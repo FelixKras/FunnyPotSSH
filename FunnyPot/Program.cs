@@ -4,17 +4,27 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
+using OpenAI.Chat;
+using DotNetEnv;
+
 
 class Program
 {
     private static readonly HttpClient httpClient = new HttpClient();
+    private static bool killswitch = true;
+    
 
     static void Main()
     {
+        
+        var root = Directory.GetCurrentDirectory();
+        var dotenv = Path.Combine(root, "../../../.env");
+        DotNetEnv.Env.Load(dotenv);
+
         Console.WriteLine("🚀 Welcome to Secure AI Chat! Type 'exit' to quit.");
         Console.Out.Flush();
 
-        while (true)
+        while (killswitch)
         {
             try
             {
@@ -65,12 +75,11 @@ class Program
 
     static string GetLLMResponse(string userInput)
     {
-        string apiUrl = "https://api.openai.com/v1/chat/completions";
-        string apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? "your-api-key";
-
+        string apiUrl = "https://openrouter.ai/api/v1/chat/completions";
+        string apiKey = Environment.GetEnvironmentVariable("OPENROUTER_API_key") ?? "no-key";
         var requestData = new
         {
-            model = "gpt-4",
+            model = "openai/gpt-4o",
             messages = new[] { new { role = "user", content = userInput } },
             max_tokens = 200
         };
