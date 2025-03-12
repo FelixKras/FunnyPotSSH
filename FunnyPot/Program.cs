@@ -4,72 +4,104 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
-using OpenAI.Chat;
+using System.Collections.Concurrent;
+//using OpenAI.Chat;
 using DotNetEnv;
-
 
 class Program
 {
     private static readonly HttpClient httpClient = new HttpClient();
     private static bool killswitch = true;
-    
+
+    // Shared queue for user input
+    private static readonly ConcurrentQueue<string> inputQueue = new ConcurrentQueue<string>();
+    // Event used to signal that a new message is available
+    private static readonly AutoResetEvent inputSignal = new AutoResetEvent(false);
 
     static void Main()
     {
-        
         var root = Directory.GetCurrentDirectory();
+          
+        #if RELEASE
+        var dotenv = Path.Combine(root, ".env");
+        #else
         var dotenv = Path.Combine(root, "../../../.env");
+        #endif
+        
+        
+        
         DotNetEnv.Env.Load(dotenv);
 
-        Console.WriteLine("🚀 Welcome to Secure AI Chat! Type 'exit' to quit.");
+        Console.WriteLine("remote@gwSrvr ~ $");
         Console.Out.Flush();
+
+        // Start a long-running background thread to process input
+        Thread processorThread = new Thread(ProcessInputQueue);
+        processorThread.Start();
 
         while (killswitch)
         {
             try
             {
-                string userInput = Console.ReadLine()?.Trim();
-
+                string userInput = (Console.ReadLine() ?? "").Trim();
                 if (string.IsNullOrEmpty(userInput))
                     continue;
 
                 if (userInput.Equals("exit", StringComparison.OrdinalIgnoreCase))
                 {
                     Console.WriteLine("Goodbye!");
+                    killswitch = false;
+                    // Signal the background thread so it can exit if waiting
+                    inputSignal.Set();
                     break;
                 }
 
-                // SCP/SFTP detection
+                // SCP/SFTP detection remains in the main thread
                 if (SCPDetector.IsSCPCommand(userInput))
                 {
                     Console.WriteLine("❌ File transfers are not allowed.");
-                    return;
+                    continue;
                 }
 
-                // Create a new thread to handle the LLM API call
-                Thread thread = new Thread(() => HandleUserInput(userInput));
-                thread.Start();
-                thread.Join(); // Wait for the thread to complete before continuing
+                // Enqueue the input and signal the background thread
+                inputQueue.Enqueue(userInput);
+                inputSignal.Set();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ Error: {ex.Message}");
-                return; // Ensures session closes on failure
+                killswitch = false;
+                inputSignal.Set();
+                break;
             }
         }
+
+        // Wait for the background thread to finish processing before exiting
+        processorThread.Join();
     }
 
-    static void HandleUserInput(string userInput)
+    static void ProcessInputQueue()
     {
-        try
+        while (killswitch || !inputQueue.IsEmpty)
         {
-            string response = GetLLMResponse(userInput);
-            Console.WriteLine(response);
-            Console.Out.Flush();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Error: {ex.Message}");
+            // Wait until a new input is signaled
+            inputSignal.WaitOne();
+
+            while (inputQueue.TryDequeue(out string? userInput))
+            {
+                if (userInput is null)
+                    continue;
+                try
+                {
+                    string response = GetLLMResponse(userInput);
+                    Console.WriteLine(response);
+                    Console.Out.Flush();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"❌ Error: {ex.Message}");
+                }
+            }
         }
     }
 
@@ -80,8 +112,12 @@ class Program
         var requestData = new
         {
             model = "openai/gpt-4o",
-            messages = new[] { new { role = "user", content = userInput } },
-            max_tokens = 200
+            messages = new[]
+            {
+            new { role = "system", content = "You are a remote computer terminal of top secret linux server. Respond with terminal command output." },
+            new { role = "user", content = userInput }
+            },
+            max_tokens = 2000
         };
 
         string jsonRequest = JsonSerializer.Serialize(requestData);
