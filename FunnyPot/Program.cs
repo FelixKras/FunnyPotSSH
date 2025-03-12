@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Collections.Concurrent;
-//using OpenAI.Chat;
+using System.Collections.Generic;
 using DotNetEnv;
 
 class Program
@@ -18,19 +18,27 @@ class Program
     // Event used to signal that a new message is available
     private static readonly AutoResetEvent inputSignal = new AutoResetEvent(false);
 
+    // Conversation history record
+    private static readonly List<ChatMessage> conversationHistory = new List<ChatMessage>();
+
     static void Main()
     {
         var root = Directory.GetCurrentDirectory();
-          
+
         #if RELEASE
         var dotenv = Path.Combine(root, ".env");
         #else
         var dotenv = Path.Combine(root, "../../../.env");
         #endif
-        
-        
-        
+      
         DotNetEnv.Env.Load(dotenv);
+
+        // Initialize conversation history with the system prompt
+        conversationHistory.Add(new ChatMessage
+        {
+            Role = "system",
+            Content = "You are a remote computer terminal of top secret linux server. Respond with terminal command output."
+        });
 
         Console.WriteLine("remote@gwSrvr ~ $");
         Console.Out.Flush();
@@ -93,7 +101,22 @@ class Program
                     continue;
                 try
                 {
-                    string response = GetLLMResponse(userInput);
+                    // Add user input to conversation history
+                    conversationHistory.Add(new ChatMessage
+                    {
+                        Role = "user",
+                        Content = userInput
+                    });
+
+                    string response = GetLLMResponse();
+                    
+                    // Add LLM response to conversation history
+                    conversationHistory.Add(new ChatMessage
+                    {
+                        Role = "assistant",
+                        Content = response
+                    });
+                    
                     Console.WriteLine(response);
                     Console.Out.Flush();
                 }
@@ -105,18 +128,15 @@ class Program
         }
     }
 
-    static string GetLLMResponse(string userInput)
+    static string GetLLMResponse()
     {
         string apiUrl = "https://openrouter.ai/api/v1/chat/completions";
         string apiKey = Environment.GetEnvironmentVariable("OPENROUTER_API_key") ?? "no-key";
+        
         var requestData = new
         {
             model = "openai/gpt-4o",
-            messages = new[]
-            {
-            new { role = "system", content = "You are a remote computer terminal of top secret linux server. Respond with terminal command output." },
-            new { role = "user", content = userInput }
-            },
+            messages = conversationHistory,
             max_tokens = 2000
         };
 
@@ -130,7 +150,10 @@ class Program
 
         string jsonResponse = response.Content.ReadAsStringAsync().Result;
         var parsedResponse = JsonDocument.Parse(jsonResponse);
-        return parsedResponse.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? "No response";
+
+        return parsedResponse.RootElement.GetProperty("choices")[0]
+                             .GetProperty("message")
+                             .GetProperty("content").GetString() ?? "No response";
     }
 }
 
@@ -144,4 +167,10 @@ class SCPDetector
                input.Contains("-t", StringComparison.OrdinalIgnoreCase) ||
                input.Contains("-f", StringComparison.OrdinalIgnoreCase);
     }
+}
+
+public class ChatMessage
+{
+    public string Role { get; set; }
+    public string Content { get; set; }
 }

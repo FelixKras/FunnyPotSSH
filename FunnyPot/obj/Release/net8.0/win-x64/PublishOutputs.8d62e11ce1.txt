@@ -1,0 +1,2 @@
+/home/felix/FunnyPotSSH/FunnyPot/bin/Release/net8.0/win-x64/publish/FunnyPot.pdb
+/home/felix/FunnyPotSSH/FunnyPot/bin/Release/net8.0/win-x64/publish/FunnyPot.exe

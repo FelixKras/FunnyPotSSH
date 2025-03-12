@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FunnyPot")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a4ebe8403600d6eec7ef9a1f7654cd3bbc36d244")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+77f296ec31bf7bb524ead03991bc2ef9c2fbda62")]
 [assembly: System.Reflection.AssemblyProductAttribute("FunnyPot")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FunnyPot")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
