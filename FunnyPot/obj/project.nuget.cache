@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "QeW/mP25IZp74Ab4G77g44+CDrZo+tt6HBA7wrCvlJL5nEEvoX6hFUo7napUa0+qUs2pwEf/Y5z7yoTlWA6k/A==",
+  "dgSpecHash": "T982O9oLsqejvRV/2BXHqN5Yc61UTSr9UqCCwzHR5LDC/S6Ff62ictPfLvoovCzlMKNuuuxG01WmX2Uy8V0foA==",
   "success": true,
   "projectFilePath": "/home/felix/FunnyPotSSH/FunnyPot/FunnyPot.csproj",
   "expectedPackageFiles": [
@@ -127,12 +127,12 @@
     "/home/felix/.nuget/packages/system.threading.timer/4.3.0/system.threading.timer.4.3.0.nupkg.sha512",
     "/home/felix/.nuget/packages/system.xml.readerwriter/4.3.0/system.xml.readerwriter.4.3.0.nupkg.sha512",
     "/home/felix/.nuget/packages/system.xml.xdocument/4.3.0/system.xml.xdocument.4.3.0.nupkg.sha512",
-    "/home/felix/.nuget/packages/microsoft.netcore.app.runtime.win-x64/8.0.12/microsoft.netcore.app.runtime.win-x64.8.0.12.nupkg.sha512",
-    "/home/felix/.nuget/packages/microsoft.netcore.app.runtime.linux-x64/8.0.12/microsoft.netcore.app.runtime.linux-x64.8.0.12.nupkg.sha512",
-    "/home/felix/.nuget/packages/microsoft.aspnetcore.app.runtime.win-x64/8.0.12/microsoft.aspnetcore.app.runtime.win-x64.8.0.12.nupkg.sha512",
-    "/home/felix/.nuget/packages/microsoft.aspnetcore.app.runtime.linux-x64/8.0.12/microsoft.aspnetcore.app.runtime.linux-x64.8.0.12.nupkg.sha512",
-    "/home/felix/.nuget/packages/microsoft.netcore.app.host.win-x64/8.0.12/microsoft.netcore.app.host.win-x64.8.0.12.nupkg.sha512",
-    "/home/felix/.nuget/packages/microsoft.netcore.app.host.linux-x64/8.0.12/microsoft.netcore.app.host.linux-x64.8.0.12.nupkg.sha512"
+    "/home/felix/.nuget/packages/microsoft.netcore.app.runtime.win-x64/8.0.14/microsoft.netcore.app.runtime.win-x64.8.0.14.nupkg.sha512",
+    "/home/felix/.nuget/packages/microsoft.netcore.app.runtime.linux-x64/8.0.14/microsoft.netcore.app.runtime.linux-x64.8.0.14.nupkg.sha512",
+    "/home/felix/.nuget/packages/microsoft.aspnetcore.app.runtime.win-x64/8.0.14/microsoft.aspnetcore.app.runtime.win-x64.8.0.14.nupkg.sha512",
+    "/home/felix/.nuget/packages/microsoft.aspnetcore.app.runtime.linux-x64/8.0.14/microsoft.aspnetcore.app.runtime.linux-x64.8.0.14.nupkg.sha512",
+    "/home/felix/.nuget/packages/microsoft.netcore.app.host.win-x64/8.0.14/microsoft.netcore.app.host.win-x64.8.0.14.nupkg.sha512",
+    "/home/felix/.nuget/packages/microsoft.netcore.app.host.linux-x64/8.0.14/microsoft.netcore.app.host.linux-x64.8.0.14.nupkg.sha512"
   ],
   "logs": []
 }

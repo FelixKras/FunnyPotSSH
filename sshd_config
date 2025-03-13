@@ -1,0 +1,10 @@
+Port 22
+PermitRootLogin no
+PasswordAuthentication yes
+
+Match User sshuser
+    ChrootDirectory /home/sshuser
+    ForceCommand /usr/bin/dotnet /app/FunnyPot.dll
+    AllowTcpForwarding no
+    X11Forwarding no
+    PermitTTY yes

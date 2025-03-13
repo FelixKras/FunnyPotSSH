@@ -1,0 +1,33 @@
+FROM debian:stable-slim
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    openssh-server \
+    dotnet-runtime-8.0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configure SSH
+RUN mkdir /var/run/sshd
+
+# Create a restricted user and group
+RUN groupadd sshuser && \
+    useradd -m -g sshuser -s /bin/bash sshuser && \
+    mkdir -p /home/sshuser/app
+
+# Copy your dotnet application to a chroot-like directory
+COPY app/ /home/sshuser/app/
+RUN chown -R root:root /home/sshuser/app && \
+    chmod -R 755 /home/sshuser/app
+
+# Copy SSH configuration
+COPY sshd_config /etc/ssh/sshd_config
+RUN chmod 600 /etc/ssh/sshd_config
+
+# Secure permissions
+RUN chown root:root /home/sshuser && chmod 755 /home/sshuser
+
+# Expose SSH port
+EXPOSE 22
+
+# Start SSH service securely in foreground
+CMD ["/usr/sbin/sshd", "-D", "-e"]

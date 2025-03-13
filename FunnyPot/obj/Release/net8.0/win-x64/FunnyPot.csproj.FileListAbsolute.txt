@@ -189,7 +189,6 @@
 /home/felix/FunnyPotSSH/FunnyPot/bin/Release/net8.0/win-x64/hostfxr.dll
 /home/felix/FunnyPotSSH/FunnyPot/bin/Release/net8.0/win-x64/hostpolicy.dll
 /home/felix/FunnyPotSSH/FunnyPot/bin/Release/net8.0/win-x64/mscordaccore.dll
-/home/felix/FunnyPotSSH/FunnyPot/bin/Release/net8.0/win-x64/mscordaccore_amd64_amd64_8.0.1224.60305.dll
 /home/felix/FunnyPotSSH/FunnyPot/bin/Release/net8.0/win-x64/mscordbi.dll
 /home/felix/FunnyPotSSH/FunnyPot/bin/Release/net8.0/win-x64/mscorrc.dll
 /home/felix/FunnyPotSSH/FunnyPot/bin/Release/net8.0/win-x64/msquic.dll
@@ -205,3 +204,4 @@
 /home/felix/FunnyPotSSH/FunnyPot/obj/Release/net8.0/win-x64/FunnyPot.pdb
 /home/felix/FunnyPotSSH/FunnyPot/obj/Release/net8.0/win-x64/FunnyPot.genruntimeconfig.cache
 /home/felix/FunnyPotSSH/FunnyPot/obj/Release/net8.0/win-x64/ref/FunnyPot.dll
+/home/felix/FunnyPotSSH/FunnyPot/bin/Release/net8.0/win-x64/mscordaccore_amd64_amd64_8.0.1425.11118.dll
