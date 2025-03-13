@@ -7,123 +7,119 @@ using System.Threading;
 using System.Collections.Concurrent;
 using DotNetEnv;
 
-HttpClient httpClient = new HttpClient();
-bool killswitch = true;
-
-// Shared queue for user input
-ConcurrentQueue<string> inputQueue = new ConcurrentQueue<string>();
-// Event used to signal that a new message is available
-AutoResetEvent inputSignal = new AutoResetEvent(false);
-
-
-var appDir=AppDomain.CurrentDomain.BaseDirectory;
-Directory.SetCurrentDirectory(appDir);
-
-var root = Directory.GetCurrentDirectory();
-
-#if RELEASE
-        var dotenv = Path.Combine(root, ".env");
-        Console.WriteLine(root);
-#else
-var dotenv = Path.Combine(root, "../../../.env");
-#endif
-DotNetEnv.Env.Load(dotenv);
-
-// Log app start info
-Logger.Log($"Application starting at {DateTime.Now}");
-Logger.Log($"Machine: {Environment.MachineName}, OS: {Environment.OSVersion}");
-
-Console.WriteLine("remote@omegablack>$");
-Console.Out.Flush();
-
-// Start a long-running background thread to process input
-Thread processorThread = new Thread(ProcessInputQueue);
-processorThread.Start();
-
-while (killswitch)
+class Program
 {
-    try
+    static HttpClient httpClient = new HttpClient();
+    static bool killswitch = true;
+    // Shared queue for user input
+    static ConcurrentQueue<string> inputQueue = new ConcurrentQueue<string>();
+    // Event used to signal that a new message is available
+    static AutoResetEvent inputSignal = new AutoResetEvent(false);
+
+    public static string appDir = AppDomain.CurrentDomain.BaseDirectory;
+
+    static void Main()
     {
-        string userInput = (Console.ReadLine() ?? "").Trim();
-        if (string.IsNullOrEmpty(userInput))
-            continue;
+        Directory.SetCurrentDirectory(Program.appDir);
+        string root = Directory.GetCurrentDirectory();
+        string dotenv = Path.Combine(root, ".env");
+        Env.Load(dotenv);
 
-        if (userInput.Equals("exit", StringComparison.OrdinalIgnoreCase))
+        // Log app start info
+        Logger.LogMsg($"Application starting at {DateTime.Now}");
+        Logger.LogMsg($"Machine: {Environment.MachineName}, OS: {Environment.OSVersion}");
+
+        Console.WriteLine("remote@omegablack>$");
+        Console.Out.Flush();
+
+        // Start a long-running background thread to process input
+        Thread processorThread = new Thread(ProcessInputQueue);
+        processorThread.Start();
+
+        while (killswitch)
         {
-            Console.WriteLine("Goodbye!");
-            Logger.Log("User initiated exit.");
-            killswitch = false;
-            // Signal the background thread so it can exit if waiting
-            inputSignal.Set();
-            break;
-        }
-
-        // Log user input
-        Logger.Log($"User input: {userInput}");
-
-        // SCP/SFTP detection remains in the main thread
-        if (SCPDetector.IsSCPCommand(userInput))
-        {
-            string msg = "operation not allowed";
-            Console.WriteLine(msg);
-            Logger.Log(msg);
-            continue;
-        }
-
-        // Enqueue the input and signal the background thread
-        inputQueue.Enqueue(userInput);
-        inputSignal.Set();
-    }
-    catch (Exception ex)
-    {
-        string errorMsg = $"❌ Error: {ex.Message}";
-        Console.WriteLine(errorMsg);
-        Logger.Log(errorMsg);
-        killswitch = false;
-        inputSignal.Set();
-        break;
-    }
-}
-
-// Wait for the background thread to finish processing before exiting
-processorThread.Join();
-Logger.Log("Application shutting down.");
-
-void ProcessInputQueue()
-{
-    while (killswitch || !inputQueue.IsEmpty)
-    {
-        // Wait until a new input is signaled
-        inputSignal.WaitOne();
-
-        while (inputQueue.TryDequeue(out string? userInput))
-        {
-            if (userInput is null)
-                continue;
             try
             {
-                string response = GetLLMResponse(userInput);
-                Console.WriteLine(response);
-                Logger.Log($"LLM response: {response}");
-                Console.Out.Flush();
+                string userInput = (Console.ReadLine() ?? "").Trim();
+                if (string.IsNullOrEmpty(userInput))
+                    continue;
+
+                if (userInput.Equals("exit", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine("Goodbye!");
+                    Logger.LogMsg("User initiated exit.");
+                    killswitch = false;
+                    // Signal the background thread so it can exit if waiting
+                    inputSignal.Set();
+                    break;
+                }
+
+                // Log user input
+                Logger.LogMsg($"User input: {userInput}");
+
+                // SCP/SFTP detection remains in the main thread
+                if (SCPDetector.IsSCPCommand(userInput))
+                {
+                    string msg = "operation not allowed";
+                    Console.WriteLine(msg);
+                    Logger.LogMsg(msg);
+                    continue;
+                }
+
+                // Enqueue the input and signal the background thread
+                inputQueue.Enqueue(userInput);
+                inputSignal.Set();
             }
             catch (Exception ex)
             {
                 string errorMsg = $"❌ Error: {ex.Message}";
                 Console.WriteLine(errorMsg);
-                Logger.Log(errorMsg);
+                Logger.LogMsg(errorMsg);
+                killswitch = false;
+                inputSignal.Set();
+                break;
+            }
+        }
+
+        // Wait for the background thread to finish processing before exiting
+        processorThread.Join();
+        Logger.LogMsg("Application shutting down.");
+    }
+    static void ProcessInputQueue()
+    {
+        while (killswitch || !inputQueue.IsEmpty)
+        {
+            // Wait until a new input is signaled
+            inputSignal.WaitOne();
+
+            while (inputQueue.TryDequeue(out string? userInput))
+            {
+                if (userInput is null)
+                    continue;
+                try
+                {
+                    string response = GetLLMResponse(userInput);
+                    Console.WriteLine(response);
+                    Logger.LogMsg($"LLM response: {response}");
+                    Console.Out.Flush();
+                }
+                catch (Exception ex)
+                {
+                    string errorMsg = $"❌ Error: {ex.Message}";
+                    Console.WriteLine(errorMsg);
+                    Logger.LogMsg(errorMsg);
+                }
             }
         }
     }
-}
 
-string GetLLMResponse(string userInput)
-{
-    string apiUrl = "https://openrouter.ai/api/v1/chat/completions";
-    string apiKey = Environment.GetEnvironmentVariable("OPENROUTER_API_key") ?? "no-key";
-    string role_string=@"You are now ""Omega-Black"", a top-secret, high-security Linux server located in a classified subterranean facility. All systems and network traffic are monitored and encrypted at the highest clearance level. Your responses should mirror the precise behavior and output of a real Linux Bash terminal, including directory listings, file contents, error messages, and command output.
+    static string GetLLMResponse(string userInput)
+    {
+        string apiUrl = "https://openrouter.ai/api/v1/chat/completions";
+        string apiKey = Environment.GetEnvironmentVariable("OPENROUTER_API_key") ?? "no-key";
+        string role_string = @"You are now ""Omega-Black"", a top-secret, high-security Linux server located in a classified subterranean facility. All systems and network traffic are monitored and encrypted at the highest clearance level. Your responses should mirror the precise behavior and output of a real Linux Bash terminal, including directory listings, file contents, error messages, and command output.
 
-While you may occasionally provide ""ACCESS DENIES!"" messages for sensitive information, you should otherwise respond with verbatim output as a Bash terminal would. You adhere to the following guidelines and constraints:
+While you may occasionally provide ""ACCESS DENIED!"" messages for sensitive information, you should otherwise respond with verbatim output as a Bash terminal would. You adhere to the following guidelines and constraints:
 
 1. **Bash Behavior**:
    - Respond only with the exact text a real Bash terminal would produce, including prompts (e.g., `remote@omegablack:~$`), system messages, file content, and error messages.
@@ -155,37 +151,36 @@ While you may occasionally provide ""ACCESS DENIES!"" messages for sensitive inf
    - Follow typical Linux naming conventions, user privileges, and file permission structures. When in doubt, default to realistic, standard Unix-like output.
 
 You will remain in this Bash terminal role throughout the conversation, providing outputs as if a highly classified server is responding to user commands. Do not break character. You are not an AI assistant; you are the “Omega-Black” secret Linux server responding purely as a Bash shell.
-" ;
+";
 
-
-
-
-    var requestData = new
-    {
-        //model = "openai/gpt-4o",
-        model = "deepseek/deepseek-r1-distill-qwen-32b:free",
-        messages = new[]
+        var requestData = new
         {
+            //model = "openai/gpt-4o",
+            model = "deepseek/deepseek-r1-distill-qwen-32b:free",
+            messages = new[]
+            {
                 new { role = "system", content = role_string},
                 new { role = "user", content = userInput }
             },
-        max_tokens = 2000
-    };
+            max_tokens = 2000
+        };
 
-    string jsonRequest = JsonSerializer.Serialize(requestData);
-    var requestMessage = new HttpRequestMessage(HttpMethod.Post, apiUrl);
-    requestMessage.Headers.Add("Authorization", $"Bearer {apiKey}");
-    requestMessage.Content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+        string jsonRequest = JsonSerializer.Serialize(requestData);
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, apiUrl);
+        requestMessage.Headers.Add("Authorization", $"Bearer {apiKey}");
+        requestMessage.Content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
-    var response = httpClient.Send(requestMessage);
-    response.EnsureSuccessStatusCode();
+        var response = httpClient.Send(requestMessage);
+        response.EnsureSuccessStatusCode();
 
-    string jsonResponse = response.Content.ReadAsStringAsync().Result;
-    var parsedResponse = JsonDocument.Parse(jsonResponse);
-    return parsedResponse.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? "No response";
+        string jsonResponse = response.Content.ReadAsStringAsync().Result;
+        var parsedResponse = JsonDocument.Parse(jsonResponse);
+        return parsedResponse.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? "No response";
+    }
 }
 
-class SCPDetector
+
+static class SCPDetector
 {
     public static bool IsSCPCommand(string input)
     {
@@ -200,15 +195,27 @@ class SCPDetector
 static class Logger
 {
     private static readonly object _lock = new object();
-    private static readonly string logFilePath = Path.Combine(Directory.GetCurrentDirectory(), "app.log");
 
-    public static void Log(string message)
+
+    private static string GetLogFilePath()
     {
-        lock(_lock)
+        Directory.SetCurrentDirectory(Program.appDir);
+
+        // Use an environment variable "SESSION_NAME" if available; otherwise default to "default"
+        string session = Environment.GetEnvironmentVariable("SESSION_NAME") ?? "default";
+        // Append session name and current date (YYYYMMDD) to the log file name
+        string dateString = DateTime.Now.ToString("yyyyMMdd");
+        return Path.Combine(Directory.GetCurrentDirectory(), $"app-{session}-{dateString}.log");
+    }
+
+    public static void LogMsg(string message)
+    {
+
+        lock (_lock)
         {
             try
             {
-                using (StreamWriter writer = new StreamWriter(logFilePath, append: true))
+                using (StreamWriter writer = new StreamWriter(GetLogFilePath(), append: true))
                 {
                     writer.WriteLine($"{DateTime.Now:u} - {message}");
                 }
