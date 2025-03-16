@@ -5,10 +5,12 @@ using DotNetEnv;
 
 class Program
 {
-    static HttpClient httpClient = new HttpClient();
-    static bool killswitch = true;
+    static readonly HttpClient httpClient = new();
+    
     // Shared queue for user input
     static ConcurrentQueue<string> inputQueue = new ConcurrentQueue<string>();
+    // Volatile killswitch for thread synchronization
+    static volatile bool IsRunning = true;
     // Event used to signal that a new message is available
     static AutoResetEvent inputSignal = new AutoResetEvent(false);
 
@@ -32,7 +34,7 @@ class Program
         Thread processorThread = new Thread(ProcessInputQueue);
         processorThread.Start();
 
-        while (killswitch)
+        while (IsRunning)
         {
             try
             {
@@ -44,7 +46,7 @@ class Program
                 {
                     Console.WriteLine("Goodbye!");
                     Logger.LogMsg("User initiated exit.");
-                    killswitch = false;
+                    IsRunning = false;
                     // Signal the background thread so it can exit if waiting
                     inputSignal.Set();
                     break;
@@ -71,7 +73,7 @@ class Program
                 string errorMsg = $"❌ Error: {ex.Message}";
                 Console.WriteLine(errorMsg);
                 Logger.LogMsg(errorMsg);
-                killswitch = false;
+                IsRunning = false;
                 inputSignal.Set();
                 break;
             }
@@ -83,7 +85,7 @@ class Program
     }
     static void ProcessInputQueue()
     {
-        while (killswitch || !inputQueue.IsEmpty)
+        while (IsRunning || !inputQueue.IsEmpty)
         {
             // Wait until a new input is signaled
             inputSignal.WaitOne();
