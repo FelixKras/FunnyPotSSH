@@ -1,2 +1,0 @@
-/mnt/c/Program Files/FunnyPot/FunnyPot.pdb
-/mnt/c/Program Files/FunnyPot/FunnyPot.exe

@@ -1,2 +1,0 @@
-/home/felix/FunnyPotSSH/FunnyPotSSH/app/FunnyPot.pdb
-/home/felix/FunnyPotSSH/FunnyPotSSH/app/FunnyPot.exe
