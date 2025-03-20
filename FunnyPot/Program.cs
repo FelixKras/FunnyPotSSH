@@ -154,11 +154,15 @@ You will remain in this Bash terminal role throughout the conversation, providin
         var requestData = new ChatRequestData
         {
             model = "openai/gpt-4o",
-            messages = new List<Tuple<string, string>> { Tuple.Create("role", role_string), Tuple.Create("user", userInput) },
+            messages = new()
+            {
+                new() { role = "system", content = role_string },
+                new() { role = "user", content = userInput },
+            },
             max_tokens = 2000,
         };
        
-        string jsonRequest = JsonSerializer.Serialize(requestData);
+        string jsonRequest = JsonSerializer.Serialize(requestData, typeof(ChatRequestData));
         var requestMessage = new HttpRequestMessage(HttpMethod.Post, apiUrl);
         requestMessage.Headers.Add("Authorization", $"Bearer {apiKey}");
         requestMessage.Content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
@@ -172,13 +176,21 @@ You will remain in this Bash terminal role throughout the conversation, providin
     }
 }
 
+
 public class ChatRequestData
-        {
-            //model = "openai/gpt-4o",
-            public string model="";
-            public List<Tuple<string,string>> messages= new List<Tuple<string, string>>();
-            public int max_tokens;
-        };
+{
+    public string model { get; set; } = "openai/gpt-4o";
+    public List<ChatMessage> messages { get; set; } = new List<ChatMessage>();
+    public int max_tokens { get; set; }
+    
+    public class ChatMessage
+{
+    public string role { get; set; } = "";
+    public string content { get; set; } = "";
+}
+}
+
+
 static class SCPDetector
 {
     public static bool IsSCPCommand(string input)
