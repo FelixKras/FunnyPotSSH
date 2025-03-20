@@ -21,7 +21,7 @@ class Program
         Directory.SetCurrentDirectory(Program.appDir);
         string root = Directory.GetCurrentDirectory();
         string dotenv = Path.Combine(root, ".env");
-        Env.Load(dotenv);
+        var envForDebug=Env.Load(dotenv);
 
         // Log app start info
         Logger.LogMsg($"Application starting at {DateTime.Now}");
@@ -97,7 +97,7 @@ class Program
                 try
                 {
                     string response = GetLLMResponse(userInput);
-                    Console.WriteLine(response);
+                    Console.WriteLine(response+"\nremote@omegablack>$");
                     Logger.LogMsg($"LLM response: {response}");
                     Console.Out.Flush();
                 }
@@ -151,18 +151,13 @@ While you may occasionally provide ""ACCESS DENIED!"" messages for sensitive inf
 You will remain in this Bash terminal role throughout the conversation, providing outputs as if a highly classified server is responding to user commands. Do not break character. You are not an AI assistant; you are the “Omega-Black” secret Linux server responding purely as a Bash shell.
 ";
 
-        var requestData = new
+        var requestData = new ChatRequestData
         {
-            //model = "openai/gpt-4o",
-            model = "deepseek/deepseek-r1-distill-qwen-32b:free",
-            messages = new[]
-            {
-                new { role = "system", content = role_string},
-                new { role = "user", content = userInput }
-            },
-            max_tokens = 2000
+            model = "openai/gpt-4o",
+            messages = new List<Tuple<string, string>> { Tuple.Create("role", role_string), Tuple.Create("user", userInput) },
+            max_tokens = 2000,
         };
-
+       
         string jsonRequest = JsonSerializer.Serialize(requestData);
         var requestMessage = new HttpRequestMessage(HttpMethod.Post, apiUrl);
         requestMessage.Headers.Add("Authorization", $"Bearer {apiKey}");
@@ -177,7 +172,13 @@ You will remain in this Bash terminal role throughout the conversation, providin
     }
 }
 
-
+public class ChatRequestData
+        {
+            //model = "openai/gpt-4o",
+            public string model="";
+            public List<Tuple<string,string>> messages= new List<Tuple<string, string>>();
+            public int max_tokens;
+        };
 static class SCPDetector
 {
     public static bool IsSCPCommand(string input)
