@@ -6,7 +6,11 @@
     <Nullable>enable</Nullable>
     <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
   </PropertyGroup>
-
+  <ItemGroup>
+    <Content Include="../.env">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <PropertyGroup Condition="'$(RuntimeIdentifier)'=='win-x64'">
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
