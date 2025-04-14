@@ -2,8 +2,10 @@
 services:
   funnypot:
     build: .
+    env_file: .env
     container_name: funnypot-container
     ports:
       - "22422:22422"
-    env_file: .env
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true

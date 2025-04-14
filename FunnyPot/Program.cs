@@ -26,6 +26,14 @@ class Program
         string dotenv = Path.Combine(root, ".env");
         var envForDebug=Env.Load(dotenv);
 
+
+        // For local dev: load from .env file if it exists
+        if (File.Exists(dotenv))
+        {
+            DotNetEnv.Env.Load(dotenv);
+        }
+
+
         // Log app start info with session ID
         Logger.LogMetric(sessionId, "SessionStart", new { Timestamp = DateTime.UtcNow });
         Logger.LogMsg($"Application starting at {DateTime.Now}");
@@ -84,7 +92,7 @@ class Program
             }
             catch (Exception ex)
             {
-                string errorMsg = $"❌ Error: {ex.Message}";
+                string errorMsg = $"Error: {ex.Message}";
                 Console.WriteLine(errorMsg);
                 Logger.LogMsg(errorMsg);
                 Logger.LogMetric(sessionId, "Error", new { Context = "MainLoop", Message = ex.Message, StackTrace = ex.StackTrace });
@@ -143,6 +151,7 @@ class Program
     static (string response, int promptTokens, int completionTokens, int totalTokens) GetLLMResponse(string userInput)
     {
         string apiUrl = "https://openrouter.ai/api/v1/chat/completions";
+
         string apiKey = Environment.GetEnvironmentVariable("OPENROUTER_API_KEY") ?? "no-key";
         string role_string = @"You are now ""Omega-Black"", a top-secret, high-security Linux server located in a classified subterranean facility. All systems and network traffic are monitored and encrypted at the highest clearance level. Your responses should mirror the precise behavior and output of a real Linux Bash terminal, including directory listings, file contents, error messages, and command output.
 
