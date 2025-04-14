@@ -1,0 +1,9 @@
+
+services:
+  funnypot:
+    build: .
+    container_name: funnypot-container
+    ports:
+      - "22422:22422"
+    env_file: .env
+    restart: unless-stopped
