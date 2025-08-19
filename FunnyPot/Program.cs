@@ -19,6 +19,12 @@ class Program
     // Unique identifier for the current session
     public static string sessionId = Guid.NewGuid().ToString();
 
+    private static string GetPrompt()
+    {
+        var username = Environment.GetEnvironmentVariable("SSH_USER") ?? Environment.UserName ?? "remote";
+        return $"{username}@omegablack>$";
+    }
+
     static void Main()
     {
         Directory.SetCurrentDirectory(Program.appDir);
@@ -34,14 +40,16 @@ class Program
         }
 
 
+        // Configure HTTP client timeout (robust network behavior)
+        httpClient.Timeout = TimeSpan.FromSeconds(30);
+
         // Log app start info with session ID
         Logger.LogMetric(sessionId, "SessionStart", new { Timestamp = DateTime.UtcNow });
         Logger.LogMsg($"Application starting at {DateTime.Now}");
         Logger.LogMsg($"Session ID: {sessionId}");
         Logger.LogMsg($"Machine: {Environment.MachineName}, OS: {Environment.OSVersion}");
 
-
-        Console.WriteLine("remote@omegablack>$");
+        Console.WriteLine(GetPrompt());
         Console.Out.Flush();
 
         // Start a long-running background thread to process input
@@ -124,7 +132,8 @@ class Program
                     (string response, int promptTokens, int completionTokens, int totalTokens) = GetLLMResponse(userInput);
                     stopwatch.Stop();
 
-                    Console.WriteLine(response+"\nremote@omegablack>$");
+                    Console.WriteLine(response);
+                    Console.WriteLine(GetPrompt());
                     Logger.LogMsg($"LLM response: {response}");
                     Logger.LogMetric(sessionId, "LLMInteraction", new {
                         Input = userInput,
@@ -203,10 +212,28 @@ You will remain in this Bash terminal role throughout the conversation, providin
         string jsonRequest = JsonSerializer.Serialize(requestData, typeof(ChatRequestData));
         var requestMessage = new HttpRequestMessage(HttpMethod.Post, apiUrl);
         requestMessage.Headers.Add("Authorization", $"Bearer {apiKey}");
+        var referer = Environment.GetEnvironmentVariable("OPENROUTER_REFERER") ?? "https://github.com/felix/FunnyPotSSH";
+        var title = Environment.GetEnvironmentVariable("OPENROUTER_TITLE") ?? "FunnyPot";
+        // Optional attribution headers recommended by OpenRouter
+        requestMessage.Headers.TryAddWithoutValidation("HTTP-Referer", referer);
+        requestMessage.Headers.TryAddWithoutValidation("X-Title", title);
         requestMessage.Content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
-        var response = httpClient.Send(requestMessage);
-        response.EnsureSuccessStatusCode();
+        HttpResponseMessage response;
+        try
+        {
+            response = httpClient.Send(requestMessage);
+        }
+        catch (Exception ex)
+        {
+            return ($"[network error] {ex.Message}", 0, 0, 0);
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorText = response.Content.ReadAsStringAsync().Result;
+            return ($"[api error] {(int)response.StatusCode} {response.ReasonPhrase}: {errorText}", 0, 0, 0);
+        }
 
         string jsonResponse = response.Content.ReadAsStringAsync().Result;
         var parsedResponse = JsonDocument.Parse(jsonResponse);

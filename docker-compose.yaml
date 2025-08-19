@@ -9,3 +9,5 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    volumes:
+      - "/home/felix/FunnyPotSSH/app:/home/test/app:rw"

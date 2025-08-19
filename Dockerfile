@@ -1,33 +1,45 @@
 FROM debian:stable-slim
 
-ARG USERNAME=pi
-ENV SSH_PASSWORD=raspberry
+ARG USERNAME=test
+ENV SSH_PASSWORD=test
 
 # Install prerequisites
 RUN apt-get update && apt-get install -y \
-    wget apt-transport-https ca-certificates gnupg openssh-server passwd
-
-RUN wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
-    dpkg -i packages-microsoft-prod.deb && \
-    rm packages-microsoft-prod.deb
-
-RUN apt-get update && apt-get install -y dotnet-runtime-8.0 && \
+    wget apt-transport-https ca-certificates gnupg openssh-server passwd && \
     rm -rf /var/lib/apt/lists/*
 
-RUN mkdir /var/run/sshd
+# Install Microsoft package repository and .NET 8 runtime
+RUN wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
+    dpkg -i packages-microsoft-prod.deb && \
+    rm packages-microsoft-prod.deb && \
+    apt-get update && apt-get install -y dotnet-runtime-8.0 && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /var/run/sshd
 
 RUN groupadd $USERNAME && \
     useradd -m -g $USERNAME -s /bin/bash $USERNAME && \
     mkdir -p /home/$USERNAME/app
 
+# Copy app artifacts (framework-dependent DLL or self-contained binary) at runtime via volume or during build
 COPY app/ /home/$USERNAME/app/
 RUN chown -R $USERNAME:$USERNAME /home/$USERNAME/app && \
     chmod -R 755 /home/$USERNAME/app
 
+# Restrict SCP/SFTP and any non-interactive commands via wrapper
+RUN printf '#!/bin/sh\n\
+case "$SSH_ORIGINAL_COMMAND" in\n\
+  scp*|-t*|-f*|sftp*) echo "operation not allowed"; exit 1 ;;\n\
+  "") exec /usr/bin/dotnet /home/%s/app/FunnyPot.dll ;;\n\
+  *) echo "operation not allowed"; exit 1 ;;\n\
+esac\n' $USERNAME > /usr/local/bin/restrict.sh && \
+    chmod 555 /usr/local/bin/restrict.sh && \
+    chown root:root /usr/local/bin/restrict.sh
+
 RUN printf 'Port 22422\nPermitRootLogin no\nPermitEmptyPasswords no\n\
-PasswordAuthentication yes\n\n\
-Match User %s\n    ForceCommand /usr/bin/dotnet /home/%s/app/FunnyPot.dll\n    AllowTcpForwarding no\n    X11Forwarding no\n    PermitTTY yes\n' \
-$USERNAME $USERNAME> /etc/ssh/sshd_config && chmod 600 /etc/ssh/sshd_config
+PasswordAuthentication yes\nPubkeyAuthentication yes\nPermitUserEnvironment no\n\n\
+Match User %s\n    ForceCommand /usr/local/bin/restrict.sh\n    AllowTcpForwarding no\n    X11Forwarding no\n    PermitTTY yes\n' \
+$USERNAME > /etc/ssh/sshd_config && chmod 600 /etc/ssh/sshd_config
 
 RUN chown root:root /home/$USERNAME && chmod 755 /home/$USERNAME
 
