@@ -212,11 +212,6 @@ You will remain in this Bash terminal role throughout the conversation, providin
         string jsonRequest = JsonSerializer.Serialize(requestData, typeof(ChatRequestData));
         var requestMessage = new HttpRequestMessage(HttpMethod.Post, apiUrl);
         requestMessage.Headers.Add("Authorization", $"Bearer {apiKey}");
-        var referer = Environment.GetEnvironmentVariable("OPENROUTER_REFERER") ?? "https://github.com/felix/FunnyPotSSH";
-        var title = Environment.GetEnvironmentVariable("OPENROUTER_TITLE") ?? "FunnyPot";
-        // Optional attribution headers recommended by OpenRouter
-        requestMessage.Headers.TryAddWithoutValidation("HTTP-Referer", referer);
-        requestMessage.Headers.TryAddWithoutValidation("X-Title", title);
         requestMessage.Content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
         HttpResponseMessage response;
