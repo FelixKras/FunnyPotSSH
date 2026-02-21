@@ -9,5 +9,10 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_USER=${GITHUB_USER}
+      - SSH_USER=${SSH_USER:-test}
+      - SSH_PASSWORD=${SSH_PASSWORD:-test}
     volumes:
-      - "/home/felix/FunnyPotSSH/app:/home/test/app:rw"
+      - "./app:/home/test/app:rw"
