@@ -60,7 +60,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
 <div class="container">
 
 <h1>FunnyPot — Complete Call Flow &amp; Architecture Documentation</h1>
-<p class="subtitle">Generated from graphify knowledge graph: 56 nodes, 82 edges, 11 communities. Commit: 8b63ef0</p>
+<p class="subtitle">Generated from graphify knowledge graph: 57 nodes, 84 edges, 11 communities. Commit: 1f7939c</p>
 
 <div class="nav">
     <a href="#overview">Architecture Overview</a>
@@ -83,7 +83,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
 flowchart LR
     TESTS_FIXTURES_B84B1DCC("Tests &amp; Fixtures<br/><small>17 nodes</small>")
     class TESTS_FIXTURES_B84B1DCC module;
-    FUNNYPOT_PROGRAMCS_PROGRAM_F8220606("Funnypot Programcs Program<br/><small>12 nodes</small>")
+    FUNNYPOT_PROGRAMCS_PROGRAM_F8220606("Funnypot Programcs Program<br/><small>13 nodes</small>")
     class FUNNYPOT_PROGRAMCS_PROGRAM_F8220606 module;
     FUNNYPOT_PROGRAMCS_ONCONNECTIONACCEPTED_A4A94B6A("Funnypot Programcs Onconnectionaccepted<br/><small>11 nodes</small>")
     class FUNNYPOT_PROGRAMCS_ONCONNECTIONACCEPTED_A4A94B6A module;
@@ -121,7 +121,7 @@ flowchart LR
     <h4>Architecture Layers</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>Layer</th><th>Nodes</th><th>Communities</th></tr>
-      <tr><td>Tests &amp; Fixtures</td><td>17</td><td><code>0, 5, 7, 8</code></td></tr><tr><td>Funnypot Programcs Program</td><td>12</td><td><code>1</code></td></tr><tr><td>Funnypot Programcs Onconnectionaccepted</td><td>11</td><td><code>2</code></td></tr><tr><td>Programcs Funnypot Harvestedcredential</td><td>7</td><td><code>3</code></td></tr><tr><td>Funnypot Programcs Int</td><td>5</td><td><code>4</code></td></tr><tr><td>Agentsmd Graphify</td><td>2</td><td><code>6</code></td></tr><tr><td>Funnypotglobalusingsgcs Funnypot Obj</td><td>1</td><td><code>10</code></td></tr><tr><td>Funnypotassemblyinfocs Funnypot Obj</td><td>1</td><td><code>9</code></td></tr>
+      <tr><td>Tests &amp; Fixtures</td><td>17</td><td><code>1, 5, 7, 8</code></td></tr><tr><td>Funnypot Programcs Program</td><td>13</td><td><code>0</code></td></tr><tr><td>Funnypot Programcs Onconnectionaccepted</td><td>11</td><td><code>2</code></td></tr><tr><td>Programcs Funnypot Harvestedcredential</td><td>7</td><td><code>3</code></td></tr><tr><td>Funnypot Programcs Int</td><td>5</td><td><code>4</code></td></tr><tr><td>Agentsmd Graphify</td><td>2</td><td><code>6</code></td></tr><tr><td>Funnypotglobalusingsgcs Funnypot Obj</td><td>1</td><td><code>10</code></td></tr><tr><td>Funnypotassemblyinfocs Funnypot Obj</td><td>1</td><td><code>9</code></td></tr>
     </table>
   </div>
   <div class="card">
@@ -133,10 +133,10 @@ flowchart LR
   <div class="card">
     <h4>Graph Report Highlights</h4>
     <ul>
-      <li>56 nodes · 82 edges · 11 communities (7 shown, 4 thin omitted)</li>
+      <li>57 nodes · 84 edges · 11 communities (7 shown, 4 thin omitted)</li>
       <li>Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS</li>
       <li>Token cost: 0 input · 0 output</li>
-      <li>1. `Program` - 15 edges</li>
+      <li>1. `Program` - 16 edges</li>
       <li>2. `InputValidatorTests` - 12 edges</li>
       <li>3. `Logger` - 9 edges</li>
     </ul>
@@ -377,17 +377,18 @@ flowchart LR
 
 <!-- ====== 3. Funnypot Programcs Program ====== -->
 <h2 id="funnypot-programcs-program">3. Funnypot Programcs Program</h2>
-<p>Funnypot Programcs Program groups implementation around funnypot, programcs, program, httpclient, mostly in FunnyPot/Program.cs. This section covers 12 nodes and 17 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Funnypot Programcs Program groups implementation around funnypot, programcs, program, httpclient, mostly in FunnyPot/Program.cs. This section covers 13 nodes and 19 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Funnypot Programcs Program (12 nodes, 17 edges)
+    %% Section: Funnypot Programcs Program (13 nodes, 19 edges)
     funnypot_program_program_d0bfc2af("Program<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_program_getprompt_8209dc2c("GetPrompt()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_program_setupshell_041bd507("SetupShell()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_program_getprompt_8209dc2c("GetPrompt()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_program_main_79182351("Main()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_program_buildsystemprompt_a9af69ce("BuildSystemPrompt()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_program_normalizeterminaloutput_6054217c("NormalizeTerminalOutput()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_program_getllmresponse_d27552cb("GetLLMResponse()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_program_handlesession_70fc96e7("HandleSession()<br/><small>FunnyPot/Program.cs</small>")
     concurrentdictionary_542498e0("ConcurrentDictionary<br/><small>FunnyPot/Program.cs</small>")
@@ -399,6 +400,7 @@ flowchart LR
     funnypot_program_program_d0bfc2af -->|method| funnypot_program_program_main_79182351
     funnypot_program_program_d0bfc2af -->|method| funnypot_program_program_setupshell_041bd507
     funnypot_program_program_d0bfc2af -->|method| funnypot_program_program_buildsystemprompt_a9af69ce
+    funnypot_program_program_d0bfc2af -->|method| funnypot_program_program_normalizeterminaloutput_6054217c
     funnypot_program_program_d0bfc2af -->|method| funnypot_program_program_getllmresponse_d27552cb
     funnypot_program_program_d0bfc2af -->|method| funnypot_program_program_handlesession_70fc96e7
     funnypot_program_program_getprompt_8209dc2c -->|calls| funnypot_program_program_setupshell_041bd507
@@ -406,12 +408,14 @@ flowchart LR
     funnypot_program_program_main_79182351 -->|calls| funnypot_program_program_handlesession_70fc96e7
     funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_program_buildsystemprompt_a9af69ce
     funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_program_getllmresponse_d27552cb
+    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_program_normalizeterminaloutput_6054217c
     funnypot_program_program_getllmresponse_d27552cb -->|calls| funnypot_program_program_handlesession_70fc96e7
     class funnypot_program_program_d0bfc2af klass;
-    class funnypot_program_program_getprompt_8209dc2c function;
     class funnypot_program_program_setupshell_041bd507 function;
+    class funnypot_program_program_getprompt_8209dc2c function;
     class funnypot_program_program_main_79182351 function;
     class funnypot_program_program_buildsystemprompt_a9af69ce function;
+    class funnypot_program_program_normalizeterminaloutput_6054217c function;
     class funnypot_program_program_getllmresponse_d27552cb function;
     class funnypot_program_program_handlesession_70fc96e7 function;
     class concurrentdictionary_542498e0 klass;
@@ -445,7 +449,7 @@ flowchart LR
   <td><code>Program</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>BuildSystemPrompt()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>GetLLMResponse()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>GetPrompt()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br>+3 more</td>
+  <td><code>BuildSystemPrompt()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>GetLLMResponse()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>GetPrompt()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br>+4 more</td>
   <td>Program node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
@@ -501,7 +505,7 @@ flowchart LR
   <td><code>.SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>GetPrompt()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Program</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><code>BuildSystemPrompt()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>GetLLMResponse()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>BuildSystemPrompt()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>GetLLMResponse()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>NormalizeTerminalOutput()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td>.SetupShell() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
@@ -514,6 +518,14 @@ flowchart LR
 </tr>
 <tr>
   <td>10</td>
+  <td><code>.NormalizeTerminalOutput()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>Program</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.NormalizeTerminalOutput() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>11</td>
   <td><code>.GetLLMResponse()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>Program</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -521,7 +533,7 @@ flowchart LR
   <td>.GetLLMResponse() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>11</td>
+  <td>12</td>
   <td><code>bool</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -529,7 +541,7 @@ flowchart LR
   <td>bool node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>12</td>
+  <td>13</td>
   <td><code>.HandleSession()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>GetLLMResponse()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>GetPrompt()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Main()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br>+1 more</td>
@@ -543,12 +555,12 @@ flowchart LR
     <h4>Key Files</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>FunnyPot/Program.cs</code></td><td>12 nodes</td></tr>
+      <tr><td><code>FunnyPot/Program.cs</code></td><td>13 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: method x6, calls x6, references x5. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: method x7, calls x7, references x5. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
@@ -1128,8 +1140,8 @@ flowchart LR
   <div class="card">
     <h4>Graph</h4>
     <table style="width:100%;font-size:0.85rem;">
-      <tr><td>Nodes</td><td>56</td></tr>
-      <tr><td>Edges</td><td>82</td></tr>
+      <tr><td>Nodes</td><td>57</td></tr>
+      <tr><td>Edges</td><td>84</td></tr>
       <tr><td>Hyperedges</td><td>0</td></tr>
       <tr><td>Communities</td><td>11</td></tr>
       <tr><td>Documented Sections</td><td>8</td></tr>
@@ -1138,7 +1150,7 @@ flowchart LR
   <div class="card">
     <h4>Edge Confidence</h4>
     <table style="width:100%;font-size:0.85rem;">
-      <tr><td>EXTRACTED</td><td>82</td></tr>
+      <tr><td>EXTRACTED</td><td>84</td></tr>
       <tr><td>INFERRED</td><td>0</td></tr>
       <tr><td>AMBIGUOUS</td><td>0</td></tr>
     </table>
@@ -1147,7 +1159,7 @@ flowchart LR
 
 <div style="text-align:center; padding:40px 0; color: var(--muted); font-size:0.9rem;">
   <p>FunnyPot — Architecture Documentation</p>
-  <p>Generated: 2026-05-11 13:08 UTC · graphify callflow-html</p>
+  <p>Generated: 2026-05-11 13:24 UTC · graphify callflow-html</p>
 </div>
 
 </div><!-- .container -->
