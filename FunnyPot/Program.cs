@@ -104,7 +104,8 @@ class Program
 
     static void OnConnectionAccepted(object? sender, Session session)
     {
-        var sessionKey = Convert.ToHexString(session.SessionId ?? [])[..16];
+        // FxSsh raises ConnectionAccepted before key exchange, so SessionId and services are not ready yet.
+        var sessionKey = Guid.NewGuid().ToString("N")[..16];
 
         if (!ConnectionLimit.Wait(0))
         {
@@ -113,9 +114,26 @@ class Program
             return;
         }
 
-        Logger.LogMsg($"Connection accepted [{sessionKey}] client={session.ClientVersion}");
+        var connectionReleased = 0;
+        session.Disconnected += (_, _) =>
+        {
+            if (Interlocked.Exchange(ref connectionReleased, 1) == 0)
+                ConnectionLimit.Release();
+        };
 
-        var userauth = session.GetService<UserauthService>();
+        Logger.LogMsg($"Connection accepted [{sessionKey}]");
+
+        session.ServiceRegistered += (_, service) =>
+        {
+            if (service is UserauthService userauth)
+                SetupUserauth(userauth, sessionKey);
+            else if (service is ConnectionService conn)
+                SetupShell(conn);
+        };
+    }
+
+    static void SetupUserauth(UserauthService userauth, string sessionKey)
+    {
         userauth.Userauth += (_, args) =>
         {
             if (args.AuthMethod != "password") return;
@@ -158,21 +176,20 @@ class Program
         userauth.Succeed += (_, username) =>
         {
             Logger.LogMsg($"Auth succeeded for {username} [{sessionKey}]");
-            SetupShell(session, username);
         };
     }
 
-    static void SetupShell(Session session, string username)
+    static void SetupShell(ConnectionService conn)
     {
-        var conn = session.GetService<ConnectionService>();
-
         conn.PtyReceived += (_, args) =>
         {
+            var username = args.AttachedUserauthArgs?.Username ?? "remote";
             Logger.LogMsg($"PTY allocated for {username}: {args.Terminal} {args.WidthChars}x{args.HeightRows}");
         };
 
         conn.EnvReceived += (_, args) =>
         {
+            var username = args.AttachedUserauthArgs?.Username ?? "remote";
             Logger.LogMsg($"Env for {username}: {args.Name}={args.Value}");
         };
 
@@ -180,6 +197,7 @@ class Program
         {
             if (args.ShellType != "shell") return;
 
+            var username = args.AttachedUserauthArgs?.Username ?? "remote";
             var channel = args.Channel;
             var sessionId = Guid.NewGuid().ToString();
             var messageCount = 0;
@@ -291,7 +309,6 @@ class Program
                 idleTimer.Stop();
                 Logger.UpdateGlobalStats(username, messageCount, blockedOps, (int)totalPromptTokens, (int)totalCompletionTokens, sessionDurationMs);
                 Task.Run(() => Logger.PushToGit(sessionId));
-                ConnectionLimit.Release();
             };
 
             channel.EofReceived += (_, _) =>
@@ -300,7 +317,6 @@ class Program
                 idleTimer.Stop();
                 Logger.UpdateGlobalStats(username, messageCount, blockedOps, (int)totalPromptTokens, (int)totalCompletionTokens, sessionDurationMs);
                 Task.Run(() => Logger.PushToGit(sessionId));
-                ConnectionLimit.Release();
             };
 
             ResetIdle();
