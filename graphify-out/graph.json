@@ -1,0 +1,1294 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "UnitTests.cs",
+      "file_type": "code",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L1",
+      "id": "funnypot_tests_unittests_cs",
+      "community": 6,
+      "norm_label": "unittests.cs"
+    },
+    {
+      "label": "InputValidatorTests",
+      "file_type": "code",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L5",
+      "id": "funnypot_tests_unittests_inputvalidatortests",
+      "community": 0,
+      "norm_label": "inputvalidatortests"
+    },
+    {
+      "label": ".Validate_NullInput_ReturnsFalse()",
+      "file_type": "code",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L7",
+      "id": "funnypot_tests_unittests_inputvalidatortests_validate_nullinput_returnsfalse",
+      "community": 0,
+      "norm_label": ".validate_nullinput_returnsfalse()"
+    },
+    {
+      "label": ".Validate_EmptyInput_ReturnsFalse()",
+      "file_type": "code",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L15",
+      "id": "funnypot_tests_unittests_inputvalidatortests_validate_emptyinput_returnsfalse",
+      "community": 0,
+      "norm_label": ".validate_emptyinput_returnsfalse()"
+    },
+    {
+      "label": ".Validate_WhitespaceInput_ReturnsTrue()",
+      "file_type": "code",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L23",
+      "id": "funnypot_tests_unittests_inputvalidatortests_validate_whitespaceinput_returnstrue",
+      "community": 0,
+      "norm_label": ".validate_whitespaceinput_returnstrue()"
+    },
+    {
+      "label": ".Validate_ExceedsMaxLength_ReturnsFalse()",
+      "file_type": "code",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L30",
+      "id": "funnypot_tests_unittests_inputvalidatortests_validate_exceedsmaxlength_returnsfalse",
+      "community": 0,
+      "norm_label": ".validate_exceedsmaxlength_returnsfalse()"
+    },
+    {
+      "label": ".Validate_AtMaxLength_ReturnsTrue()",
+      "file_type": "code",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L39",
+      "id": "funnypot_tests_unittests_inputvalidatortests_validate_atmaxlength_returnstrue",
+      "community": 0,
+      "norm_label": ".validate_atmaxlength_returnstrue()"
+    },
+    {
+      "label": ".Validate_ContainsNullByte_ReturnsFalse()",
+      "file_type": "code",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L49",
+      "id": "funnypot_tests_unittests_inputvalidatortests_validate_containsnullbyte_returnsfalse",
+      "community": 0,
+      "norm_label": ".validate_containsnullbyte_returnsfalse()"
+    },
+    {
+      "label": ".Validate_NoNullBytes_ReturnsTrue()",
+      "file_type": "code",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L58",
+      "id": "funnypot_tests_unittests_inputvalidatortests_validate_nonullbytes_returnstrue",
+      "community": 0,
+      "norm_label": ".validate_nonullbytes_returnstrue()"
+    },
+    {
+      "label": ".Validate_RepetitiveCharsExceedsLimit_ReturnsFalse()",
+      "file_type": "code",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L65",
+      "id": "funnypot_tests_unittests_inputvalidatortests_validate_repetitivecharsexceedslimit_returnsfalse",
+      "community": 0,
+      "norm_label": ".validate_repetitivecharsexceedslimit_returnsfalse()"
+    },
+    {
+      "label": ".Validate_ValidRepetitiveInput_ReturnsTrue()",
+      "file_type": "code",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L74",
+      "id": "funnypot_tests_unittests_inputvalidatortests_validate_validrepetitiveinput_returnstrue",
+      "community": 0,
+      "norm_label": ".validate_validrepetitiveinput_returnstrue()"
+    },
+    {
+      "label": ".Validate_NormalCommand_ReturnsTrue()",
+      "file_type": "code",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L82",
+      "id": "funnypot_tests_unittests_inputvalidatortests_validate_normalcommand_returnstrue",
+      "community": 0,
+      "norm_label": ".validate_normalcommand_returnstrue()"
+    },
+    {
+      "label": ".Validate_ValidLongInput_ReturnsTrue()",
+      "file_type": "code",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L89",
+      "id": "funnypot_tests_unittests_inputvalidatortests_validate_validlonginput_returnstrue",
+      "community": 0,
+      "norm_label": ".validate_validlonginput_returnstrue()"
+    },
+    {
+      "label": "SCPDetectorTests",
+      "file_type": "code",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L98",
+      "id": "funnypot_tests_unittests_scpdetectortests",
+      "community": 6,
+      "norm_label": "scpdetectortests"
+    },
+    {
+      "label": ".IsSCPCommand_DetectsCorrectly()",
+      "file_type": "code",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L100",
+      "id": "funnypot_tests_unittests_scpdetectortests_isscpcommand_detectscorrectly",
+      "community": 6,
+      "norm_label": ".isscpcommand_detectscorrectly()"
+    },
+    {
+      "label": "FunnyPot.Tests.GlobalUsings.g.cs",
+      "file_type": "code",
+      "source_file": "FunnyPot.Tests/obj/Debug/net8.0/FunnyPot.Tests.GlobalUsings.g.cs",
+      "source_location": "L1",
+      "id": "funnypot_tests_obj_debug_net8_0_funnypot_tests_globalusings_g_cs",
+      "community": 9,
+      "norm_label": "funnypot.tests.globalusings.g.cs"
+    },
+    {
+      "label": "FunnyPot.Tests.AssemblyInfo.cs",
+      "file_type": "code",
+      "source_file": "FunnyPot.Tests/obj/Debug/net8.0/FunnyPot.Tests.AssemblyInfo.cs",
+      "source_location": "L1",
+      "id": "funnypot_tests_obj_debug_net8_0_funnypot_tests_assemblyinfo_cs",
+      "community": 10,
+      "norm_label": "funnypot.tests.assemblyinfo.cs"
+    },
+    {
+      "label": "Program.cs",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1",
+      "id": "funnypot_program_cs",
+      "community": 3,
+      "norm_label": "program.cs"
+    },
+    {
+      "label": "Program",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L13",
+      "id": "funnypot_program_program",
+      "community": 4,
+      "norm_label": "program"
+    },
+    {
+      "label": "HttpClient",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L15",
+      "id": "httpclient",
+      "community": 4,
+      "norm_label": "httpclient"
+    },
+    {
+      "label": "int",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L17",
+      "id": "int",
+      "community": 5,
+      "norm_label": "int"
+    },
+    {
+      "label": "string",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L21",
+      "id": "string",
+      "community": 4,
+      "norm_label": "string"
+    },
+    {
+      "label": "ConcurrentDictionary",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L25",
+      "id": "concurrentdictionary",
+      "community": 4,
+      "norm_label": "concurrentdictionary"
+    },
+    {
+      "label": "SemaphoreSlim",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L27",
+      "id": "semaphoreslim",
+      "community": 4,
+      "norm_label": "semaphoreslim"
+    },
+    {
+      "label": ".GetPrompt()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L29",
+      "id": "funnypot_program_program_getprompt",
+      "community": 2,
+      "norm_label": ".getprompt()"
+    },
+    {
+      "label": ".Main()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L35",
+      "id": "funnypot_program_program_main",
+      "community": 2,
+      "norm_label": ".main()"
+    },
+    {
+      "label": ".OnConnectionAccepted()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L104",
+      "id": "funnypot_program_program_onconnectionaccepted",
+      "community": 7,
+      "norm_label": ".onconnectionaccepted()"
+    },
+    {
+      "label": ".SetupShell()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L164",
+      "id": "funnypot_program_program_setupshell",
+      "community": 2,
+      "norm_label": ".setupshell()"
+    },
+    {
+      "label": ".GetLLMResponse()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L305",
+      "id": "funnypot_program_program_getllmresponse",
+      "community": 2,
+      "norm_label": ".getllmresponse()"
+    },
+    {
+      "label": "HarvestedCredential",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L396",
+      "id": "funnypot_program_harvestedcredential",
+      "community": 3,
+      "norm_label": "harvestedcredential"
+    },
+    {
+      "label": "ChatRequestData",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L404",
+      "id": "funnypot_program_chatrequestdata",
+      "community": 3,
+      "norm_label": "chatrequestdata"
+    },
+    {
+      "label": "ChatMessage",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L410",
+      "id": "funnypot_program_chatmessage",
+      "community": 3,
+      "norm_label": "chatmessage"
+    },
+    {
+      "label": "GlobalStats",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L417",
+      "id": "funnypot_program_globalstats",
+      "community": 3,
+      "norm_label": "globalstats"
+    },
+    {
+      "label": "InputValidator",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L429",
+      "id": "funnypot_program_inputvalidator",
+      "community": 5,
+      "norm_label": "inputvalidator"
+    },
+    {
+      "label": ".Validate()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L434",
+      "id": "funnypot_program_inputvalidator_validate",
+      "community": 5,
+      "norm_label": ".validate()"
+    },
+    {
+      "label": ".ContainsNullBytes()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L447",
+      "id": "funnypot_program_inputvalidator_containsnullbytes",
+      "community": 5,
+      "norm_label": ".containsnullbytes()"
+    },
+    {
+      "label": ".IsRepetitiveNoise()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L454",
+      "id": "funnypot_program_inputvalidator_isrepetitivenoise",
+      "community": 5,
+      "norm_label": ".isrepetitivenoise()"
+    },
+    {
+      "label": "SCPDetector",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L476",
+      "id": "funnypot_program_scpdetector",
+      "community": 3,
+      "norm_label": "scpdetector"
+    },
+    {
+      "label": ".IsSCPCommand()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L478",
+      "id": "funnypot_program_scpdetector_isscpcommand",
+      "community": 2,
+      "norm_label": ".isscpcommand()"
+    },
+    {
+      "label": "Logger",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L486",
+      "id": "funnypot_program_logger",
+      "community": 1,
+      "norm_label": "logger"
+    },
+    {
+      "label": "object",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L488",
+      "id": "object",
+      "community": 1,
+      "norm_label": "object"
+    },
+    {
+      "label": "Lazy",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L497",
+      "id": "lazy",
+      "community": 1,
+      "norm_label": "lazy"
+    },
+    {
+      "label": ".LogYaml()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L502",
+      "id": "funnypot_program_logger_logyaml",
+      "community": 7,
+      "norm_label": ".logyaml()"
+    },
+    {
+      "label": ".UpdateGlobalStats()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L521",
+      "id": "funnypot_program_logger_updateglobalstats",
+      "community": 1,
+      "norm_label": ".updateglobalstats()"
+    },
+    {
+      "label": ".GetLogFilePath()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L562",
+      "id": "funnypot_program_logger_getlogfilepath",
+      "community": 1,
+      "norm_label": ".getlogfilepath()"
+    },
+    {
+      "label": ".LogMsg()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L574",
+      "id": "funnypot_program_logger_logmsg",
+      "community": 1,
+      "norm_label": ".logmsg()"
+    },
+    {
+      "label": ".LogMetric()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L587",
+      "id": "funnypot_program_logger_logmetric",
+      "community": 2,
+      "norm_label": ".logmetric()"
+    },
+    {
+      "label": ".PushToGit()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L602",
+      "id": "funnypot_program_logger_pushtogit",
+      "community": 1,
+      "norm_label": ".pushtogit()"
+    },
+    {
+      "label": "FunnyPot.AssemblyInfo.cs",
+      "file_type": "code",
+      "source_file": "FunnyPot/obj/Debug/net8.0/FunnyPot.AssemblyInfo.cs",
+      "source_location": "L1",
+      "id": "funnypot_obj_debug_net8_0_funnypot_assemblyinfo_cs",
+      "community": 11,
+      "norm_label": "funnypot.assemblyinfo.cs"
+    },
+    {
+      "label": "FunnyPot.GlobalUsings.g.cs",
+      "file_type": "code",
+      "source_file": "FunnyPot/obj/Debug/net8.0/FunnyPot.GlobalUsings.g.cs",
+      "source_location": "L1",
+      "id": "funnypot_obj_debug_net8_0_funnypot_globalusings_g_cs",
+      "community": 12,
+      "norm_label": "funnypot.globalusings.g.cs"
+    },
+    {
+      "label": "AGENTS.md",
+      "file_type": "document",
+      "source_file": "AGENTS.md",
+      "source_location": "L1",
+      "id": "agents_md",
+      "community": 8,
+      "norm_label": "agents.md"
+    },
+    {
+      "label": "graphify",
+      "file_type": "document",
+      "source_file": "AGENTS.md",
+      "source_location": "L1",
+      "id": "funnypot_agents_graphify",
+      "community": 8,
+      "norm_label": "graphify"
+    },
+    {
+      "label": "bool",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L15",
+      "community": 4,
+      "norm_label": "bool",
+      "id": "bool"
+    },
+    {
+      "label": ".HandleSession()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L103",
+      "community": 2,
+      "norm_label": ".handlesession()",
+      "id": "funnypot_program_program_handlesession"
+    }
+  ],
+  "links": [
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L5",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_tests_unittests_cs",
+      "target": "funnypot_tests_unittests_inputvalidatortests"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L96",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_tests_unittests_cs",
+      "target": "funnypot_tests_unittests_scpdetectortests"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_tests_unittests_inputvalidatortests",
+      "target": "funnypot_tests_unittests_inputvalidatortests_validate_nullinput_returnsfalse"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L15",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_tests_unittests_inputvalidatortests",
+      "target": "funnypot_tests_unittests_inputvalidatortests_validate_emptyinput_returnsfalse"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L23",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_tests_unittests_inputvalidatortests",
+      "target": "funnypot_tests_unittests_inputvalidatortests_validate_whitespaceinput_returnstrue"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L30",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_tests_unittests_inputvalidatortests",
+      "target": "funnypot_tests_unittests_inputvalidatortests_validate_exceedsmaxlength_returnsfalse"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L39",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_tests_unittests_inputvalidatortests",
+      "target": "funnypot_tests_unittests_inputvalidatortests_validate_atmaxlength_returnstrue"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L47",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_tests_unittests_inputvalidatortests",
+      "target": "funnypot_tests_unittests_inputvalidatortests_validate_containsnullbyte_returnsfalse"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L56",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_tests_unittests_inputvalidatortests",
+      "target": "funnypot_tests_unittests_inputvalidatortests_validate_nonullbytes_returnstrue"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L63",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_tests_unittests_inputvalidatortests",
+      "target": "funnypot_tests_unittests_inputvalidatortests_validate_repetitivecharsexceedslimit_returnsfalse"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L72",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_tests_unittests_inputvalidatortests",
+      "target": "funnypot_tests_unittests_inputvalidatortests_validate_validrepetitiveinput_returnstrue"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L80",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_tests_unittests_inputvalidatortests",
+      "target": "funnypot_tests_unittests_inputvalidatortests_validate_normalcommand_returnstrue"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L87",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_tests_unittests_inputvalidatortests",
+      "target": "funnypot_tests_unittests_inputvalidatortests_validate_validlonginput_returnstrue"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L98",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_tests_unittests_scpdetectortests",
+      "target": "funnypot_tests_unittests_scpdetectortests_isscpcommand_detectscorrectly"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_cs",
+      "target": "funnypot_program_program"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L392",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_cs",
+      "target": "funnypot_program_harvestedcredential"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L311",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_cs",
+      "target": "funnypot_program_chatrequestdata"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L317",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_cs",
+      "target": "funnypot_program_chatmessage"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L325",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_cs",
+      "target": "funnypot_program_globalstats"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L337",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_cs",
+      "target": "funnypot_program_inputvalidator"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L395",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_cs",
+      "target": "funnypot_program_scpdetector"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L407",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_cs",
+      "target": "funnypot_program_logger"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "context": "field",
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program",
+      "target": "httpclient"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L20",
+      "weight": 1.0,
+      "context": "field",
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program",
+      "target": "int"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L17",
+      "weight": 1.0,
+      "context": "field",
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program",
+      "target": "string"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L26",
+      "weight": 1.0,
+      "context": "field",
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program",
+      "target": "concurrentdictionary"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L27",
+      "weight": 1.0,
+      "context": "field",
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program",
+      "target": "semaphoreslim"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L19",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program",
+      "target": "funnypot_program_program_getprompt"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L25",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program",
+      "target": "funnypot_program_program_main"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L104",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program",
+      "target": "funnypot_program_program_onconnectionaccepted"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L164",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program",
+      "target": "funnypot_program_program_setupshell"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L209",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program",
+      "target": "funnypot_program_program_getllmresponse"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L15",
+      "weight": 1.0,
+      "context": "field",
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program",
+      "target": "bool"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L103",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program",
+      "target": "funnypot_program_program_handlesession"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L340",
+      "weight": 1.0,
+      "context": "field",
+      "confidence_score": 1.0,
+      "source": "funnypot_program_inputvalidator",
+      "target": "int"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L203",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_setupshell",
+      "target": "funnypot_program_program_getprompt"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L118",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_handlesession",
+      "target": "funnypot_program_program_getprompt"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L40",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_main",
+      "target": "funnypot_program_logger_logmsg"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L85",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_main",
+      "target": "funnypot_program_program_handlesession"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L110",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_onconnectionaccepted",
+      "target": "funnypot_program_logger_logmsg"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L132",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_onconnectionaccepted",
+      "target": "funnypot_program_logger_logyaml"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L160",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_onconnectionaccepted",
+      "target": "funnypot_program_program_setupshell"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L170",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_setupshell",
+      "target": "funnypot_program_logger_logmsg"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L235",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_setupshell",
+      "target": "funnypot_program_inputvalidator_validate"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L246",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_setupshell",
+      "target": "funnypot_program_scpdetector_isscpcommand"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L259",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_setupshell",
+      "target": "funnypot_program_program_getllmresponse"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L271",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_setupshell",
+      "target": "funnypot_program_logger_logmetric"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L286",
+      "weight": 1.0,
+      "source": "funnypot_program_program_setupshell",
+      "target": "funnypot_program_logger_updateglobalstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L287",
+      "weight": 1.0,
+      "source": "funnypot_program_program_setupshell",
+      "target": "funnypot_program_logger_pushtogit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L172",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_handlesession",
+      "target": "funnypot_program_program_getllmresponse"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L342",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_inputvalidator",
+      "target": "funnypot_program_inputvalidator_validate"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L359",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_inputvalidator",
+      "target": "funnypot_program_inputvalidator_containsnullbytes"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L369",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_inputvalidator",
+      "target": "funnypot_program_inputvalidator_isrepetitivenoise"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L350",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_inputvalidator_validate",
+      "target": "funnypot_program_inputvalidator_containsnullbytes"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L353",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_inputvalidator_validate",
+      "target": "funnypot_program_inputvalidator_isrepetitivenoise"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L147",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_handlesession",
+      "target": "funnypot_program_inputvalidator_validate"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L397",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_scpdetector",
+      "target": "funnypot_program_scpdetector_isscpcommand"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L160",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_handlesession",
+      "target": "funnypot_program_scpdetector_isscpcommand"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L411",
+      "weight": 1.0,
+      "context": "field",
+      "confidence_score": 1.0,
+      "source": "funnypot_program_logger",
+      "target": "object"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L493",
+      "weight": 1.0,
+      "context": "field",
+      "confidence_score": 1.0,
+      "source": "funnypot_program_logger",
+      "target": "lazy"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L498",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_logger",
+      "target": "funnypot_program_logger_logyaml"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L413",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_logger",
+      "target": "funnypot_program_logger_updateglobalstats"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L461",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_logger",
+      "target": "funnypot_program_logger_getlogfilepath"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L479",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_logger",
+      "target": "funnypot_program_logger_logmsg"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L499",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_logger",
+      "target": "funnypot_program_logger_logmetric"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L522",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_logger",
+      "target": "funnypot_program_logger_pushtogit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L456",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_logger_updateglobalstats",
+      "target": "funnypot_program_logger_logmsg"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L154",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_handlesession",
+      "target": "funnypot_program_logger_updateglobalstats"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L486",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_logger_logmsg",
+      "target": "funnypot_program_logger_getlogfilepath"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L510",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_logger_logmetric",
+      "target": "funnypot_program_logger_getlogfilepath"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L546",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_logger_pushtogit",
+      "target": "funnypot_program_logger_getlogfilepath"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L534",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_logger_pushtogit",
+      "target": "funnypot_program_logger_logmsg"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L116",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_handlesession",
+      "target": "funnypot_program_logger_logmsg"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L115",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_handlesession",
+      "target": "funnypot_program_logger_logmetric"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L155",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_handlesession",
+      "target": "funnypot_program_logger_pushtogit"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AGENTS.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "agents_md",
+      "target": "funnypot_agents_graphify"
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "bf5f96686e75ddf27a6891f6f0681b2dbbd40742"
+}

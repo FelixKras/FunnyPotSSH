@@ -1,0 +1,12 @@
+.git/
+.gitignore
+.gitattributes
+venv/
+.vscode/
+frontend/
+graphify-out/
+*.dll
+*.pdb
+*.exe
+*.so
+.env

@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FunnyPot — Complete Call Flow &amp; Architecture Documentation</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+:root {
+  --bg: #0f172a; --surface: #1e293b; --border: #334155;
+  --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+  --warn: #fbbf24; --err: #f87171; --ok: #34d399;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+.container { max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
+h1 { font-size: 2.4rem; margin-bottom: 8px; background: linear-gradient(135deg, var(--accent), #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+h2 { font-size: 1.7rem; margin: 48px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--accent); }
+h3 { font-size: 1.25rem; margin: 32px 0 12px; color: var(--accent); }
+h4 { font-size: 1.05rem; margin: 20px 0 8px; color: var(--warn); }
+p { margin: 8px 0; color: var(--muted); }
+.subtitle { color: var(--muted); font-size: 1.1rem; margin-bottom: 32px; }
+.mermaid { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 20px 0; overflow-x: auto; position: relative; }
+.mermaid.is-enhanced { padding: 0; overflow: hidden; min-height: 260px; }
+.mermaid-viewport { padding: 54px 24px 24px; overflow: hidden; cursor: grab; touch-action: none; min-height: 260px; }
+.mermaid-viewport.is-dragging { cursor: grabbing; }
+.mermaid-viewport svg { max-width: none !important; height: auto; transform-origin: 0 0; transition: transform 120ms ease; }
+.mermaid-toolbar { position: absolute; top: 10px; right: 10px; z-index: 3; display: flex; align-items: center; gap: 6px; padding: 6px; background: rgba(15,23,42,0.92); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.28); }
+.mermaid-toolbar button, .mermaid-toolbar .zoom-level { height: 28px; min-width: 32px; border: 1px solid var(--border); border-radius: 6px; background: #1e293b; color: var(--text); font: 600 0.78rem system-ui, sans-serif; display: inline-flex; align-items: center; justify-content: center; }
+.mermaid-toolbar button { cursor: pointer; }
+.mermaid-toolbar button:hover { border-color: var(--accent); color: var(--accent); }
+.mermaid-toolbar .zoom-level { min-width: 52px; color: var(--muted); background: transparent; }
+.call-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.92rem; }
+.call-table th { background: #1a2744; color: var(--accent); text-align: left; padding: 10px 14px; border: 1px solid var(--border); }
+.call-table td { padding: 8px 14px; border: 1px solid var(--border); vertical-align: top; }
+.call-table tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+.tag-async { background: #7c3aed33; color: #a78bfa; }
+.tag-class { background: #05966933; color: var(--ok); }
+.tag-func { background: #2563eb33; color: var(--accent); }
+.tag-cmd { background: #d9770633; color: var(--warn); }
+.tag-endpoint { background: #dc262633; color: var(--err); }
+.tag-hook { background: #db277733; color: #f472b6; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin: 16px 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; margin: 16px 0; }
+.arrow-chain { font-family: 'Fira Code', monospace; font-size: 0.85rem; color: var(--accent); padding: 10px; background: rgba(56,189,248,0.06); border-radius: 6px; }
+code { font-family: 'Fira Code', 'Cascadia Code', monospace; background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 3px; font-size: 0.88em; }
+ul, ol { margin: 8px 0 8px 24px; color: var(--muted); }
+li { margin: 4px 0; }
+a { color: var(--accent); }
+hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+.nav { position: sticky; top: 0; background: var(--bg); z-index: 10; padding: 12px 0; border-bottom: 1px solid var(--border); display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.9rem; }
+.nav a { text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+@media (max-width: 768px) { .container { padding: 16px; } h1 { font-size: 1.8rem; } }
+
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>FunnyPot — Complete Call Flow &amp; Architecture Documentation</h1>
+<p class="subtitle">Generated from graphify knowledge graph: 54 nodes, 76 edges, 13 communities. Commit: bf5f966</p>
+
+<div class="nav">
+    <a href="#overview">Architecture Overview</a>
+    <a href="#tests-fixtures">Tests &amp; Fixtures</a>
+    <a href="#funnypot-programcs-logger">Funnypot Programcs Logger</a>
+    <a href="#funnypot-programcs-getprompt">Funnypot Programcs Getprompt</a>
+    <a href="#programcs-funnypot-harvestedcredential">Programcs Funnypot Harvestedcredential</a>
+    <a href="#funnypot-programcs-program">Funnypot Programcs Program</a>
+    <a href="#funnypot-programcs-int">Funnypot Programcs Int</a>
+    <a href="#funnypot-programcs-onconnectionaccepted">Funnypot Programcs Onconnectionaccepted</a>
+    <a href="#agentsmd-graphify">Agentsmd Graphify</a>
+    <a href="#funnypotassemblyinfocs-funnypot-obj">Funnypotassemblyinfocs Funnypot Obj</a>
+    <a href="#funnypotglobalusingsgcs-funnypot-obj">Funnypotglobalusingsgcs Funnypot Obj</a>
+</div>
+
+<!-- ====== Architecture Overview ====== -->
+<h2 id="overview">1. Architecture Overview</h2>
+
+<div class="mermaid">
+
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    TESTS_FIXTURES_B84B1DCC("Tests &amp; Fixtures<br/><small>17 nodes</small>")
+    class TESTS_FIXTURES_B84B1DCC module;
+    FUNNYPOT_PROGRAMCS_LOGGER_99464D22("Funnypot Programcs Logger<br/><small>7 nodes</small>")
+    class FUNNYPOT_PROGRAMCS_LOGGER_99464D22 module;
+    FUNNYPOT_PROGRAMCS_GETPROMPT_3D443807("Funnypot Programcs Getprompt<br/><small>7 nodes</small>")
+    class FUNNYPOT_PROGRAMCS_GETPROMPT_3D443807 module;
+    PROGRAMCS_FUNNYPOT_HARVESTEDCREDENTIAL_3B611401("Programcs Funnypot Harvestedcredential<br/><small>6 nodes</small>")
+    class PROGRAMCS_FUNNYPOT_HARVESTEDCREDENTIAL_3B611401 module;
+    FUNNYPOT_PROGRAMCS_PROGRAM_F8220606("Funnypot Programcs Program<br/><small>6 nodes</small>")
+    class FUNNYPOT_PROGRAMCS_PROGRAM_F8220606 module;
+    FUNNYPOT_PROGRAMCS_INT_20F45718("Funnypot Programcs Int<br/><small>5 nodes</small>")
+    class FUNNYPOT_PROGRAMCS_INT_20F45718 module;
+    FUNNYPOT_PROGRAMCS_ONCONNECTIONACCEPTED_A4A94B6A("Funnypot Programcs Onconnectionaccepted<br/><small>2 nodes</small>")
+    class FUNNYPOT_PROGRAMCS_ONCONNECTIONACCEPTED_A4A94B6A module;
+    AGENTSMD_GRAPHIFY_127948D2("Agentsmd Graphify<br/><small>2 nodes</small>")
+    class AGENTSMD_GRAPHIFY_127948D2 module;
+    FUNNYPOTASSEMBLYINFOCS_FUNNYPOT_OBJ_91926451("Funnypotassemblyinfocs Funnypot Obj<br/><small>1 nodes</small>")
+    class FUNNYPOTASSEMBLYINFOCS_FUNNYPOT_OBJ_91926451 module;
+    FUNNYPOTGLOBALUSINGSGCS_FUNNYPOT_OBJ_E57C8018("Funnypotglobalusingsgcs Funnypot Obj<br/><small>1 nodes</small>")
+    class FUNNYPOTGLOBALUSINGSGCS_FUNNYPOT_OBJ_E57C8018 module;
+    FUNNYPOT_PROGRAMCS_PROGRAM_F8220606 -->|method x5| FUNNYPOT_PROGRAMCS_GETPROMPT_3D443807
+    FUNNYPOT_PROGRAMCS_LOGGER_99464D22 -->|calls x5| FUNNYPOT_PROGRAMCS_GETPROMPT_3D443807
+    FUNNYPOT_PROGRAMCS_GETPROMPT_3D443807 -->|calls x4| FUNNYPOT_PROGRAMCS_LOGGER_99464D22
+    PROGRAMCS_FUNNYPOT_HARVESTEDCREDENTIAL_3B611401 -->|contains| FUNNYPOT_PROGRAMCS_PROGRAM_F8220606
+    PROGRAMCS_FUNNYPOT_HARVESTEDCREDENTIAL_3B611401 -->|contains| FUNNYPOT_PROGRAMCS_INT_20F45718
+    PROGRAMCS_FUNNYPOT_HARVESTEDCREDENTIAL_3B611401 -->|contains| FUNNYPOT_PROGRAMCS_LOGGER_99464D22
+    FUNNYPOT_PROGRAMCS_PROGRAM_F8220606 -->|references| FUNNYPOT_PROGRAMCS_INT_20F45718
+    FUNNYPOT_PROGRAMCS_PROGRAM_F8220606 -->|method| FUNNYPOT_PROGRAMCS_ONCONNECTIONACCEPTED_A4A94B6A
+    FUNNYPOT_PROGRAMCS_ONCONNECTIONACCEPTED_A4A94B6A -->|calls| FUNNYPOT_PROGRAMCS_LOGGER_99464D22
+    FUNNYPOT_PROGRAMCS_ONCONNECTIONACCEPTED_A4A94B6A -->|calls| FUNNYPOT_PROGRAMCS_GETPROMPT_3D443807
+    FUNNYPOT_PROGRAMCS_GETPROMPT_3D443807 -->|calls| FUNNYPOT_PROGRAMCS_INT_20F45718
+    FUNNYPOT_PROGRAMCS_INT_20F45718 -->|calls| FUNNYPOT_PROGRAMCS_GETPROMPT_3D443807
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h4>Architecture Layers</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>Layer</th><th>Nodes</th><th>Communities</th></tr>
+      <tr><td>Tests &amp; Fixtures</td><td>17</td><td><code>0, 6, 10, 9</code></td></tr><tr><td>Funnypot Programcs Logger</td><td>7</td><td><code>1</code></td></tr><tr><td>Funnypot Programcs Getprompt</td><td>7</td><td><code>2</code></td></tr><tr><td>Programcs Funnypot Harvestedcredential</td><td>6</td><td><code>3</code></td></tr><tr><td>Funnypot Programcs Program</td><td>6</td><td><code>4</code></td></tr><tr><td>Funnypot Programcs Int</td><td>5</td><td><code>5</code></td></tr><tr><td>Funnypot Programcs Onconnectionaccepted</td><td>2</td><td><code>7</code></td></tr><tr><td>Agentsmd Graphify</td><td>2</td><td><code>8</code></td></tr><tr><td>Funnypotassemblyinfocs Funnypot Obj</td><td>1</td><td><code>11</code></td></tr><tr><td>Funnypotglobalusingsgcs Funnypot Obj</td><td>1</td><td><code>12</code></td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Core Flow</h4>
+    <div class="arrow-chain">Tests &amp; Fixtures -&gt; Funnypot Programcs Logger -&gt; Funnypot Programcs Getprompt -&gt; Funnypot Programcs Int -&gt; Programcs Funnypot Harvestedcredential -&gt; Funnypot Programcs Program -&gt; Funnypot Programcs Onconnectionaccepted</div>
+  </div>
+</div>
+<div class="grid">
+  <div class="card">
+    <h4>Graph Report Highlights</h4>
+    <ul>
+      <li>54 nodes · 76 edges · 13 communities (9 shown, 4 thin omitted)</li>
+      <li>Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS</li>
+      <li>Token cost: 0 input · 0 output</li>
+      <li>1. `Program` - 13 edges</li>
+      <li>2. `InputValidatorTests` - 12 edges</li>
+      <li>3. `Logger` - 9 edges</li>
+    </ul>
+  </div>
+</div>
+<hr>
+<!-- ====== 2. Tests & Fixtures ====== -->
+<h2 id="tests-fixtures">2. Tests &amp; Fixtures</h2>
+<p>Tests &amp; Fixtures groups implementation around funnypottests, unittestscs, validate, returnstrue, mostly in FunnyPot.Tests/UnitTests.cs, Debug/net8.0/FunnyPot.Tests.AssemblyInfo.cs, Debug/net8.0/FunnyPot.Tests.GlobalUsings.g.cs. This section covers 17 nodes and 14 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Tests &amp; Fixtures (17 nodes, 14 edges)
+    subgraph tests_fixtures_FunnyPot_Tests_UnitTests_cs_03a441b1["FunnyPot.Tests/UnitTests.cs"]
+        funnypot_tests_unittests_inputvalidatortests_e1a69f58("InputValidatorTests<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
+        funnypot_tests_unittests_scpdetectortests_e50d92d6("SCPDetectorTests<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
+        funnypot_tests_unittests_inputvalidatortests_val_fde529d9("Validate_NullInput_ReturnsFalse()<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
+        funnypot_tests_unittests_inputvalidatortests_val_ec600fbd("Validate_EmptyInput_ReturnsFalse()<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
+        funnypot_tests_unittests_inputvalidatortests_val_69395451("Validate_WhitespaceInput_ReturnsTrue()<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
+        funnypot_tests_unittests_inputvalidatortests_val_f6e7e28d("Validate_ExceedsMaxLength_ReturnsFalse()<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
+        funnypot_tests_unittests_inputvalidatortests_val_bf60de55("Validate_AtMaxLength_ReturnsTrue()<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
+        funnypot_tests_unittests_inputvalidatortests_val_b0fc3fc1("Validate_ContainsNullByte_ReturnsFalse()<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
+        funnypot_tests_unittests_inputvalidatortests_val_5b259fb6("Validate_NoNullBytes_ReturnsTrue()<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
+        funnypot_tests_unittests_inputvalidatortests_val_330769ce("Validate_RepetitiveCharsExceedsLimit_ReturnsFalse()<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
+        funnypot_tests_unittests_inputvalidatortests_val_40d3c9e7("Validate_ValidRepetitiveInput_ReturnsTrue()<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
+        funnypot_tests_unittests_inputvalidatortests_val_3ba49c27("Validate_NormalCommand_ReturnsTrue()<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
+        funnypot_tests_unittests_inputvalidatortests_val_914e8433("Validate_ValidLongInput_ReturnsTrue()<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
+        funnypot_tests_unittests_scpdetectortests_isscpc_d5d2cc2f("IsSCPCommand_DetectsCorrectly()<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
+        funnypot_tests_unittests_cs_5bcaa1a7("UnitTests.cs")
+    end
+    funnypot_tests_obj_debug_net8_0_funnypot_tests_a_b4740e01("FunnyPot.Tests.AssemblyInfo.cs")
+    funnypot_tests_obj_debug_net8_0_funnypot_tests_g_eaaa5c75("FunnyPot.Tests.GlobalUsings.g.cs")
+    funnypot_tests_unittests_inputvalidatortests_e1a69f58 -->|method| funnypot_tests_unittests_inputvalidatortests_val_fde529d9
+    funnypot_tests_unittests_inputvalidatortests_e1a69f58 -->|method| funnypot_tests_unittests_inputvalidatortests_val_ec600fbd
+    funnypot_tests_unittests_inputvalidatortests_e1a69f58 -->|method| funnypot_tests_unittests_inputvalidatortests_val_69395451
+    funnypot_tests_unittests_inputvalidatortests_e1a69f58 -->|method| funnypot_tests_unittests_inputvalidatortests_val_f6e7e28d
+    funnypot_tests_unittests_inputvalidatortests_e1a69f58 -->|method| funnypot_tests_unittests_inputvalidatortests_val_bf60de55
+    funnypot_tests_unittests_inputvalidatortests_e1a69f58 -->|method| funnypot_tests_unittests_inputvalidatortests_val_b0fc3fc1
+    funnypot_tests_unittests_inputvalidatortests_e1a69f58 -->|method| funnypot_tests_unittests_inputvalidatortests_val_5b259fb6
+    funnypot_tests_unittests_inputvalidatortests_e1a69f58 -->|method| funnypot_tests_unittests_inputvalidatortests_val_330769ce
+    funnypot_tests_unittests_inputvalidatortests_e1a69f58 -->|method| funnypot_tests_unittests_inputvalidatortests_val_40d3c9e7
+    funnypot_tests_unittests_inputvalidatortests_e1a69f58 -->|method| funnypot_tests_unittests_inputvalidatortests_val_3ba49c27
+    funnypot_tests_unittests_inputvalidatortests_e1a69f58 -->|method| funnypot_tests_unittests_inputvalidatortests_val_914e8433
+    funnypot_tests_unittests_scpdetectortests_e50d92d6 -->|method| funnypot_tests_unittests_scpdetectortests_isscpc_d5d2cc2f
+    class funnypot_tests_unittests_inputvalidatortests_e1a69f58 test;
+    class funnypot_tests_unittests_scpdetectortests_e50d92d6 test;
+    class funnypot_tests_unittests_inputvalidatortests_val_fde529d9 test;
+    class funnypot_tests_unittests_inputvalidatortests_val_ec600fbd test;
+    class funnypot_tests_unittests_inputvalidatortests_val_69395451 test;
+    class funnypot_tests_unittests_inputvalidatortests_val_f6e7e28d test;
+    class funnypot_tests_unittests_inputvalidatortests_val_bf60de55 test;
+    class funnypot_tests_unittests_inputvalidatortests_val_b0fc3fc1 test;
+    class funnypot_tests_unittests_inputvalidatortests_val_5b259fb6 test;
+    class funnypot_tests_unittests_inputvalidatortests_val_330769ce test;
+    class funnypot_tests_unittests_inputvalidatortests_val_40d3c9e7 test;
+    class funnypot_tests_unittests_inputvalidatortests_val_3ba49c27 test;
+    class funnypot_tests_unittests_inputvalidatortests_val_914e8433 test;
+    class funnypot_tests_unittests_scpdetectortests_isscpc_d5d2cc2f test;
+    class funnypot_tests_unittests_cs_5bcaa1a7 test;
+    class funnypot_tests_obj_debug_net8_0_funnypot_tests_a_b4740e01 test;
+    class funnypot_tests_obj_debug_net8_0_funnypot_tests_g_eaaa5c75 test;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>InputValidatorTests</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>Validate_AtMaxLength_ReturnsTrue()</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small><br><code>Validate_ContainsNullByte_ReturnsFalse()</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small><br><code>Validate_EmptyInput_ReturnsFalse()</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small><br>+8 more</td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>.Validate_NullInput_ReturnsFalse()</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>InputValidatorTests</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.Validate_NullInput_ReturnsFalse() node in FunnyPot.Tests/UnitTests.cs.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>.Validate_EmptyInput_ReturnsFalse()</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>InputValidatorTests</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.Validate_EmptyInput_ReturnsFalse() node in FunnyPot.Tests/UnitTests.cs.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>.Validate_WhitespaceInput_ReturnsTrue()</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>InputValidatorTests</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.Validate_WhitespaceInput_ReturnsTrue() node in FunnyPot.Tests/UnitTests.cs.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>.Validate_ExceedsMaxLength_ReturnsFalse()</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>InputValidatorTests</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.Validate_ExceedsMaxLength_ReturnsFalse() node in FunnyPot.Tests/UnitTests.cs.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>.Validate_AtMaxLength_ReturnsTrue()</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>InputValidatorTests</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.Validate_AtMaxLength_ReturnsTrue() node in FunnyPot.Tests/UnitTests.cs.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>.Validate_ContainsNullByte_ReturnsFalse()</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>InputValidatorTests</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.Validate_ContainsNullByte_ReturnsFalse() node in FunnyPot.Tests/UnitTests.cs.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>.Validate_NoNullBytes_ReturnsTrue()</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>InputValidatorTests</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.Validate_NoNullBytes_ReturnsTrue() node in FunnyPot.Tests/UnitTests.cs.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>.Validate_RepetitiveCharsExceedsLimit_ReturnsFalse()</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>InputValidatorTests</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.Validate_RepetitiveCharsExceedsLimit_ReturnsFalse() node in FunnyPot.Tests/UnitTests.cs.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>.Validate_ValidRepetitiveInput_ReturnsTrue()</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>InputValidatorTests</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.Validate_ValidRepetitiveInput_ReturnsTrue() node in FunnyPot.Tests/UnitTests.cs.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>.Validate_NormalCommand_ReturnsTrue()</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>InputValidatorTests</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.Validate_NormalCommand_ReturnsTrue() node in FunnyPot.Tests/UnitTests.cs.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>.Validate_ValidLongInput_ReturnsTrue()</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>InputValidatorTests</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.Validate_ValidLongInput_ReturnsTrue() node in FunnyPot.Tests/UnitTests.cs.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>UnitTests.cs</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>SCPDetectorTests</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>IsSCPCommand_DetectsCorrectly()</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>.IsSCPCommand_DetectsCorrectly()</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>SCPDetectorTests</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.IsSCPCommand_DetectsCorrectly() node in FunnyPot.Tests/UnitTests.cs.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>FunnyPot.Tests.AssemblyInfo.cs</code><br><small style="color:var(--muted)">Debug/net8.0/FunnyPot.Tests.AssemblyInfo.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>17</td>
+  <td><code>FunnyPot.Tests.GlobalUsings.g.cs</code><br><small style="color:var(--muted)">Debug/net8.0/FunnyPot.Tests.GlobalUsings.g.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>FunnyPot.Tests/UnitTests.cs</code></td><td>15 nodes</td></tr>
+<tr><td><code>Debug/net8.0/FunnyPot.Tests.AssemblyInfo.cs</code></td><td>1 nodes</td></tr>
+<tr><td><code>Debug/net8.0/FunnyPot.Tests.GlobalUsings.g.cs</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: method x12, contains x2. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 3. Funnypot Programcs Logger ====== -->
+<h2 id="funnypot-programcs-logger">3. Funnypot Programcs Logger</h2>
+<p>Funnypot Programcs Logger groups implementation around funnypot, programcs, logger, object, mostly in FunnyPot/Program.cs. This section covers 7 nodes and 10 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Funnypot Programcs Logger (7 nodes, 10 edges)
+    funnypot_program_logger_b0696d9a("Logger<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_logger_getlogfilepath_0cd11470("GetLogFilePath()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_logger_updateglobalstats_030f86aa("UpdateGlobalStats()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_logger_logmsg_25723b3d("LogMsg()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_logger_pushtogit_a27324d6("PushToGit()<br/><small>FunnyPot/Program.cs</small>")
+    lazy_1078cf41("Lazy<br/><small>FunnyPot/Program.cs</small>")
+    object_1615307c("object<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_logger_b0696d9a -->|method| funnypot_program_logger_updateglobalstats_030f86aa
+    funnypot_program_logger_b0696d9a -->|method| funnypot_program_logger_getlogfilepath_0cd11470
+    funnypot_program_logger_b0696d9a -->|method| funnypot_program_logger_logmsg_25723b3d
+    funnypot_program_logger_b0696d9a -->|method| funnypot_program_logger_pushtogit_a27324d6
+    funnypot_program_logger_updateglobalstats_030f86aa -->|calls| funnypot_program_logger_logmsg_25723b3d
+    funnypot_program_logger_getlogfilepath_0cd11470 -->|calls| funnypot_program_logger_logmsg_25723b3d
+    funnypot_program_logger_getlogfilepath_0cd11470 -->|calls| funnypot_program_logger_pushtogit_a27324d6
+    funnypot_program_logger_logmsg_25723b3d -->|calls| funnypot_program_logger_pushtogit_a27324d6
+    class funnypot_program_logger_b0696d9a klass;
+    class funnypot_program_logger_getlogfilepath_0cd11470 function;
+    class funnypot_program_logger_updateglobalstats_030f86aa function;
+    class funnypot_program_logger_logmsg_25723b3d function;
+    class funnypot_program_logger_pushtogit_a27324d6 function;
+    class lazy_1078cf41 klass;
+    class object_1615307c function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>GetLogFilePath()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>LogMsg()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>PushToGit()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br>+1 more</td>
+  <td>Logger node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>object</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>object node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>Lazy</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Lazy node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>.UpdateGlobalStats()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>LogMsg()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>.UpdateGlobalStats() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>.GetLogFilePath()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>LogMsg()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>PushToGit()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>.GetLogFilePath() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>.LogMsg()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>GetLogFilePath()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>UpdateGlobalStats()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>PushToGit()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>.LogMsg() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>.PushToGit()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>GetLogFilePath()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>LogMsg()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>Turns a local path or remote repository into analysis context.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>FunnyPot/Program.cs</code></td><td>7 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: method x4, calls x4, references x2. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 4. Funnypot Programcs Getprompt ====== -->
+<h2 id="funnypot-programcs-getprompt">4. Funnypot Programcs Getprompt</h2>
+<p>Funnypot Programcs Getprompt groups implementation around funnypot, programcs, getprompt, setupshell, mostly in FunnyPot/Program.cs. This section covers 7 nodes and 9 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Funnypot Programcs Getprompt (7 nodes, 9 edges)
+    funnypot_program_program_setupshell_041bd507("SetupShell()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_program_getprompt_8209dc2c("GetPrompt()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_program_main_79182351("Main()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_logger_logmetric_2a9179e4("LogMetric()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_program_getllmresponse_d27552cb("GetLLMResponse()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_scpdetector_isscpcommand_4a635d7d("IsSCPCommand()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_program_handlesession_70fc96e7("HandleSession()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_program_getprompt_8209dc2c -->|calls| funnypot_program_program_setupshell_041bd507
+    funnypot_program_program_getprompt_8209dc2c -->|calls| funnypot_program_program_handlesession_70fc96e7
+    funnypot_program_program_main_79182351 -->|calls| funnypot_program_program_handlesession_70fc96e7
+    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_scpdetector_isscpcommand_4a635d7d
+    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_program_getllmresponse_d27552cb
+    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_logger_logmetric_2a9179e4
+    funnypot_program_program_getllmresponse_d27552cb -->|calls| funnypot_program_program_handlesession_70fc96e7
+    funnypot_program_scpdetector_isscpcommand_4a635d7d -->|calls| funnypot_program_program_handlesession_70fc96e7
+    funnypot_program_logger_logmetric_2a9179e4 -->|calls| funnypot_program_program_handlesession_70fc96e7
+    class funnypot_program_program_setupshell_041bd507 function;
+    class funnypot_program_program_getprompt_8209dc2c function;
+    class funnypot_program_program_main_79182351 function;
+    class funnypot_program_logger_logmetric_2a9179e4 function;
+    class funnypot_program_program_getllmresponse_d27552cb function;
+    class funnypot_program_scpdetector_isscpcommand_4a635d7d entry;
+    class funnypot_program_program_handlesession_70fc96e7 function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>.GetPrompt()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>HandleSession()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>Builds structured prompts for model calls.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>.Main()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>HandleSession()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>.Main() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>.SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>GetPrompt()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>GetLLMResponse()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>IsSCPCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>LogMetric()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>.SetupShell() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>.GetLLMResponse()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>HandleSession()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>.GetLLMResponse() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>.IsSCPCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-cmd">Entry</span></td>
+  <td><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>HandleSession()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>.IsSCPCommand() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>.LogMetric()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>HandleSession()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>.LogMetric() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>.HandleSession()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>GetLLMResponse()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>GetPrompt()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>IsSCPCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br>+2 more</td>
+  <td>No direct outbound edge</td>
+  <td>.HandleSession() node in FunnyPot/Program.cs.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>FunnyPot/Program.cs</code></td><td>7 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: calls x9. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 5. Programcs Funnypot Harvestedcredential ====== -->
+<h2 id="programcs-funnypot-harvestedcredential">5. Programcs Funnypot Harvestedcredential</h2>
+<p>Programcs Funnypot Harvestedcredential groups implementation around programcs, funnypot, harvestedcredential, chatrequestdata, mostly in FunnyPot/Program.cs. This section covers 6 nodes and 5 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Programcs Funnypot Harvestedcredential (6 nodes, 5 edges)
+    funnypot_program_cs_a5d7913e("Program.cs")
+    funnypot_program_harvestedcredential_992dc727("HarvestedCredential<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_chatrequestdata_169a93cb("ChatRequestData<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_chatmessage_47cfd94d("ChatMessage<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_globalstats_bf0b0c32("GlobalStats<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_scpdetector_0f1376d3("SCPDetector<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_cs_a5d7913e -->|contains| funnypot_program_harvestedcredential_992dc727
+    funnypot_program_cs_a5d7913e -->|contains| funnypot_program_chatrequestdata_169a93cb
+    funnypot_program_cs_a5d7913e -->|contains| funnypot_program_chatmessage_47cfd94d
+    funnypot_program_cs_a5d7913e -->|contains| funnypot_program_globalstats_bf0b0c32
+    funnypot_program_cs_a5d7913e -->|contains| funnypot_program_scpdetector_0f1376d3
+    class funnypot_program_cs_a5d7913e klass;
+    class funnypot_program_harvestedcredential_992dc727 klass;
+    class funnypot_program_chatrequestdata_169a93cb klass;
+    class funnypot_program_chatmessage_47cfd94d klass;
+    class funnypot_program_globalstats_bf0b0c32 klass;
+    class funnypot_program_scpdetector_0f1376d3 klass;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>Program.cs</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Program.cs node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>HarvestedCredential</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>HarvestedCredential node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>ChatRequestData</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>ChatMessage</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>GlobalStats</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>GlobalStats node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>SCPDetector</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>SCPDetector node in FunnyPot/Program.cs.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>FunnyPot/Program.cs</code></td><td>6 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x5. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 6. Funnypot Programcs Program ====== -->
+<h2 id="funnypot-programcs-program">6. Funnypot Programcs Program</h2>
+<p>Funnypot Programcs Program groups implementation around funnypot, programcs, program, httpclient, mostly in FunnyPot/Program.cs. This section covers 6 nodes and 5 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Funnypot Programcs Program (6 nodes, 5 edges)
+    funnypot_program_program_d0bfc2af("Program<br/><small>FunnyPot/Program.cs</small>")
+    httpclient_d7de67e7("HttpClient<br/><small>FunnyPot/Program.cs</small>")
+    string_ecb25204("string<br/><small>FunnyPot/Program.cs</small>")
+    concurrentdictionary_542498e0("ConcurrentDictionary<br/><small>FunnyPot/Program.cs</small>")
+    semaphoreslim_04bc8939("SemaphoreSlim<br/><small>FunnyPot/Program.cs</small>")
+    bool_5039d155("bool<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_program_d0bfc2af -->|references| httpclient_d7de67e7
+    funnypot_program_program_d0bfc2af -->|references| string_ecb25204
+    funnypot_program_program_d0bfc2af -->|references| concurrentdictionary_542498e0
+    funnypot_program_program_d0bfc2af -->|references| semaphoreslim_04bc8939
+    funnypot_program_program_d0bfc2af -->|references| bool_5039d155
+    class funnypot_program_program_d0bfc2af klass;
+    class httpclient_d7de67e7 entry;
+    class string_ecb25204 function;
+    class concurrentdictionary_542498e0 klass;
+    class semaphoreslim_04bc8939 klass;
+    class bool_5039d155 function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>Program</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Program node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>HttpClient</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-cmd">Entry</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>HttpClient node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>string</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>string node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>ConcurrentDictionary</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>ConcurrentDictionary node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>SemaphoreSlim</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>SemaphoreSlim node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>bool</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>bool node in FunnyPot/Program.cs.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>FunnyPot/Program.cs</code></td><td>6 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: references x5. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 7. Funnypot Programcs Int ====== -->
+<h2 id="funnypot-programcs-int">7. Funnypot Programcs Int</h2>
+<p>Funnypot Programcs Int groups implementation around funnypot, programcs, int, inputvalidator, mostly in FunnyPot/Program.cs. This section covers 5 nodes and 6 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Funnypot Programcs Int (5 nodes, 6 edges)
+    funnypot_program_inputvalidator_dadda68a("InputValidator<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_inputvalidator_validate_05e69817("Validate()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_inputvalidator_containsnullbyte_83d0efaa("ContainsNullBytes()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_inputvalidator_isrepetitivenois_7c4fae4d("IsRepetitiveNoise()<br/><small>FunnyPot/Program.cs</small>")
+    int_46f8ab7c("int<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_inputvalidator_dadda68a -->|method| funnypot_program_inputvalidator_validate_05e69817
+    funnypot_program_inputvalidator_dadda68a -->|method| funnypot_program_inputvalidator_containsnullbyte_83d0efaa
+    funnypot_program_inputvalidator_dadda68a -->|method| funnypot_program_inputvalidator_isrepetitivenois_7c4fae4d
+    funnypot_program_inputvalidator_validate_05e69817 -->|calls| funnypot_program_inputvalidator_containsnullbyte_83d0efaa
+    funnypot_program_inputvalidator_validate_05e69817 -->|calls| funnypot_program_inputvalidator_isrepetitivenois_7c4fae4d
+    class funnypot_program_inputvalidator_dadda68a klass;
+    class funnypot_program_inputvalidator_validate_05e69817 function;
+    class funnypot_program_inputvalidator_containsnullbyte_83d0efaa function;
+    class funnypot_program_inputvalidator_isrepetitivenois_7c4fae4d function;
+    class int_46f8ab7c function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>int</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>int node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>InputValidator</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>ContainsNullBytes()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>IsRepetitiveNoise()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Validate()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>InputValidator node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>.Validate()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>InputValidator</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>ContainsNullBytes()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>IsRepetitiveNoise()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>.Validate() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>.ContainsNullBytes()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>InputValidator</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Validate()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.ContainsNullBytes() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>.IsRepetitiveNoise()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>InputValidator</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Validate()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.IsRepetitiveNoise() node in FunnyPot/Program.cs.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>FunnyPot/Program.cs</code></td><td>5 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: method x3, calls x2, references x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 8. Funnypot Programcs Onconnectionaccepted ====== -->
+<h2 id="funnypot-programcs-onconnectionaccepted">8. Funnypot Programcs Onconnectionaccepted</h2>
+<p>Funnypot Programcs Onconnectionaccepted groups implementation around funnypot, programcs, onconnectionaccepted, logyaml, mostly in FunnyPot/Program.cs. This section covers 2 nodes and 1 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Funnypot Programcs Onconnectionaccepted (2 nodes, 1 edges)
+    funnypot_program_program_onconnectionaccepted_ea272405("OnConnectionAccepted()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_logger_logyaml_f08d7238("LogYaml()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_program_onconnectionaccepted_ea272405 -->|calls| funnypot_program_logger_logyaml_f08d7238
+    class funnypot_program_program_onconnectionaccepted_ea272405 function;
+    class funnypot_program_logger_logyaml_f08d7238 function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>.OnConnectionAccepted()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>LogYaml()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>.OnConnectionAccepted() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>.LogYaml()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>OnConnectionAccepted()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.LogYaml() node in FunnyPot/Program.cs.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>FunnyPot/Program.cs</code></td><td>2 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: calls x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 9. Agentsmd Graphify ====== -->
+<h2 id="agentsmd-graphify">9. Agentsmd Graphify</h2>
+<p>Agentsmd Graphify groups implementation around agentsmd, graphify, mostly in AGENTS.md. This section covers 2 nodes and 1 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Agentsmd Graphify (2 nodes, 1 edges)
+    agents_md_1f169a2a("AGENTS.md")
+    funnypot_agents_graphify_56c2f2de("graphify<br/><small>AGENTS.md</small>")
+    agents_md_1f169a2a -->|contains| funnypot_agents_graphify_56c2f2de
+    class agents_md_1f169a2a concept;
+    class funnypot_agents_graphify_56c2f2de concept;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>AGENTS.md</code><br><small style="color:var(--muted)">AGENTS.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing AGENTS.md.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>graphify</code><br><small style="color:var(--muted)">AGENTS.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing graphify.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>AGENTS.md</code></td><td>2 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 10. Funnypotassemblyinfocs Funnypot Obj ====== -->
+<h2 id="funnypotassemblyinfocs-funnypot-obj">10. Funnypotassemblyinfocs Funnypot Obj</h2>
+<p>Funnypotassemblyinfocs Funnypot Obj groups implementation around funnypotassemblyinfocs, funnypot, obj, debug, mostly in Debug/net8.0/FunnyPot.AssemblyInfo.cs. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Funnypotassemblyinfocs Funnypot Obj (1 nodes, 0 edges)
+    funnypot_obj_debug_net8_0_funnypot_assemblyinfo_b07a176b("FunnyPot.AssemblyInfo.cs")
+    class funnypot_obj_debug_net8_0_funnypot_assemblyinfo_b07a176b async;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>FunnyPot.AssemblyInfo.cs</code><br><small style="color:var(--muted)">Debug/net8.0/FunnyPot.AssemblyInfo.cs</small></td>
+  <td><span class="tag tag-async">Async</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>FunnyPot.AssemblyInfo.cs node in Debug/net8.0/FunnyPot.AssemblyInfo.cs.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>Debug/net8.0/FunnyPot.AssemblyInfo.cs</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: No high-confidence call edges detected. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 11. Funnypotglobalusingsgcs Funnypot Obj ====== -->
+<h2 id="funnypotglobalusingsgcs-funnypot-obj">11. Funnypotglobalusingsgcs Funnypot Obj</h2>
+<p>Funnypotglobalusingsgcs Funnypot Obj groups implementation around funnypotglobalusingsgcs, funnypot, obj, debug, mostly in Debug/net8.0/FunnyPot.GlobalUsings.g.cs. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Funnypotglobalusingsgcs Funnypot Obj (1 nodes, 0 edges)
+    funnypot_obj_debug_net8_0_funnypot_globalusings_889bd8cc("FunnyPot.GlobalUsings.g.cs")
+    class funnypot_obj_debug_net8_0_funnypot_globalusings_889bd8cc klass;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>FunnyPot.GlobalUsings.g.cs</code><br><small style="color:var(--muted)">Debug/net8.0/FunnyPot.GlobalUsings.g.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>FunnyPot.GlobalUsings.g.cs node in Debug/net8.0/FunnyPot.GlobalUsings.g.cs.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>Debug/net8.0/FunnyPot.GlobalUsings.g.cs</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: No high-confidence call edges detected. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<h2 id="stats">Project Statistics</h2>
+
+<div class="grid">
+  <div class="card">
+    <h4>Graph</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><td>Nodes</td><td>54</td></tr>
+      <tr><td>Edges</td><td>76</td></tr>
+      <tr><td>Hyperedges</td><td>0</td></tr>
+      <tr><td>Communities</td><td>13</td></tr>
+      <tr><td>Documented Sections</td><td>10</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Edge Confidence</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><td>EXTRACTED</td><td>76</td></tr>
+      <tr><td>INFERRED</td><td>0</td></tr>
+      <tr><td>AMBIGUOUS</td><td>0</td></tr>
+    </table>
+  </div>
+</div>
+
+<div style="text-align:center; padding:40px 0; color: var(--muted); font-size:0.9rem;">
+  <p>FunnyPot — Architecture Documentation</p>
+  <p>Generated: 2026-05-11 12:17 UTC · graphify callflow-html</p>
+</div>
+
+</div><!-- .container -->
+
+<script>
+(function () {
+  const mermaidConfig = {
+    startOnLoad: false,
+    theme: 'dark',
+    securityLevel: 'loose',
+    flowchart: { htmlLabels: true, useMaxWidth: true },
+    themeVariables: {
+      primaryColor: '#1e293b',
+      primaryTextColor: '#e2e8f0',
+      primaryBorderColor: '#38bdf8',
+      secondaryColor: '#0f172a',
+      tertiaryColor: '#334155',
+      lineColor: '#64748b',
+      textColor: '#e2e8f0',
+    }
+  };
+
+  mermaid.initialize(mermaidConfig);
+
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function enhanceMermaidDiagrams() {
+    document.querySelectorAll('.mermaid').forEach((container) => {
+      if (container.dataset.zoomReady === 'true') return;
+      const svg = container.querySelector('svg');
+      if (!svg) return;
+
+      container.dataset.zoomReady = 'true';
+      container.classList.add('is-enhanced');
+
+      const viewport = document.createElement('div');
+      viewport.className = 'mermaid-viewport';
+      svg.parentNode.insertBefore(viewport, svg);
+      viewport.appendChild(svg);
+
+      const toolbar = document.createElement('div');
+      toolbar.className = 'mermaid-toolbar';
+      toolbar.innerHTML = [
+        '<button type="button" data-action="zoom-out" title="Zoom out">-</button>',
+        '<span class="zoom-level" data-role="level">100%</span>',
+        '<button type="button" data-action="zoom-in" title="Zoom in">+</button>',
+        '<button type="button" data-action="fit" title="Fit width">Fit</button>',
+        '<button type="button" data-action="reset" title="Reset view">Reset</button>'
+      ].join('');
+      container.insertBefore(toolbar, viewport);
+
+      const state = { scale: 1, x: 0, y: 0, dragging: false, startX: 0, startY: 0, originX: 0, originY: 0 };
+      const level = toolbar.querySelector('[data-role="level"]');
+
+      function applyTransform() {
+        svg.style.transform = `translate(${state.x}px, ${state.y}px) scale(${state.scale})`;
+        level.textContent = `${Math.round(state.scale * 100)}%`;
+      }
+
+      function zoomBy(delta) {
+        state.scale = clamp(state.scale + delta, 0.25, 3);
+        applyTransform();
+      }
+
+      function reset() {
+        state.scale = 1;
+        state.x = 0;
+        state.y = 0;
+        applyTransform();
+      }
+
+      function fitWidth() {
+        const rawWidth = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width
+          ? svg.viewBox.baseVal.width
+          : svg.getBoundingClientRect().width / state.scale;
+        if (!rawWidth) {
+          reset();
+          return;
+        }
+        state.scale = clamp((viewport.clientWidth - 48) / rawWidth, 0.25, 1.4);
+        state.x = 0;
+        state.y = 0;
+        applyTransform();
+      }
+
+      toolbar.addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-action]');
+        if (!button) return;
+        const action = button.dataset.action;
+        if (action === 'zoom-in') zoomBy(0.15);
+        if (action === 'zoom-out') zoomBy(-0.15);
+        if (action === 'fit') fitWidth();
+        if (action === 'reset') reset();
+      });
+
+      viewport.addEventListener('wheel', (event) => {
+        if (!event.ctrlKey && !event.metaKey) return;
+        event.preventDefault();
+        zoomBy(event.deltaY < 0 ? 0.1 : -0.1);
+      }, { passive: false });
+
+      viewport.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0) return;
+        state.dragging = true;
+        state.startX = event.clientX;
+        state.startY = event.clientY;
+        state.originX = state.x;
+        state.originY = state.y;
+        viewport.classList.add('is-dragging');
+        viewport.setPointerCapture(event.pointerId);
+      });
+
+      viewport.addEventListener('pointermove', (event) => {
+        if (!state.dragging) return;
+        state.x = state.originX + event.clientX - state.startX;
+        state.y = state.originY + event.clientY - state.startY;
+        applyTransform();
+      });
+
+      function endDrag(event) {
+        if (!state.dragging) return;
+        state.dragging = false;
+        viewport.classList.remove('is-dragging');
+        if (viewport.hasPointerCapture(event.pointerId)) {
+          viewport.releasePointerCapture(event.pointerId);
+        }
+      }
+
+      viewport.addEventListener('pointerup', endDrag);
+      viewport.addEventListener('pointercancel', endDrag);
+      applyTransform();
+    });
+  }
+
+  function renderMermaid() {
+    const result = mermaid.run
+      ? mermaid.run({ querySelector: '.mermaid' })
+      : Promise.resolve();
+    Promise.resolve(result)
+      .then(enhanceMermaidDiagrams)
+      .catch((error) => {
+        console.error('Mermaid render failed:', error);
+        enhanceMermaidDiagrams();
+      });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderMermaid);
+  } else {
+    renderMermaid();
+  }
+})();
+</script>
+
+</body>
+</html>

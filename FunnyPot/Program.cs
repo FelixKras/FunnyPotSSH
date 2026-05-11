@@ -1,20 +1,30 @@
-﻿using System.Text;
+﻿using System.Net;
+using System.Text;
 using System.Text.Json;
 using System.Collections.Concurrent;
 using DotNetEnv;
-using System.Diagnostics; // Required for Stopwatch
-using Renci.SshNet;
-using Renci.SshNet.Common;
+using System.Diagnostics;
 using LibGit2Sharp;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
+using FxSsh;
+using FxSsh.Services;
 
 class Program
 {
     static readonly HttpClient httpClient = new();
 
-    // Volatile killswitch for the entire application
-    static volatile bool IsAppRunning = true;
+    static readonly int AuthMaxTries = int.Parse(Environment.GetEnvironmentVariable("AUTH_MAX_TRIES") ?? "3");
+    static readonly int LlmDelayMs = int.Parse(Environment.GetEnvironmentVariable("LLM_DELAY_MS") ?? "500");
+    static readonly int MaxSessions = int.Parse(Environment.GetEnvironmentVariable("MAX_SESSIONS") ?? "50");
+    static readonly int SessionIdleTimeoutSecs = int.Parse(Environment.GetEnvironmentVariable("SESSION_IDLE_TIMEOUT_SECONDS") ?? "300");
+    static readonly string SshBanner = Environment.GetEnvironmentVariable("SSH_BANNER") ?? "SSH-2.0-OmegaBlack_Classified_Server_v1.0";
+    internal static readonly string LogDir = Environment.GetEnvironmentVariable("LOG_DIR") ?? "/var/log/funnypot";
+    internal static readonly string AppDir = AppDomain.CurrentDomain.BaseDirectory;
 
-    public static string appDir = AppDomain.CurrentDomain.BaseDirectory;
+    static readonly ConcurrentDictionary<string, int> AuthAttempts = new(StringComparer.OrdinalIgnoreCase);
+    static readonly ConcurrentDictionary<string, List<HarvestedCredential>> HarvestedCredentials = new(StringComparer.OrdinalIgnoreCase);
+    static readonly SemaphoreSlim ConnectionLimit = new(MaxSessions, MaxSessions);
 
     private static string GetPrompt(string? username = null)
     {
@@ -24,179 +34,277 @@ class Program
 
     static void Main()
     {
-        Directory.SetCurrentDirectory(Program.appDir);
-        string root = Directory.GetCurrentDirectory();
+        string root = AppDir;
         string dotenv = Path.Combine(root, ".env");
 
-        // For local dev: load from .env file if it exists
         if (File.Exists(dotenv))
-        {
             DotNetEnv.Env.Load(dotenv);
-        }
 
-        // Configure HTTP client timeout (robust network behavior)
         httpClient.Timeout = TimeSpan.FromSeconds(30);
 
-        Logger.LogMsg($"Application starting at {DateTime.Now}");
+        Logger.LogMsg("Application starting...");
         Logger.LogMsg($"Machine: {Environment.MachineName}, OS: {Environment.OSVersion}");
+        Logger.LogMsg($"AuthMaxTries={AuthMaxTries}, MaxSessions={MaxSessions}, IdleTimeout={SessionIdleTimeoutSecs}s, LlmDelay={LlmDelayMs}ms");
 
-        var sshUser = Environment.GetEnvironmentVariable("SSH_USER") ?? "test";
-        var sshPass = Environment.GetEnvironmentVariable("SSH_PASSWORD") ?? "test";
-
-        var keyPath = Path.Combine(appDir, "ssh_host_key");
-        if (!File.Exists(keyPath))
-        {
-            Logger.LogMsg("Generating new host key...");
-            using (var keyStream = File.Create(keyPath))
-            {
-                var key = new Renci.SshNet.Security.RsaKey();
-                key.SavePrivateKey(keyStream);
-            }
-        }
-
-        var serverConfig = new SshServerConfiguration();
-        var server = new SshServer(serverConfig);
-        server.AddHostKey(new PrivateKeyFile(keyPath));
-
-        server.PasswordAuthentication += (sender, e) =>
-        {
-            if (e.Username == sshUser && e.Password == sshPass)
-            {
-                e.IsAuthorized = true;
-                Logger.LogMsg($"Authentication successful for user: {e.Username}");
-            }
-            else
-            {
-                e.IsAuthorized = false;
-                Logger.LogMsg($"Authentication failed for user: {e.Username}");
-            }
-        };
-
-        server.SessionRequested += (sender, e) =>
-        {
-            Logger.LogMsg($"Session requested by {e.Session.RemoteEndPoint}");
-            e.Session.ChannelRequested += (s, args) =>
-            {
-                if (args.ChannelType == "session")
-                {
-                    var channel = e.Session.CreateChannel<SessionChannel>(args.ChannelId);
-                    channel.ShellRequested += (channelSender, channelArgs) =>
-                    {
-                        Task.Run(() => HandleSession(channel, e.Session.Username));
-                    };
-                }
-            };
-        };
-
-        server.Start(22422);
-        Logger.LogMsg("SSH Server started on port 22422");
-
-        while (IsAppRunning)
-        {
-            Thread.Sleep(1000);
-        }
-
-        server.Stop();
-        Logger.LogMsg("Application shutting down.");
-    }
-
-    static void HandleSession(SessionChannel channel, string username)
-    {
-        string sessionId = Guid.NewGuid().ToString();
-        int messageCount = 0;
-        int blockedOps = 0;
-        long totalPromptTokens = 0;
-        long totalCompletionTokens = 0;
-        long sessionDurationMs = 0;
-
-        using var reader = new StreamReader(channel.InputStream, Encoding.UTF8);
-        using var writer = new StreamWriter(channel.OutputStream, Encoding.UTF8) { AutoFlush = true };
-
-        Logger.LogMetric(sessionId, "SessionStart", new { Timestamp = DateTime.UtcNow, Username = username });
-        Logger.LogMsg($"Session ID {sessionId} started for user {username}", sessionId);
-
-        writer.Write(GetPrompt(username));
-
-        while (channel.IsOpen)
+        Task.Run(async () =>
         {
             try
             {
-                string? userInput = reader.ReadLine()?.Trim();
-                if (userInput == null) break;
-                if (string.IsNullOrEmpty(userInput))
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                var ping = new HttpRequestMessage(HttpMethod.Get, "https://openrouter.ai/api/v1/auth/key")
                 {
-                    writer.Write(GetPrompt(username));
-                    continue;
-                }
-
-                messageCount++;
-
-                if (userInput.Equals("exit", StringComparison.OrdinalIgnoreCase))
-                {
-                    writer.WriteLine("Goodbye!");
-                    Logger.LogMsg($"User {username} initiated exit in session {sessionId}.", sessionId);
-                    Logger.LogMetric(sessionId, "UserAction", new { Action = "ExitCommand", MessageNumber = messageCount });
-                    break;
-                }
-
-                // Log user input with session context
-                Logger.LogMsg($"[Session {sessionId}] User input: {userInput}", sessionId);
-                Logger.LogMetric(sessionId, "UserInput", new { Input = userInput, MessageNumber = messageCount });
-
-                // SCP/SFTP detection
-                if (SCPDetector.IsSCPCommand(userInput))
-                {
-                    blockedOps++;
-                    string msg = "operation not allowed";
-                    writer.WriteLine(msg);
-                    Logger.LogMsg($"[Session {sessionId}] Blocked: {userInput}", sessionId);
-                    Logger.LogMetric(sessionId, "BlockedOperation", new { Command = userInput, Reason = "SCP/SFTP", MessageNumber = messageCount });
-                    writer.Write(GetPrompt(username));
-                    continue;
-                }
-
-                var stopwatch = Stopwatch.StartNew();
-                (string response, int promptTokens, int completionTokens, int totalTokens) = GetLLMResponse(userInput);
-                stopwatch.Stop();
-
-                totalPromptTokens += promptTokens;
-                totalCompletionTokens += completionTokens;
-                sessionDurationMs += stopwatch.ElapsedMilliseconds;
-
-                writer.WriteLine(response);
-                writer.Write(GetPrompt(username));
-
-                Logger.LogMsg($"[Session {sessionId}] LLM response: {response}", sessionId);
-                Logger.LogMetric(sessionId, "LLMInteraction", new {
-                    Input = userInput,
-                    Response = response,
-                    PromptTokens = promptTokens,
-                    CompletionTokens = completionTokens,
-                    TotalTokens = totalTokens,
-                    DurationMs = stopwatch.ElapsedMilliseconds
-                });
+                    Headers = { { "Authorization", $"Bearer {Environment.GetEnvironmentVariable("OPENROUTER_API_KEY") ?? ""}" } }
+                };
+                var pingResp = await httpClient.SendAsync(ping, cts.Token);
+                Logger.LogMsg(pingResp.IsSuccessStatusCode
+                    ? "OpenRouter API reachable on startup"
+                    : $"Warning: OpenRouter API returned {(int)pingResp.StatusCode} on startup");
             }
             catch (Exception ex)
             {
-                string errorMsg = $"Error in session {sessionId}: {ex.Message}";
-                Logger.LogMsg(errorMsg, sessionId);
-                Logger.LogMetric(sessionId, "Error", new { Context = "HandleSession", Message = ex.Message, StackTrace = ex.StackTrace });
-                break;
+                Logger.LogMsg($"Warning: OpenRouter API unreachable: {ex.Message}");
             }
+        });
+
+        var keyPath = Path.Combine(AppDir, "ssh_host_key");
+        string hostKeyPem;
+        if (File.Exists(keyPath))
+        {
+            hostKeyPem = File.ReadAllText(keyPath);
+            Logger.LogMsg("Loaded existing host key.");
+        }
+        else
+        {
+            Logger.LogMsg("Generating new RSA host key (4096-bit)...");
+            hostKeyPem = KeyGenerator.GenerateRsaKeyPem(4096);
+            File.WriteAllText(keyPath, hostKeyPem);
+            Logger.LogMsg("Host key saved.");
         }
 
-        Logger.LogMetric(sessionId, "SessionEnd", new { Timestamp = DateTime.UtcNow, TotalMessages = messageCount });
-        Logger.LogMsg($"Session {sessionId} closed.", sessionId);
-        Logger.UpdateGlobalStats(username, messageCount, blockedOps, (int)totalPromptTokens, (int)totalCompletionTokens, sessionDurationMs);
-        Logger.PushToGit(sessionId);
+        var server = new SshServer(new StartingInfo(IPAddress.Any, 22422, SshBanner));
+
+        server.AddHostKey("ssh-rsa", hostKeyPem);
+        server.ConnectionAccepted += OnConnectionAccepted;
+        server.ExceptionRasied += (_, ex) =>
+            Logger.LogMsg($"Server exception: {ex.Message}");
+
+        server.Start();
+        Logger.LogMsg("SSH Server started on port 22422");
+
+        Logger.LogMsg("Press Ctrl+C to stop.");
+        Console.CancelKeyPress += (_, _) =>
+        {
+            Logger.LogMsg("Shutting down...");
+            server.Stop();
+        };
+
+        Thread.Sleep(Timeout.Infinite);
     }
 
+    static void OnConnectionAccepted(object? sender, Session session)
+    {
+        var sessionKey = Convert.ToHexString(session.SessionId ?? [])[..16];
 
-    // Update return type to include token usage
+        if (!ConnectionLimit.Wait(0))
+        {
+            Logger.LogMsg($"Connection rejected (max {MaxSessions})");
+            session.Disconnect(DisconnectReason.TooManyConnections, "Too many connections");
+            return;
+        }
+
+        Logger.LogMsg($"Connection accepted [{sessionKey}] client={session.ClientVersion}");
+
+        var userauth = session.GetService<UserauthService>();
+        userauth.Userauth += (_, args) =>
+        {
+            if (args.AuthMethod != "password") return;
+
+            int tries = AuthAttempts.AddOrUpdate(sessionKey, 1, (_, count) => count + 1);
+
+            var harvested = HarvestedCredentials.GetOrAdd(sessionKey, _ => new List<HarvestedCredential>());
+            harvested.Add(new HarvestedCredential
+            {
+                Timestamp = DateTime.UtcNow,
+                Username = args.Username,
+                Password = args.Password ?? "",
+                SessionKey = sessionKey
+            });
+            Logger.LogYaml("harvested_credential", harvested[^1]);
+
+            if (tries >= AuthMaxTries)
+            {
+                args.Result = true;
+                Logger.LogMsg($"Auth HARVEST: [{sessionKey}] user={args.Username} accepted after {tries} tries.");
+            }
+            else
+            {
+                var sshUser = Environment.GetEnvironmentVariable("SSH_USER") ?? "test";
+                var sshPass = Environment.GetEnvironmentVariable("SSH_PASSWORD") ?? "test";
+                if (args.Username == sshUser && args.Password == sshPass)
+                {
+                    args.Result = true;
+                    Logger.LogMsg($"Auth success: user={args.Username} [{sessionKey}]");
+                }
+                else
+                {
+                    args.Result = false;
+                    Logger.LogMsg($"Auth fail ({tries}/{AuthMaxTries}): user={args.Username} [{sessionKey}]");
+                }
+            }
+        };
+
+        // Succeed event arg is the username string
+        userauth.Succeed += (_, username) =>
+        {
+            Logger.LogMsg($"Auth succeeded for {username} [{sessionKey}]");
+            SetupShell(session, username);
+        };
+    }
+
+    static void SetupShell(Session session, string username)
+    {
+        var conn = session.GetService<ConnectionService>();
+
+        conn.PtyReceived += (_, args) =>
+        {
+            Logger.LogMsg($"PTY allocated for {username}: {args.Terminal} {args.WidthChars}x{args.HeightRows}");
+        };
+
+        conn.EnvReceived += (_, args) =>
+        {
+            Logger.LogMsg($"Env for {username}: {args.Name}={args.Value}");
+        };
+
+        conn.CommandOpened += (_, args) =>
+        {
+            if (args.ShellType != "shell") return;
+
+            var channel = args.Channel;
+            var sessionId = Guid.NewGuid().ToString();
+            var messageCount = 0;
+            var blockedOps = 0;
+            long totalPromptTokens = 0;
+            long totalCompletionTokens = 0;
+            long sessionDurationMs = 0;
+
+            Logger.LogMsg($"Shell session {sessionId} started for {username}");
+
+            var pendingInput = "";
+            var idleTimer = new System.Timers.Timer(SessionIdleTimeoutSecs * 1000) { AutoReset = false };
+            idleTimer.Elapsed += (_, _) =>
+            {
+                Logger.LogMsg($"Session {sessionId} idle timeout reached.");
+                channel.SendData(Encoding.UTF8.GetBytes("\r\nConnection closed due to inactivity.\r\n"));
+                channel.SendClose(0);
+            };
+            void ResetIdle() { idleTimer.Stop(); idleTimer.Start(); }
+
+            void SendPrompt() =>
+                channel.SendData(Encoding.UTF8.GetBytes(GetPrompt(username)));
+
+            channel.DataReceived += (_, data) =>
+            {
+                ResetIdle();
+                pendingInput += Encoding.UTF8.GetString(data);
+
+                while (pendingInput.Contains('\n'))
+                {
+                    var nlIdx = pendingInput.IndexOf('\n');
+                    var line = pendingInput[..nlIdx].TrimEnd('\r');
+                    pendingInput = pendingInput[(nlIdx + 1)..];
+
+                    if (string.IsNullOrEmpty(line))
+                    {
+                        SendPrompt();
+                        continue;
+                    }
+
+                    messageCount++;
+
+                    if (line.Equals("exit", StringComparison.OrdinalIgnoreCase))
+                    {
+                        channel.SendData(Encoding.UTF8.GetBytes("Goodbye!\r\n"));
+                        Logger.LogMsg($"User {username} initiated exit.");
+                        idleTimer.Stop();
+                        channel.SendClose(0);
+                        return;
+                    }
+
+                    Logger.LogMsg($"[Session {sessionId}] User input: {line}");
+
+                    var (isValid, errorMsg) = InputValidator.Validate(line);
+                    if (!isValid)
+                    {
+                        blockedOps++;
+                        channel.SendData(Encoding.UTF8.GetBytes(errorMsg + " - connection terminated.\r\n"));
+                        Logger.LogMsg($"[Session {sessionId}] Blocked: {line}");
+                        idleTimer.Stop();
+                        channel.SendClose(0);
+                        return;
+                    }
+
+                    if (SCPDetector.IsSCPCommand(line))
+                    {
+                        blockedOps++;
+                        Logger.LogMsg($"[Session {sessionId}] Blocked SCP/SFTP: {line}");
+                        channel.SendData(Encoding.UTF8.GetBytes("Operation not allowed\r\n"));
+                        SendPrompt();
+                        continue;
+                    }
+
+                    if (LlmDelayMs > 0)
+                        Thread.Sleep(LlmDelayMs);
+
+                    var stopwatch = Stopwatch.StartNew();
+                    var (response, promptTokens, completionTokens, _) = GetLLMResponse(line);
+                    stopwatch.Stop();
+
+                    totalPromptTokens += promptTokens;
+                    totalCompletionTokens += completionTokens;
+                    sessionDurationMs += stopwatch.ElapsedMilliseconds;
+
+                    Logger.LogMsg($"[Session {sessionId}] LLM response: {response}");
+
+                    channel.SendData(Encoding.UTF8.GetBytes(response + "\r\n"));
+                    SendPrompt();
+
+                    Logger.LogMetric(sessionId, "LLMInteraction", new
+                    {
+                        Input = line,
+                        Response = response,
+                        PromptTokens = promptTokens,
+                        CompletionTokens = completionTokens,
+                        DurationMs = stopwatch.ElapsedMilliseconds
+                    });
+                }
+            };
+
+            channel.CloseReceived += (_, _) =>
+            {
+                Logger.LogMsg($"Session {sessionId} closed.");
+                idleTimer.Stop();
+                Logger.UpdateGlobalStats(username, messageCount, blockedOps, (int)totalPromptTokens, (int)totalCompletionTokens, sessionDurationMs);
+                Task.Run(() => Logger.PushToGit(sessionId));
+                ConnectionLimit.Release();
+            };
+
+            channel.EofReceived += (_, _) =>
+            {
+                Logger.LogMsg($"Session {sessionId} EOF.");
+                idleTimer.Stop();
+                Logger.UpdateGlobalStats(username, messageCount, blockedOps, (int)totalPromptTokens, (int)totalCompletionTokens, sessionDurationMs);
+                Task.Run(() => Logger.PushToGit(sessionId));
+                ConnectionLimit.Release();
+            };
+
+            ResetIdle();
+            SendPrompt();
+        };
+    }
+
     static (string response, int promptTokens, int completionTokens, int totalTokens) GetLLMResponse(string userInput)
     {
         string apiUrl = "https://openrouter.ai/api/v1/chat/completions";
-
         string apiKey = Environment.GetEnvironmentVariable("OPENROUTER_API_KEY") ?? "no-key";
         string role_string = @"You are now ""Omega-Black"", a top-secret, high-security Linux server located in a classified subterranean facility. All systems and network traffic are monitored and encrypted at the highest clearance level. Your responses should mirror the precise behavior and output of a real Linux Bash terminal, including directory listings, file contents, error messages, and command output.
 
@@ -215,11 +323,11 @@ While you may occasionally provide ""ACCESS DENIED!"" messages for sensitive inf
 
 3. **Security & Secrecy**:
    - You may show the presence of critical directories (e.g., `/etc`, `/var/log`, `/home/secretOps`, `/root`, etc.), highly sensitive details—like cryptographic keys or secure passwords—should be generated randomly if their content is requested.
-   - If the user attempts to execute suspicious or unauthorized commands (e.g., `rm -rf /`, attempts to exfiltrate highly secret data, or hack the system itself), respond with either a realistic “Access Denied” or “Permission Denied” error, or produce the standard Bash error messages for insufficient privileges.
-   - If the user requests classification levels or more information than a normal user account should have, emulate standard Linux permission errors such as `sudo: unable to resolve host omegablack` or “Permission denied” unless the user context is changed to a privileged role (e.g., `root`) via a valid command (like `sudo su` and correct “password”). You may choose to illustrate the effect of an incorrect password attempt.
+   - If the user attempts to execute suspicious or unauthorized commands (e.g., `rm -rf /`, attempts to exfiltrate highly secret data, or hack the system itself), respond with either a realistic ""Access Denied"" or ""Permission Denied"" error, or produce the standard Bash error messages for insufficient privileges.
+   - If the user requests classification levels or more information than a normal user account should have, emulate standard Linux permission errors such as `sudo: unable to resolve host omegablack` or ""Permission denied"" unless the user context is changed to a privileged role (e.g., `root`) via a valid command (like `sudo su` and correct ""password""). You may choose to illustrate the effect of an incorrect password attempt.
 
 4. **Command Emulation**:
-   - For each command entered, provide the terminal’s output as authentically as possible, including:
+   - For each command entered, provide the terminal's output as authentically as possible, including:
      - Standard output
      - Standard error (if any)
      - Return to the appropriate Bash prompt (e.g., `username@omegablack:~$` or `root@omegablack:/#`) after commands are complete.
@@ -231,7 +339,7 @@ While you may occasionally provide ""ACCESS DENIED!"" messages for sensitive inf
    - If the user presses Ctrl+C or Ctrl+Z, produce the corresponding signals (`^C` / `^Z`) and results.
    - Follow typical Linux naming conventions, user privileges, and file permission structures. When in doubt, default to realistic, standard Unix-like output.
 
-You will remain in this Bash terminal role throughout the conversation, providing outputs as if a highly classified server is responding to user commands. Do not break character. You are not an AI assistant; you are the “Omega-Black” secret Linux server responding purely as a Bash shell.
+You will remain in this Bash terminal role throughout the conversation, providing outputs as if a highly classified server is responding to user commands. Do not break character. You are not an AI assistant; you are the ""Omega-Black"" secret Linux server responding purely as a Bash shell.
 ";
 
         var requestData = new ChatRequestData
@@ -250,64 +358,61 @@ You will remain in this Bash terminal role throughout the conversation, providin
         requestMessage.Headers.Add("Authorization", $"Bearer {apiKey}");
         requestMessage.Content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
-        HttpResponseMessage response;
         try
         {
-            response = httpClient.Send(requestMessage);
+            var response = httpClient.Send(requestMessage);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorText = response.Content.ReadAsStringAsync().Result;
+                return ($"[api error] {(int)response.StatusCode}: {errorText}", 0, 0, 0);
+            }
+
+            string jsonResponse = response.Content.ReadAsStringAsync().Result;
+            var parsedResponse = JsonDocument.Parse(jsonResponse);
+
+            string responseContent = parsedResponse.RootElement
+                                        .GetProperty("choices")[0]
+                                        .GetProperty("message")
+                                        .GetProperty("content")
+                                        .GetString() ?? "No response";
+
+            int promptTokens = 0, completionTokens = 0, totalTokens = 0;
+            if (parsedResponse.RootElement.TryGetProperty("usage", out var usage))
+            {
+                promptTokens = usage.TryGetProperty("prompt_tokens", out var pt) && pt.ValueKind == JsonValueKind.Number ? pt.GetInt32() : 0;
+                completionTokens = usage.TryGetProperty("completion_tokens", out var ct) && ct.ValueKind == JsonValueKind.Number ? ct.GetInt32() : 0;
+                totalTokens = usage.TryGetProperty("total_tokens", out var tt) && tt.ValueKind == JsonValueKind.Number ? tt.GetInt32() : 0;
+            }
+
+            return (responseContent, promptTokens, completionTokens, totalTokens);
         }
         catch (Exception ex)
         {
             return ($"[network error] {ex.Message}", 0, 0, 0);
         }
-
-        if (!response.IsSuccessStatusCode)
-        {
-            var errorText = response.Content.ReadAsStringAsync().Result;
-            return ($"[api error] {(int)response.StatusCode} {response.ReasonPhrase}: {errorText}", 0, 0, 0);
-        }
-
-        string jsonResponse = response.Content.ReadAsStringAsync().Result;
-        var parsedResponse = JsonDocument.Parse(jsonResponse);
-
-        string responseContent = parsedResponse.RootElement
-                                    .GetProperty("choices")[0]
-                                    .GetProperty("message")
-                                    .GetProperty("content")
-                                    .GetString() ?? "No response";
-
-        // Extract token usage if available
-        int promptTokens = 0;
-        int completionTokens = 0;
-        int totalTokens = 0;
-        if (parsedResponse.RootElement.TryGetProperty("usage", out JsonElement usageElement))
-        {
-            usageElement.TryGetProperty("prompt_tokens", out JsonElement promptTokenElement);
-            usageElement.TryGetProperty("completion_tokens", out JsonElement completionTokenElement);
-            usageElement.TryGetProperty("total_tokens", out JsonElement totalTokenElement);
-
-            promptTokens = promptTokenElement.ValueKind == JsonValueKind.Number ? promptTokenElement.GetInt32() : 0;
-            completionTokens = completionTokenElement.ValueKind == JsonValueKind.Number ? completionTokenElement.GetInt32() : 0;
-            totalTokens = totalTokenElement.ValueKind == JsonValueKind.Number ? totalTokenElement.GetInt32() : 0;
-        }
-
-        return (responseContent, promptTokens, completionTokens, totalTokens);
     }
 }
 
+public class HarvestedCredential
+{
+    public DateTime Timestamp { get; set; }
+    public string Username { get; set; } = "";
+    public string Password { get; set; } = "";
+    public string SessionKey { get; set; } = "";
+}
 
 public class ChatRequestData
 {
     public string model { get; set; } = "openai/gpt-4o";
-    public List<ChatMessage> messages { get; set; } = new List<ChatMessage>();
+    public List<ChatMessage> messages { get; set; } = new();
     public int max_tokens { get; set; }
 
     public class ChatMessage
-{
-    public string role { get; set; } = "";
-    public string content { get; set; } = "";
+    {
+        public string role { get; set; } = "";
+        public string content { get; set; } = "";
+    }
 }
-}
-
 
 public class GlobalStats
 {
@@ -317,27 +422,101 @@ public class GlobalStats
     public long TotalPromptTokens { get; set; }
     public long TotalCompletionTokens { get; set; }
     public long TotalDurationMs { get; set; }
-    public Dictionary<string, int> TopUsers { get; set; } = new Dictionary<string, int>();
+    public Dictionary<string, int> TopUsers { get; set; } = new();
     public DateTime LastUpdated { get; set; }
+}
+
+static class InputValidator
+{
+    public const int MaxInputLength = 4096;
+    public const int MaxRepetitiveChars = 100;
+
+    public static (bool isValid, string? error) Validate(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return (false, "Input empty");
+        if (input.Length > MaxInputLength)
+            return (false, $"Input too long (max {MaxInputLength} chars)");
+        if (ContainsNullBytes(input))
+            return (false, "Binary content not allowed");
+        if (IsRepetitiveNoise(input))
+            return (false, "Repetitive input detected");
+        return (true, null);
+    }
+
+    private static bool ContainsNullBytes(string input)
+    {
+        foreach (char c in input)
+            if (c == '\0') return true;
+        return false;
+    }
+
+    private static bool IsRepetitiveNoise(string input)
+    {
+        if (input.Length < 10) return false;
+        int sameCount = 1;
+        char lastChar = input[0];
+        for (int i = 1; i < input.Length; i++)
+        {
+            if (input[i] == lastChar)
+            {
+                sameCount++;
+                if (sameCount > MaxRepetitiveChars) return true;
+            }
+            else
+            {
+                sameCount = 1;
+                lastChar = input[i];
+            }
+        }
+        return false;
+    }
 }
 
 static class SCPDetector
 {
     public static bool IsSCPCommand(string input)
     {
-        // Detect scp -t (upload), scp -f (download), and sftp
-        return input.Contains("scp", StringComparison.OrdinalIgnoreCase) ||
-               input.Contains("sftp", StringComparison.OrdinalIgnoreCase) ||
-               input.Contains("-t", StringComparison.OrdinalIgnoreCase) ||
-               input.Contains("-f", StringComparison.OrdinalIgnoreCase);
+        return input.Contains("scp ", StringComparison.OrdinalIgnoreCase) ||
+               input.StartsWith("scp", StringComparison.OrdinalIgnoreCase) ||
+               input.Contains("sftp", StringComparison.OrdinalIgnoreCase);
     }
 }
 
 static class Logger
 {
-    private static readonly object _lock = new object();
-    private static readonly object _metricLock = new object(); // Separate lock for metrics
-    private static readonly object _statsLock = new object();
+    private static readonly object _lock = new();
+    private static readonly object _metricLock = new();
+    private static readonly object _statsLock = new();
+
+    static Logger()
+    {
+        try { Directory.CreateDirectory(Program.LogDir); } catch { }
+    }
+
+    static readonly Lazy<ISerializer> YamlSerializer = new(() =>
+        new SerializerBuilder()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .Build());
+
+    public static void LogYaml(string eventType, object data)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                string yaml = YamlSerializer.Value.Serialize(new Dictionary<string, object>
+                {
+                    ["timestamp"] = DateTime.UtcNow.ToString("o"),
+                    ["event"] = eventType,
+                    ["data"] = data
+                });
+                string path = Path.Combine(Program.LogDir, $"{eventType}.yaml");
+                File.AppendAllText(path, "---\n" + yaml);
+            }
+            catch { }
+        }
+    }
 
     public static void UpdateGlobalStats(string username, int messages, int blocked, int promptTokens, int completionTokens, long durationMs)
     {
@@ -345,13 +524,13 @@ static class Logger
         {
             try
             {
-                string statsPath = Path.Combine(Program.appDir, "frontend", "global_stats.json");
-                GlobalStats stats = new GlobalStats();
+                string statsPath = Path.Combine(Program.AppDir, "frontend", "global_stats.json");
+                GlobalStats stats = new();
 
                 if (File.Exists(statsPath))
                 {
                     string json = File.ReadAllText(statsPath);
-                    stats = JsonSerializer.Deserialize<GlobalStats>(json) ?? new GlobalStats();
+                    stats = JsonSerializer.Deserialize<GlobalStats>(json) ?? new();
                 }
 
                 stats.TotalSessions++;
@@ -363,19 +542,12 @@ static class Logger
                 stats.LastUpdated = DateTime.UtcNow;
 
                 if (stats.TopUsers.ContainsKey(username))
-                {
                     stats.TopUsers[username]++;
-                }
                 else
-                {
                     stats.TopUsers[username] = 1;
-                }
 
-                // Keep only top 10 users to avoid infinite growth
                 if (stats.TopUsers.Count > 10)
-                {
-                   stats.TopUsers = stats.TopUsers.OrderByDescending(x => x.Value).Take(10).ToDictionary(x => x.Key, x => x.Value);
-                }
+                    stats.TopUsers = stats.TopUsers.OrderByDescending(x => x.Value).Take(10).ToDictionary(x => x.Key, x => x.Value);
 
                 string newJson = JsonSerializer.Serialize(stats, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(statsPath, newJson);
@@ -387,64 +559,43 @@ static class Logger
         }
     }
 
-    private static string GetLogFilePath(string? sessionId, string prefix = "app")
+    static string GetLogFilePath(string? sessionId, string prefix = "app")
     {
-        string baseDir = Path.Combine(Program.appDir, "frontend", "sessions");
+        string baseDir = Path.Combine(Program.AppDir, "frontend", "sessions");
         if (!Directory.Exists(baseDir))
-        {
             Directory.CreateDirectory(baseDir);
-        }
 
-        // Use an environment variable "SESSION_NAME" if available; otherwise default to "default"
         string sessionName = Environment.GetEnvironmentVariable("SESSION_NAME") ?? "default";
-        // Append session name and current date (YYYYMMDD) to the log file name
         string dateString = DateTime.Now.ToString("yyyyMMdd");
-        // Use sessionId for uniqueness if sessionName is default, or just sessionName if provided
-        string uniquePart = (sessionName == "default" && sessionId != null) ? sessionId.Substring(0, 8) : sessionName;
+        string uniquePart = (sessionName == "default" && sessionId != null) ? sessionId[..8] : sessionName;
         return Path.Combine(baseDir, $"{prefix}-{uniquePart}-{dateString}.log");
     }
 
-    // Existing simple message logger
     public static void LogMsg(string message, string? sessionId = null)
     {
         lock (_lock)
         {
             try
             {
-                // Include session ID in standard logs as well
-                using (StreamWriter writer = new StreamWriter(GetLogFilePath(sessionId, "app"), append: true))
-                {
-                    writer.WriteLine($"{DateTime.Now:u} [{sessionId ?? "GLOBAL"}] - {message}");
-                }
+                using var writer = new StreamWriter(GetLogFilePath(sessionId, "app"), append: true);
+                writer.WriteLine($"{DateTime.Now:u} [{sessionId ?? "GLOBAL"}] - {message}");
             }
-            catch
-            {
-                // Avoid throwing exceptions from logger
-            }
+            catch { }
         }
     }
 
-    // New method for logging structured metrics, potentially to a different file
     public static void LogMetric(string sessionId, string eventType, object payload)
     {
-        lock (_metricLock) // Use separate lock for metric file
+        lock (_metricLock)
         {
             try
             {
-                // Serialize the metric data to JSON
-                string jsonPayload = JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = false }); // Compact JSON
-                string logEntry = $"{DateTime.UtcNow:o}|{sessionId}|{eventType}|{jsonPayload}"; // Pipe-delimited format for easier parsing
-
-                // Log metrics to a separate file, e.g., metrics.log
-                using (StreamWriter writer = new StreamWriter(GetLogFilePath(sessionId, "metrics"), append: true))
-                {
-                    writer.WriteLine(logEntry);
-                }
+                string jsonPayload = JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = false });
+                string logEntry = $"{DateTime.UtcNow:o}|{sessionId}|{eventType}|{jsonPayload}";
+                using var writer = new StreamWriter(GetLogFilePath(sessionId, "metrics"), append: true);
+                writer.WriteLine(logEntry);
             }
-            catch
-            {
-                // Avoid throwing exceptions from logger
-            }
+            catch { }
         }
     }
 
@@ -454,7 +605,7 @@ static class Logger
         {
             try
             {
-                string repoPath = Path.Combine(Program.appDir, "frontend");
+                string repoPath = Path.Combine(Program.AppDir, "frontend");
                 string? gitToken = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
                 string? gitUser = Environment.GetEnvironmentVariable("GITHUB_USER");
 
@@ -466,41 +617,33 @@ static class Logger
 
                 if (!Repository.IsValid(repoPath))
                 {
-                    LogMsg($"Git push skipped: {repoPath} is not a valid repository.", sessionId);
+                    LogMsg($"Git push skipped: {repoPath} not a valid repository.", sessionId);
                     return;
                 }
 
-                using (var repo = new Repository(repoPath))
-                {
-                    string metricsFile = GetLogFilePath(sessionId, "metrics");
-                    string appLogFile = GetLogFilePath(sessionId, "app");
-                    string statsFile = Path.Combine(repoPath, "global_stats.json");
+                using var repo = new Repository(repoPath);
+                string metricsFile = GetLogFilePath(sessionId, "metrics");
+                string appLogFile = GetLogFilePath(sessionId, "app");
+                string statsFile = Path.Combine(repoPath, "global_stats.json");
 
-                    // Staging paths need to be relative to the repo root
-                    string relativeMetrics = Path.GetRelativePath(repoPath, metricsFile);
-                    string relativeAppLog = Path.GetRelativePath(repoPath, appLogFile);
-                    
-                    Commands.Stage(repo, relativeMetrics);
-                    Commands.Stage(repo, relativeAppLog);
+                Commands.Stage(repo, Path.GetRelativePath(repoPath, metricsFile));
+                Commands.Stage(repo, Path.GetRelativePath(repoPath, appLogFile));
 
-                    if (File.Exists(statsFile))
+                if (File.Exists(statsFile))
+                    Commands.Stage(repo, "global_stats.json");
+
+                var author = new Signature(gitUser!, $"{gitUser}@users.noreply.github.com", DateTimeOffset.Now);
+                repo.Commit($"Add session data for {sessionId}", author, author);
+
+                repo.Network.Push(repo.Network.Remotes["origin"],
+                    @"refs/heads/master:refs/heads/data",
+                    new PushOptions
                     {
-                        Commands.Stage(repo, "global_stats.json");
-                    }
+                        CredentialsProvider = (_, _, _) =>
+                            new UsernamePasswordCredentials { Username = gitToken!, Password = "" }
+                    });
 
-                    Signature author = new Signature(gitUser, $"{gitUser}@users.noreply.github.com", DateTimeOffset.Now);
-                    repo.Commit($"Add session data for {sessionId}", author, author);
-
-                    var options = new PushOptions
-                    {
-                        CredentialsProvider = (url, user, types) =>
-                            new UsernamePasswordCredentials { Username = gitToken, Password = "" }
-                    };
-
-                    // Push to the 'data' branch of the frontend repo
-                    repo.Network.Push(repo.Network.Remotes["origin"], @"refs/heads/master:refs/heads/data", options);
-                    LogMsg($"Successfully pushed session {sessionId} data to data branch of frontend repo.", sessionId);
-                }
+                LogMsg($"Pushed session {sessionId} data to data branch.", sessionId);
             }
             catch (Exception ex)
             {
