@@ -21,4 +21,4 @@ services:
       - SSH_PASSWORD=${SSH_PASSWORD:-test}
       - SSH_PORT=${SSH_PORT:-22722}
     volumes:
-      - "./app:/home/test/app:rw"
+      - "./app/frontend:/home/test/app/frontend:rw"
