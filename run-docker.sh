@@ -13,12 +13,6 @@ if [ ! -f .env ]; then
   exit 1
 fi
 
-# Ensure app/frontend/sessions exists
-mkdir -p app/frontend/sessions
-
-echo "Stopping old container..."
-docker rm -f funnypot-container 2>/dev/null || true
-
 echo "Building and starting..."
 $COMPOSE up -d --build
 
