@@ -84,7 +84,7 @@ class Program
 
         var server = new SshServer(new StartingInfo(IPAddress.Any, SshPort, SshBanner));
 
-        server.AddHostKey("ssh-rsa", hostKeyPem);
+        server.AddHostKey("rsa-sha2-512", hostKeyPem);
         server.ConnectionAccepted += OnConnectionAccepted;
         server.ExceptionRasied += (_, ex) =>
             Logger.LogMsg($"Server exception: {ex.Message}");
