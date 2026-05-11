@@ -225,81 +225,98 @@ class Program
             void SendPrompt() =>
                 channel.SendData(Encoding.UTF8.GetBytes(GetPrompt(username)));
 
+            void ProcessLine(string line)
+            {
+                if (string.IsNullOrEmpty(line))
+                {
+                    SendPrompt();
+                    return;
+                }
+
+                messageCount++;
+
+                if (line.Equals("exit", StringComparison.OrdinalIgnoreCase))
+                {
+                    channel.SendData(Encoding.UTF8.GetBytes("Goodbye!\r\n"));
+                    Logger.LogMsg($"User {username} initiated exit.");
+                    idleTimer.Stop();
+                    channel.SendClose(0);
+                    return;
+                }
+
+                Logger.LogMsg($"[Session {sessionId}] User input: {line}");
+
+                var (isValid, errorMsg) = InputValidator.Validate(line);
+                if (!isValid)
+                {
+                    blockedOps++;
+                    channel.SendData(Encoding.UTF8.GetBytes(errorMsg + " - connection terminated.\r\n"));
+                    Logger.LogMsg($"[Session {sessionId}] Blocked: {line}");
+                    idleTimer.Stop();
+                    channel.SendClose(0);
+                    return;
+                }
+
+                if (SCPDetector.IsSCPCommand(line))
+                {
+                    blockedOps++;
+                    Logger.LogMsg($"[Session {sessionId}] Blocked SCP/SFTP: {line}");
+                    channel.SendData(Encoding.UTF8.GetBytes("Operation not allowed\r\n"));
+                    SendPrompt();
+                    return;
+                }
+
+                if (LlmDelayMs > 0)
+                    Thread.Sleep(LlmDelayMs);
+
+                var stopwatch = Stopwatch.StartNew();
+                var (response, promptTokens, completionTokens, _) = GetLLMResponse(messageHistory, line);
+                messageHistory.Add(new() { role = "assistant", content = response });
+                stopwatch.Stop();
+
+                totalPromptTokens += promptTokens;
+                totalCompletionTokens += completionTokens;
+                sessionDurationMs += stopwatch.ElapsedMilliseconds;
+
+                Logger.LogMsg($"[Session {sessionId}] LLM response: {response}");
+
+                channel.SendData(Encoding.UTF8.GetBytes(response + "\r\n"));
+                SendPrompt();
+
+                Logger.LogMetric(sessionId, "LLMInteraction", new
+                {
+                    Input = line,
+                    Response = response,
+                    PromptTokens = promptTokens,
+                    CompletionTokens = completionTokens,
+                    DurationMs = stopwatch.ElapsedMilliseconds
+                });
+            }
+
             channel.DataReceived += (_, data) =>
             {
                 ResetIdle();
-                pendingInput += Encoding.UTF8.GetString(data);
-
-                while (pendingInput.Contains('\n'))
+                foreach (var c in Encoding.UTF8.GetString(data))
                 {
-                    var nlIdx = pendingInput.IndexOf('\n');
-                    var line = pendingInput[..nlIdx].TrimEnd('\r');
-                    pendingInput = pendingInput[(nlIdx + 1)..];
-
-                    if (string.IsNullOrEmpty(line))
+                    if (c == '\r' || c == '\n')
                     {
-                        SendPrompt();
+                        channel.SendData(Encoding.UTF8.GetBytes("\r\n"));
+                        var line = pendingInput;
+                        pendingInput = "";
+                        ProcessLine(line);
                         continue;
                     }
 
-                    messageCount++;
-
-                    if (line.Equals("exit", StringComparison.OrdinalIgnoreCase))
+                    if (c == '\b' || c == '\u007f')
                     {
-                        channel.SendData(Encoding.UTF8.GetBytes("Goodbye!\r\n"));
-                        Logger.LogMsg($"User {username} initiated exit.");
-                        idleTimer.Stop();
-                        channel.SendClose(0);
-                        return;
-                    }
-
-                    Logger.LogMsg($"[Session {sessionId}] User input: {line}");
-
-                    var (isValid, errorMsg) = InputValidator.Validate(line);
-                    if (!isValid)
-                    {
-                        blockedOps++;
-                        channel.SendData(Encoding.UTF8.GetBytes(errorMsg + " - connection terminated.\r\n"));
-                        Logger.LogMsg($"[Session {sessionId}] Blocked: {line}");
-                        idleTimer.Stop();
-                        channel.SendClose(0);
-                        return;
-                    }
-
-                    if (SCPDetector.IsSCPCommand(line))
-                    {
-                        blockedOps++;
-                        Logger.LogMsg($"[Session {sessionId}] Blocked SCP/SFTP: {line}");
-                        channel.SendData(Encoding.UTF8.GetBytes("Operation not allowed\r\n"));
-                        SendPrompt();
+                        if (pendingInput.Length == 0) continue;
+                        pendingInput = pendingInput[..^1];
+                        channel.SendData(Encoding.UTF8.GetBytes("\b \b"));
                         continue;
                     }
 
-                    if (LlmDelayMs > 0)
-                        Thread.Sleep(LlmDelayMs);
-
-                    var stopwatch = Stopwatch.StartNew();
-                    var (response, promptTokens, completionTokens, _) = GetLLMResponse(messageHistory, line);
-                    messageHistory.Add(new() { role = "assistant", content = response });
-                    stopwatch.Stop();
-
-                    totalPromptTokens += promptTokens;
-                    totalCompletionTokens += completionTokens;
-                    sessionDurationMs += stopwatch.ElapsedMilliseconds;
-
-                    Logger.LogMsg($"[Session {sessionId}] LLM response: {response}");
-
-                    channel.SendData(Encoding.UTF8.GetBytes(response + "\r\n"));
-                    SendPrompt();
-
-                    Logger.LogMetric(sessionId, "LLMInteraction", new
-                    {
-                        Input = line,
-                        Response = response,
-                        PromptTokens = promptTokens,
-                        CompletionTokens = completionTokens,
-                        DurationMs = stopwatch.ElapsedMilliseconds
-                    });
+                    pendingInput += c;
+                    channel.SendData(Encoding.UTF8.GetBytes(c.ToString()));
                 }
             };
 
