@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FunnyPot.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bf5f96686e75ddf27a6891f6f0681b2dbbd40742")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8dc507e04d7022119921eea87fe61babbf34b1e8")]
 [assembly: System.Reflection.AssemblyProductAttribute("FunnyPot.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FunnyPot.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

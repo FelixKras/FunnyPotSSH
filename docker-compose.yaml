@@ -4,7 +4,7 @@ services:
     env_file: .env
     container_name: funnypot-container
     ports:
-      - "22422:22422"
+      - "22722:22722"
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -19,5 +19,6 @@ services:
       - GITHUB_USER=${GITHUB_USER}
       - SSH_USER=${SSH_USER:-test}
       - SSH_PASSWORD=${SSH_PASSWORD:-test}
+      - SSH_PORT=${SSH_PORT:-22722}
     volumes:
       - "./app:/home/test/app:rw"

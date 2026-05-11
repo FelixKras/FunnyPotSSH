@@ -36,8 +36,8 @@ RUN mkdir -p /home/$USERNAME/app/frontend/sessions && \
 
 USER $USERNAME
 
-EXPOSE 22422
+EXPOSE 22722
 
-HEALTHCHECK --interval=30s --timeout=10s CMD timeout 2s bash -c '</dev/tcp/localhost/22422' || exit 1
+HEALTHCHECK --interval=30s --timeout=10s CMD timeout 2s bash -c '</dev/tcp/localhost/22722' || exit 1
 
 CMD ["dotnet", "FunnyPot.dll"]
