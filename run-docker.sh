@@ -16,15 +16,4 @@ fi
 echo "Building and starting..."
 $COMPOSE up -d --build
 
-echo "Waiting for health check..."
-for i in $(seq 1 12); do
-  status=$(docker inspect --format='{{.State.Health.Status}}' funnypot-container 2>/dev/null)
-  if [ "$status" = "healthy" ]; then
-    echo "Container is healthy."
-    break
-  fi
-  sleep 5
-done
-
-docker ps --filter name=funnypot-container --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-echo "Done. SSH to: ssh -p 22722 test@localhost"
+echo "Done. Give it a few seconds then: ssh -p 22722 test@localhost"
