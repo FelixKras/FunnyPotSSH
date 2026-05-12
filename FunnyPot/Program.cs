@@ -18,7 +18,7 @@ class Program
     static readonly HttpClient httpClient = new();
 
     static readonly int AuthMaxTries = int.Parse(Environment.GetEnvironmentVariable("AUTH_MAX_TRIES") ?? "3");
-    static readonly int PasswordHarvestAttempt = Math.Max(1, AuthMaxTries - 1);
+    static readonly int PasswordHarvestAttempt = Math.Max(1, Math.Min(AuthMaxTries, 3));
     static readonly int LlmDelayMs = int.Parse(Environment.GetEnvironmentVariable("LLM_DELAY_MS") ?? "500");
     static readonly int MaxSessions = int.Parse(Environment.GetEnvironmentVariable("MAX_SESSIONS") ?? "50");
     static readonly int SessionIdleTimeoutSecs = int.Parse(Environment.GetEnvironmentVariable("SESSION_IDLE_TIMEOUT_SECONDS") ?? "300");
@@ -38,6 +38,20 @@ class Program
     {
         username ??= Environment.GetEnvironmentVariable("SSH_USER") ?? "remote";
         return $"{username}@omegablack>$ ";
+    }
+
+    internal static string? GetSecretOrEnvironment(string name)
+    {
+        var secretName = name.ToLowerInvariant();
+        var secretPath = Path.Combine("/run/secrets", secretName);
+        if (File.Exists(secretPath))
+        {
+            var secret = File.ReadAllText(secretPath).Trim();
+            if (!string.IsNullOrEmpty(secret))
+                return secret;
+        }
+
+        return Environment.GetEnvironmentVariable(name);
     }
 
     static void Main()
@@ -61,7 +75,7 @@ class Program
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
                 var ping = new HttpRequestMessage(HttpMethod.Get, "https://openrouter.ai/api/v1/auth/key")
                 {
-                    Headers = { { "Authorization", $"Bearer {Environment.GetEnvironmentVariable("OPENROUTER_API_KEY") ?? ""}" } }
+                    Headers = { { "Authorization", $"Bearer {GetSecretOrEnvironment("OPENROUTER_API_KEY") ?? ""}" } }
                 };
                 var pingResp = await httpClient.SendAsync(ping, cts.Token);
                 Logger.LogMsg(pingResp.IsSuccessStatusCode
@@ -569,7 +583,7 @@ You are not an AI, an LLM, or a language model. You are the Omega-Black server r
         List<ChatRequestData.ChatMessage> history, string userInput)
     {
         string apiUrl = "https://openrouter.ai/api/v1/chat/completions";
-        string apiKey = Environment.GetEnvironmentVariable("OPENROUTER_API_KEY") ?? "no-key";
+        string apiKey = GetSecretOrEnvironment("OPENROUTER_API_KEY") ?? "no-key";
 
         history.Add(new() { role = "user", content = userInput });
 
@@ -1104,8 +1118,8 @@ static class Logger
             try
             {
                 string repoPath = Path.Combine(Program.AppDir, "frontend");
-                string? gitToken = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
-                string? gitUser = Environment.GetEnvironmentVariable("GITHUB_USER");
+                string? gitToken = Program.GetSecretOrEnvironment("GITHUB_TOKEN");
+                string? gitUser = Program.GetSecretOrEnvironment("GITHUB_USER");
 
                 if (string.IsNullOrEmpty(gitToken) || string.IsNullOrEmpty(gitUser))
                 {

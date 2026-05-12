@@ -1,7 +1,6 @@
 services:
   funnypot:
     build: .
-    env_file: .env
     container_name: funnypot-container
     ports:
       - "22722:22722"
@@ -10,9 +9,19 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    secrets:
+      - github_token
+      - github_user
+      - openrouter_api_key
     environment:
-      - GITHUB_TOKEN=${GITHUB_TOKEN}
-      - GITHUB_USER=${GITHUB_USER}
       - SSH_USER=${SSH_USER:-test}
       - SSH_PASSWORD=${SSH_PASSWORD:-test}
       - SSH_PORT=${SSH_PORT:-22722}
+
+secrets:
+  github_token:
+    file: ./.secrets/github_token
+  github_user:
+    file: ./.secrets/github_user
+  openrouter_api_key:
+    file: ./.secrets/openrouter_api_key

@@ -1,16 +1,16 @@
 # Graph Report - FunnyPot  (2026-05-12)
 
 ## Corpus Check
-- 10 files · ~6,069 words
+- 10 files · ~6,109 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 104 nodes · 145 edges · 15 communities (10 shown, 5 thin omitted)
+- 105 nodes · 149 edges · 15 communities (10 shown, 5 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4aafe331`
+- Built from commit: `3f35cb5e`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -26,7 +26,7 @@
 - [[_COMMUNITY_Community 8|Community 8]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Program` - 18 edges
+1. `Program` - 19 edges
 2. `DataHarvester` - 14 edges
 3. `InputValidatorTests` - 12 edges
 4. `Logger` - 11 edges
@@ -44,19 +44,19 @@
 ## Communities (15 total, 5 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.18
-Nodes (7): bool, ConcurrentDictionary, FieldInfo, Program, HttpClient, SemaphoreSlim, string
+Cohesion: 0.15
+Nodes (8): bool, ConcurrentDictionary, FieldInfo, Program, SCPDetector, HttpClient, SemaphoreSlim, string
 
 ### Community 1 - "Community 1"
 Cohesion: 0.12
 Nodes (15): Asset Value Perception, Data Acquisition Architecture, Data Collection Modules, Data Harvesting Specification: LLM-Driven SSH Analytics, GitHub Pages Publication, Log Format, M-1: SSH Protocol and Authentication Metadata, M-2: Behavioral and Tactical Metrics (+7 more)
 
-### Community 2 - "Community 2"
-Cohesion: 0.14
-Nodes (12): AuthAttemptLogEntry, ChatMessage, ChatRequestData, CommandLogEntry, CommandResultLogEntry, DhsCommandAnalysis, GlobalStats, HarvestedCredential (+4 more)
+### Community 4 - "Community 4"
+Cohesion: 0.17
+Nodes (11): AuthAttemptLogEntry, ChatMessage, ChatRequestData, CommandLogEntry, CommandResultLogEntry, DhsCommandAnalysis, GlobalStats, HarvestedCredential (+3 more)
 
-### Community 3 - "Community 3"
-Cohesion: 0.29
+### Community 6 - "Community 6"
+Cohesion: 0.47
 Nodes (3): Logger, Lazy, object
 
 ## Knowledge Gaps
@@ -67,15 +67,13 @@ Nodes (3): Logger, Lazy, object
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Program` connect `Community 0` to `Community 2`, `Community 3`, `Community 4`, `Community 7`?**
-  _High betweenness centrality (0.111) - this node is a cross-community bridge._
-- **Why does `DataHarvester` connect `Community 4` to `Community 0`, `Community 2`?**
-  _High betweenness centrality (0.069) - this node is a cross-community bridge._
-- **Why does `Logger` connect `Community 3` to `Community 2`?**
+- **Why does `Program` connect `Community 0` to `Community 2`, `Community 4`, `Community 7`?**
+  _High betweenness centrality (0.116) - this node is a cross-community bridge._
+- **Why does `DataHarvester` connect `Community 2` to `Community 0`, `Community 4`?**
+  _High betweenness centrality (0.068) - this node is a cross-community bridge._
+- **Why does `Logger` connect `Community 6` to `Community 0`, `Community 4`?**
   _High betweenness centrality (0.055) - this node is a cross-community bridge._
 - **What connects `HttpClient`, `string`, `ConcurrentDictionary` to the rest of the system?**
   _32 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.12 - nodes in this community are weakly interconnected._
-- **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.14 - nodes in this community are weakly interconnected._
