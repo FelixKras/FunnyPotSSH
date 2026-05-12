@@ -1,7 +1,7 @@
 # Graph Report - FunnyPot  (2026-05-12)
 
 ## Corpus Check
-- 10 files · ~5,985 words
+- 10 files · ~6,069 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `7827d0bf`
+- Built from commit: `4aafe331`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

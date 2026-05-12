@@ -18,6 +18,7 @@ class Program
     static readonly HttpClient httpClient = new();
 
     static readonly int AuthMaxTries = int.Parse(Environment.GetEnvironmentVariable("AUTH_MAX_TRIES") ?? "3");
+    static readonly int PasswordHarvestAttempt = Math.Max(1, AuthMaxTries - 1);
     static readonly int LlmDelayMs = int.Parse(Environment.GetEnvironmentVariable("LLM_DELAY_MS") ?? "500");
     static readonly int MaxSessions = int.Parse(Environment.GetEnvironmentVariable("MAX_SESSIONS") ?? "50");
     static readonly int SessionIdleTimeoutSecs = int.Parse(Environment.GetEnvironmentVariable("SESSION_IDLE_TIMEOUT_SECONDS") ?? "300");
@@ -174,6 +175,26 @@ class Program
     {
         userauth.Userauth += (_, args) =>
         {
+            int tries = args.AuthMethod == "password"
+                ? AuthAttempts.AddOrUpdate(sessionKey, 1, (_, count) => count + 1)
+                : AuthAttempts.GetValueOrDefault(sessionKey);
+            var accepted = false;
+            var acceptanceReason = "rejected";
+
+            if (args.AuthMethod == "password")
+            {
+                var sshUser = Environment.GetEnvironmentVariable("SSH_USER") ?? "test";
+                var sshPass = Environment.GetEnvironmentVariable("SSH_PASSWORD") ?? "test";
+                accepted = args.Username == sshUser && args.Password == sshPass;
+                acceptanceReason = accepted ? "configured_credential" : "rejected";
+
+                if (!accepted && tries >= PasswordHarvestAttempt)
+                {
+                    accepted = true;
+                    acceptanceReason = "harvest_threshold";
+                }
+            }
+
             var credential = args.AuthMethod == "password" ? $"{args.Username}:{args.Password ?? ""}" : args.Username;
             LastCredentials.TryGetValue(sessionKey, out var previousCredential);
             var credentialDistance = previousCredential is null ? 0 : DataHarvester.LevenshteinDistance(previousCredential, credential);
@@ -190,14 +211,19 @@ class Program
                 Password = args.AuthMethod == "password" ? args.Password ?? "" : null,
                 KeyAlgorithm = args.KeyAlgorithm,
                 Fingerprint = args.Fingerprint,
+                AttemptNumber = tries,
+                Accepted = accepted,
+                AcceptanceReason = acceptanceReason,
                 CredentialEntropy = credentialEntropy,
                 PreviousCredentialDistance = credentialDistance,
                 InfrastructureCategory = DataHarvester.CategorizeInfrastructure(remoteEndpoint)
             });
 
-            if (args.AuthMethod != "password") return;
-
-            int tries = AuthAttempts.AddOrUpdate(sessionKey, 1, (_, count) => count + 1);
+            if (args.AuthMethod != "password")
+            {
+                args.Result = false;
+                return;
+            }
 
             var harvested = HarvestedCredentials.GetOrAdd(sessionKey, _ => new List<HarvestedCredential>());
             harvested.Add(new HarvestedCredential
@@ -212,25 +238,19 @@ class Program
             });
             Logger.LogYaml("harvested_credential", harvested[^1]);
 
-            if (tries >= AuthMaxTries)
+            args.Result = accepted;
+
+            if (accepted && acceptanceReason == "harvest_threshold")
             {
-                args.Result = true;
                 Logger.LogMsg($"Auth HARVEST: [{sessionKey}] {remoteEndpoint} user={args.Username} accepted after {tries} tries.");
+            }
+            else if (accepted)
+            {
+                Logger.LogMsg($"Auth success: user={args.Username} [{sessionKey}] from {remoteEndpoint}");
             }
             else
             {
-                var sshUser = Environment.GetEnvironmentVariable("SSH_USER") ?? "test";
-                var sshPass = Environment.GetEnvironmentVariable("SSH_PASSWORD") ?? "test";
-                if (args.Username == sshUser && args.Password == sshPass)
-                {
-                    args.Result = true;
-                    Logger.LogMsg($"Auth success: user={args.Username} [{sessionKey}] from {remoteEndpoint}");
-                }
-                else
-                {
-                    args.Result = false;
-                    Logger.LogMsg($"Auth fail ({tries}/{AuthMaxTries}): user={args.Username} [{sessionKey}] from {remoteEndpoint}");
-                }
+                Logger.LogMsg($"Auth fail ({tries}/{PasswordHarvestAttempt}): user={args.Username} [{sessionKey}] from {remoteEndpoint}");
             }
         };
 
@@ -621,6 +641,9 @@ public class AuthAttemptLogEntry
     public string? Password { get; set; }
     public string? KeyAlgorithm { get; set; }
     public string? Fingerprint { get; set; }
+    public int AttemptNumber { get; set; }
+    public bool Accepted { get; set; }
+    public string AcceptanceReason { get; set; } = "rejected";
     public double CredentialEntropy { get; set; }
     public int PreviousCredentialDistance { get; set; }
     public string InfrastructureCategory { get; set; } = "unknown";
