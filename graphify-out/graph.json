@@ -657,7 +657,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1009",
       "id": "funnypot_program_dataharvester_capturepayloadmetadataasync",
-      "community": 2,
+      "community": 0,
       "norm_label": ".capturepayloadmetadataasync()"
     },
     {
@@ -774,7 +774,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1156",
       "id": "funnypot_program_logger_logyaml",
-      "community": 2,
+      "community": 0,
       "norm_label": ".logyaml()"
     },
     {
@@ -839,6 +839,24 @@
       "id": "funnypot_program_logger_pushtogit",
       "community": 2,
       "norm_label": ".pushtogit()"
+    },
+    {
+      "label": ".EnsurePublicationRepository()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1364",
+      "id": "funnypot_program_logger_ensurepublicationrepository",
+      "community": 2,
+      "norm_label": ".ensurepublicationrepository()"
+    },
+    {
+      "label": ".GetStaticDashboardRemoteUrl()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1384",
+      "id": "funnypot_program_logger_getstaticdashboardremoteurl",
+      "community": 2,
+      "norm_label": ".getstaticdashboardremoteurl()"
     },
     {
       "label": "FunnyPot.AssemblyInfo.cs",
@@ -1727,6 +1745,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1386",
+      "weight": 1.0,
+      "source": "funnypot_program_logger_getstaticdashboardremoteurl",
+      "target": "funnypot_program_program_getsecretorenvironment",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
       "source_location": "L40",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -2551,6 +2580,26 @@
       "target": "funnypot_program_logger_pushtogit"
     },
     {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1364",
+      "weight": 1.0,
+      "source": "funnypot_program_logger",
+      "target": "funnypot_program_logger_ensurepublicationrepository",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1384",
+      "weight": 1.0,
+      "source": "funnypot_program_logger",
+      "target": "funnypot_program_logger_getstaticdashboardremoteurl",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -2643,6 +2692,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1369",
+      "weight": 1.0,
+      "source": "funnypot_program_logger_ensurepublicationrepository",
+      "target": "funnypot_program_logger_logmsg",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
       "source_location": "L116",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -2665,11 +2725,33 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1321",
+      "weight": 1.0,
+      "source": "funnypot_program_logger_pushtogit",
+      "target": "funnypot_program_logger_ensurepublicationrepository",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
       "source_location": "L155",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "funnypot_program_program_handlesession",
       "target": "funnypot_program_logger_pushtogit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1376",
+      "weight": 1.0,
+      "source": "funnypot_program_logger_ensurepublicationrepository",
+      "target": "funnypot_program_logger_getstaticdashboardremoteurl",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -2833,5 +2915,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "e16a4e3f348a0af568136c1c49df6afbb74e30ca"
+  "built_at_commit": "eda897be24c01f0137e89bc5a32061f7d9339fc8"
 }

@@ -17,6 +17,10 @@ services:
       - SSH_USER=${SSH_USER:-test}
       - SSH_PASSWORD=${SSH_PASSWORD:-test}
       - SSH_PORT=${SSH_PORT:-22722}
+      - GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-}
+      - GITHUB_REPO=${GITHUB_REPO:-}
+      - STATIC_SITE_REMOTE_URL=${STATIC_SITE_REMOTE_URL:-}
+      - GITHUB_DATA_BRANCH=${GITHUB_DATA_BRANCH:-data}
 
 secrets:
   github_token:

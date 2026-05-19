@@ -1317,11 +1317,8 @@ static class Logger
                     return;
                 }
 
-                if (!Repository.IsValid(repoPath))
-                {
-                    LogMsg($"Git push skipped: {repoPath} not a valid repository.", sessionId);
-                    return;
-                }
+                Directory.CreateDirectory(repoPath);
+                EnsurePublicationRepository(repoPath, gitUser, sessionId);
 
                 using var repo = new Repository(repoPath);
                 string metricsFile = GetLogFilePath(sessionId, "metrics");
@@ -1352,7 +1349,7 @@ static class Logger
                     new PushOptions
                     {
                         CredentialsProvider = (_, _, _) =>
-                            new UsernamePasswordCredentials { Username = gitToken!, Password = "" }
+                            new UsernamePasswordCredentials { Username = gitUser!, Password = gitToken! }
                     });
 
                 LogMsg($"Pushed session {sessionId} data to data branch.", sessionId);
@@ -1362,5 +1359,49 @@ static class Logger
                 LogMsg($"Git push failed for session {sessionId}: {ex.Message}", sessionId);
             }
         }
+    }
+
+    static void EnsurePublicationRepository(string repoPath, string gitUser, string sessionId)
+    {
+        if (!Repository.IsValid(repoPath))
+        {
+            Repository.Init(repoPath);
+            LogMsg($"Initialized static dashboard repository at {repoPath}.", sessionId);
+        }
+
+        using var repo = new Repository(repoPath);
+        if (repo.Network.Remotes["origin"] is not null)
+            return;
+
+        var remoteUrl = GetStaticDashboardRemoteUrl(gitUser);
+        if (string.IsNullOrWhiteSpace(remoteUrl))
+            throw new InvalidOperationException("Static dashboard remote is not configured. Set GITHUB_REMOTE_URL, STATIC_SITE_REMOTE_URL, or GITHUB_REPOSITORY.");
+
+        repo.Network.Remotes.Add("origin", remoteUrl);
+        LogMsg($"Configured static dashboard origin: {remoteUrl}", sessionId);
+    }
+
+    static string? GetStaticDashboardRemoteUrl(string gitUser)
+    {
+        var explicitUrl = Program.GetSecretOrEnvironment("STATIC_SITE_REMOTE_URL")
+            ?? Program.GetSecretOrEnvironment("GITHUB_REMOTE_URL");
+        if (!string.IsNullOrWhiteSpace(explicitUrl))
+            return explicitUrl;
+
+        var repository = Program.GetSecretOrEnvironment("GITHUB_REPOSITORY");
+        if (!string.IsNullOrWhiteSpace(repository))
+        {
+            if (repository.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                repository.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+                repository.StartsWith("git@", StringComparison.OrdinalIgnoreCase))
+                return repository;
+
+            return $"https://github.com/{repository}.git";
+        }
+
+        var repoName = Program.GetSecretOrEnvironment("GITHUB_REPO");
+        return string.IsNullOrWhiteSpace(repoName)
+            ? null
+            : $"https://github.com/{gitUser}/{repoName}.git";
     }
 }
