@@ -9,7 +9,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L1",
       "id": "funnypot_tests_unittests_cs",
-      "community": 6,
+      "community": 1,
       "norm_label": "unittests.cs"
     },
     {
@@ -18,7 +18,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L5",
       "id": "funnypot_tests_unittests_inputvalidatortests",
-      "community": 5,
+      "community": 1,
       "norm_label": "inputvalidatortests"
     },
     {
@@ -27,7 +27,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L7",
       "id": "funnypot_tests_unittests_inputvalidatortests_validate_nullinput_returnsfalse",
-      "community": 5,
+      "community": 1,
       "norm_label": ".validate_nullinput_returnsfalse()"
     },
     {
@@ -36,7 +36,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L15",
       "id": "funnypot_tests_unittests_inputvalidatortests_validate_emptyinput_returnsfalse",
-      "community": 5,
+      "community": 1,
       "norm_label": ".validate_emptyinput_returnsfalse()"
     },
     {
@@ -45,7 +45,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L23",
       "id": "funnypot_tests_unittests_inputvalidatortests_validate_whitespaceinput_returnstrue",
-      "community": 5,
+      "community": 1,
       "norm_label": ".validate_whitespaceinput_returnstrue()"
     },
     {
@@ -54,7 +54,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L30",
       "id": "funnypot_tests_unittests_inputvalidatortests_validate_exceedsmaxlength_returnsfalse",
-      "community": 5,
+      "community": 1,
       "norm_label": ".validate_exceedsmaxlength_returnsfalse()"
     },
     {
@@ -63,7 +63,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L39",
       "id": "funnypot_tests_unittests_inputvalidatortests_validate_atmaxlength_returnstrue",
-      "community": 5,
+      "community": 1,
       "norm_label": ".validate_atmaxlength_returnstrue()"
     },
     {
@@ -72,7 +72,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L49",
       "id": "funnypot_tests_unittests_inputvalidatortests_validate_containsnullbyte_returnsfalse",
-      "community": 5,
+      "community": 1,
       "norm_label": ".validate_containsnullbyte_returnsfalse()"
     },
     {
@@ -81,7 +81,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L58",
       "id": "funnypot_tests_unittests_inputvalidatortests_validate_nonullbytes_returnstrue",
-      "community": 5,
+      "community": 1,
       "norm_label": ".validate_nonullbytes_returnstrue()"
     },
     {
@@ -90,7 +90,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L65",
       "id": "funnypot_tests_unittests_inputvalidatortests_validate_repetitivecharsexceedslimit_returnsfalse",
-      "community": 5,
+      "community": 1,
       "norm_label": ".validate_repetitivecharsexceedslimit_returnsfalse()"
     },
     {
@@ -99,7 +99,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L74",
       "id": "funnypot_tests_unittests_inputvalidatortests_validate_validrepetitiveinput_returnstrue",
-      "community": 5,
+      "community": 1,
       "norm_label": ".validate_validrepetitiveinput_returnstrue()"
     },
     {
@@ -108,7 +108,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L82",
       "id": "funnypot_tests_unittests_inputvalidatortests_validate_normalcommand_returnstrue",
-      "community": 5,
+      "community": 1,
       "norm_label": ".validate_normalcommand_returnstrue()"
     },
     {
@@ -117,7 +117,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L89",
       "id": "funnypot_tests_unittests_inputvalidatortests_validate_validlonginput_returnstrue",
-      "community": 5,
+      "community": 1,
       "norm_label": ".validate_validlonginput_returnstrue()"
     },
     {
@@ -126,7 +126,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L98",
       "id": "funnypot_tests_unittests_scpdetectortests",
-      "community": 6,
+      "community": 1,
       "norm_label": "scpdetectortests"
     },
     {
@@ -135,7 +135,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L100",
       "id": "funnypot_tests_unittests_scpdetectortests_isscpcommand_detectscorrectly",
-      "community": 6,
+      "community": 1,
       "norm_label": ".isscpcommand_detectscorrectly()"
     },
     {
@@ -207,17 +207,17 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L190",
       "id": "funnypot_tests_unittests_ntfynotifiertests",
-      "community": 6,
+      "community": 1,
       "norm_label": "ntfynotifiertests"
     },
     {
-      "label": ".BuildConnectionMessage_IncludesConnectionDetails()",
+      "label": ".BuildAuthAttemptMessage_IncludesAuthDetailsWithoutPassword()",
       "file_type": "code",
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L192",
-      "id": "funnypot_tests_unittests_ntfynotifiertests_buildconnectionmessage_includesconnectiondetails",
-      "community": 6,
-      "norm_label": ".buildconnectionmessage_includesconnectiondetails()"
+      "id": "funnypot_tests_unittests_ntfynotifiertests_buildauthattemptmessage_includesauthdetailswithoutpassword",
+      "community": 1,
+      "norm_label": ".buildauthattemptmessage_includesauthdetailswithoutpassword()"
     },
     {
       "label": "FunnyPot.Tests.GlobalUsings.g.cs",
@@ -243,7 +243,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1",
       "id": "funnypot_program_cs",
-      "community": 1,
+      "community": 3,
       "norm_label": "program.cs"
     },
     {
@@ -270,7 +270,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L22",
       "id": "int",
-      "community": 7,
+      "community": 8,
       "norm_label": "int"
     },
     {
@@ -324,7 +324,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L46",
       "id": "funnypot_program_program_getsecretorenvironment",
-      "community": 3,
+      "community": 4,
       "norm_label": ".getsecretorenvironment()"
     },
     {
@@ -333,7 +333,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L60",
       "id": "funnypot_program_program_main",
-      "community": 3,
+      "community": 4,
       "norm_label": ".main()"
     },
     {
@@ -349,7 +349,7 @@
       "label": ".GetRemoteEndpoint()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L180",
+      "source_location": "L179",
       "id": "funnypot_program_program_getremoteendpoint",
       "community": 0,
       "norm_label": ".getremoteendpoint()"
@@ -358,16 +358,16 @@
       "label": ".SetupUserauth()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L192",
+      "source_location": "L191",
       "id": "funnypot_program_program_setupuserauth",
-      "community": 4,
+      "community": 2,
       "norm_label": ".setupuserauth()"
     },
     {
       "label": ".SetupShell()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L285",
+      "source_location": "L293",
       "id": "funnypot_program_program_setupshell",
       "community": 0,
       "norm_label": ".setupshell()"
@@ -376,7 +376,7 @@
       "label": ".BuildSystemPrompt()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L570",
+      "source_location": "L578",
       "id": "funnypot_program_program_buildsystemprompt",
       "community": 0,
       "norm_label": ".buildsystemprompt()"
@@ -385,7 +385,7 @@
       "label": ".NormalizeTerminalOutput()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L601",
+      "source_location": "L609",
       "id": "funnypot_program_program_normalizeterminaloutput",
       "community": 0,
       "norm_label": ".normalizeterminaloutput()"
@@ -394,133 +394,133 @@
       "label": ".GetLLMResponse()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L608",
+      "source_location": "L616",
       "id": "funnypot_program_program_getllmresponse",
-      "community": 3,
+      "community": 4,
       "norm_label": ".getllmresponse()"
     },
     {
       "label": "HarvestedCredential",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L663",
+      "source_location": "L671",
       "id": "funnypot_program_harvestedcredential",
-      "community": 1,
+      "community": 3,
       "norm_label": "harvestedcredential"
     },
     {
       "label": "AuthAttemptLogEntry",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L674",
+      "source_location": "L682",
       "id": "funnypot_program_authattemptlogentry",
-      "community": 1,
+      "community": 3,
       "norm_label": "authattemptlogentry"
     },
     {
       "label": "SessionLogEntry",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L694",
+      "source_location": "L702",
       "id": "funnypot_program_sessionlogentry",
-      "community": 1,
+      "community": 3,
       "norm_label": "sessionlogentry"
     },
     {
       "label": "CommandLogEntry",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L707",
+      "source_location": "L715",
       "id": "funnypot_program_commandlogentry",
-      "community": 1,
+      "community": 3,
       "norm_label": "commandlogentry"
     },
     {
       "label": "CommandResultLogEntry",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L729",
+      "source_location": "L737",
       "id": "funnypot_program_commandresultlogentry",
-      "community": 1,
+      "community": 3,
       "norm_label": "commandresultlogentry"
     },
     {
       "label": "PayloadCaptureLogEntry",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L745",
+      "source_location": "L753",
       "id": "funnypot_program_payloadcapturelogentry",
-      "community": 1,
+      "community": 3,
       "norm_label": "payloadcapturelogentry"
     },
     {
       "label": "HarvestedEvent",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L759",
+      "source_location": "L767",
       "id": "funnypot_program_harvestedevent",
-      "community": 1,
+      "community": 3,
       "norm_label": "harvestedevent"
     },
     {
       "label": "HarvestSummary",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L766",
+      "source_location": "L774",
       "id": "funnypot_program_harvestsummary",
-      "community": 1,
+      "community": 3,
       "norm_label": "harvestsummary"
     },
     {
       "label": "DhsCommandAnalysis",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L773",
+      "source_location": "L781",
       "id": "funnypot_program_dhscommandanalysis",
-      "community": 1,
+      "community": 3,
       "norm_label": "dhscommandanalysis"
     },
     {
       "label": "ChatRequestData",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L786",
+      "source_location": "L794",
       "id": "funnypot_program_chatrequestdata",
-      "community": 1,
+      "community": 3,
       "norm_label": "chatrequestdata"
     },
     {
       "label": "ChatMessage",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L792",
+      "source_location": "L800",
       "id": "funnypot_program_chatmessage",
-      "community": 1,
+      "community": 3,
       "norm_label": "chatmessage"
     },
     {
       "label": "GlobalStats",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L799",
+      "source_location": "L807",
       "id": "funnypot_program_globalstats",
-      "community": 1,
+      "community": 3,
       "norm_label": "globalstats"
     },
     {
       "label": "InfrastructureProfile",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L814",
+      "source_location": "L822",
       "id": "funnypot_program_infrastructureprofile",
-      "community": 1,
+      "community": 3,
       "norm_label": "infrastructureprofile"
     },
     {
       "label": "ShellSessionAnalytics",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L820",
+      "source_location": "L828",
       "id": "funnypot_program_shellsessionanalytics",
       "community": 0,
       "norm_label": "shellsessionanalytics"
@@ -529,7 +529,7 @@
       "label": ".RecordCommand()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L833",
+      "source_location": "L841",
       "id": "funnypot_program_shellsessionanalytics_recordcommand",
       "community": 0,
       "norm_label": ".recordcommand()"
@@ -538,7 +538,7 @@
       "label": ".RecordResult()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L844",
+      "source_location": "L852",
       "id": "funnypot_program_shellsessionanalytics_recordresult",
       "community": 0,
       "norm_label": ".recordresult()"
@@ -547,7 +547,7 @@
       "label": ".CalculateTuringMultiplier()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L850",
+      "source_location": "L858",
       "id": "funnypot_program_shellsessionanalytics_calculateturingmultiplier",
       "community": 0,
       "norm_label": ".calculateturingmultiplier()"
@@ -556,124 +556,124 @@
       "label": "InputValidator",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L858",
+      "source_location": "L866",
       "id": "funnypot_program_inputvalidator",
-      "community": 7,
+      "community": 8,
       "norm_label": "inputvalidator"
     },
     {
       "label": ".Validate()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L863",
+      "source_location": "L871",
       "id": "funnypot_program_inputvalidator_validate",
-      "community": 7,
+      "community": 8,
       "norm_label": ".validate()"
     },
     {
       "label": ".ContainsNullBytes()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L876",
+      "source_location": "L884",
       "id": "funnypot_program_inputvalidator_containsnullbytes",
-      "community": 7,
+      "community": 8,
       "norm_label": ".containsnullbytes()"
     },
     {
       "label": ".IsRepetitiveNoise()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L883",
+      "source_location": "L891",
       "id": "funnypot_program_inputvalidator_isrepetitivenoise",
-      "community": 7,
+      "community": 8,
       "norm_label": ".isrepetitivenoise()"
     },
     {
       "label": "SCPDetector",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L905",
+      "source_location": "L913",
       "id": "funnypot_program_scpdetector",
-      "community": 1,
+      "community": 3,
       "norm_label": "scpdetector"
     },
     {
       "label": ".IsSCPCommand()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L907",
+      "source_location": "L915",
       "id": "funnypot_program_scpdetector_isscpcommand",
-      "community": 1,
+      "community": 3,
       "norm_label": ".isscpcommand()"
     },
     {
       "label": "DataHarvester",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L915",
+      "source_location": "L923",
       "id": "funnypot_program_dataharvester",
-      "community": 4,
+      "community": 2,
       "norm_label": "dataharvester"
     },
     {
       "label": "Regex",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L917",
+      "source_location": "L925",
       "id": "regex",
-      "community": 4,
+      "community": 2,
       "norm_label": "regex"
     },
     {
       "label": ".AnalyzeCommand()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L920",
+      "source_location": "L928",
       "id": "funnypot_program_dataharvester_analyzecommand",
-      "community": 4,
+      "community": 2,
       "norm_label": ".analyzecommand()"
     },
     {
       "label": ".CalculateEntropy()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L953",
+      "source_location": "L961",
       "id": "funnypot_program_dataharvester_calculateentropy",
-      "community": 4,
+      "community": 2,
       "norm_label": ".calculateentropy()"
     },
     {
       "label": ".LevenshteinDistance()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L963",
+      "source_location": "L971",
       "id": "funnypot_program_dataharvester_levenshteindistance",
-      "community": 4,
+      "community": 2,
       "norm_label": ".levenshteindistance()"
     },
     {
       "label": ".CategorizeInfrastructure()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L985",
+      "source_location": "L993",
       "id": "funnypot_program_dataharvester_categorizeinfrastructure",
-      "community": 4,
+      "community": 2,
       "norm_label": ".categorizeinfrastructure()"
     },
     {
       "label": ".CalculateFingerprintHash()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1001",
+      "source_location": "L1009",
       "id": "funnypot_program_dataharvester_calculatefingerprinthash",
-      "community": 4,
+      "community": 2,
       "norm_label": ".calculatefingerprinthash()"
     },
     {
       "label": ".CapturePayloadMetadataAsync()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1010",
+      "source_location": "L1018",
       "id": "funnypot_program_dataharvester_capturepayloadmetadataasync",
       "community": 0,
       "norm_label": ".capturepayloadmetadataasync()"
@@ -682,151 +682,151 @@
       "label": ".IsFailureResponse()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1072",
+      "source_location": "L1080",
       "id": "funnypot_program_dataharvester_isfailureresponse",
-      "community": 0,
+      "community": 2,
       "norm_label": ".isfailureresponse()"
     },
     {
       "label": ".DetectHallucinationFeedback()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1078",
+      "source_location": "L1086",
       "id": "funnypot_program_dataharvester_detecthallucinationfeedback",
-      "community": 0,
+      "community": 2,
       "norm_label": ".detecthallucinationfeedback()"
     },
     {
       "label": ".CalculateDiscoveryDepthScore()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1083",
+      "source_location": "L1091",
       "id": "funnypot_program_dataharvester_calculatediscoverydepthscore",
-      "community": 4,
+      "community": 2,
       "norm_label": ".calculatediscoverydepthscore()"
     },
     {
       "label": ".DetectPersistenceVector()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1093",
+      "source_location": "L1101",
       "id": "funnypot_program_dataharvester_detectpersistencevector",
-      "community": 4,
+      "community": 2,
       "norm_label": ".detectpersistencevector()"
     },
     {
       "label": ".DetectTunnelingIntent()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1102",
+      "source_location": "L1110",
       "id": "funnypot_program_dataharvester_detecttunnelingintent",
-      "community": 4,
+      "community": 2,
       "norm_label": ".detecttunnelingintent()"
     },
     {
       "label": ".DetectPersonaBreakout()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1111",
+      "source_location": "L1119",
       "id": "funnypot_program_dataharvester_detectpersonabreakout",
-      "community": 4,
+      "community": 2,
       "norm_label": ".detectpersonabreakout()"
     },
     {
       "label": ".CalculateSemanticComplexity()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1116",
+      "source_location": "L1124",
       "id": "funnypot_program_dataharvester_calculatesemanticcomplexity",
-      "community": 4,
+      "community": 2,
       "norm_label": ".calculatesemanticcomplexity()"
     },
     {
       "label": ".ExtractEgressTargets()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1123",
+      "source_location": "L1131",
       "id": "funnypot_program_dataharvester_extractegresstargets",
-      "community": 4,
+      "community": 2,
       "norm_label": ".extractegresstargets()"
     },
     {
       "label": ".IsLikelyCloudOrHosting()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1131",
+      "source_location": "L1139",
       "id": "funnypot_program_dataharvester_islikelycloudorhosting",
-      "community": 4,
+      "community": 2,
       "norm_label": ".islikelycloudorhosting()"
     },
     {
       "label": "NtfyNotifier",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1141",
+      "source_location": "L1149",
       "id": "funnypot_program_ntfynotifier",
-      "community": 8,
+      "community": 7,
       "norm_label": "ntfynotifier"
     },
     {
-      "label": ".NotifyConnectionAcceptedAsync()",
+      "label": ".NotifyAuthAttemptAsync()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1143",
-      "id": "funnypot_program_ntfynotifier_notifyconnectionacceptedasync",
-      "community": 8,
-      "norm_label": ".notifyconnectionacceptedasync()"
+      "source_location": "L1151",
+      "id": "funnypot_program_ntfynotifier_notifyauthattemptasync",
+      "community": 7,
+      "norm_label": ".notifyauthattemptasync()"
     },
     {
-      "label": ".BuildConnectionMessage()",
+      "label": ".BuildAuthAttemptMessage()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1175",
-      "id": "funnypot_program_ntfynotifier_buildconnectionmessage",
-      "community": 8,
-      "norm_label": ".buildconnectionmessage()"
+      "source_location": "L1191",
+      "id": "funnypot_program_ntfynotifier_buildauthattemptmessage",
+      "community": 7,
+      "norm_label": ".buildauthattemptmessage()"
     },
     {
       "label": ".IsTruthy()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1180",
+      "source_location": "L1204",
       "id": "funnypot_program_ntfynotifier_istruthy",
-      "community": 8,
+      "community": 7,
       "norm_label": ".istruthy()"
     },
     {
       "label": "Logger",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1189",
+      "source_location": "L1213",
       "id": "funnypot_program_logger",
-      "community": 3,
+      "community": 4,
       "norm_label": "logger"
     },
     {
       "label": "object",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1191",
+      "source_location": "L1215",
       "id": "object",
-      "community": 3,
+      "community": 4,
       "norm_label": "object"
     },
     {
       "label": "Lazy",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1200",
+      "source_location": "L1224",
       "id": "lazy",
-      "community": 3,
+      "community": 4,
       "norm_label": "lazy"
     },
     {
       "label": ".LogYaml()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1205",
+      "source_location": "L1229",
       "id": "funnypot_program_logger_logyaml",
       "community": 0,
       "norm_label": ".logyaml()"
@@ -835,81 +835,81 @@
       "label": ".LogHarvestUnsafe()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1225",
+      "source_location": "L1249",
       "id": "funnypot_program_logger_logharvestunsafe",
-      "community": 3,
+      "community": 4,
       "norm_label": ".logharvestunsafe()"
     },
     {
       "label": ".UpdateHarvestSummaryUnsafe()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1244",
+      "source_location": "L1268",
       "id": "funnypot_program_logger_updateharvestsummaryunsafe",
-      "community": 3,
+      "community": 4,
       "norm_label": ".updateharvestsummaryunsafe()"
     },
     {
       "label": ".UpdateGlobalStats()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1262",
+      "source_location": "L1286",
       "id": "funnypot_program_logger_updateglobalstats",
-      "community": 3,
+      "community": 4,
       "norm_label": ".updateglobalstats()"
     },
     {
       "label": ".GetLogFilePath()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1313",
+      "source_location": "L1337",
       "id": "funnypot_program_logger_getlogfilepath",
-      "community": 3,
+      "community": 4,
       "norm_label": ".getlogfilepath()"
     },
     {
       "label": ".LogMsg()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1325",
+      "source_location": "L1349",
       "id": "funnypot_program_logger_logmsg",
-      "community": 3,
+      "community": 4,
       "norm_label": ".logmsg()"
     },
     {
       "label": ".LogMetric()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1338",
+      "source_location": "L1362",
       "id": "funnypot_program_logger_logmetric",
-      "community": 3,
+      "community": 4,
       "norm_label": ".logmetric()"
     },
     {
       "label": ".PushToGit()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1353",
+      "source_location": "L1377",
       "id": "funnypot_program_logger_pushtogit",
-      "community": 3,
+      "community": 4,
       "norm_label": ".pushtogit()"
     },
     {
       "label": ".EnsurePublicationRepository()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1413",
+      "source_location": "L1437",
       "id": "funnypot_program_logger_ensurepublicationrepository",
-      "community": 3,
+      "community": 4,
       "norm_label": ".ensurepublicationrepository()"
     },
     {
       "label": ".GetStaticDashboardRemoteUrl()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1433",
+      "source_location": "L1457",
       "id": "funnypot_program_logger_getstaticdashboardremoteurl",
-      "community": 3,
+      "community": 4,
       "norm_label": ".getstaticdashboardremoteurl()"
     },
     {
@@ -972,7 +972,7 @@
       "source_file": "docs/data-harvesting-requirements.md",
       "source_location": "L1",
       "id": "docs_data_harvesting_requirements_md",
-      "community": 2,
+      "community": 5,
       "norm_label": "data-harvesting-requirements.md"
     },
     {
@@ -981,7 +981,7 @@
       "source_file": "docs/data-harvesting-requirements.md",
       "source_location": "L1",
       "id": "docs_data_harvesting_requirements_data_harvesting_specification_llm_driven_ssh_analytics",
-      "community": 2,
+      "community": 5,
       "norm_label": "data harvesting specification: llm-driven ssh analytics"
     },
     {
@@ -990,7 +990,7 @@
       "source_file": "docs/data-harvesting-requirements.md",
       "source_location": "L5",
       "id": "docs_data_harvesting_requirements_data_acquisition_architecture",
-      "community": 2,
+      "community": 5,
       "norm_label": "data acquisition architecture"
     },
     {
@@ -999,7 +999,7 @@
       "source_file": "docs/data-harvesting-requirements.md",
       "source_location": "L9",
       "id": "docs_data_harvesting_requirements_data_collection_modules",
-      "community": 2,
+      "community": 5,
       "norm_label": "data collection modules"
     },
     {
@@ -1008,7 +1008,7 @@
       "source_file": "docs/data-harvesting-requirements.md",
       "source_location": "L11",
       "id": "docs_data_harvesting_requirements_m_1_ssh_protocol_and_authentication_metadata",
-      "community": 2,
+      "community": 5,
       "norm_label": "m-1: ssh protocol and authentication metadata"
     },
     {
@@ -1017,7 +1017,7 @@
       "source_file": "docs/data-harvesting-requirements.md",
       "source_location": "L19",
       "id": "docs_data_harvesting_requirements_m_2_behavioral_and_tactical_metrics",
-      "community": 2,
+      "community": 5,
       "norm_label": "m-2: behavioral and tactical metrics"
     },
     {
@@ -1026,7 +1026,7 @@
       "source_file": "docs/data-harvesting-requirements.md",
       "source_location": "L28",
       "id": "docs_data_harvesting_requirements_m_3_payload_and_egress_telemetry",
-      "community": 2,
+      "community": 5,
       "norm_label": "m-3: payload and egress telemetry"
     },
     {
@@ -1035,7 +1035,7 @@
       "source_file": "docs/data-harvesting-requirements.md",
       "source_location": "L36",
       "id": "docs_data_harvesting_requirements_m_4_llm_interaction_and_persona_metrics",
-      "community": 2,
+      "community": 5,
       "norm_label": "m-4: llm interaction and persona metrics"
     },
     {
@@ -1044,7 +1044,7 @@
       "source_file": "docs/data-harvesting-requirements.md",
       "source_location": "L45",
       "id": "docs_data_harvesting_requirements_processing_and_correlation",
-      "community": 2,
+      "community": 5,
       "norm_label": "processing and correlation"
     },
     {
@@ -1053,7 +1053,7 @@
       "source_file": "docs/data-harvesting-requirements.md",
       "source_location": "L47",
       "id": "docs_data_harvesting_requirements_temporal_correlation",
-      "community": 2,
+      "community": 5,
       "norm_label": "temporal correlation"
     },
     {
@@ -1062,7 +1062,7 @@
       "source_file": "docs/data-harvesting-requirements.md",
       "source_location": "L51",
       "id": "docs_data_harvesting_requirements_asset_value_perception",
-      "community": 2,
+      "community": 5,
       "norm_label": "asset value perception"
     },
     {
@@ -1071,7 +1071,7 @@
       "source_file": "docs/data-harvesting-requirements.md",
       "source_location": "L55",
       "id": "docs_data_harvesting_requirements_storage_and_publication",
-      "community": 2,
+      "community": 5,
       "norm_label": "storage and publication"
     },
     {
@@ -1080,7 +1080,7 @@
       "source_file": "docs/data-harvesting-requirements.md",
       "source_location": "L57",
       "id": "docs_data_harvesting_requirements_log_format",
-      "community": 2,
+      "community": 5,
       "norm_label": "log format"
     },
     {
@@ -1089,7 +1089,7 @@
       "source_file": "docs/data-harvesting-requirements.md",
       "source_location": "L61",
       "id": "docs_data_harvesting_requirements_storage_tiers",
-      "community": 2,
+      "community": 5,
       "norm_label": "storage tiers"
     },
     {
@@ -1098,7 +1098,7 @@
       "source_file": "docs/data-harvesting-requirements.md",
       "source_location": "L67",
       "id": "docs_data_harvesting_requirements_metrics_export",
-      "community": 2,
+      "community": 5,
       "norm_label": "metrics export"
     },
     {
@@ -1107,8 +1107,35 @@
       "source_file": "docs/data-harvesting-requirements.md",
       "source_location": "L71",
       "id": "docs_data_harvesting_requirements_github_pages_publication",
-      "community": 2,
+      "community": 5,
       "norm_label": "github pages publication"
+    },
+    {
+      "label": ".BuildConnectionMessage_IncludesConnectionDetails()",
+      "file_type": "code",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L192",
+      "community": 1,
+      "norm_label": ".buildconnectionmessage_includesconnectiondetails()",
+      "id": "funnypot_tests_unittests_ntfynotifiertests_buildconnectionmessage_includesconnectiondetails"
+    },
+    {
+      "label": ".NotifyConnectionAcceptedAsync()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1143",
+      "community": 7,
+      "norm_label": ".notifyconnectionacceptedasync()",
+      "id": "funnypot_program_ntfynotifier_notifyconnectionacceptedasync"
+    },
+    {
+      "label": ".BuildConnectionMessage()",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1175",
+      "community": 7,
+      "norm_label": ".buildconnectionmessage()",
+      "id": "funnypot_program_ntfynotifier_buildconnectionmessage"
     },
     {
       "label": "bool",
@@ -1124,7 +1151,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L103",
-      "community": 3,
+      "community": 4,
       "norm_label": ".handlesession()",
       "id": "funnypot_program_program_handlesession"
     }
@@ -1166,9 +1193,9 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L190",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "funnypot_tests_unittests_cs",
-      "target": "funnypot_tests_unittests_ntfynotifiertests",
-      "confidence_score": 1.0
+      "target": "funnypot_tests_unittests_ntfynotifiertests"
     },
     {
       "relation": "method",
@@ -1356,9 +1383,19 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L192",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "funnypot_tests_unittests_ntfynotifiertests",
-      "target": "funnypot_tests_unittests_ntfynotifiertests_buildconnectionmessage_includesconnectiondetails",
-      "confidence_score": 1.0
+      "target": "funnypot_tests_unittests_ntfynotifiertests_buildauthattemptmessage_includesauthdetailswithoutpassword"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot.Tests/UnitTests.cs",
+      "source_location": "L192",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_tests_unittests_ntfynotifiertests",
+      "target": "funnypot_tests_unittests_ntfynotifiertests_buildconnectionmessage_includesconnectiondetails"
     },
     {
       "relation": "contains",
@@ -1546,9 +1583,9 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1141",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "funnypot_program_cs",
-      "target": "funnypot_program_ntfynotifier",
-      "confidence_score": 1.0
+      "target": "funnypot_program_ntfynotifier"
     },
     {
       "relation": "contains",
@@ -1818,11 +1855,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1145",
+      "source_location": "L1161",
       "weight": 1.0,
-      "source": "funnypot_program_ntfynotifier_notifyconnectionacceptedasync",
-      "target": "funnypot_program_program_getsecretorenvironment",
-      "confidence_score": 1.0
+      "confidence_score": 1.0,
+      "source": "funnypot_program_ntfynotifier_notifyauthattemptasync",
+      "target": "funnypot_program_program_getsecretorenvironment"
     },
     {
       "relation": "calls",
@@ -1844,6 +1881,17 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "funnypot_program_logger_getstaticdashboardremoteurl",
+      "target": "funnypot_program_program_getsecretorenvironment"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1145",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_ntfynotifier_notifyconnectionacceptedasync",
       "target": "funnypot_program_program_getsecretorenvironment"
     },
     {
@@ -1906,17 +1954,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L161",
-      "weight": 1.0,
-      "source": "funnypot_program_program_onconnectionaccepted",
-      "target": "funnypot_program_ntfynotifier_notifyconnectionacceptedasync",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "FunnyPot/Program.cs",
       "source_location": "L129",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -1933,6 +1970,17 @@
       "confidence_score": 1.0,
       "source": "funnypot_program_program_onconnectionaccepted",
       "target": "funnypot_program_program_setupshell"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L161",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_onconnectionaccepted",
+      "target": "funnypot_program_ntfynotifier_notifyconnectionacceptedasync"
     },
     {
       "relation": "calls",
@@ -1988,6 +2036,17 @@
       "confidence_score": 1.0,
       "source": "funnypot_program_program_setupuserauth",
       "target": "funnypot_program_dataharvester_calculatefingerprinthash"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L241",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_program_setupuserauth",
+      "target": "funnypot_program_ntfynotifier_notifyauthattemptasync"
     },
     {
       "relation": "calls",
@@ -2587,21 +2646,21 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1143",
+      "source_location": "L1151",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "funnypot_program_ntfynotifier",
-      "target": "funnypot_program_ntfynotifier_notifyconnectionacceptedasync",
-      "confidence_score": 1.0
+      "target": "funnypot_program_ntfynotifier_notifyauthattemptasync"
     },
     {
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1175",
+      "source_location": "L1191",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "funnypot_program_ntfynotifier",
-      "target": "funnypot_program_ntfynotifier_buildconnectionmessage",
-      "confidence_score": 1.0
+      "target": "funnypot_program_ntfynotifier_buildauthattemptmessage"
     },
     {
       "relation": "method",
@@ -2609,9 +2668,62 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1180",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "funnypot_program_ntfynotifier",
-      "target": "funnypot_program_ntfynotifier_istruthy",
-      "confidence_score": 1.0
+      "target": "funnypot_program_ntfynotifier_istruthy"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1143",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_ntfynotifier",
+      "target": "funnypot_program_ntfynotifier_notifyconnectionacceptedasync"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1175",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_ntfynotifier",
+      "target": "funnypot_program_ntfynotifier_buildconnectionmessage"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1162",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_ntfynotifier_notifyauthattemptasync",
+      "target": "funnypot_program_ntfynotifier_istruthy"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1174",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_ntfynotifier_notifyauthattemptasync",
+      "target": "funnypot_program_ntfynotifier_buildauthattemptmessage"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1183",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_ntfynotifier_notifyauthattemptasync",
+      "target": "funnypot_program_logger_logmsg"
     },
     {
       "relation": "calls",
@@ -2620,31 +2732,9 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1146",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "funnypot_program_ntfynotifier_notifyconnectionacceptedasync",
-      "target": "funnypot_program_ntfynotifier_istruthy",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1158",
-      "weight": 1.0,
-      "source": "funnypot_program_ntfynotifier_notifyconnectionacceptedasync",
-      "target": "funnypot_program_ntfynotifier_buildconnectionmessage",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1167",
-      "weight": 1.0,
-      "source": "funnypot_program_ntfynotifier_notifyconnectionacceptedasync",
-      "target": "funnypot_program_logger_logmsg",
-      "confidence_score": 1.0
+      "target": "funnypot_program_ntfynotifier_istruthy"
     },
     {
       "relation": "references",
@@ -2872,6 +2962,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1167",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_ntfynotifier_notifyconnectionacceptedasync",
+      "target": "funnypot_program_logger_logmsg"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
       "source_location": "L116",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -3081,8 +3182,19 @@
       "confidence_score": 1.0,
       "source": "docs_data_harvesting_requirements_storage_and_publication",
       "target": "docs_data_harvesting_requirements_github_pages_publication"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1158",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "funnypot_program_ntfynotifier_notifyconnectionacceptedasync",
+      "target": "funnypot_program_ntfynotifier_buildconnectionmessage"
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "49a52a8a32b9e4893a79c059d7e382adcf7525e4"
+  "built_at_commit": "3999e07e29f471eaf1bf43eaee5cfb522b5a0b89"
 }

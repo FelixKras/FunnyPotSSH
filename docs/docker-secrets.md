@@ -26,7 +26,7 @@ GITHUB_REPOSITORY=owner/repo
 
 Alternatively use `STATIC_SITE_REMOTE_URL=https://github.com/owner/repo.git`, `GITHUB_REMOTE_URL=https://github.com/owner/repo.git`, or `GITHUB_REPO=repo` with `GITHUB_USER` as the owner. The data branch defaults to `data`; override it with `GITHUB_DATA_BRANCH`.
 
-To receive ntfy notifications when an SSH connection is accepted, add a private topic URL to `.env`:
+To receive ntfy notifications when an SSH authentication attempt is received, add a private topic URL to `.env`:
 
 ```text
 NTFY_TOPIC_URL=https://ntfy.sh/funnypot-your-long-random-topic
@@ -40,4 +40,4 @@ NTFY_PRIORITY=high
 NTFY_TAGS=warning,computer
 ```
 
-Use a long unguessable ntfy topic and keep notifications minimal. FunnyPot sends the remote endpoint, session key, and SSH client version, but not credentials or command logs.
+Use a long unguessable ntfy topic and keep notifications minimal. FunnyPot sends the remote endpoint, session key, username, auth method, attempt number, decision, and SSH client version, but not passwords or command logs. Raw TCP connections do not notify, which avoids Docker healthcheck noise.

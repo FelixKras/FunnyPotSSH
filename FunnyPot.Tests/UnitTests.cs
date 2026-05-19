@@ -190,13 +190,19 @@ public class DataHarvesterTests
 public class NtfyNotifierTests
 {
     [Fact]
-    public void BuildConnectionMessage_IncludesConnectionDetails()
+    public void BuildAuthAttemptMessage_IncludesAuthDetailsWithoutPassword()
     {
-        var message = NtfyNotifier.BuildConnectionMessage("203.0.113.5:49152", "abc123", "SSH-2.0-TestClient");
+        var message = NtfyNotifier.BuildAuthAttemptMessage("203.0.113.5:49152", "abc123", "SSH-2.0-TestClient", "root", "password", 2, false, "rejected");
 
-        Assert.Contains("FunnyPot SSH connection", message);
+        Assert.Contains("FunnyPot SSH auth attempt", message);
         Assert.Contains("Remote: 203.0.113.5:49152", message);
         Assert.Contains("Session: abc123", message);
+        Assert.Contains("Username: root", message);
+        Assert.Contains("Method: password", message);
+        Assert.Contains("Attempt: 2", message);
+        Assert.Contains("Accepted: False", message);
+        Assert.Contains("Reason: rejected", message);
         Assert.Contains("Client: SSH-2.0-TestClient", message);
+        Assert.DoesNotContain("Password:", message);
     }
 }

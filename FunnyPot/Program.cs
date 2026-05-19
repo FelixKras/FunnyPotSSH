@@ -158,7 +158,6 @@ class Program
         };
 
         Logger.LogMsg($"Connection accepted [{sessionKey}] from {remoteEndpoint}");
-        _ = Task.Run(() => NtfyNotifier.NotifyConnectionAcceptedAsync(remoteEndpoint, sessionKey, session.ClientVersion));
         Logger.LogYaml("session_start", new SessionLogEntry
         {
             Timestamp = connectionStartedAt,
@@ -239,6 +238,15 @@ class Program
                 InfrastructureAsn = infrastructureProfile.Asn,
                 FingerprintHash = DataHarvester.CalculateFingerprintHash(args.Session?.ClientVersion, args.KeyAlgorithm, args.Fingerprint)
             });
+            _ = Task.Run(() => NtfyNotifier.NotifyAuthAttemptAsync(
+                remoteEndpoint,
+                sessionKey,
+                args.Session?.ClientVersion,
+                args.Username,
+                args.AuthMethod,
+                tries,
+                accepted,
+                acceptanceReason));
 
             if (args.AuthMethod != "password")
             {
@@ -1140,7 +1148,15 @@ static class DataHarvester
 
 static class NtfyNotifier
 {
-    public static async Task NotifyConnectionAcceptedAsync(string remoteEndpoint, string sessionKey, string? clientVersion)
+    public static async Task NotifyAuthAttemptAsync(
+        string remoteEndpoint,
+        string sessionKey,
+        string? clientVersion,
+        string username,
+        string authMethod,
+        int attemptNumber,
+        bool accepted,
+        string acceptanceReason)
     {
         var enabled = Program.GetSecretOrEnvironment("NOTIFY_ENABLED");
         if (enabled is not null && !IsTruthy(enabled))
@@ -1155,9 +1171,9 @@ static class NtfyNotifier
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, topicUrl)
             {
-                Content = new StringContent(BuildConnectionMessage(remoteEndpoint, sessionKey, clientVersion), Encoding.UTF8, "text/plain")
+                Content = new StringContent(BuildAuthAttemptMessage(remoteEndpoint, sessionKey, clientVersion, username, authMethod, attemptNumber, accepted, acceptanceReason), Encoding.UTF8, "text/plain")
             };
-            request.Headers.TryAddWithoutValidation("Title", "FunnyPot connection");
+            request.Headers.TryAddWithoutValidation("Title", "FunnyPot auth attempt");
             request.Headers.TryAddWithoutValidation("Priority", Program.GetSecretOrEnvironment("NTFY_PRIORITY") ?? "high");
             request.Headers.TryAddWithoutValidation("Tags", Program.GetSecretOrEnvironment("NTFY_TAGS") ?? "warning,computer");
 
@@ -1172,9 +1188,17 @@ static class NtfyNotifier
         }
     }
 
-    public static string BuildConnectionMessage(string remoteEndpoint, string sessionKey, string? clientVersion)
+    public static string BuildAuthAttemptMessage(
+        string remoteEndpoint,
+        string sessionKey,
+        string? clientVersion,
+        string username,
+        string authMethod,
+        int attemptNumber,
+        bool accepted,
+        string acceptanceReason)
     {
-        return $"FunnyPot SSH connection\nRemote: {remoteEndpoint}\nSession: {sessionKey}\nClient: {clientVersion ?? "pending"}";
+        return $"FunnyPot SSH auth attempt\nRemote: {remoteEndpoint}\nSession: {sessionKey}\nUsername: {username}\nMethod: {authMethod}\nAttempt: {attemptNumber}\nAccepted: {accepted}\nReason: {acceptanceReason}\nClient: {clientVersion ?? "unknown"}";
     }
 
     private static bool IsTruthy(string value)
