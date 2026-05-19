@@ -186,3 +186,17 @@ public class DataHarvesterTests
         Assert.True(analytics.CalculateTuringMultiplier() > 0);
     }
 }
+
+public class NtfyNotifierTests
+{
+    [Fact]
+    public void BuildConnectionMessage_IncludesConnectionDetails()
+    {
+        var message = NtfyNotifier.BuildConnectionMessage("203.0.113.5:49152", "abc123", "SSH-2.0-TestClient");
+
+        Assert.Contains("FunnyPot SSH connection", message);
+        Assert.Contains("Remote: 203.0.113.5:49152", message);
+        Assert.Contains("Session: abc123", message);
+        Assert.Contains("Client: SSH-2.0-TestClient", message);
+    }
+}

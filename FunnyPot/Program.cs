@@ -158,6 +158,7 @@ class Program
         };
 
         Logger.LogMsg($"Connection accepted [{sessionKey}] from {remoteEndpoint}");
+        _ = Task.Run(() => NtfyNotifier.NotifyConnectionAcceptedAsync(remoteEndpoint, sessionKey, session.ClientVersion));
         Logger.LogYaml("session_start", new SessionLogEntry
         {
             Timestamp = connectionStartedAt,
@@ -1134,6 +1135,54 @@ static class DataHarvester
             return false;
 
         return bytes[0] is 3 or 13 or 18 or 20 or 34 or 35 or 40 or 44 or 52 or 54 or 104 or 138 or 139;
+    }
+}
+
+static class NtfyNotifier
+{
+    public static async Task NotifyConnectionAcceptedAsync(string remoteEndpoint, string sessionKey, string? clientVersion)
+    {
+        var enabled = Program.GetSecretOrEnvironment("NOTIFY_ENABLED");
+        if (enabled is not null && !IsTruthy(enabled))
+            return;
+
+        var topicUrl = Program.GetSecretOrEnvironment("NTFY_TOPIC_URL")
+            ?? Program.GetSecretOrEnvironment("NOTIFY_NTFY_URL");
+        if (string.IsNullOrWhiteSpace(topicUrl))
+            return;
+
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, topicUrl)
+            {
+                Content = new StringContent(BuildConnectionMessage(remoteEndpoint, sessionKey, clientVersion), Encoding.UTF8, "text/plain")
+            };
+            request.Headers.TryAddWithoutValidation("Title", "FunnyPot connection");
+            request.Headers.TryAddWithoutValidation("Priority", Program.GetSecretOrEnvironment("NTFY_PRIORITY") ?? "high");
+            request.Headers.TryAddWithoutValidation("Tags", Program.GetSecretOrEnvironment("NTFY_TAGS") ?? "warning,computer");
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            using var response = await Program.SharedHttpClient.SendAsync(request, cts.Token);
+            if (!response.IsSuccessStatusCode)
+                Logger.LogMsg($"ntfy notification failed: {(int)response.StatusCode} {response.ReasonPhrase}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogMsg($"ntfy notification failed: {ex.Message}");
+        }
+    }
+
+    public static string BuildConnectionMessage(string remoteEndpoint, string sessionKey, string? clientVersion)
+    {
+        return $"FunnyPot SSH connection\nRemote: {remoteEndpoint}\nSession: {sessionKey}\nClient: {clientVersion ?? "pending"}";
+    }
+
+    private static bool IsTruthy(string value)
+    {
+        return value.Equals("1", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("true", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("yes", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("on", StringComparison.OrdinalIgnoreCase);
     }
 }
 

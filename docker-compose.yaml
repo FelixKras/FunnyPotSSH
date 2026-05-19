@@ -9,23 +9,19 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    secrets:
-      - github_token
-      - github_user
-      - openrouter_api_key
     environment:
       - SSH_USER=${SSH_USER:-test}
       - SSH_PASSWORD=${SSH_PASSWORD:-test}
       - SSH_PORT=${SSH_PORT:-22722}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - GITHUB_USER=${GITHUB_USER:-}
       - GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-}
       - GITHUB_REPO=${GITHUB_REPO:-}
       - STATIC_SITE_REMOTE_URL=${STATIC_SITE_REMOTE_URL:-}
       - GITHUB_DATA_BRANCH=${GITHUB_DATA_BRANCH:-data}
-
-secrets:
-  github_token:
-    file: ./.secrets/github_token
-  github_user:
-    file: ./.secrets/github_user
-  openrouter_api_key:
-    file: ./.secrets/openrouter_api_key
+      - NOTIFY_ENABLED=${NOTIFY_ENABLED:-true}
+      - NTFY_TOPIC_URL=${NTFY_TOPIC_URL:-}
+      - NOTIFY_NTFY_URL=${NOTIFY_NTFY_URL:-}
+      - NTFY_PRIORITY=${NTFY_PRIORITY:-high}
+      - NTFY_TAGS=${NTFY_TAGS:-warning,computer}

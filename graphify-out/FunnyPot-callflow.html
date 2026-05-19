@@ -60,17 +60,18 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
 <div class="container">
 
 <h1>FunnyPot — Complete Call Flow &amp; Architecture Documentation</h1>
-<p class="subtitle">Generated from graphify knowledge graph: 119 nodes, 176 edges, 15 communities. Commit: eda897b</p>
+<p class="subtitle">Generated from graphify knowledge graph: 125 nodes, 187 edges, 16 communities. Commit: 49a52a8</p>
 
 <div class="nav">
     <a href="#overview">Architecture Overview</a>
     <a href="#tests-fixtures">Tests &amp; Fixtures</a>
     <a href="#funnypot-programcs-program">Funnypot Programcs Program</a>
     <a href="#programcs-funnypot-harvestedcredential">Programcs Funnypot Harvestedcredential</a>
-    <a href="#funnypot-programcs-getsecretorenvironment">Funnypot Programcs Getsecretorenvironment</a>
     <a href="#data-harvesting-requirementsmd">Data Harvesting Requirementsmd</a>
+    <a href="#funnypot-programcs-getsecretorenvironment">Funnypot Programcs Getsecretorenvironment</a>
     <a href="#funnypot-programcs-setupuserauth">Funnypot Programcs Setupuserauth</a>
     <a href="#funnypot-programcs-int">Funnypot Programcs Int</a>
+    <a href="#funnypot-programcs-ntfynotifier">Funnypot Programcs Ntfynotifier</a>
     <a href="#agentsmd-graphify">Agentsmd Graphify</a>
     <a href="#funnypotassemblyinfocs-funnypot-obj">Funnypotassemblyinfocs Funnypot Obj</a>
     <a href="#funnypotglobalusingsgcs-funnypot-obj">Funnypotglobalusingsgcs Funnypot Obj</a>
@@ -85,20 +86,22 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
 
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    TESTS_FIXTURES_B84B1DCC("Tests &amp; Fixtures<br/><small>24 nodes</small>")
+    TESTS_FIXTURES_B84B1DCC("Tests &amp; Fixtures<br/><small>26 nodes</small>")
     class TESTS_FIXTURES_B84B1DCC module;
     FUNNYPOT_PROGRAMCS_PROGRAM_F8220606("Funnypot Programcs Program<br/><small>21 nodes</small>")
     class FUNNYPOT_PROGRAMCS_PROGRAM_F8220606 module;
     PROGRAMCS_FUNNYPOT_HARVESTEDCREDENTIAL_3B611401("Programcs Funnypot Harvestedcredential<br/><small>16 nodes</small>")
     class PROGRAMCS_FUNNYPOT_HARVESTEDCREDENTIAL_3B611401 module;
-    FUNNYPOT_PROGRAMCS_GETSECRETORENVIRONMENT_4065B551("Funnypot Programcs Getsecretorenvironment<br/><small>16 nodes</small>")
-    class FUNNYPOT_PROGRAMCS_GETSECRETORENVIRONMENT_4065B551 module;
     DATA_HARVESTING_REQUIREMENTSMD_589A3893("Data Harvesting Requirementsmd<br/><small>16 nodes</small>")
     class DATA_HARVESTING_REQUIREMENTSMD_589A3893 module;
+    FUNNYPOT_PROGRAMCS_GETSECRETORENVIRONMENT_4065B551("Funnypot Programcs Getsecretorenvironment<br/><small>16 nodes</small>")
+    class FUNNYPOT_PROGRAMCS_GETSECRETORENVIRONMENT_4065B551 module;
     FUNNYPOT_PROGRAMCS_SETUPUSERAUTH_15C89363("Funnypot Programcs Setupuserauth<br/><small>15 nodes</small>")
     class FUNNYPOT_PROGRAMCS_SETUPUSERAUTH_15C89363 module;
     FUNNYPOT_PROGRAMCS_INT_20F45718("Funnypot Programcs Int<br/><small>5 nodes</small>")
     class FUNNYPOT_PROGRAMCS_INT_20F45718 module;
+    FUNNYPOT_PROGRAMCS_NTFYNOTIFIER_BC8F09D0("Funnypot Programcs Ntfynotifier<br/><small>4 nodes</small>")
+    class FUNNYPOT_PROGRAMCS_NTFYNOTIFIER_BC8F09D0 module;
     AGENTSMD_GRAPHIFY_127948D2("Agentsmd Graphify<br/><small>2 nodes</small>")
     class AGENTSMD_GRAPHIFY_127948D2 module;
     FUNNYPOTASSEMBLYINFOCS_FUNNYPOT_OBJ_91926451("Funnypotassemblyinfocs Funnypot Obj<br/><small>1 nodes</small>")
@@ -117,10 +120,10 @@ flowchart LR
     FUNNYPOT_PROGRAMCS_PROGRAM_F8220606 -->|references x2| FUNNYPOT_PROGRAMCS_INT_20F45718
     PROGRAMCS_FUNNYPOT_HARVESTEDCREDENTIAL_3B611401 -->|contains| FUNNYPOT_PROGRAMCS_INT_20F45718
     PROGRAMCS_FUNNYPOT_HARVESTEDCREDENTIAL_3B611401 -->|contains| FUNNYPOT_PROGRAMCS_SETUPUSERAUTH_15C89363
+    PROGRAMCS_FUNNYPOT_HARVESTEDCREDENTIAL_3B611401 -->|contains| FUNNYPOT_PROGRAMCS_NTFYNOTIFIER_BC8F09D0
     FUNNYPOT_PROGRAMCS_INT_20F45718 -->|references| FUNNYPOT_PROGRAMCS_SETUPUSERAUTH_15C89363
-    FUNNYPOT_PROGRAMCS_SETUPUSERAUTH_15C89363 -->|calls| FUNNYPOT_PROGRAMCS_GETSECRETORENVIRONMENT_4065B551
-    FUNNYPOT_PROGRAMCS_PROGRAM_F8220606 -->|calls| PROGRAMCS_FUNNYPOT_HARVESTEDCREDENTIAL_3B611401
-    FUNNYPOT_PROGRAMCS_INT_20F45718 -->|calls| FUNNYPOT_PROGRAMCS_GETSECRETORENVIRONMENT_4065B551
+    FUNNYPOT_PROGRAMCS_GETSECRETORENVIRONMENT_4065B551 -->|calls| FUNNYPOT_PROGRAMCS_NTFYNOTIFIER_BC8F09D0
+    FUNNYPOT_PROGRAMCS_PROGRAM_F8220606 -->|calls| FUNNYPOT_PROGRAMCS_NTFYNOTIFIER_BC8F09D0
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -137,19 +140,19 @@ flowchart LR
     <h4>Architecture Layers</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>Layer</th><th>Nodes</th><th>Communities</th></tr>
-      <tr><td>Tests &amp; Fixtures</td><td>24</td><td><code>5, 6, 10, 9</code></td></tr><tr><td>Funnypot Programcs Program</td><td>21</td><td><code>0</code></td></tr><tr><td>Programcs Funnypot Harvestedcredential</td><td>16</td><td><code>1</code></td></tr><tr><td>Funnypot Programcs Getsecretorenvironment</td><td>16</td><td><code>2</code></td></tr><tr><td>Data Harvesting Requirementsmd</td><td>16</td><td><code>3</code></td></tr><tr><td>Funnypot Programcs Setupuserauth</td><td>15</td><td><code>4</code></td></tr><tr><td>Funnypot Programcs Int</td><td>5</td><td><code>7</code></td></tr><tr><td>Agentsmd Graphify</td><td>2</td><td><code>8</code></td></tr><tr><td>Funnypotassemblyinfocs Funnypot Obj</td><td>1</td><td><code>11</code></td></tr><tr><td>Funnypotglobalusingsgcs Funnypot Obj</td><td>1</td><td><code>12</code></td></tr><tr><td>Funnypotassemblyinfocs Funnypot Obj</td><td>1</td><td><code>13</code></td></tr><tr><td>Funnypotglobalusingsgcs Funnypot Obj</td><td>1</td><td><code>14</code></td></tr>
+      <tr><td>Tests &amp; Fixtures</td><td>26</td><td><code>5, 6, 10, 11</code></td></tr><tr><td>Funnypot Programcs Program</td><td>21</td><td><code>0</code></td></tr><tr><td>Programcs Funnypot Harvestedcredential</td><td>16</td><td><code>1</code></td></tr><tr><td>Data Harvesting Requirementsmd</td><td>16</td><td><code>2</code></td></tr><tr><td>Funnypot Programcs Getsecretorenvironment</td><td>16</td><td><code>3</code></td></tr><tr><td>Funnypot Programcs Setupuserauth</td><td>15</td><td><code>4</code></td></tr><tr><td>Funnypot Programcs Int</td><td>5</td><td><code>7</code></td></tr><tr><td>Funnypot Programcs Ntfynotifier</td><td>4</td><td><code>8</code></td></tr><tr><td>Agentsmd Graphify</td><td>2</td><td><code>9</code></td></tr><tr><td>Funnypotassemblyinfocs Funnypot Obj</td><td>1</td><td><code>12</code></td></tr><tr><td>Funnypotglobalusingsgcs Funnypot Obj</td><td>1</td><td><code>13</code></td></tr><tr><td>Funnypotassemblyinfocs Funnypot Obj</td><td>1</td><td><code>14</code></td></tr><tr><td>Funnypotglobalusingsgcs Funnypot Obj</td><td>1</td><td><code>15</code></td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Core Flow</h4>
-    <div class="arrow-chain">Tests &amp; Fixtures -&gt; Funnypot Programcs Program -&gt; Funnypot Programcs Getsecretorenvironment -&gt; Programcs Funnypot Harvestedcredential -&gt; Funnypot Programcs Setupuserauth -&gt; Data Harvesting Requirementsmd -&gt; Funnypot Programcs Int</div>
+    <div class="arrow-chain">Tests &amp; Fixtures -&gt; Funnypot Programcs Program -&gt; Funnypot Programcs Getsecretorenvironment -&gt; Funnypot Programcs Ntfynotifier -&gt; Programcs Funnypot Harvestedcredential -&gt; Funnypot Programcs Setupuserauth -&gt; Data Harvesting Requirementsmd</div>
   </div>
 </div>
 <div class="grid">
   <div class="card">
     <h4>Graph Report Highlights</h4>
     <ul>
-      <li>119 nodes · 176 edges · 15 communities (10 shown, 5 thin omitted)</li>
+      <li>125 nodes · 187 edges · 16 communities (11 shown, 5 thin omitted)</li>
       <li>Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS</li>
       <li>Token cost: 0 input · 0 output</li>
       <li>1. `Program` - 19 edges</li>
@@ -161,14 +164,15 @@ flowchart LR
 <hr>
 <!-- ====== 2. Tests & Fixtures ====== -->
 <h2 id="tests-fixtures">2. Tests &amp; Fixtures</h2>
-<p>Tests &amp; Fixtures groups implementation around funnypottests, unittestscs, validate, returnstrue, mostly in FunnyPot.Tests/UnitTests.cs, Debug/net8.0/FunnyPot.Tests.AssemblyInfo.cs, Debug/net8.0/FunnyPot.Tests.GlobalUsings.g.cs. This section covers 24 nodes and 21 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Tests &amp; Fixtures groups implementation around funnypottests, unittestscs, validate, returnstrue, mostly in FunnyPot.Tests/UnitTests.cs, Debug/net8.0/FunnyPot.Tests.GlobalUsings.g.cs, Debug/net8.0/FunnyPot.Tests.AssemblyInfo.cs. This section covers 26 nodes and 23 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Tests &amp; Fixtures (24 nodes, 21 edges)
+    %% Section: Tests &amp; Fixtures (26 nodes, 23 edges)
     funnypot_tests_unittests_inputvalidatortests_e1a69f58("InputValidatorTests<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
     funnypot_tests_unittests_dataharvestertests_0bb85aeb("DataHarvesterTests<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
+    funnypot_tests_unittests_ntfynotifiertests_1a0269ff("NtfyNotifierTests<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
     funnypot_tests_unittests_scpdetectortests_e50d92d6("SCPDetectorTests<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
     funnypot_tests_unittests_inputvalidatortests_val_fde529d9("Validate_NullInput_ReturnsFalse()<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
     funnypot_tests_unittests_inputvalidatortests_val_ec600fbd("Validate_EmptyInput_ReturnsFalse()<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
@@ -184,7 +188,6 @@ flowchart LR
     funnypot_tests_unittests_scpdetectortests_isscpc_d5d2cc2f("IsSCPCommand_DetectsCorrectly()<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
     funnypot_tests_unittests_dataharvestertests_leve_f479ade1("LevenshteinDistance_DetectsPasswordMutation()<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
     funnypot_tests_unittests_dataharvestertests_anal_f023749b("AnalyzeCommand_ExtractsPayloadAndDiscoverySignals()<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
-    funnypot_tests_unittests_dataharvestertests_anal_8a837a3b("AnalyzeCommand_DetectsPersistenceAndTunneling()<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
     funnypot_tests_unittests_inputvalidatortests_e1a69f58 -->|method| funnypot_tests_unittests_inputvalidatortests_val_fde529d9
     funnypot_tests_unittests_inputvalidatortests_e1a69f58 -->|method| funnypot_tests_unittests_inputvalidatortests_val_ec600fbd
     funnypot_tests_unittests_inputvalidatortests_e1a69f58 -->|method| funnypot_tests_unittests_inputvalidatortests_val_69395451
@@ -199,10 +202,10 @@ flowchart LR
     funnypot_tests_unittests_scpdetectortests_e50d92d6 -->|method| funnypot_tests_unittests_scpdetectortests_isscpc_d5d2cc2f
     funnypot_tests_unittests_dataharvestertests_0bb85aeb -->|method| funnypot_tests_unittests_dataharvestertests_leve_f479ade1
     funnypot_tests_unittests_dataharvestertests_0bb85aeb -->|method| funnypot_tests_unittests_dataharvestertests_anal_f023749b
-    funnypot_tests_unittests_dataharvestertests_0bb85aeb -->|method| funnypot_tests_unittests_dataharvestertests_anal_8a837a3b
-    %% Omitted for readability: 6 nodes, 0 edges
+    %% Omitted for readability: 8 nodes, 0 edges
     class funnypot_tests_unittests_inputvalidatortests_e1a69f58 test;
     class funnypot_tests_unittests_dataharvestertests_0bb85aeb test;
+    class funnypot_tests_unittests_ntfynotifiertests_1a0269ff test;
     class funnypot_tests_unittests_scpdetectortests_e50d92d6 test;
     class funnypot_tests_unittests_inputvalidatortests_val_fde529d9 test;
     class funnypot_tests_unittests_inputvalidatortests_val_ec600fbd test;
@@ -218,7 +221,6 @@ flowchart LR
     class funnypot_tests_unittests_scpdetectortests_isscpc_d5d2cc2f test;
     class funnypot_tests_unittests_dataharvestertests_leve_f479ade1 test;
     class funnypot_tests_unittests_dataharvestertests_anal_f023749b test;
-    class funnypot_tests_unittests_dataharvestertests_anal_8a837a3b test;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -418,15 +420,31 @@ flowchart LR
 </tr>
 <tr>
   <td>23</td>
-  <td><code>FunnyPot.Tests.AssemblyInfo.cs</code><br><small style="color:var(--muted)">Debug/net8.0/FunnyPot.Tests.AssemblyInfo.cs</small></td>
+  <td><code>NtfyNotifierTests</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>BuildConnectionMessage_IncludesConnectionDetails()</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>24</td>
+  <td><code>.BuildConnectionMessage_IncludesConnectionDetails()</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>NtfyNotifierTests</code><br><small style="color:var(--muted)">FunnyPot.Tests/UnitTests.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.BuildConnectionMessage_IncludesConnectionDetails() node in FunnyPot.Tests/UnitTests.cs.</td>
+</tr>
+<tr>
+  <td>25</td>
+  <td><code>FunnyPot.Tests.GlobalUsings.g.cs</code><br><small style="color:var(--muted)">Debug/net8.0/FunnyPot.Tests.GlobalUsings.g.cs</small></td>
   <td><span class="tag tag-func">Test</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
   <td>Verifies imports, entry points, or version behavior.</td>
 </tr>
 <tr>
-  <td>24</td>
-  <td><code>FunnyPot.Tests.GlobalUsings.g.cs</code><br><small style="color:var(--muted)">Debug/net8.0/FunnyPot.Tests.GlobalUsings.g.cs</small></td>
+  <td>26</td>
+  <td><code>FunnyPot.Tests.AssemblyInfo.cs</code><br><small style="color:var(--muted)">Debug/net8.0/FunnyPot.Tests.AssemblyInfo.cs</small></td>
   <td><span class="tag tag-func">Test</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
@@ -439,14 +457,14 @@ flowchart LR
     <h4>Key Files</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>FunnyPot.Tests/UnitTests.cs</code></td><td>22 nodes</td></tr>
+      <tr><td><code>FunnyPot.Tests/UnitTests.cs</code></td><td>24 nodes</td></tr>
 <tr><td><code>Debug/net8.0/FunnyPot.Tests.AssemblyInfo.cs</code></td><td>1 nodes</td></tr>
 <tr><td><code>Debug/net8.0/FunnyPot.Tests.GlobalUsings.g.cs</code></td><td>1 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: method x18, contains x3. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: method x19, contains x4. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
@@ -933,8 +951,229 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 5. Funnypot Programcs Getsecretorenvironment ====== -->
-<h2 id="funnypot-programcs-getsecretorenvironment">5. Funnypot Programcs Getsecretorenvironment</h2>
+<!-- ====== 5. Data Harvesting Requirementsmd ====== -->
+<h2 id="data-harvesting-requirementsmd">5. Data Harvesting Requirementsmd</h2>
+<p>Data Harvesting Requirementsmd groups implementation around data, harvesting, requirementsmd, docs, mostly in docs/data-harvesting-requirements.md. This section covers 16 nodes and 15 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Data Harvesting Requirementsmd (16 nodes, 15 edges)
+    docs_data_harvesting_requirements_data_collectio_754d0a3a("Data Collection Modules<br/><small>docs/data-harvesting-requirements.md</small>")
+    docs_data_harvesting_requirements_data_harvestin_eb36a533("Data Harvesting Specification: LLM-Driv...<br/><small>docs/data-harvesting-requirements.md</small>")
+    docs_data_harvesting_requirements_storage_and_pu_eab67f7d("Storage and Publication<br/><small>docs/data-harvesting-requirements.md</small>")
+    docs_data_harvesting_requirements_processing_and_1d6b0591("Processing and Correlation<br/><small>docs/data-harvesting-requirements.md</small>")
+    docs_data_harvesting_requirements_md_657cee13("data-harvesting-requirements.md")
+    docs_data_harvesting_requirements_data_acquisiti_610c4714("Data Acquisition Architecture<br/><small>docs/data-harvesting-requirements.md</small>")
+    docs_data_harvesting_requirements_asset_value_pe_de26b8be("Asset Value Perception<br/><small>docs/data-harvesting-requirements.md</small>")
+    docs_data_harvesting_requirements_github_pages_p_17c904ae("GitHub Pages Publication<br/><small>docs/data-harvesting-requirements.md</small>")
+    docs_data_harvesting_requirements_log_format_e0e57874("Log Format<br/><small>docs/data-harvesting-requirements.md</small>")
+    docs_data_harvesting_requirements_m_1_ssh_protoc_9e828311("M-1: SSH Protocol and Authentication Me...<br/><small>docs/data-harvesting-requirements.md</small>")
+    docs_data_harvesting_requirements_m_2_behavioral_fb018c5c("M-2: Behavioral and Tactical Metrics<br/><small>docs/data-harvesting-requirements.md</small>")
+    docs_data_harvesting_requirements_m_3_payload_an_767055b0("M-3: Payload and Egress Telemetry<br/><small>docs/data-harvesting-requirements.md</small>")
+    docs_data_harvesting_requirements_m_4_llm_intera_c642f5d1("M-4: LLM Interaction and Persona Metrics<br/><small>docs/data-harvesting-requirements.md</small>")
+    docs_data_harvesting_requirements_metrics_export_1039fbf9("Metrics Export<br/><small>docs/data-harvesting-requirements.md</small>")
+    docs_data_harvesting_requirements_storage_tiers_36c2ca05("Storage Tiers<br/><small>docs/data-harvesting-requirements.md</small>")
+    docs_data_harvesting_requirements_temporal_corre_a4fc27c0("Temporal Correlation<br/><small>docs/data-harvesting-requirements.md</small>")
+    docs_data_harvesting_requirements_md_657cee13 -->|contains| docs_data_harvesting_requirements_data_harvestin_eb36a533
+    docs_data_harvesting_requirements_data_harvestin_eb36a533 -->|contains| docs_data_harvesting_requirements_data_acquisiti_610c4714
+    docs_data_harvesting_requirements_data_harvestin_eb36a533 -->|contains| docs_data_harvesting_requirements_data_collectio_754d0a3a
+    docs_data_harvesting_requirements_data_harvestin_eb36a533 -->|contains| docs_data_harvesting_requirements_processing_and_1d6b0591
+    docs_data_harvesting_requirements_data_harvestin_eb36a533 -->|contains| docs_data_harvesting_requirements_storage_and_pu_eab67f7d
+    docs_data_harvesting_requirements_data_collectio_754d0a3a -->|contains| docs_data_harvesting_requirements_m_1_ssh_protoc_9e828311
+    docs_data_harvesting_requirements_data_collectio_754d0a3a -->|contains| docs_data_harvesting_requirements_m_2_behavioral_fb018c5c
+    docs_data_harvesting_requirements_data_collectio_754d0a3a -->|contains| docs_data_harvesting_requirements_m_3_payload_an_767055b0
+    docs_data_harvesting_requirements_data_collectio_754d0a3a -->|contains| docs_data_harvesting_requirements_m_4_llm_intera_c642f5d1
+    docs_data_harvesting_requirements_processing_and_1d6b0591 -->|contains| docs_data_harvesting_requirements_temporal_corre_a4fc27c0
+    docs_data_harvesting_requirements_processing_and_1d6b0591 -->|contains| docs_data_harvesting_requirements_asset_value_pe_de26b8be
+    docs_data_harvesting_requirements_storage_and_pu_eab67f7d -->|contains| docs_data_harvesting_requirements_log_format_e0e57874
+    docs_data_harvesting_requirements_storage_and_pu_eab67f7d -->|contains| docs_data_harvesting_requirements_storage_tiers_36c2ca05
+    docs_data_harvesting_requirements_storage_and_pu_eab67f7d -->|contains| docs_data_harvesting_requirements_metrics_export_1039fbf9
+    docs_data_harvesting_requirements_storage_and_pu_eab67f7d -->|contains| docs_data_harvesting_requirements_github_pages_p_17c904ae
+    class docs_data_harvesting_requirements_data_collectio_754d0a3a concept;
+    class docs_data_harvesting_requirements_data_harvestin_eb36a533 concept;
+    class docs_data_harvesting_requirements_storage_and_pu_eab67f7d concept;
+    class docs_data_harvesting_requirements_processing_and_1d6b0591 concept;
+    class docs_data_harvesting_requirements_md_657cee13 concept;
+    class docs_data_harvesting_requirements_data_acquisiti_610c4714 concept;
+    class docs_data_harvesting_requirements_asset_value_pe_de26b8be concept;
+    class docs_data_harvesting_requirements_github_pages_p_17c904ae concept;
+    class docs_data_harvesting_requirements_log_format_e0e57874 concept;
+    class docs_data_harvesting_requirements_m_1_ssh_protoc_9e828311 concept;
+    class docs_data_harvesting_requirements_m_2_behavioral_fb018c5c concept;
+    class docs_data_harvesting_requirements_m_3_payload_an_767055b0 concept;
+    class docs_data_harvesting_requirements_m_4_llm_intera_c642f5d1 concept;
+    class docs_data_harvesting_requirements_metrics_export_1039fbf9 concept;
+    class docs_data_harvesting_requirements_storage_tiers_36c2ca05 concept;
+    class docs_data_harvesting_requirements_temporal_corre_a4fc27c0 concept;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>data-harvesting-requirements.md</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing data-harvesting-requirements.md.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>Data Harvesting Specification: LLM-Driven SSH Analytics</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Data Harvesting Specification: LLM-Driven SSH Analytics.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>Data Acquisition Architecture</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Data Acquisition Architecture.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>Data Collection Modules</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Data Collection Modules.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>M-1: SSH Protocol and Authentication Metadata</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing M-1: SSH Protocol and Authentication Metadata.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>M-2: Behavioral and Tactical Metrics</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing M-2: Behavioral and Tactical Metrics.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>M-3: Payload and Egress Telemetry</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing M-3: Payload and Egress Telemetry.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>M-4: LLM Interaction and Persona Metrics</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing M-4: LLM Interaction and Persona Metrics.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>Processing and Correlation</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Processing and Correlation.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>Temporal Correlation</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Temporal Correlation.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>Asset Value Perception</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Asset Value Perception.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>Storage and Publication</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Storage and Publication.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>Log Format</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Log Format.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>Storage Tiers</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Storage Tiers.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>Metrics Export</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Metrics Export.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>GitHub Pages Publication</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing GitHub Pages Publication.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>docs/data-harvesting-requirements.md</code></td><td>16 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x15. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 6. Funnypot Programcs Getsecretorenvironment ====== -->
+<h2 id="funnypot-programcs-getsecretorenvironment">6. Funnypot Programcs Getsecretorenvironment</h2>
 <p>Funnypot Programcs Getsecretorenvironment groups implementation around funnypot, programcs, getsecretorenvironment, getllmresponse, mostly in FunnyPot/Program.cs. This section covers 16 nodes and 31 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -1160,227 +1399,6 @@ flowchart LR
   <div class="card">
     <h4>Design Notes</h4>
     <p>This section comes from graphify community clustering. Relationship summary: calls x20, method x9, references x2. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
-  </div>
-</div>
-<hr>
-
-<!-- ====== 6. Data Harvesting Requirementsmd ====== -->
-<h2 id="data-harvesting-requirementsmd">6. Data Harvesting Requirementsmd</h2>
-<p>Data Harvesting Requirementsmd groups implementation around data, harvesting, requirementsmd, docs, mostly in docs/data-harvesting-requirements.md. This section covers 16 nodes and 15 internal edges; the diagram shows only representative relationships to stay readable.</p>
-
-<div class="mermaid">
-%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
-flowchart LR
-    %% Section: Data Harvesting Requirementsmd (16 nodes, 15 edges)
-    docs_data_harvesting_requirements_data_collectio_754d0a3a("Data Collection Modules<br/><small>docs/data-harvesting-requirements.md</small>")
-    docs_data_harvesting_requirements_data_harvestin_eb36a533("Data Harvesting Specification: LLM-Driv...<br/><small>docs/data-harvesting-requirements.md</small>")
-    docs_data_harvesting_requirements_storage_and_pu_eab67f7d("Storage and Publication<br/><small>docs/data-harvesting-requirements.md</small>")
-    docs_data_harvesting_requirements_processing_and_1d6b0591("Processing and Correlation<br/><small>docs/data-harvesting-requirements.md</small>")
-    docs_data_harvesting_requirements_md_657cee13("data-harvesting-requirements.md")
-    docs_data_harvesting_requirements_data_acquisiti_610c4714("Data Acquisition Architecture<br/><small>docs/data-harvesting-requirements.md</small>")
-    docs_data_harvesting_requirements_asset_value_pe_de26b8be("Asset Value Perception<br/><small>docs/data-harvesting-requirements.md</small>")
-    docs_data_harvesting_requirements_github_pages_p_17c904ae("GitHub Pages Publication<br/><small>docs/data-harvesting-requirements.md</small>")
-    docs_data_harvesting_requirements_log_format_e0e57874("Log Format<br/><small>docs/data-harvesting-requirements.md</small>")
-    docs_data_harvesting_requirements_m_1_ssh_protoc_9e828311("M-1: SSH Protocol and Authentication Me...<br/><small>docs/data-harvesting-requirements.md</small>")
-    docs_data_harvesting_requirements_m_2_behavioral_fb018c5c("M-2: Behavioral and Tactical Metrics<br/><small>docs/data-harvesting-requirements.md</small>")
-    docs_data_harvesting_requirements_m_3_payload_an_767055b0("M-3: Payload and Egress Telemetry<br/><small>docs/data-harvesting-requirements.md</small>")
-    docs_data_harvesting_requirements_m_4_llm_intera_c642f5d1("M-4: LLM Interaction and Persona Metrics<br/><small>docs/data-harvesting-requirements.md</small>")
-    docs_data_harvesting_requirements_metrics_export_1039fbf9("Metrics Export<br/><small>docs/data-harvesting-requirements.md</small>")
-    docs_data_harvesting_requirements_storage_tiers_36c2ca05("Storage Tiers<br/><small>docs/data-harvesting-requirements.md</small>")
-    docs_data_harvesting_requirements_temporal_corre_a4fc27c0("Temporal Correlation<br/><small>docs/data-harvesting-requirements.md</small>")
-    docs_data_harvesting_requirements_md_657cee13 -->|contains| docs_data_harvesting_requirements_data_harvestin_eb36a533
-    docs_data_harvesting_requirements_data_harvestin_eb36a533 -->|contains| docs_data_harvesting_requirements_data_acquisiti_610c4714
-    docs_data_harvesting_requirements_data_harvestin_eb36a533 -->|contains| docs_data_harvesting_requirements_data_collectio_754d0a3a
-    docs_data_harvesting_requirements_data_harvestin_eb36a533 -->|contains| docs_data_harvesting_requirements_processing_and_1d6b0591
-    docs_data_harvesting_requirements_data_harvestin_eb36a533 -->|contains| docs_data_harvesting_requirements_storage_and_pu_eab67f7d
-    docs_data_harvesting_requirements_data_collectio_754d0a3a -->|contains| docs_data_harvesting_requirements_m_1_ssh_protoc_9e828311
-    docs_data_harvesting_requirements_data_collectio_754d0a3a -->|contains| docs_data_harvesting_requirements_m_2_behavioral_fb018c5c
-    docs_data_harvesting_requirements_data_collectio_754d0a3a -->|contains| docs_data_harvesting_requirements_m_3_payload_an_767055b0
-    docs_data_harvesting_requirements_data_collectio_754d0a3a -->|contains| docs_data_harvesting_requirements_m_4_llm_intera_c642f5d1
-    docs_data_harvesting_requirements_processing_and_1d6b0591 -->|contains| docs_data_harvesting_requirements_temporal_corre_a4fc27c0
-    docs_data_harvesting_requirements_processing_and_1d6b0591 -->|contains| docs_data_harvesting_requirements_asset_value_pe_de26b8be
-    docs_data_harvesting_requirements_storage_and_pu_eab67f7d -->|contains| docs_data_harvesting_requirements_log_format_e0e57874
-    docs_data_harvesting_requirements_storage_and_pu_eab67f7d -->|contains| docs_data_harvesting_requirements_storage_tiers_36c2ca05
-    docs_data_harvesting_requirements_storage_and_pu_eab67f7d -->|contains| docs_data_harvesting_requirements_metrics_export_1039fbf9
-    docs_data_harvesting_requirements_storage_and_pu_eab67f7d -->|contains| docs_data_harvesting_requirements_github_pages_p_17c904ae
-    class docs_data_harvesting_requirements_data_collectio_754d0a3a concept;
-    class docs_data_harvesting_requirements_data_harvestin_eb36a533 concept;
-    class docs_data_harvesting_requirements_storage_and_pu_eab67f7d concept;
-    class docs_data_harvesting_requirements_processing_and_1d6b0591 concept;
-    class docs_data_harvesting_requirements_md_657cee13 concept;
-    class docs_data_harvesting_requirements_data_acquisiti_610c4714 concept;
-    class docs_data_harvesting_requirements_asset_value_pe_de26b8be concept;
-    class docs_data_harvesting_requirements_github_pages_p_17c904ae concept;
-    class docs_data_harvesting_requirements_log_format_e0e57874 concept;
-    class docs_data_harvesting_requirements_m_1_ssh_protoc_9e828311 concept;
-    class docs_data_harvesting_requirements_m_2_behavioral_fb018c5c concept;
-    class docs_data_harvesting_requirements_m_3_payload_an_767055b0 concept;
-    class docs_data_harvesting_requirements_m_4_llm_intera_c642f5d1 concept;
-    class docs_data_harvesting_requirements_metrics_export_1039fbf9 concept;
-    class docs_data_harvesting_requirements_storage_tiers_36c2ca05 concept;
-    class docs_data_harvesting_requirements_temporal_corre_a4fc27c0 concept;
-    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
-    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
-    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
-    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
-    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
-    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
-    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
-    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
-    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
-</div>
-
-<h3>Call Details</h3>
-<table class="call-table">
-<tr>
-  <th style="width:5%">#</th>
-  <th style="width:28%">Node</th>
-  <th style="width:10%">Type</th>
-  <th style="width:17%">Caller</th>
-  <th style="width:20%">Callees</th>
-  <th style="width:20%">Description</th>
-</tr>
-<tr>
-  <td>1</td>
-  <td><code>data-harvesting-requirements.md</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
-  <td><span class="tag tag-func">Concept</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Documentation node describing data-harvesting-requirements.md.</td>
-</tr>
-<tr>
-  <td>2</td>
-  <td><code>Data Harvesting Specification: LLM-Driven SSH Analytics</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
-  <td><span class="tag tag-func">Concept</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Documentation node describing Data Harvesting Specification: LLM-Driven SSH Analytics.</td>
-</tr>
-<tr>
-  <td>3</td>
-  <td><code>Data Acquisition Architecture</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
-  <td><span class="tag tag-func">Concept</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Documentation node describing Data Acquisition Architecture.</td>
-</tr>
-<tr>
-  <td>4</td>
-  <td><code>Data Collection Modules</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
-  <td><span class="tag tag-func">Concept</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Documentation node describing Data Collection Modules.</td>
-</tr>
-<tr>
-  <td>5</td>
-  <td><code>M-1: SSH Protocol and Authentication Metadata</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
-  <td><span class="tag tag-func">Concept</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Documentation node describing M-1: SSH Protocol and Authentication Metadata.</td>
-</tr>
-<tr>
-  <td>6</td>
-  <td><code>M-2: Behavioral and Tactical Metrics</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
-  <td><span class="tag tag-func">Concept</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Documentation node describing M-2: Behavioral and Tactical Metrics.</td>
-</tr>
-<tr>
-  <td>7</td>
-  <td><code>M-3: Payload and Egress Telemetry</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
-  <td><span class="tag tag-func">Concept</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Documentation node describing M-3: Payload and Egress Telemetry.</td>
-</tr>
-<tr>
-  <td>8</td>
-  <td><code>M-4: LLM Interaction and Persona Metrics</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
-  <td><span class="tag tag-func">Concept</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Documentation node describing M-4: LLM Interaction and Persona Metrics.</td>
-</tr>
-<tr>
-  <td>9</td>
-  <td><code>Processing and Correlation</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
-  <td><span class="tag tag-func">Concept</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Documentation node describing Processing and Correlation.</td>
-</tr>
-<tr>
-  <td>10</td>
-  <td><code>Temporal Correlation</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
-  <td><span class="tag tag-func">Concept</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Documentation node describing Temporal Correlation.</td>
-</tr>
-<tr>
-  <td>11</td>
-  <td><code>Asset Value Perception</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
-  <td><span class="tag tag-func">Concept</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Documentation node describing Asset Value Perception.</td>
-</tr>
-<tr>
-  <td>12</td>
-  <td><code>Storage and Publication</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
-  <td><span class="tag tag-func">Concept</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Documentation node describing Storage and Publication.</td>
-</tr>
-<tr>
-  <td>13</td>
-  <td><code>Log Format</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
-  <td><span class="tag tag-func">Concept</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Documentation node describing Log Format.</td>
-</tr>
-<tr>
-  <td>14</td>
-  <td><code>Storage Tiers</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
-  <td><span class="tag tag-func">Concept</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Documentation node describing Storage Tiers.</td>
-</tr>
-<tr>
-  <td>15</td>
-  <td><code>Metrics Export</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
-  <td><span class="tag tag-func">Concept</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Documentation node describing Metrics Export.</td>
-</tr>
-<tr>
-  <td>16</td>
-  <td><code>GitHub Pages Publication</code><br><small style="color:var(--muted)">docs/data-harvesting-requirements.md</small></td>
-  <td><span class="tag tag-func">Concept</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Documentation node describing GitHub Pages Publication.</td>
-</tr>
-</table>
-
-<div class="grid">
-  <div class="card">
-    <h4>Key Files</h4>
-    <table style="width:100%;font-size:0.85rem;">
-      <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>docs/data-harvesting-requirements.md</code></td><td>16 nodes</td></tr>
-    </table>
-  </div>
-  <div class="card">
-    <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x15. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
@@ -1705,8 +1723,99 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 9. Agentsmd Graphify ====== -->
-<h2 id="agentsmd-graphify">9. Agentsmd Graphify</h2>
+<!-- ====== 9. Funnypot Programcs Ntfynotifier ====== -->
+<h2 id="funnypot-programcs-ntfynotifier">9. Funnypot Programcs Ntfynotifier</h2>
+<p>Funnypot Programcs Ntfynotifier groups implementation around funnypot, programcs, ntfynotifier, notifyconnectionacceptedasync, mostly in FunnyPot/Program.cs. This section covers 4 nodes and 5 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Funnypot Programcs Ntfynotifier (4 nodes, 5 edges)
+    funnypot_program_ntfynotifier_d9801141("NtfyNotifier<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_ntfynotifier_notifyconnectionac_abd30796("NotifyConnectionAcceptedAsync()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_ntfynotifier_buildconnectionmes_0273d4f6("BuildConnectionMessage()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_ntfynotifier_istruthy_3ff3df8c("IsTruthy()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_ntfynotifier_d9801141 -->|method| funnypot_program_ntfynotifier_notifyconnectionac_abd30796
+    funnypot_program_ntfynotifier_d9801141 -->|method| funnypot_program_ntfynotifier_buildconnectionmes_0273d4f6
+    funnypot_program_ntfynotifier_d9801141 -->|method| funnypot_program_ntfynotifier_istruthy_3ff3df8c
+    funnypot_program_ntfynotifier_notifyconnectionac_abd30796 -->|calls| funnypot_program_ntfynotifier_istruthy_3ff3df8c
+    funnypot_program_ntfynotifier_notifyconnectionac_abd30796 -->|calls| funnypot_program_ntfynotifier_buildconnectionmes_0273d4f6
+    class funnypot_program_ntfynotifier_d9801141 klass;
+    class funnypot_program_ntfynotifier_notifyconnectionac_abd30796 async;
+    class funnypot_program_ntfynotifier_buildconnectionmes_0273d4f6 function;
+    class funnypot_program_ntfynotifier_istruthy_3ff3df8c function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>NtfyNotifier</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>BuildConnectionMessage()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>IsTruthy()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>NotifyConnectionAcceptedAsync()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>NtfyNotifier node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>.NotifyConnectionAcceptedAsync()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-async">Async</span></td>
+  <td><code>NtfyNotifier</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>BuildConnectionMessage()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>IsTruthy()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>.NotifyConnectionAcceptedAsync() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>.BuildConnectionMessage()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>NotifyConnectionAcceptedAsync()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>NtfyNotifier</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.BuildConnectionMessage() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>.IsTruthy()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>NotifyConnectionAcceptedAsync()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>NtfyNotifier</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.IsTruthy() node in FunnyPot/Program.cs.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>FunnyPot/Program.cs</code></td><td>4 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: method x3, calls x2. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 10. Agentsmd Graphify ====== -->
+<h2 id="agentsmd-graphify">10. Agentsmd Graphify</h2>
 <p>Agentsmd Graphify groups implementation around agentsmd, graphify, mostly in AGENTS.md. This section covers 2 nodes and 1 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -1772,8 +1881,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 10. Funnypotassemblyinfocs Funnypot Obj ====== -->
-<h2 id="funnypotassemblyinfocs-funnypot-obj">10. Funnypotassemblyinfocs Funnypot Obj</h2>
+<!-- ====== 11. Funnypotassemblyinfocs Funnypot Obj ====== -->
+<h2 id="funnypotassemblyinfocs-funnypot-obj">11. Funnypotassemblyinfocs Funnypot Obj</h2>
 <p>Funnypotassemblyinfocs Funnypot Obj groups implementation around funnypotassemblyinfocs, funnypot, obj, debug, mostly in Debug/net8.0/FunnyPot.AssemblyInfo.cs. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -1828,8 +1937,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 11. Funnypotglobalusingsgcs Funnypot Obj ====== -->
-<h2 id="funnypotglobalusingsgcs-funnypot-obj">11. Funnypotglobalusingsgcs Funnypot Obj</h2>
+<!-- ====== 12. Funnypotglobalusingsgcs Funnypot Obj ====== -->
+<h2 id="funnypotglobalusingsgcs-funnypot-obj">12. Funnypotglobalusingsgcs Funnypot Obj</h2>
 <p>Funnypotglobalusingsgcs Funnypot Obj groups implementation around funnypotglobalusingsgcs, funnypot, obj, debug, mostly in Debug/net8.0/FunnyPot.GlobalUsings.g.cs. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -1884,8 +1993,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 12. Funnypotassemblyinfocs Funnypot Obj ====== -->
-<h2 id="funnypotassemblyinfocs-funnypot-obj-81fc76">12. Funnypotassemblyinfocs Funnypot Obj</h2>
+<!-- ====== 13. Funnypotassemblyinfocs Funnypot Obj ====== -->
+<h2 id="funnypotassemblyinfocs-funnypot-obj-81fc76">13. Funnypotassemblyinfocs Funnypot Obj</h2>
 <p>Funnypotassemblyinfocs Funnypot Obj groups implementation around funnypotassemblyinfocs, funnypot, obj, release, mostly in net8.0/linux-x64/FunnyPot.AssemblyInfo.cs. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -1940,8 +2049,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 13. Funnypotglobalusingsgcs Funnypot Obj ====== -->
-<h2 id="funnypotglobalusingsgcs-funnypot-obj-e7a97a">13. Funnypotglobalusingsgcs Funnypot Obj</h2>
+<!-- ====== 14. Funnypotglobalusingsgcs Funnypot Obj ====== -->
+<h2 id="funnypotglobalusingsgcs-funnypot-obj-e7a97a">14. Funnypotglobalusingsgcs Funnypot Obj</h2>
 <p>Funnypotglobalusingsgcs Funnypot Obj groups implementation around funnypotglobalusingsgcs, funnypot, obj, release, mostly in net8.0/linux-x64/FunnyPot.GlobalUsings.g.cs. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -2002,17 +2111,17 @@ flowchart LR
   <div class="card">
     <h4>Graph</h4>
     <table style="width:100%;font-size:0.85rem;">
-      <tr><td>Nodes</td><td>119</td></tr>
-      <tr><td>Edges</td><td>176</td></tr>
+      <tr><td>Nodes</td><td>125</td></tr>
+      <tr><td>Edges</td><td>187</td></tr>
       <tr><td>Hyperedges</td><td>0</td></tr>
-      <tr><td>Communities</td><td>15</td></tr>
-      <tr><td>Documented Sections</td><td>12</td></tr>
+      <tr><td>Communities</td><td>16</td></tr>
+      <tr><td>Documented Sections</td><td>13</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Edge Confidence</h4>
     <table style="width:100%;font-size:0.85rem;">
-      <tr><td>EXTRACTED</td><td>176</td></tr>
+      <tr><td>EXTRACTED</td><td>187</td></tr>
       <tr><td>INFERRED</td><td>0</td></tr>
       <tr><td>AMBIGUOUS</td><td>0</td></tr>
     </table>
@@ -2021,7 +2130,7 @@ flowchart LR
 
 <div style="text-align:center; padding:40px 0; color: var(--muted); font-size:0.9rem;">
   <p>FunnyPot — Architecture Documentation</p>
-  <p>Generated: 2026-05-19 08:58 UTC · graphify callflow-html</p>
+  <p>Generated: 2026-05-19 09:24 UTC · graphify callflow-html</p>
 </div>
 
 </div><!-- .container -->
