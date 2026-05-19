@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
+using System.Security.Cryptography;
 using DotNetEnv;
 using System.Diagnostics;
 using LibGit2Sharp;
@@ -16,6 +17,7 @@ using FxSsh.Services;
 class Program
 {
     static readonly HttpClient httpClient = new();
+    internal static HttpClient SharedHttpClient => httpClient;
 
     static readonly int AuthMaxTries = int.Parse(Environment.GetEnvironmentVariable("AUTH_MAX_TRIES") ?? "3");
     static readonly int PasswordHarvestAttempt = Math.Max(1, Math.Min(AuthMaxTries, 3));
@@ -31,6 +33,7 @@ class Program
     static readonly ConcurrentDictionary<string, List<HarvestedCredential>> HarvestedCredentials = new(StringComparer.OrdinalIgnoreCase);
     static readonly ConcurrentDictionary<string, string> LastCredentials = new(StringComparer.OrdinalIgnoreCase);
     static readonly ConcurrentDictionary<string, DateTime> LastCommandEndedAt = new(StringComparer.OrdinalIgnoreCase);
+    static readonly ConcurrentDictionary<string, ShellSessionAnalytics> ShellAnalyticsBySession = new(StringComparer.OrdinalIgnoreCase);
     static readonly SemaphoreSlim ConnectionLimit = new(MaxSessions, MaxSessions);
     static readonly FieldInfo? SessionSocketField = typeof(Session).GetField("_socket", BindingFlags.Instance | BindingFlags.NonPublic);
 
@@ -214,6 +217,7 @@ class Program
             var credentialDistance = previousCredential is null ? 0 : DataHarvester.LevenshteinDistance(previousCredential, credential);
             LastCredentials[sessionKey] = credential;
             var credentialEntropy = args.AuthMethod == "password" ? DataHarvester.CalculateEntropy(args.Password ?? "") : 0;
+            var infrastructureProfile = DataHarvester.CategorizeInfrastructure(remoteEndpoint);
 
             Logger.LogYaml("auth_attempt", new AuthAttemptLogEntry
             {
@@ -230,7 +234,9 @@ class Program
                 AcceptanceReason = acceptanceReason,
                 CredentialEntropy = credentialEntropy,
                 PreviousCredentialDistance = credentialDistance,
-                InfrastructureCategory = DataHarvester.CategorizeInfrastructure(remoteEndpoint)
+                InfrastructureCategory = infrastructureProfile.Category,
+                InfrastructureAsn = infrastructureProfile.Asn,
+                FingerprintHash = DataHarvester.CalculateFingerprintHash(args.Session?.ClientVersion, args.KeyAlgorithm, args.Fingerprint)
             });
 
             if (args.AuthMethod != "password")
@@ -305,6 +311,11 @@ class Program
             {
                 new() { role = "system", content = BuildSystemPrompt(username) }
             };
+            var shellAnalytics = ShellAnalyticsBySession.GetOrAdd(sessionId, _ => new ShellSessionAnalytics
+            {
+                SessionStartedAt = DateTime.UtcNow,
+                InfrastructureCategory = DataHarvester.CategorizeInfrastructure(remoteEndpoint).Category
+            });
 
             Logger.LogMsg($"Shell session {sessionId} started for {username} from {remoteEndpoint}");
             Logger.LogYaml("shell_session_start", new SessionLogEntry
@@ -352,7 +363,8 @@ class Program
                     Event = reason,
                     DurationSeconds = (DateTime.UtcNow - connectionStartedAt).TotalSeconds
                 });
-                Logger.UpdateGlobalStats(username, messageCount, blockedOps, (int)totalPromptTokens, (int)totalCompletionTokens, sessionDurationMs);
+                Logger.UpdateGlobalStats(username, messageCount, blockedOps, (int)totalPromptTokens, (int)totalCompletionTokens, sessionDurationMs, shellAnalytics);
+                ShellAnalyticsBySession.TryRemove(sessionId, out ShellSessionAnalytics? _);
                 Task.Run(() => Logger.PushToGit(sessionId));
             }
 
@@ -402,6 +414,7 @@ class Program
                 Logger.LogMsg($"[Session {sessionId}] User input: {line}");
                 var commandStartedAt = DateTime.UtcNow;
                 var commandAnalysis = DataHarvester.AnalyzeCommand(line);
+                shellAnalytics.RecordCommand(commandAnalysis);
                 long? commandSequenceLatencyMs = LastCommandEndedAt.TryGetValue(sessionId, out var previousEndedAt)
                     ? (long)(commandStartedAt - previousEndedAt).TotalMilliseconds
                     : null;
@@ -427,6 +440,9 @@ class Program
                     AssetValuePerceptionScore = commandAnalysis.AssetValuePerceptionScore,
                     MitreAttackTechniques = commandAnalysis.MitreAttackTechniques
                 });
+
+                foreach (var payloadUrl in commandAnalysis.PayloadUrls)
+                    _ = Task.Run(() => DataHarvester.CapturePayloadMetadataAsync(payloadUrl, connectionSessionKey, sessionId, remoteEndpoint));
 
                 var (isValid, errorMsg) = InputValidator.Validate(line);
                 if (!isValid)
@@ -466,6 +482,9 @@ class Program
                 channel.SendData(Encoding.UTF8.GetBytes(response + "\r\n"));
                 SendPrompt();
 
+                var failedCommand = DataHarvester.IsFailureResponse(response);
+                shellAnalytics.RecordResult(failedCommand);
+
                 Logger.LogMetric(sessionId, "LLMInteraction", new
                 {
                     Input = line,
@@ -473,8 +492,11 @@ class Program
                     PromptTokens = promptTokens,
                     CompletionTokens = completionTokens,
                     DurationMs = stopwatch.ElapsedMilliseconds,
-                    FailedCommand = DataHarvester.IsFailureResponse(response),
-                    HallucinationFeedback = DataHarvester.DetectHallucinationFeedback(line, response)
+                    FailedCommand = failedCommand,
+                    HallucinationFeedback = DataHarvester.DetectHallucinationFeedback(line, response),
+                    StandardErrorRatio = shellAnalytics.StandardErrorRatio,
+                    SemanticDrift = shellAnalytics.SemanticDrift,
+                    TuringMultiplier = shellAnalytics.CalculateTuringMultiplier()
                 });
 
                 Logger.LogYaml("command_result", new CommandResultLogEntry
@@ -485,9 +507,12 @@ class Program
                     RemoteEndpoint = remoteEndpoint,
                     Username = username,
                     Command = line,
-                    FailedCommand = DataHarvester.IsFailureResponse(response),
+                    FailedCommand = failedCommand,
                     ResponseDurationMs = stopwatch.ElapsedMilliseconds,
-                    HallucinationFeedback = DataHarvester.DetectHallucinationFeedback(line, response)
+                    HallucinationFeedback = DataHarvester.DetectHallucinationFeedback(line, response),
+                    StandardErrorRatio = shellAnalytics.StandardErrorRatio,
+                    SemanticDrift = shellAnalytics.SemanticDrift,
+                    TuringMultiplier = shellAnalytics.CalculateTuringMultiplier()
                 });
             }
 
@@ -661,6 +686,8 @@ public class AuthAttemptLogEntry
     public double CredentialEntropy { get; set; }
     public int PreviousCredentialDistance { get; set; }
     public string InfrastructureCategory { get; set; } = "unknown";
+    public string InfrastructureAsn { get; set; } = "unknown";
+    public string FingerprintHash { get; set; } = "";
 }
 
 public class SessionLogEntry
@@ -709,6 +736,23 @@ public class CommandResultLogEntry
     public bool FailedCommand { get; set; }
     public long ResponseDurationMs { get; set; }
     public bool HallucinationFeedback { get; set; }
+    public double StandardErrorRatio { get; set; }
+    public int SemanticDrift { get; set; }
+    public double TuringMultiplier { get; set; }
+}
+
+public class PayloadCaptureLogEntry
+{
+    public DateTime Timestamp { get; set; }
+    public string SessionKey { get; set; } = "";
+    public string ShellSessionId { get; set; } = "";
+    public string RemoteEndpoint { get; set; } = "";
+    public string Url { get; set; } = "";
+    public string Status { get; set; } = "queued";
+    public int? HttpStatusCode { get; set; }
+    public long BytesCaptured { get; set; }
+    public string Sha256 { get; set; } = "";
+    public string Error { get; set; } = "";
 }
 
 public class HarvestedEvent
@@ -760,7 +804,54 @@ public class GlobalStats
     public long TotalCompletionTokens { get; set; }
     public long TotalDurationMs { get; set; }
     public Dictionary<string, int> TopUsers { get; set; } = new();
+    public Dictionary<string, int> SessionsByInfrastructureCategory { get; set; } = new();
+    public Dictionary<string, int> MitreTechniqueDistribution { get; set; } = new();
+    public double MeanEngagementSeconds { get; set; }
     public DateTime LastUpdated { get; set; }
+}
+
+public class InfrastructureProfile
+{
+    public string Category { get; set; } = "unknown";
+    public string Asn { get; set; } = "unknown";
+}
+
+public class ShellSessionAnalytics
+{
+    public DateTime SessionStartedAt { get; set; }
+    public string InfrastructureCategory { get; set; } = "unknown";
+    public int TotalCommands { get; private set; }
+    public int FailedCommands { get; private set; }
+    public int FirstSemanticComplexity { get; private set; }
+    public int LastSemanticComplexity { get; private set; }
+    public Dictionary<string, int> MitreTechniqueCounts { get; } = new();
+
+    public double StandardErrorRatio => TotalCommands == 0 ? 0 : (double)FailedCommands / TotalCommands;
+    public int SemanticDrift => LastSemanticComplexity - FirstSemanticComplexity;
+
+    public void RecordCommand(DhsCommandAnalysis analysis)
+    {
+        TotalCommands++;
+        if (TotalCommands == 1)
+            FirstSemanticComplexity = analysis.SemanticComplexity;
+        LastSemanticComplexity = analysis.SemanticComplexity;
+
+        foreach (var technique in analysis.MitreAttackTechniques)
+            MitreTechniqueCounts[technique] = MitreTechniqueCounts.GetValueOrDefault(technique) + 1;
+    }
+
+    public void RecordResult(bool failedCommand)
+    {
+        if (failedCommand)
+            FailedCommands++;
+    }
+
+    public double CalculateTuringMultiplier()
+    {
+        var elapsedSeconds = Math.Max(1, (DateTime.UtcNow - SessionStartedAt).TotalSeconds);
+        var staticHoneypotBaselineSeconds = Math.Max(1, TotalCommands * 5);
+        return Math.Round(elapsedSeconds / staticHoneypotBaselineSeconds, 2);
+    }
 }
 
 static class InputValidator
@@ -823,6 +914,7 @@ static class SCPDetector
 static class DataHarvester
 {
     private static readonly Regex UrlRegex = new(@"\b(?:https?|ftp|tftp)://[^\s'""<>]+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private const int MaxPayloadCaptureBytes = 10 * 1024 * 1024;
 
     public static DhsCommandAnalysis AnalyzeCommand(string command)
     {
@@ -889,12 +981,91 @@ static class DataHarvester
         return costs[right.Length];
     }
 
-    public static string CategorizeInfrastructure(string remoteEndpoint)
+    public static InfrastructureProfile CategorizeInfrastructure(string remoteEndpoint)
     {
         var host = remoteEndpoint.Split(':')[0];
-        return IPAddress.TryParse(host, out var ip) && IPAddress.IsLoopback(ip) || host.StartsWith("10.") || host.StartsWith("192.168.") || Regex.IsMatch(host, @"^172\.(1[6-9]|2\d|3[01])\.")
-            ? "private"
-            : "unknown";
+        if (!IPAddress.TryParse(host, out var ip))
+            return new InfrastructureProfile { Category = "unknown", Asn = "unknown" };
+
+        if (IPAddress.IsLoopback(ip) || host.StartsWith("10.") || host.StartsWith("192.168.") || Regex.IsMatch(host, @"^172\.(1[6-9]|2\d|3[01])\."))
+            return new InfrastructureProfile { Category = "private", Asn = "private" };
+
+        return new InfrastructureProfile
+        {
+            Category = IsLikelyCloudOrHosting(ip) ? "hosting_cloud" : "unknown",
+            Asn = "lookup_unavailable"
+        };
+    }
+
+    public static string CalculateFingerprintHash(params string?[] parts)
+    {
+        var material = string.Join("|", parts.Where(part => !string.IsNullOrWhiteSpace(part)).Select(part => part!.Trim().ToLowerInvariant()));
+        if (string.IsNullOrEmpty(material))
+            return "";
+
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(material))).ToLowerInvariant();
+    }
+
+    public static async Task CapturePayloadMetadataAsync(string url, string sessionKey, string shellSessionId, string remoteEndpoint)
+    {
+        var entry = new PayloadCaptureLogEntry
+        {
+            Timestamp = DateTime.UtcNow,
+            SessionKey = sessionKey,
+            ShellSessionId = shellSessionId,
+            RemoteEndpoint = remoteEndpoint,
+            Url = url,
+            Status = "queued"
+        };
+
+        try
+        {
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https"))
+            {
+                entry.Status = "unsupported_scheme";
+                Logger.LogYaml("payload_capture", entry);
+                return;
+            }
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+            using var response = await Program.SharedHttpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+            entry.HttpStatusCode = (int)response.StatusCode;
+
+            if (!response.IsSuccessStatusCode)
+            {
+                entry.Status = "http_error";
+                Logger.LogYaml("payload_capture", entry);
+                return;
+            }
+
+            await using var stream = await response.Content.ReadAsStreamAsync(cts.Token);
+            using var memory = new MemoryStream();
+            var buffer = new byte[81920];
+            int read;
+            while ((read = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length), cts.Token)) > 0)
+            {
+                if (memory.Length + read > MaxPayloadCaptureBytes)
+                {
+                    entry.Status = "too_large";
+                    break;
+                }
+
+                memory.Write(buffer, 0, read);
+            }
+
+            if (entry.Status != "too_large")
+                entry.Status = "captured";
+
+            entry.BytesCaptured = memory.Length;
+            entry.Sha256 = Convert.ToHexString(SHA256.HashData(memory.ToArray())).ToLowerInvariant();
+        }
+        catch (Exception ex)
+        {
+            entry.Status = "error";
+            entry.Error = ex.Message;
+        }
+
+        Logger.LogYaml("payload_capture", entry);
     }
 
     public static bool IsFailureResponse(string response)
@@ -954,6 +1125,15 @@ static class DataHarvester
         foreach (Match match in Regex.Matches(command, @"\b(?:nc|netcat|curl|wget|ssh|telnet)\s+((?:[a-z0-9.-]+|\d{1,3}(?:\.\d{1,3}){3})(?::\d+)?)", RegexOptions.IgnoreCase))
             targets.Add(match.Groups[1].Value);
         return targets.Distinct().ToList();
+    }
+
+    private static bool IsLikelyCloudOrHosting(IPAddress ip)
+    {
+        var bytes = ip.GetAddressBytes();
+        if (bytes.Length != 4)
+            return false;
+
+        return bytes[0] is 3 or 13 or 18 or 20 or 34 or 35 or 40 or 44 or 52 or 54 or 104 or 138 or 139;
     }
 }
 
@@ -1030,7 +1210,7 @@ static class Logger
         File.WriteAllText(summaryPath, JsonSerializer.Serialize(summary, new JsonSerializerOptions { WriteIndented = true }));
     }
 
-    public static void UpdateGlobalStats(string username, int messages, int blocked, int promptTokens, int completionTokens, long durationMs)
+    public static void UpdateGlobalStats(string username, int messages, int blocked, int promptTokens, int completionTokens, long durationMs, ShellSessionAnalytics? analytics = null)
     {
         lock (_statsLock)
         {
@@ -1051,7 +1231,17 @@ static class Logger
                 stats.TotalPromptTokens += promptTokens;
                 stats.TotalCompletionTokens += completionTokens;
                 stats.TotalDurationMs += durationMs;
+                stats.MeanEngagementSeconds = stats.TotalSessions == 0 ? 0 : Math.Round(stats.TotalDurationMs / 1000.0 / stats.TotalSessions, 2);
                 stats.LastUpdated = DateTime.UtcNow;
+
+                if (analytics is not null)
+                {
+                    stats.SessionsByInfrastructureCategory[analytics.InfrastructureCategory] =
+                        stats.SessionsByInfrastructureCategory.GetValueOrDefault(analytics.InfrastructureCategory) + 1;
+
+                    foreach (var (technique, count) in analytics.MitreTechniqueCounts)
+                        stats.MitreTechniqueDistribution[technique] = stats.MitreTechniqueDistribution.GetValueOrDefault(technique) + count;
+                }
 
                 if (stats.TopUsers.ContainsKey(username))
                     stats.TopUsers[username]++;
@@ -1138,6 +1328,7 @@ static class Logger
                 string appLogFile = GetLogFilePath(sessionId, "app");
                 string statsFile = Path.Combine(repoPath, "global_stats.json");
                 string dataDir = Path.Combine(repoPath, "data");
+                string dataBranch = Environment.GetEnvironmentVariable("GITHUB_DATA_BRANCH") ?? "data";
 
                 Commands.Stage(repo, Path.GetRelativePath(repoPath, metricsFile));
                 Commands.Stage(repo, Path.GetRelativePath(repoPath, appLogFile));
@@ -1147,11 +1338,17 @@ static class Logger
                 if (Directory.Exists(dataDir))
                     Commands.Stage(repo, "data");
 
+                if (!repo.RetrieveStatus().IsDirty)
+                {
+                    LogMsg($"Git push skipped: no data changes for session {sessionId}.", sessionId);
+                    return;
+                }
+
                 var author = new Signature(gitUser!, $"{gitUser}@users.noreply.github.com", DateTimeOffset.Now);
                 repo.Commit($"Add session data for {sessionId}", author, author);
 
                 repo.Network.Push(repo.Network.Remotes["origin"],
-                    @"refs/heads/master:refs/heads/data",
+                    $@"refs/heads/{repo.Head.FriendlyName}:refs/heads/{dataBranch}",
                     new PushOptions
                     {
                         CredentialsProvider = (_, _, _) =>
