@@ -206,3 +206,15 @@ public class NtfyNotifierTests
         Assert.DoesNotContain("Password:", message);
     }
 }
+
+public class ProgramTests
+{
+    [Theory]
+    [InlineData("203.0.113.5:49152", "203.0.113.5")]
+    [InlineData("[2001:db8::1]:49152", "2001:db8::1")]
+    [InlineData("unknown", "unknown")]
+    public void GetRemoteAttemptKey_UsesIpWithoutSourcePort(string remoteEndpoint, string expected)
+    {
+        Assert.Equal(expected, Program.GetRemoteAttemptKey(remoteEndpoint));
+    }
+}

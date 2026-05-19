@@ -188,13 +188,29 @@ class Program
         return "unknown";
     }
 
+    internal static string GetRemoteAttemptKey(string remoteEndpoint)
+    {
+        if (string.IsNullOrWhiteSpace(remoteEndpoint) || remoteEndpoint == "unknown")
+            return "unknown";
+
+        if (IPEndPoint.TryParse(remoteEndpoint, out var endpoint))
+            return endpoint.Address.ToString();
+
+        var lastColon = remoteEndpoint.LastIndexOf(':');
+        if (lastColon > 0 && remoteEndpoint[..lastColon].Count(c => c == ':') == 0)
+            return remoteEndpoint[..lastColon];
+
+        return remoteEndpoint;
+    }
+
     static void SetupUserauth(UserauthService userauth, string sessionKey, string remoteEndpoint)
     {
+        var remoteAttemptKey = GetRemoteAttemptKey(remoteEndpoint);
         userauth.Userauth += (_, args) =>
         {
             int tries = args.AuthMethod == "password"
-                ? AuthAttempts.AddOrUpdate(sessionKey, 1, (_, count) => count + 1)
-                : AuthAttempts.GetValueOrDefault(sessionKey);
+                ? AuthAttempts.AddOrUpdate(remoteAttemptKey, 1, (_, count) => count + 1)
+                : AuthAttempts.GetValueOrDefault(remoteAttemptKey);
             var accepted = false;
             var acceptanceReason = "rejected";
 
