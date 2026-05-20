@@ -37,23 +37,15 @@ class Program
     static readonly SemaphoreSlim ConnectionLimit = new(MaxSessions, MaxSessions);
     static readonly FieldInfo? SessionSocketField = typeof(Session).GetField("_socket", BindingFlags.Instance | BindingFlags.NonPublic);
 
-    static readonly List<BannerSlot> BannerPool = ParseBannerPool();
-    static string GetBannerForSession(Session session)
-    {
-        try
-        {
-            if (SessionSocketField?.GetValue(session) is Socket socket)
-            {
-                var localPort = (socket.LocalEndPoint as IPEndPoint)?.Port ?? 0;
-                var slot = BannerPool.FirstOrDefault(b => b.Port == localPort);
-                if (slot is not null) return slot.Banner;
-            }
-        }
-        catch { }
-        return BannerPool.FirstOrDefault()?.Banner ?? SshBanner;
-    }
+    static readonly List<string> BannerPool = ParseBannerPool();
+    static volatile int _currentBannerIndex = 0;
+    static string _currentBanner = BannerPool.Count > 0 ? BannerPool[0] : SshBanner;
+    static SshServer? _sshServer;
+    static readonly object _serverLock = new();
 
-    static List<BannerSlot> ParseBannerPool()
+    static string GetBannerForSession(Session session) => _currentBanner;
+
+    static List<string> ParseBannerPool()
     {
         var bannersEnv = Environment.GetEnvironmentVariable("SSH_BANNERS");
         if (!string.IsNullOrWhiteSpace(bannersEnv))
@@ -63,18 +55,55 @@ class Program
                 .ToList();
             if (banners.Count > 0)
             {
-                var slots = new List<BannerSlot>();
-                for (int i = 0; i < banners.Count; i++)
-                    slots.Add(new BannerSlot { Port = SshPort + i, Banner = banners[i] });
-                Logger.LogMsg($"Banner pool: {banners.Count} banners on ports {slots[0].Port}-{slots[^1].Port}");
-                return slots;
+                Logger.LogMsg($"Banner pool loaded: {banners.Count} banners");
+                return banners;
             }
         }
-        Logger.LogMsg($"Banner pool: single banner on port {SshPort}");
-        return new List<BannerSlot> { new() { Port = SshPort, Banner = SshBanner } };
+        Logger.LogMsg($"Banner pool: single banner '{SshBanner}'");
+        return new List<string> { SshBanner };
     }
 
-    public class BannerSlot { public int Port { get; set; } public string Banner { get; set; } = ""; }
+    static string GetHostKeyPem()
+    {
+        var keyPath = Path.Combine(AppDir, "ssh_host_key");
+        if (File.Exists(keyPath))
+        {
+            Logger.LogMsg("Loaded existing host key.");
+            return File.ReadAllText(keyPath);
+        }
+        Logger.LogMsg("Generating new RSA host key (4096-bit)...");
+        var pem = KeyGenerator.GenerateRsaKeyPem(4096);
+        File.WriteAllText(keyPath, pem);
+        Logger.LogMsg("Host key saved.");
+        return pem;
+    }
+
+    static void StartSshServer(string banner, int port)
+    {
+        lock (_serverLock)
+        {
+            _sshServer?.Stop();
+            _sshServer = new SshServer(new StartingInfo(IPAddress.Any, port, banner));
+            _sshServer.AddHostKey("rsa-sha2-512", hostKeyPem);
+            _sshServer.ConnectionAccepted += OnConnectionAccepted;
+            _sshServer.ExceptionRasied += (_, ex) =>
+                Logger.LogMsg($"SSH server exception: {ex.Message}");
+            _sshServer.Start();
+            Logger.LogMsg($"SSH Server started on port {port} [{banner}]");
+        }
+    }
+
+    static void RotateBanner()
+    {
+        if (BannerPool.Count <= 1) return;
+        var nextIndex = Interlocked.Increment(ref _currentBannerIndex) % BannerPool.Count;
+        var banner = BannerPool[nextIndex];
+        Interlocked.Exchange(ref _currentBanner, banner);
+        Logger.LogMsg($"Rotating banner to [{banner}]");
+        StartSshServer(banner, SshPort);
+    }
+
+    static readonly string hostKeyPem = GetHostKeyPem();
 
     private static string GetPrompt(string? username = null)
     {
@@ -130,41 +159,26 @@ class Program
             }
         });
 
-        var keyPath = Path.Combine(AppDir, "ssh_host_key");
-        string hostKeyPem;
-        if (File.Exists(keyPath))
-        {
-            hostKeyPem = File.ReadAllText(keyPath);
-            Logger.LogMsg("Loaded existing host key.");
-        }
-        else
-        {
-            Logger.LogMsg("Generating new RSA host key (4096-bit)...");
-            hostKeyPem = KeyGenerator.GenerateRsaKeyPem(4096);
-            File.WriteAllText(keyPath, hostKeyPem);
-            Logger.LogMsg("Host key saved.");
-        }
-
         Logger.PreparePublicationRepository();
 
-        var servers = new List<SshServer>();
-        foreach (var slot in BannerPool)
+        var initialBanner = BannerPool.Count > 0 ? BannerPool[0] : SshBanner;
+        _currentBanner = initialBanner;
+        StartSshServer(initialBanner, SshPort);
+
+        var rotationInterval = int.Parse(Environment.GetEnvironmentVariable("SSH_BANNER_ROTATION_INTERVAL") ?? "0");
+        if (rotationInterval > 0 && BannerPool.Count > 1)
         {
-            var srv = new SshServer(new StartingInfo(IPAddress.Any, slot.Port, slot.Banner));
-            srv.AddHostKey("rsa-sha2-512", hostKeyPem);
-            srv.ConnectionAccepted += OnConnectionAccepted;
-            srv.ExceptionRasied += (_, ex) =>
-                Logger.LogMsg($"Server on {slot.Port} exception: {ex.Message}");
-            srv.Start();
-            servers.Add(srv);
-            Logger.LogMsg($"SSH Server started on port {slot.Port} [{slot.Banner}]");
+            var rotationTimer = new System.Timers.Timer(rotationInterval * 1000) { AutoReset = true };
+            rotationTimer.Elapsed += (_, _) => RotateBanner();
+            rotationTimer.Start();
+            Logger.LogMsg($"Banner rotation every {rotationInterval}s across {BannerPool.Count} banners");
         }
 
         Logger.LogMsg("Press Ctrl+C to stop.");
         Console.CancelKeyPress += (_, _) =>
         {
             Logger.LogMsg("Shutting down...");
-            foreach (var s in servers) s.Stop();
+            _sshServer?.Stop();
         };
 
         Thread.Sleep(Timeout.Infinite);

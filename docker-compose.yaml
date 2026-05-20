@@ -3,7 +3,7 @@ services:
     build: .
     container_name: funnypot-container
     ports:
-      - "22722-22726:22722-22726"
+      - "22722:22722"
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -28,3 +28,4 @@ services:
       - LLM_RATE_LIMIT_MAX=${LLM_RATE_LIMIT_MAX:-20}
       - LLM_RATE_LIMIT_WINDOW_SECONDS=${LLM_RATE_LIMIT_WINDOW_SECONDS:-60}
       - SSH_BANNERS=${SSH_BANNERS:-SSH-2.0-OmegaBlack_Classified_Server_v1.0,SSH-2.0-dropbear_2020.80,SSH-2.0-OpenSSH_6.6.1,SSH-2.0-OpenSSH_7.2p2 Ubuntu,SSH-2.0-OpenSSH_for_Windows_8.1}
+      - SSH_BANNER_ROTATION_INTERVAL=${SSH_BANNER_ROTATION_INTERVAL:-300}
