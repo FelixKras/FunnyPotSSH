@@ -28,8 +28,10 @@ RUN groupadd $USERNAME && \
 
 WORKDIR /home/$USERNAME/app
 COPY --from=publish /app/publish .
+COPY --from=build /src/frontend ./frontend
 
-RUN mkdir -p /home/$USERNAME/app/frontend/sessions && \
+RUN rm -rf /home/$USERNAME/app/frontend/.git && \
+    mkdir -p /home/$USERNAME/app/frontend/sessions && \
     chown -R $USERNAME:$USERNAME /home/$USERNAME/app /var/log/funnypot && \
     chmod -R 755 /home/$USERNAME/app && \
     chmod -R 755 /var/log/funnypot

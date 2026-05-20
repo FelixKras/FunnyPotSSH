@@ -791,7 +791,11 @@ public class HarvestSummary
 {
     public DateTime LastUpdated { get; set; }
     public int TotalEvents { get; set; }
+    public int TotalScanAttempts { get; set; }
+    public int UniqueScanIps { get; set; }
+    public int TotalShells { get; set; }
     public Dictionary<string, int> EventCounts { get; set; } = new();
+    public Dictionary<string, int> ScansByIp { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
 
 public class DhsCommandAnalysis
@@ -1231,6 +1235,9 @@ static class Logger
     private static readonly object _lock = new();
     private static readonly object _metricLock = new();
     private static readonly object _statsLock = new();
+    private static readonly object _pushLock = new();
+    private static DateTime _lastDataPushRequestedAt = DateTime.MinValue;
+    private static readonly TimeSpan DataPushInterval = TimeSpan.FromSeconds(Math.Max(1, int.Parse(Environment.GetEnvironmentVariable("DATA_PUSH_INTERVAL_SECONDS") ?? "300")));
 
     static Logger()
     {
@@ -1244,6 +1251,8 @@ static class Logger
 
     public static void LogYaml(string eventType, object data)
     {
+        var sessionKey = TryGetSessionKey(data);
+
         lock (_lock)
         {
             try
@@ -1260,6 +1269,38 @@ static class Logger
             }
             catch { }
         }
+
+        RequestDataPush(sessionKey ?? eventType, force: IsPublicationBoundaryEvent(eventType));
+    }
+
+    static string? TryGetSessionKey(object data)
+    {
+        var value = data.GetType().GetProperty("SessionKey")?.GetValue(data) as string;
+        return string.IsNullOrWhiteSpace(value) ? null : value;
+    }
+
+    static bool IsPublicationBoundaryEvent(string eventType)
+    {
+        return eventType is "shell_session_end" or "session_end";
+    }
+
+    internal static bool ShouldRequestDataPush(DateTime now, DateTime lastRequestedAt, TimeSpan interval, bool force)
+    {
+        return force || lastRequestedAt == DateTime.MinValue || now - lastRequestedAt >= interval;
+    }
+
+    static void RequestDataPush(string sessionId, bool force = false)
+    {
+        var now = DateTime.UtcNow;
+        lock (_pushLock)
+        {
+            if (!ShouldRequestDataPush(now, _lastDataPushRequestedAt, DataPushInterval, force))
+                return;
+
+            _lastDataPushRequestedAt = now;
+        }
+
+        Task.Run(() => PushToGit(sessionId));
     }
 
     static void LogHarvestUnsafe(string eventType, object data)
@@ -1278,10 +1319,10 @@ static class Logger
         var staticDataDir = Path.Combine(Program.AppDir, "frontend", "data");
         Directory.CreateDirectory(staticDataDir);
         File.AppendAllText(Path.Combine(staticDataDir, "harvest.jsonl"), json + Environment.NewLine);
-        UpdateHarvestSummaryUnsafe(staticDataDir, eventType);
+        UpdateHarvestSummaryUnsafe(staticDataDir, eventType, data);
     }
 
-    static void UpdateHarvestSummaryUnsafe(string staticDataDir, string eventType)
+    static void UpdateHarvestSummaryUnsafe(string staticDataDir, string eventType, object data)
     {
         var summaryPath = Path.Combine(staticDataDir, "harvest_summary.json");
         HarvestSummary summary = new();
@@ -1292,11 +1333,40 @@ static class Logger
             summary = JsonSerializer.Deserialize<HarvestSummary>(existing) ?? new();
         }
 
-        summary.LastUpdated = DateTime.UtcNow;
+        ApplyHarvestSummaryEvent(summary, eventType, data, DateTime.UtcNow);
+
+        File.WriteAllText(summaryPath, JsonSerializer.Serialize(summary, new JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    internal static void ApplyHarvestSummaryEvent(HarvestSummary summary, string eventType, object data, DateTime timestamp)
+    {
+        summary.LastUpdated = timestamp;
         summary.TotalEvents++;
         summary.EventCounts[eventType] = summary.EventCounts.GetValueOrDefault(eventType) + 1;
 
-        File.WriteAllText(summaryPath, JsonSerializer.Serialize(summary, new JsonSerializerOptions { WriteIndented = true }));
+        if (eventType == "auth_attempt")
+        {
+            summary.TotalScanAttempts++;
+            var remoteIp = TryGetRemoteIp(data);
+            if (!string.IsNullOrWhiteSpace(remoteIp))
+            {
+                summary.ScansByIp[remoteIp] = summary.ScansByIp.GetValueOrDefault(remoteIp) + 1;
+                summary.UniqueScanIps = summary.ScansByIp.Count;
+            }
+        }
+        else if (eventType == "shell_session_start")
+        {
+            summary.TotalShells++;
+        }
+    }
+
+    static string? TryGetRemoteIp(object data)
+    {
+        var remoteEndpoint = data.GetType().GetProperty("RemoteEndpoint")?.GetValue(data) as string;
+        if (string.IsNullOrWhiteSpace(remoteEndpoint))
+            return null;
+
+        return Program.GetRemoteAttemptKey(remoteEndpoint);
     }
 
     public static void UpdateGlobalStats(string username, int messages, int blocked, int promptTokens, int completionTokens, long durationMs, ShellSessionAnalytics? analytics = null)
@@ -1416,8 +1486,10 @@ static class Logger
                 string dataDir = Path.Combine(repoPath, "data");
                 string dataBranch = Environment.GetEnvironmentVariable("GITHUB_DATA_BRANCH") ?? "data";
 
-                Commands.Stage(repo, Path.GetRelativePath(repoPath, metricsFile));
-                Commands.Stage(repo, Path.GetRelativePath(repoPath, appLogFile));
+                if (File.Exists(metricsFile))
+                    Commands.Stage(repo, Path.GetRelativePath(repoPath, metricsFile));
+                if (File.Exists(appLogFile))
+                    Commands.Stage(repo, Path.GetRelativePath(repoPath, appLogFile));
 
                 if (File.Exists(statsFile))
                     Commands.Stage(repo, "global_stats.json");

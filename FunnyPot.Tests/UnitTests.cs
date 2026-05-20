@@ -207,6 +207,47 @@ public class NtfyNotifierTests
     }
 }
 
+public class LoggerTests
+{
+    [Fact]
+    public void ShouldRequestDataPush_AllowsInitialAndElapsedRequests()
+    {
+        var now = DateTime.UtcNow;
+        var interval = TimeSpan.FromMinutes(5);
+
+        Assert.True(Logger.ShouldRequestDataPush(now, DateTime.MinValue, interval, force: false));
+        Assert.True(Logger.ShouldRequestDataPush(now, now.AddMinutes(-6), interval, force: false));
+    }
+
+    [Fact]
+    public void ShouldRequestDataPush_DebouncesNonBoundaryEvents()
+    {
+        var now = DateTime.UtcNow;
+        var interval = TimeSpan.FromMinutes(5);
+
+        Assert.False(Logger.ShouldRequestDataPush(now, now.AddMinutes(-1), interval, force: false));
+        Assert.True(Logger.ShouldRequestDataPush(now, now.AddMinutes(-1), interval, force: true));
+    }
+
+    [Fact]
+    public void ApplyHarvestSummaryEvent_TracksUniqueScanIpsAndShells()
+    {
+        var summary = new HarvestSummary();
+        var timestamp = DateTime.UtcNow;
+
+        Logger.ApplyHarvestSummaryEvent(summary, "auth_attempt", new AuthAttemptLogEntry { RemoteEndpoint = "203.0.113.5:49152" }, timestamp);
+        Logger.ApplyHarvestSummaryEvent(summary, "auth_attempt", new AuthAttemptLogEntry { RemoteEndpoint = "203.0.113.5:49153" }, timestamp);
+        Logger.ApplyHarvestSummaryEvent(summary, "auth_attempt", new AuthAttemptLogEntry { RemoteEndpoint = "198.51.100.7:22" }, timestamp);
+        Logger.ApplyHarvestSummaryEvent(summary, "shell_session_start", new SessionLogEntry(), timestamp);
+
+        Assert.Equal(3, summary.TotalScanAttempts);
+        Assert.Equal(2, summary.UniqueScanIps);
+        Assert.Equal(2, summary.ScansByIp["203.0.113.5"]);
+        Assert.Equal(1, summary.ScansByIp["198.51.100.7"]);
+        Assert.Equal(1, summary.TotalShells);
+    }
+}
+
 public class ProgramTests
 {
     [Theory]

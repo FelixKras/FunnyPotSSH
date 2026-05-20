@@ -1,0 +1,8 @@
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/FelixKras/FunnyPot.ai.git
+	branch = data
+[submodule "frontend-main"]
+	path = frontend-main
+	url = https://github.com/FelixKras/FunnyPot.ai.git
+	branch = main
