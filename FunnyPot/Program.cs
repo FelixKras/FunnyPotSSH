@@ -37,6 +37,45 @@ class Program
     static readonly SemaphoreSlim ConnectionLimit = new(MaxSessions, MaxSessions);
     static readonly FieldInfo? SessionSocketField = typeof(Session).GetField("_socket", BindingFlags.Instance | BindingFlags.NonPublic);
 
+    static readonly List<BannerSlot> BannerPool = ParseBannerPool();
+    static string GetBannerForSession(Session session)
+    {
+        try
+        {
+            if (SessionSocketField?.GetValue(session) is Socket socket)
+            {
+                var localPort = (socket.LocalEndPoint as IPEndPoint)?.Port ?? 0;
+                var slot = BannerPool.FirstOrDefault(b => b.Port == localPort);
+                if (slot is not null) return slot.Banner;
+            }
+        }
+        catch { }
+        return BannerPool.FirstOrDefault()?.Banner ?? SshBanner;
+    }
+
+    static List<BannerSlot> ParseBannerPool()
+    {
+        var bannersEnv = Environment.GetEnvironmentVariable("SSH_BANNERS");
+        if (!string.IsNullOrWhiteSpace(bannersEnv))
+        {
+            var banners = bannersEnv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(b => !string.IsNullOrWhiteSpace(b))
+                .ToList();
+            if (banners.Count > 0)
+            {
+                var slots = new List<BannerSlot>();
+                for (int i = 0; i < banners.Count; i++)
+                    slots.Add(new BannerSlot { Port = SshPort + i, Banner = banners[i] });
+                Logger.LogMsg($"Banner pool: {banners.Count} banners on ports {slots[0].Port}-{slots[^1].Port}");
+                return slots;
+            }
+        }
+        Logger.LogMsg($"Banner pool: single banner on port {SshPort}");
+        return new List<BannerSlot> { new() { Port = SshPort, Banner = SshBanner } };
+    }
+
+    public class BannerSlot { public int Port { get; set; } public string Banner { get; set; } = ""; }
+
     private static string GetPrompt(string? username = null)
     {
         username ??= Environment.GetEnvironmentVariable("SSH_USER") ?? "remote";
@@ -108,21 +147,24 @@ class Program
 
         Logger.PreparePublicationRepository();
 
-        var server = new SshServer(new StartingInfo(IPAddress.Any, SshPort, SshBanner));
-
-        server.AddHostKey("rsa-sha2-512", hostKeyPem);
-        server.ConnectionAccepted += OnConnectionAccepted;
-        server.ExceptionRasied += (_, ex) =>
-            Logger.LogMsg($"Server exception: {ex.Message}");
-
-        server.Start();
-        Logger.LogMsg("SSH Server started on port 22422");
+        var servers = new List<SshServer>();
+        foreach (var slot in BannerPool)
+        {
+            var srv = new SshServer(new StartingInfo(IPAddress.Any, slot.Port, slot.Banner));
+            srv.AddHostKey("rsa-sha2-512", hostKeyPem);
+            srv.ConnectionAccepted += OnConnectionAccepted;
+            srv.ExceptionRasied += (_, ex) =>
+                Logger.LogMsg($"Server on {slot.Port} exception: {ex.Message}");
+            srv.Start();
+            servers.Add(srv);
+            Logger.LogMsg($"SSH Server started on port {slot.Port} [{slot.Banner}]");
+        }
 
         Logger.LogMsg("Press Ctrl+C to stop.");
         Console.CancelKeyPress += (_, _) =>
         {
             Logger.LogMsg("Shutting down...");
-            server.Stop();
+            foreach (var s in servers) s.Stop();
         };
 
         Thread.Sleep(Timeout.Infinite);
@@ -134,6 +176,7 @@ class Program
         var sessionKey = Guid.NewGuid().ToString("N")[..16];
         var remoteEndpoint = GetRemoteEndpoint(session);
         var connectionStartedAt = DateTime.UtcNow;
+        var sshBanner = GetBannerForSession(session);
 
         if (!ConnectionLimit.Wait(0))
         {
@@ -151,6 +194,7 @@ class Program
                 SessionKey = sessionKey,
                 RemoteEndpoint = remoteEndpoint,
                 ClientVersion = session.ClientVersion ?? "unknown",
+                SshBanner = sshBanner,
                 Event = "Disconnected",
                 DurationSeconds = (DateTime.UtcNow - connectionStartedAt).TotalSeconds
             });
@@ -159,13 +203,14 @@ class Program
                 ConnectionLimit.Release();
         };
 
-        Logger.LogMsg($"Connection accepted [{sessionKey}] from {remoteEndpoint}");
+        Logger.LogMsg($"Connection accepted [{sessionKey}] from {remoteEndpoint} banner: {sshBanner}");
         Logger.LogYaml("session_start", new SessionLogEntry
         {
             Timestamp = connectionStartedAt,
             SessionKey = sessionKey,
             RemoteEndpoint = remoteEndpoint,
             ClientVersion = session.ClientVersion ?? "pending",
+            SshBanner = sshBanner,
             Event = "ConnectionAccepted"
         });
 
@@ -174,7 +219,7 @@ class Program
             if (service is UserauthService userauth)
                 SetupUserauth(userauth, sessionKey, remoteEndpoint);
             else if (service is ConnectionService conn)
-                SetupShell(conn, sessionKey, remoteEndpoint, connectionStartedAt);
+                SetupShell(conn, sessionKey, remoteEndpoint, connectionStartedAt, sshBanner);
         };
     }
 
@@ -308,7 +353,7 @@ class Program
         };
     }
 
-    static void SetupShell(ConnectionService conn, string connectionSessionKey, string remoteEndpoint, DateTime connectionStartedAt)
+    static void SetupShell(ConnectionService conn, string connectionSessionKey, string remoteEndpoint, DateTime connectionStartedAt, string sshBanner = "")
     {
         conn.PtyReceived += (_, args) =>
         {
@@ -355,6 +400,7 @@ class Program
                 RemoteEndpoint = remoteEndpoint,
                 Username = username,
                 ClientVersion = args.AttachedUserauthArgs?.Session?.ClientVersion ?? "unknown",
+                SshBanner = sshBanner,
                 Event = "ShellOpened",
                 DurationSeconds = (DateTime.UtcNow - connectionStartedAt).TotalSeconds,
                 TimeToCompromiseMs = (long)(DateTime.UtcNow - connectionStartedAt).TotalMilliseconds
@@ -389,10 +435,11 @@ class Program
                     RemoteEndpoint = remoteEndpoint,
                     Username = username,
                     ClientVersion = args.AttachedUserauthArgs?.Session?.ClientVersion ?? "unknown",
+                    SshBanner = sshBanner,
                     Event = reason,
                     DurationSeconds = (DateTime.UtcNow - connectionStartedAt).TotalSeconds
                 });
-                Logger.UpdateGlobalStats(username, messageCount, blockedOps, (int)totalPromptTokens, (int)totalCompletionTokens, sessionDurationMs, shellAnalytics);
+                Logger.UpdateGlobalStats(username, messageCount, blockedOps, (int)totalPromptTokens, (int)totalCompletionTokens, sessionDurationMs, shellAnalytics, sshBanner);
                 ShellAnalyticsBySession.TryRemove(sessionId, out ShellSessionAnalytics? _);
                 FakeFileSystem.Remove(sessionId);
                 Task.Run(() => Logger.PushToGit(sessionId));
@@ -756,6 +803,7 @@ public class SessionLogEntry
     public string RemoteEndpoint { get; set; } = "";
     public string Username { get; set; } = "";
     public string ClientVersion { get; set; } = "";
+    public string SshBanner { get; set; } = "";
     public string Event { get; set; } = "";
     public double DurationSeconds { get; set; }
     public long TimeToCompromiseMs { get; set; }
@@ -869,6 +917,7 @@ public class GlobalStats
     public long TotalDurationMs { get; set; }
     public Dictionary<string, int> TopUsers { get; set; } = new();
     public Dictionary<string, int> SessionsByInfrastructureCategory { get; set; } = new();
+    public Dictionary<string, int> SessionsByBanner { get; set; } = new();
     public Dictionary<string, int> MitreTechniqueDistribution { get; set; } = new();
     public double MeanEngagementSeconds { get; set; }
     public DateTime LastUpdated { get; set; }
@@ -2108,7 +2157,7 @@ static class Logger
         return Program.GetRemoteAttemptKey(remoteEndpoint);
     }
 
-    public static void UpdateGlobalStats(string username, int messages, int blocked, int promptTokens, int completionTokens, long durationMs, ShellSessionAnalytics? analytics = null)
+    public static void UpdateGlobalStats(string username, int messages, int blocked, int promptTokens, int completionTokens, long durationMs, ShellSessionAnalytics? analytics = null, string? sshBanner = null)
     {
         lock (_statsLock)
         {
@@ -2139,6 +2188,11 @@ static class Logger
 
                     foreach (var (technique, count) in analytics.MitreTechniqueCounts)
                         stats.MitreTechniqueDistribution[technique] = stats.MitreTechniqueDistribution.GetValueOrDefault(technique) + count;
+                }
+
+                if (!string.IsNullOrEmpty(sshBanner))
+                {
+                    stats.SessionsByBanner[sshBanner] = stats.SessionsByBanner.GetValueOrDefault(sshBanner) + 1;
                 }
 
                 if (stats.TopUsers.ContainsKey(username))
