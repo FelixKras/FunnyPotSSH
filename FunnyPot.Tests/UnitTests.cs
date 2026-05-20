@@ -235,15 +235,19 @@ public class LoggerTests
         var summary = new HarvestSummary();
         var timestamp = DateTime.UtcNow;
 
-        Logger.ApplyHarvestSummaryEvent(summary, "auth_attempt", new AuthAttemptLogEntry { RemoteEndpoint = "203.0.113.5:49152" }, timestamp);
-        Logger.ApplyHarvestSummaryEvent(summary, "auth_attempt", new AuthAttemptLogEntry { RemoteEndpoint = "203.0.113.5:49153" }, timestamp);
-        Logger.ApplyHarvestSummaryEvent(summary, "auth_attempt", new AuthAttemptLogEntry { RemoteEndpoint = "198.51.100.7:22" }, timestamp);
+        Logger.ApplyHarvestSummaryEvent(summary, "auth_attempt", new AuthAttemptLogEntry { RemoteEndpoint = "203.0.113.5:49152", Username = "root", Password = "admin" }, timestamp);
+        Logger.ApplyHarvestSummaryEvent(summary, "auth_attempt", new AuthAttemptLogEntry { RemoteEndpoint = "203.0.113.5:49153", Username = "root", Password = "admin" }, timestamp);
+        Logger.ApplyHarvestSummaryEvent(summary, "auth_attempt", new AuthAttemptLogEntry { RemoteEndpoint = "198.51.100.7:22", Username = "support", Password = "password" }, timestamp);
         Logger.ApplyHarvestSummaryEvent(summary, "shell_session_start", new SessionLogEntry(), timestamp);
 
         Assert.Equal(3, summary.TotalScanAttempts);
         Assert.Equal(2, summary.UniqueScanIps);
         Assert.Equal(2, summary.ScansByIp["203.0.113.5"]);
         Assert.Equal(1, summary.ScansByIp["198.51.100.7"]);
+        Assert.Equal(2, summary.TopUsernames["root"]);
+        Assert.Equal(1, summary.TopUsernames["support"]);
+        Assert.Equal(2, summary.TopPasswords["admin"]);
+        Assert.Equal(1, summary.TopPasswords["password"]);
         Assert.Equal(1, summary.TotalShells);
     }
 }

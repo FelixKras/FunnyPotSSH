@@ -798,6 +798,8 @@ public class HarvestSummary
     public int TotalShells { get; set; }
     public Dictionary<string, int> EventCounts { get; set; } = new();
     public Dictionary<string, int> ScansByIp { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, int> TopUsernames { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, int> TopPasswords { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
 
 public class DhsCommandAnalysis
@@ -1349,6 +1351,15 @@ static class Logger
         if (eventType == "auth_attempt")
         {
             summary.TotalScanAttempts++;
+            if (data is AuthAttemptLogEntry authAttempt)
+            {
+                if (!string.IsNullOrWhiteSpace(authAttempt.Username))
+                    summary.TopUsernames[authAttempt.Username] = summary.TopUsernames.GetValueOrDefault(authAttempt.Username) + 1;
+
+                if (!string.IsNullOrEmpty(authAttempt.Password))
+                    summary.TopPasswords[authAttempt.Password] = summary.TopPasswords.GetValueOrDefault(authAttempt.Password) + 1;
+            }
+
             var remoteIp = TryGetRemoteIp(data);
             if (!string.IsNullOrWhiteSpace(remoteIp))
             {
