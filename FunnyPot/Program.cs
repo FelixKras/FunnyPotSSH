@@ -106,6 +106,8 @@ class Program
             Logger.LogMsg("Host key saved.");
         }
 
+        Logger.PreparePublicationRepository();
+
         var server = new SshServer(new StartingInfo(IPAddress.Any, SshPort, SshBanner));
 
         server.AddHostKey("rsa-sha2-512", hostKeyPem);
@@ -1520,6 +1522,57 @@ static class Logger
                 LogMsg($"Git push failed for session {sessionId}: {ex.Message}", sessionId);
             }
         }
+    }
+
+    public static void PreparePublicationRepository()
+    {
+        lock (_lock)
+        {
+            try
+            {
+                string repoPath = Path.Combine(Program.AppDir, "frontend");
+                string? gitToken = Program.GetSecretOrEnvironment("GITHUB_TOKEN");
+                string? gitUser = Program.GetSecretOrEnvironment("GITHUB_USER");
+
+                if (string.IsNullOrEmpty(gitToken) || string.IsNullOrEmpty(gitUser))
+                {
+                    LogMsg("Static dashboard repository preparation skipped: GITHUB_TOKEN or GITHUB_USER not set.");
+                    return;
+                }
+
+                Directory.CreateDirectory(repoPath);
+                EnsurePublicationRepository(repoPath, gitUser, "startup");
+
+                using var repo = new Repository(repoPath);
+                string dataBranch = Environment.GetEnvironmentVariable("GITHUB_DATA_BRANCH") ?? "data";
+                SyncPublicationBranch(repo, dataBranch, gitUser, gitToken);
+                LogMsg($"Static dashboard repository prepared on {dataBranch} branch.");
+            }
+            catch (Exception ex)
+            {
+                LogMsg($"Static dashboard repository preparation failed: {ex.Message}");
+            }
+        }
+    }
+
+    static void SyncPublicationBranch(Repository repo, string dataBranch, string gitUser, string gitToken)
+    {
+        var remote = repo.Network.Remotes["origin"] ?? throw new InvalidOperationException("Static dashboard origin is not configured.");
+        Commands.Fetch(repo, remote.Name, remote.FetchRefSpecs.Select(refSpec => refSpec.Specification), new FetchOptions
+        {
+            CredentialsProvider = (_, _, _) =>
+                new UsernamePasswordCredentials { Username = gitUser, Password = gitToken }
+        }, null);
+
+        var remoteBranch = repo.Branches[$"origin/{dataBranch}"];
+        if (remoteBranch is null)
+            return;
+
+        var localBranch = repo.Branches[dataBranch] ?? repo.CreateBranch(dataBranch, remoteBranch.Tip);
+        repo.Branches.Update(localBranch, branch => branch.Remote = remote.Name, branch => branch.UpstreamBranch = remoteBranch.CanonicalName);
+
+        if (repo.Head.FriendlyName != dataBranch)
+            Commands.Checkout(repo, localBranch, new CheckoutOptions { CheckoutModifiers = CheckoutModifiers.Force });
     }
 
     static void EnsurePublicationRepository(string repoPath, string gitUser, string sessionId)
