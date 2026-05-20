@@ -36,12 +36,12 @@ commit_submodule_if_needed() {
     printf 'Committing %s changes...\n' "$path"
     git -C "$path" add -A
     git -C "$path" -c user.name="$AUTHOR_NAME" -c user.email="$AUTHOR_EMAIL" commit -m "$message"
+
+    printf 'Pushing %s %s...\n' "$path" "$branch"
+    git -C "$path" push "git@github.com:FelixKras/FunnyPot.ai.git" "$branch"
   else
     printf '%s has no local changes.\n' "$path"
   fi
-
-  printf 'Pushing %s %s...\n' "$path" "$branch"
-  git -C "$path" push "git@github.com:FelixKras/FunnyPot.ai.git" "$branch"
 }
 
 commit_parent_if_needed() {
