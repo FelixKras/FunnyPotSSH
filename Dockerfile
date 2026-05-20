@@ -29,6 +29,7 @@ RUN groupadd $USERNAME && \
 WORKDIR /home/$USERNAME/app
 COPY --from=publish /app/publish .
 COPY --from=build /src/frontend ./frontend
+COPY --from=build /src/FunnyPot/data ./data
 
 RUN rm -rf /home/$USERNAME/app/frontend/.git && \
     mkdir -p /home/$USERNAME/app/frontend/sessions && \

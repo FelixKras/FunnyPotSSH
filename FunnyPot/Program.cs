@@ -344,6 +344,8 @@ class Program
                 InfrastructureCategory = DataHarvester.CategorizeInfrastructure(remoteEndpoint).Category
             });
 
+            var fakeFs = FakeFileSystem.GetOrCreate(sessionId);
+
             Logger.LogMsg($"Shell session {sessionId} started for {username} from {remoteEndpoint}");
             Logger.LogYaml("shell_session_start", new SessionLogEntry
             {
@@ -392,6 +394,7 @@ class Program
                 });
                 Logger.UpdateGlobalStats(username, messageCount, blockedOps, (int)totalPromptTokens, (int)totalCompletionTokens, sessionDurationMs, shellAnalytics);
                 ShellAnalyticsBySession.TryRemove(sessionId, out ShellSessionAnalytics? _);
+                FakeFileSystem.Remove(sessionId);
                 Task.Run(() => Logger.PushToGit(sessionId));
             }
 
@@ -490,21 +493,47 @@ class Program
                     return;
                 }
 
-                if (LlmDelayMs > 0)
-                    Thread.Sleep(LlmDelayMs);
-
+                var remoteIp = Program.GetRemoteAttemptKey(remoteEndpoint);
                 var stopwatch = Stopwatch.StartNew();
-                var (response, promptTokens, completionTokens, _) = GetLLMResponse(messageHistory, line);
-                response = NormalizeTerminalOutput(response);
-                messageHistory.Add(new() { role = "assistant", content = response });
+                var (response, usedStatic, rateLimited) = CommandResolver.ResolveCommand(
+                    line,
+                    sessionId,
+                    remoteIp,
+                    fakeFs,
+                    messageHistory);
+
                 stopwatch.Stop();
                 LastCommandEndedAt[sessionId] = DateTime.UtcNow;
+
+                int promptTokens = 0, completionTokens = 0;
+                if (!usedStatic && !rateLimited)
+                {
+                    messageHistory.Add(new() { role = "assistant", content = response });
+                    var tokensMatch = Regex.Match(response, @"\[token usage: (\d+) prompt, (\d+) completion\]");
+                    if (tokensMatch.Success)
+                    {
+                        promptTokens = int.Parse(tokensMatch.Groups[1].Value);
+                        completionTokens = int.Parse(tokensMatch.Groups[2].Value);
+                    }
+                }
+                else if (usedStatic)
+                {
+                    promptTokens = 0;
+                    completionTokens = 0;
+                }
 
                 totalPromptTokens += promptTokens;
                 totalCompletionTokens += completionTokens;
                 sessionDurationMs += stopwatch.ElapsedMilliseconds;
 
-                Logger.LogMsg($"[Session {sessionId}] LLM response: {response}");
+                Logger.LogMsg($"[Session {sessionId}] Response (static={usedStatic}, rateLimited={rateLimited}): {response}");
+
+                if (IsExitCommand(response))
+                {
+                    channel.SendData(Encoding.UTF8.GetBytes(response + "\r\n"));
+                    CloseShell("ClientExit");
+                    return;
+                }
 
                 channel.SendData(Encoding.UTF8.GetBytes(response + "\r\n"));
                 SendPrompt();
@@ -512,7 +541,7 @@ class Program
                 var failedCommand = DataHarvester.IsFailureResponse(response);
                 shellAnalytics.RecordResult(failedCommand);
 
-                Logger.LogMetric(sessionId, "LLMInteraction", new
+                Logger.LogMetric(sessionId, usedStatic ? "StaticInteraction" : "LLMInteraction", new
                 {
                     Input = line,
                     Response = response,
@@ -520,6 +549,8 @@ class Program
                     CompletionTokens = completionTokens,
                     DurationMs = stopwatch.ElapsedMilliseconds,
                     FailedCommand = failedCommand,
+                    UsedStaticDataset = usedStatic,
+                    RateLimited = rateLimited,
                     HallucinationFeedback = DataHarvester.DetectHallucinationFeedback(line, response),
                     StandardErrorRatio = shellAnalytics.StandardErrorRatio,
                     SemanticDrift = shellAnalytics.SemanticDrift,
@@ -624,14 +655,14 @@ You are not an AI, an LLM, or a language model. You are the Omega-Black server r
 ";
     }
 
-    static string NormalizeTerminalOutput(string response)
+    internal static string NormalizeTerminalOutput(string response)
     {
         response = Regex.Replace(response, @"(?m)^\s*\w+@omegablack:[^\r\n]*[#$]\s*", "");
         response = response.Replace("\r\n", "\n").Replace("\r", "\n").TrimEnd();
         return response.Replace("\n", "\r\n");
     }
 
-    static (string response, int promptTokens, int completionTokens, int totalTokens) GetLLMResponse(
+    internal static (string response, int promptTokens, int completionTokens, int totalTokens) GetLLMResponse(
         List<ChatRequestData.ChatMessage> history, string userInput)
     {
         string apiUrl = "https://openrouter.ai/api/v1/chat/completions";
@@ -936,12 +967,707 @@ static class InputValidator
 
 static class SCPDetector
 {
+    private static readonly Regex ScpUploadPattern = new(@"(?i)^\s*scp\s+.*(-t|-r|-p)\s+", RegexOptions.Compiled);
+    private static readonly Regex ScpDownloadPattern = new(@"(?i)^\s*scp\s+.*(-f)\s+", RegexOptions.Compiled);
+    private static readonly Regex SftpPattern = new(@"(?i)^\s*(sftp|ssh|sftp\-server)", RegexOptions.Compiled);
+
     public static bool IsSCPCommand(string input)
     {
-        return input.Contains("scp ", StringComparison.OrdinalIgnoreCase) ||
-               input.StartsWith("scp", StringComparison.OrdinalIgnoreCase) ||
-               input.Contains("sftp", StringComparison.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(input))
+            return false;
+        var trimmed = input.TrimStart();
+        if (trimmed.StartsWith("scp", StringComparison.OrdinalIgnoreCase) &&
+            (trimmed.Length == 3 || !char.IsLetterOrDigit(trimmed[3])))
+            return true;
+        return SftpPattern.IsMatch(input);
     }
+
+    public static bool IsSCPUpload(string input)
+    {
+        return ScpUploadPattern.IsMatch(input);
+    }
+
+    public static (string? remotePath, string? localPath) ParseSCPUpload(string input)
+    {
+        var match = Regex.Match(input, @"(?i)scp\s+(?:-[tprdD]+\s+)?(\S+)\s+(\S+)$");
+        if (match.Success)
+        {
+            var localPath = match.Groups[2].Value;
+            return (localPath, localPath);
+        }
+        return (null, null);
+    }
+}
+
+static class SCPUploadHandler
+{
+    private static readonly string UploadDir = Path.Combine(Program.LogDir, "uploads");
+    private static readonly object _lock = new();
+
+    static SCPUploadHandler()
+    {
+        try { Directory.CreateDirectory(UploadDir); } catch { }
+    }
+
+    public static void EnsureUploadDir() { }
+
+    public static string CaptureUpload(string sessionKey, string filename, byte[] data)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                var sessionDir = Path.Combine(UploadDir, sessionKey[..Math.Min(8, sessionKey.Length)]);
+                Directory.CreateDirectory(sessionDir);
+
+                var safeName = Regex.Replace(filename, @"[^a-zA-Z0-9._-]", "_");
+                var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+                var destPath = Path.Combine(sessionDir, $"{timestamp}_{safeName}");
+
+                File.WriteAllBytes(destPath, data);
+
+                var sha256 = Convert.ToHexString(SHA256.HashData(data)).ToLowerInvariant();
+                Logger.LogYaml("scp_upload_captured", new SCPUploadLogEntry
+                {
+                    Timestamp = DateTime.UtcNow,
+                    SessionKey = sessionKey,
+                    Filename = filename,
+                    Bytes = data.Length,
+                    Sha256 = sha256,
+                    Path = destPath
+                });
+
+                Logger.LogMsg($"SCP upload captured: {filename} ({data.Length} bytes) from session {sessionKey}");
+                return destPath;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogMsg($"SCP upload capture failed: {ex.Message}");
+                return "";
+            }
+        }
+    }
+}
+
+public class SCPUploadLogEntry
+{
+    public DateTime Timestamp { get; set; }
+    public string SessionKey { get; set; } = "";
+    public string Filename { get; set; } = "";
+    public long Bytes { get; set; }
+    public string Sha256 { get; set; } = "";
+    public string Path { get; set; } = "";
+}
+
+class FakeFileSystem
+{
+    private static readonly Dictionary<string, FakeFileSystem> SessionFilesystems = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly object _lock = new();
+
+    public string CurrentDirectory { get; private set; } = "/home/remote";
+
+    public static FakeFileSystem GetOrCreate(string sessionId)
+    {
+        lock (_lock)
+        {
+            if (!SessionFilesystems.TryGetValue(sessionId, out var fs))
+            {
+                fs = new FakeFileSystem();
+                SessionFilesystems[sessionId] = fs;
+            }
+            return fs;
+        }
+    }
+
+    public static void Remove(string sessionId)
+    {
+        lock (_lock)
+        {
+            SessionFilesystems.Remove(sessionId);
+        }
+    }
+
+    public string ResolvePath(string path)
+    {
+        if (string.IsNullOrEmpty(path)) return CurrentDirectory;
+
+        if (path.StartsWith("/"))
+            return NormalizePath(path);
+
+        if (path == "..")
+            return CurrentDirectory == "/" ? "/" : CurrentDirectory[..CurrentDirectory.LastIndexOf('/')];
+
+        if (path == ".")
+            return CurrentDirectory;
+
+        var combined = CurrentDirectory == "/" ? $"/{path}" : $"{CurrentDirectory}/{path}";
+        return NormalizePath(combined);
+    }
+
+    private static string NormalizePath(string path)
+    {
+        var parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var result = new List<string>();
+        foreach (var part in parts)
+        {
+            if (part == "..")
+            {
+                if (result.Count > 0) result.RemoveAt(result.Count - 1);
+            }
+            else if (part != ".")
+            {
+                result.Add(part);
+            }
+        }
+        return result.Count == 0 ? "/" : "/" + string.Join("/", result);
+    }
+
+    public void ChangeDirectory(string path)
+    {
+        CurrentDirectory = ResolvePath(path);
+    }
+
+    public bool IsValidDirectory(string path)
+    {
+        var resolved = ResolvePath(path);
+        return resolved == "/" || resolved.StartsWith("/home") || resolved == "/root" ||
+               resolved == "/etc" || resolved == "/var" || resolved == "/tmp" ||
+               resolved == "/bin" || resolved == "/sbin" || resolved == "/usr" ||
+               resolved == "/var/log";
+    }
+
+    public string ListDirectory(string? path = null)
+    {
+        var dir = path is null ? CurrentDirectory : ResolvePath(path);
+
+        return dir switch
+        {
+            "/home/remote" or "~" => "Documents  Downloads  Music  Pictures  Public  Templates  Videos",
+            "/home/secretOps" => ".env  mission_brief.txt",
+            "/" => "bin  boot  dev  etc  home  lib  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var",
+            "/etc" => "adduser.conf  dpkg  hosts  login.defs  passwd  profile  shadow  sudoers  sysctl.conf",
+            "/root" => "access_logs  backup  config  scripts",
+            "/var" => "backups  cache  crash  lib  local  lock  log  mail  opt  run  spool  tmp",
+            "/var/log" => "alternatives.log  apt  auth.log  btmp  dmesg  dpkg.log  kern.log  lastlog  syslog  wtmp",
+            "/tmp" => "systemd-private-abc123  vmware-dragon",
+            "/bin" => "bash  cat  chmod  cp  date  dd  df  echo  false  ln  ls  mkdir  mv  pwd  rm  rmdir  sh  sleep  sort  stat  true  uname",
+            "/usr/bin" => "python3  python  curl  wget  git  gcc  make  perl  ruby  node  php",
+            "/sbin" => "agetty  fsck  ifconfig  ip  fdisk",
+            "/usr/sbin" => "adduser  chroot  cron  useradd  userdel",
+            "/proc" => "1  cpuinfo  meminfo  mounts  stat  uptime  version",
+            _ => ""
+        };
+    }
+
+    public bool FileExists(string path)
+    {
+        var resolved = ResolvePath(path);
+        return resolved switch
+        {
+            "/etc/passwd" or "/etc/shadow" or "/etc/hosts" or "/etc/hostname" or "/etc/os-release" or "/etc/resolv.conf" => true,
+            "/home/secretOps/.env" or "/home/secretOps/mission_brief.txt" => true,
+            "/root/.ssh/id_rsa" or "/root/.ssh/authorized_keys" => true,
+            _ => false
+        };
+    }
+
+    public string? ReadFile(string path)
+    {
+        var resolved = ResolvePath(path);
+        return resolved switch
+        {
+            "/etc/passwd" => "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nremote:x:1001:1001:,,,:/home/remote:/bin/bash\nsecretOps:x:1002:1001:,,,:/home/secretOps:/bin/bash",
+            "/etc/hosts" => "127.0.0.1   localhost\n127.0.1.1   omegablack",
+            "/etc/hostname" => "omegablack",
+            "/etc/resolv.conf" => "nameserver 8.8.8.8\nnameserver 8.8.4.4",
+            "/home/secretOps/.env" => "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\nAWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\nDB_PASSWORD=s3cr3t!Vault99",
+            "/home/secretOps/mission_brief.txt" => "NIGHTFALL OPERATION - CLASSIFIED\n\nOperation: NIGHTFALL\nClassification: TOP SECRET\nStatus: ACTIVE\n\nObjective: Establish covert access to primary targets.\nContact: Use encrypted channel. Key ID: NIGHTFALL-2024-X9",
+            "/root/.ssh/id_rsa" => "-----BEGIN RSA PRIVATE KEY-----\nMIIEogIBAAJAKhP4n3M...\n-----END RSA PRIVATE KEY-----",
+            _ => null
+        };
+    }
+}
+
+static class LlmRateLimiter
+{
+    private static readonly ConcurrentDictionary<string, RateLimitInfo> IpLimits = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly int MaxRequestsPerWindow = int.Parse(Environment.GetEnvironmentVariable("LLM_RATE_LIMIT_MAX") ?? "20");
+    private static readonly int RateLimitWindowSeconds = int.Parse(Environment.GetEnvironmentVariable("LLM_RATE_LIMIT_WINDOW_SECONDS") ?? "60");
+
+    public static bool IsAllowed(string ip, out string? fallbackMessage)
+    {
+        fallbackMessage = null;
+
+        if (MaxRequestsPerWindow <= 0)
+            return true;
+
+        var now = DateTime.UtcNow;
+        var info = IpLimits.GetOrAdd(ip, _ => new RateLimitInfo());
+
+        lock (info._lock)
+        {
+            if (now - info.WindowStart > TimeSpan.FromSeconds(RateLimitWindowSeconds))
+            {
+                info.WindowStart = now;
+                info.RequestCount = 0;
+            }
+
+            if (info.RequestCount >= MaxRequestsPerWindow)
+            {
+                var remainingTime = RateLimitWindowSeconds - (int)(now - info.WindowStart).TotalSeconds;
+                fallbackMessage = $"Rate limit exceeded for this IP. Please try again in {Math.Max(1, remainingTime)} seconds.";
+                return false;
+            }
+
+            info.RequestCount++;
+            return true;
+        }
+    }
+
+    public static void Reset(string ip)
+    {
+        IpLimits.TryRemove(ip, out _);
+    }
+
+    public static void LogLimitStatus(string ip)
+    {
+        if (IpLimits.TryGetValue(ip, out var info))
+        {
+            var remaining = Math.Max(0, MaxRequestsPerWindow - info.RequestCount);
+            Logger.LogMsg($"Rate limit: {ip} - {info.RequestCount}/{MaxRequestsPerWindow} requests in window, {remaining} remaining");
+        }
+    }
+
+    private class RateLimitInfo
+    {
+        public DateTime WindowStart { get; set; } = DateTime.UtcNow;
+        public int RequestCount { get; set; }
+        public readonly object _lock = new();
+    }
+}
+
+static class CommandResolver
+{
+    public static (string response, bool usedStatic, bool rateLimited) ResolveCommand(
+        string command,
+        string sessionId,
+        string remoteIp,
+        FakeFileSystem fs,
+        List<ChatRequestData.ChatMessage> messageHistory)
+    {
+        var (isValid, errorMsg) = InputValidator.Validate(command);
+        if (!isValid)
+        {
+            return ($"{errorMsg} - connection terminated.", false, false);
+        }
+
+        if (SCPDetector.IsSCPCommand(command))
+        {
+            if (SCPDetector.IsSCPUpload(command))
+            {
+                var (_, filename) = SCPDetector.ParseSCPUpload(command);
+                return ($"SCP upload detected: {filename ?? "unknown file"} - operation not allowed", false, false);
+            }
+            return ("Operation not allowed", false, false);
+        }
+
+        if (IsBuiltInCommand(command, fs, out var builtinResponse))
+        {
+            return (builtinResponse!, false, false);
+        }
+
+        var staticResponse = StaticResponseStore.GetResponse(command, fs.CurrentDirectory);
+        if (staticResponse is not null)
+        {
+            if (command.StartsWith("cd "))
+            {
+                var targetDir = command[3..].Trim();
+                fs.ChangeDirectory(targetDir);
+            }
+            return (staticResponse, true, false);
+        }
+
+        if (!LlmRateLimiter.IsAllowed(remoteIp, out var fallbackMessage))
+        {
+            Logger.LogMsg($"Rate limit triggered for {remoteIp}, using fallback response");
+            return (fallbackMessage ?? "Rate limit exceeded. Please wait.", false, true);
+        }
+
+        LlmRateLimiter.LogLimitStatus(remoteIp);
+
+        var (response, promptTokens, completionTokens, _) = Program.GetLLMResponse(messageHistory, command);
+        response = Program.NormalizeTerminalOutput(response);
+
+        return (response, false, false);
+    }
+
+    private static bool IsBuiltInCommand(string command, FakeFileSystem fs, out string? response)
+    {
+        response = null;
+        var parts = command.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Length == 0) return false;
+
+        var cmd = parts[0].ToLowerInvariant();
+
+        switch (cmd)
+        {
+            case "cd":
+                if (parts.Length > 1)
+                {
+                    fs.ChangeDirectory(parts[1]);
+                }
+                else
+                {
+                    fs.ChangeDirectory("/home/remote");
+                }
+                response = "";
+                return true;
+
+            case "exit":
+            case "logout":
+            case "quit":
+                response = "Connection to omegablack closed.";
+                return true;
+
+            case "clear":
+            case "reset":
+                response = "";
+                return true;
+
+            case "pwd":
+                response = fs.CurrentDirectory;
+                return true;
+
+            case "echo":
+                response = string.Join(" ", parts.Skip(1));
+                return true;
+
+            case "true":
+                response = "";
+                return true;
+
+            case "false":
+                response = "";
+                return true;
+
+            case "alias":
+                response = "alias ll='ls -la'\nalias la='ls -A'\nalias l='ls -CF'";
+                return true;
+
+            case "history":
+                response = "    1  ls\n    2  cd /etc\n    3  cat passwd\n    4  ls -la\n    5  pwd\n    6  whoami";
+                return true;
+
+            case "type":
+                if (parts.Length > 1)
+                {
+                    var target = parts[1];
+                    response = target switch
+                    {
+                        "ls" => "ls is /bin/ls",
+                        "cd" => "cd is a shell builtin",
+                        "echo" => "echo is a shell builtin",
+                        "pwd" => "pwd is a shell builtin",
+                        "cat" => "cat is /bin/cat",
+                        _ => $"type: {target}: not found"
+                    };
+                }
+                return true;
+
+            case "which":
+                if (parts.Length > 1)
+                {
+                    var target = parts[1];
+                    response = target switch
+                    {
+                        "ls" => "/bin/ls",
+                        "cat" => "/bin/cat",
+                        "grep" => "/bin/grep",
+                        "python3" => "/usr/bin/python3",
+                        "python" => "/usr/bin/python3",
+                        "bash" => "/bin/bash",
+                        _ => $"which: {target}: not found"
+                    };
+                }
+                return true;
+
+            case "help":
+                response = "GNU coreutils available. Type 'man command' for more info.";
+                return true;
+
+            case "whoami":
+                response = "remote";
+                return true;
+
+            case "id":
+                response = "uid=1001(remote) gid=1001(users) groups=1001(users)";
+                return true;
+
+            case "groups":
+                response = "users";
+                return true;
+
+            case "umask":
+                response = "0022";
+                return true;
+
+            case "nproc":
+                response = "2";
+                return true;
+
+            case "getconf":
+                if (parts.Length > 1)
+                {
+                    response = parts[1] switch
+                    {
+                        "PAGESIZE" => "4096",
+                        "LONG_BIT" => "64",
+                        "POSIX_VERSION" => "200809L",
+                        _ => ""
+                    };
+                }
+                return true;
+
+            case "arch":
+                response = "x86_64";
+                return true;
+
+            case "uname":
+                if (parts.Length > 1 && parts[1] == "-a")
+                    response = "Linux omegablack 5.15.0-91-generic #91-Ubuntu SMP x86_64 GNU/Linux";
+                else
+                    response = "Linux";
+                return true;
+
+            case "hostname":
+                response = "omegablack";
+                return true;
+
+            case "date":
+                response = DateTime.Now.ToString("ddd MMM dd HH:mm:ss UTC yyyy");
+                return true;
+
+            case "who":
+                response = $"{Environment.UserName}   pts/0        {DateTime.Now:yyyy-MM-dd} {DateTime.Now:HH:mm} (192.168.1.100)";
+                return true;
+
+            case "tty":
+                response = "/dev/pts/0";
+                return true;
+
+            case "stty":
+                response = "24 80";
+                return true;
+        }
+
+        return false;
+    }
+}
+
+static class StaticResponseStore
+{
+    private static readonly Dictionary<string, StaticResponseEntry> Responses = new(StringComparer.OrdinalIgnoreCase);
+    private static bool _loaded = false;
+    private static readonly object _loadLock = new();
+
+    public static void EnsureLoaded()
+    {
+        if (_loaded) return;
+        lock (_loadLock)
+        {
+            if (_loaded) return;
+            LoadResponses();
+            _loaded = true;
+        }
+    }
+
+    private static void LoadResponses()
+    {
+        var dataPath = Path.Combine(Program.AppDir, "data", "ssh_responses.jsonl");
+        if (!File.Exists(dataPath))
+        {
+            Logger.LogMsg($"Static response data not found at {dataPath}");
+            return;
+        }
+
+        try
+        {
+            var lines = File.ReadAllLines(dataPath);
+            foreach (var line in lines)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                try
+                {
+                    var entry = JsonSerializer.Deserialize<StaticResponseEntry>(line);
+                    if (entry is not null && !string.IsNullOrEmpty(entry.Command))
+                    {
+                        Responses[entry.Command] = entry;
+                    }
+                }
+                catch { }
+            }
+            Logger.LogMsg($"Loaded {Responses.Count} static command responses");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogMsg($"Failed to load static responses: {ex.Message}");
+        }
+    }
+
+    public static string? GetResponse(string command, string? currentDir = null)
+    {
+        EnsureLoaded();
+
+        var cleanCommand = command.Trim();
+        if (Responses.TryGetValue(cleanCommand, out var entry))
+        {
+            if (entry.outputType == "dynamic")
+            {
+                return GenerateDynamicResponse(cleanCommand, currentDir);
+            }
+            return entry.Response;
+        }
+
+        var parts = cleanCommand.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length > 0 && Responses.TryGetValue(parts[0], out entry))
+        {
+            if (entry.outputType == "dynamic")
+            {
+                return GenerateDynamicResponse(cleanCommand, currentDir);
+            }
+            return entry.Response;
+        }
+
+        return null;
+    }
+
+    private static string GenerateDynamicResponse(string command, string? currentDir)
+    {
+        var lower = command.ToLowerInvariant();
+        var random = new Random();
+
+        if (lower == "ps" || lower == "ps aux")
+        {
+            var pid = random.Next(100, 999);
+            return $"  PID TTY          TIME CMD\n    1 ?        00:00:02 systemd\n  {pid} ?        00:00:00 sshd\n  {pid + 1} pts/0    00:00:00 ps";
+        }
+
+        if (lower == "ls /var/log" || lower == "ls -la /var/log")
+        {
+            var files = new[] { "alternatives.log", "apt", "auth.log", "btmp", "dmesg", "dpkg.log", "kern.log", "lastlog", "syslog", "wtmp" };
+            return string.Join("\n", files);
+        }
+
+        if (lower.StartsWith("who") || lower == "w")
+        {
+            var hour = DateTime.Now.Hour;
+            var min = DateTime.Now.Minute;
+            return $"{Environment.UserName}   pts/0        {DateTime.Now:yyyy-MM-dd} {hour:D2}:{min:D2} (192.168.1.100)";
+        }
+
+        if (lower.StartsWith("last"))
+        {
+            return $"{Environment.UserName}   pts/0        192.168.1.100    {DateTime.Now:ddd MMM dd HH:mm}   still logged in\nwtmp begins {DateTime.Now.AddDays(-5):ddd MMM dd HH:mm}";
+        }
+
+        if (lower.StartsWith("free"))
+        {
+            var totalMem = 8000 + random.Next(-200, 200);
+            var usedMem = 2400 + random.Next(-100, 100);
+            return $"               total        used        free      shared  buff/cache   available\nMem:           {totalMem}        {usedMem}        {3000 + random.Next(-100, 100)}         {200 + random.Next(-50, 50)}        {2300 + random.Next(-100, 100)}        {5000 + random.Next(-200, 200)}\nSwap:          2047           0        2047";
+        }
+
+        if (lower.StartsWith("df"))
+        {
+            return "Filesystem     1K-blocks    Used Available Use% Mounted on\n/dev/sda1       51475068 8234512  40610056  17% /\ntmpfs             4039272       0   4039272   0% /dev/shm";
+        }
+
+        if (lower == "uptime")
+        {
+            var uptime = TimeSpan.FromDays(47).Add(TimeSpan.FromHours(3)).Add(TimeSpan.FromMinutes(22));
+            var users = random.Next(1, 3);
+            var load = $"{random.Next(0, 2)}.{random.Next(10, 99)}, {random.Next(0, 2)}.{random.Next(10, 99)}, {random.Next(0, 2)}.{random.Next(10, 99)}";
+            return $"{DateTime.Now:HH:mm:ss} up {uptime.Days} days,  {uptime.Hours}:{uptime.Minutes:D2},  {users} user,  load average: {load}";
+        }
+
+        if (lower.StartsWith("env") || lower == "export" || lower == "set" || lower.StartsWith("shopt") || lower.StartsWith("ulimit"))
+        {
+            return "declare -x HOME=\"/home/remote\"\ndeclare -x LANG=\"en_US.UTF-8\"\ndeclare -x PATH=\"/usr/local/bin:/usr/bin:/bin\"\ndeclare -x PWD=\"/home/remote\"\ndeclare -x SHELL=\"/bin/bash\"\ndeclare -x USER=\"remote\"";
+        }
+
+        if (lower.StartsWith("locale"))
+        {
+            return "LANG=en_US.UTF-8\nLANGUAGE=\nLC_CTYPE=\"en_US.UTF-8\"\nLC_NUMERIC=\"en_US.UTF-8\"\nLC_TIME=\"en_US.UTF-8\"";
+        }
+
+        if (lower.StartsWith("tty"))
+        {
+            return "/dev/pts/0";
+        }
+
+        if (lower.StartsWith("stty"))
+        {
+            return "24 80";
+        }
+
+        if (lower.StartsWith("netstat") || lower.StartsWith("ss "))
+        {
+            return "Netid  State   Recv-Q  Send-Q   Local Address:Port    Peer Address:Port   Process\ntcp    LISTEN  0       128        0.0.0.0:22           0.0.0.0:*\ntcp    LISTEN  0       128        0.0.0.0:80          0.0.0.0:*";
+        }
+
+        if (lower.StartsWith("route"))
+        {
+            return "Kernel IP routing table\nDestination     Gateway         Genmask         Flags Metric Ref  Use Iface\n0.0.0.0         192.168.1.1     0.0.0.0         UG    100    0        0 eth0";
+        }
+
+        if (lower.StartsWith("ip "))
+        {
+            return "1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN\n    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00\n2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP\n    link/ether 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff";
+        }
+
+        if (lower == "hostname -I")
+        {
+            return "172.17.0.2";
+        }
+
+        if (lower.StartsWith("stat "))
+        {
+            return "  File: /etc/passwd\n  Size: 1576       Blocks: 8          IO Block: 4096   regular file";
+        }
+
+        if (lower == "lscpu")
+        {
+            return "Architecture:            x86_64\nCPU(s):                 2\nVendor ID:              GenuineIntel\nModel name:            Intel(R) Xeon(R) CPU";
+        }
+
+        if (lower == "cal" || Regex.IsMatch(lower, @"^cal\s+\d{4}$"))
+        {
+            return "      May 2026\nSu Mo Tu We Th Fr Sa\n            1  2  3\n 4  5  6  7  8  9 10\n11 12 13 14 15 16 17\n18 19 20 21 22 23 24\n25 26 27 28 29 30 31";
+        }
+
+        if (lower.StartsWith("top"))
+        {
+            return "top - 12:00:00 up 47 days,  3:22,  1 user,  load average: 0.52, 0.58, 0.59\nTasks:  89 total,   1 running,  88 sleeping";
+        }
+
+        return Responses.GetValueOrDefault("ls")?.Response ?? "ls: command not found";
+    }
+
+    public static bool IsKnownCommand(string command)
+    {
+        EnsureLoaded();
+        var cleanCommand = command.Trim();
+        var parts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return Responses.ContainsKey(cleanCommand) || (parts.Length > 0 && Responses.ContainsKey(parts[0]));
+    }
+}
+
+public class StaticResponseEntry
+{
+    public string Command { get; set; } = "";
+    public string? Response { get; set; }
+    public string? outputType { get; set; }
 }
 
 static class DataHarvester

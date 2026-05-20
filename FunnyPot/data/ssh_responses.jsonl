@@ -1,0 +1,204 @@
+{"command": "ls", "response": "Documents  Downloads  Music  Pictures  Public  Templates  Videos"}
+{"command": "ls -la", "response": "total 64\ndrwxr-xr-x  15 remote users 4096 May 20 10:30 .\nddrwxr-xr-x  11 remote users 4096 May 20 09:15 ..\ndrwxr-xr-x   5 remote users 4096 May 15 08:22 Documents\ndrwxr-xr-x   3 remote users 4096 May 18 14:45 Downloads\ndrwxr-xr-x   2 remote users 4096 May 10 11:30 Music\ndrwxr-xr-x   2 remote users 4096 May 12 16:00 Pictures\ndrwxr-xr-x   3 remote users 4096 May 14 09:45 Public\ndrwxr-xr-x   2 remote users 4096 May 11 13:20 Templates\ndrwxr-xr-x   2 remote users 4096 May 13 15:10 Videos"}
+{"command": "ls -l", "response": "total 64\ndrwxr-xr-x  15 remote users 4096 May 20 10:30 .\ndrwxr-xr-x  11 remote users 4096 May 20 09:15 ..\ndrwxr-xr-x   5 remote users 4096 May 15 08:22 Documents\ndrwxr-xr-x   3 remote users 4096 May 18 14:45 Downloads\ndrwxr-xr-x   2 remote users 4096 May 10 11:30 Music\ndrwxr-xr-x   2 remote users 4096 May 12 16:00 Pictures\ndrwxr-xr-x   3 remote users 4096 May 14 09:45 Public\ndrwxr-xr-x   2 remote users 4096 May 11 13:20 Templates\ndrwxr-xr-x   2 remote users 4096 May 13 15:10 Videos"}
+{"command": "pwd", "response": "/home/remote"}
+{"command": "whoami", "response": "remote"}
+{"command": "id", "response": "uid=1001(remote) gid=1001(users) groups=1001(users)"}
+{"command": "uname -a", "response": "Linux omegablack 5.15.0-91-generic #91-Ubuntu SMP x86_64 GNU/Linux"}
+{"command": "uname", "response": "Linux"}
+{"command": "hostname", "response": "omegablack"}
+{"command": "date", "response": "Wed May 20 12:00:00 UTC 2026"}
+{"command": "uptime", "response": "12:00:00 up 47 days,  3:22,  1 user,  load average: 0.52, 0.58, 0.59"}
+{"command": "df", "response": "Filesystem     1K-blocks    Used Available Use% Mounted on\n/dev/sda1       51475068 8234512  40610056  17% /\ntmpfs             4039272       0   4039272   0% /dev/shm\n/dev/sda2      206420760 45678912 149522848  24% /home"}
+{"command": "df -h", "response": "Filesystem      Size  Used Avail Use% Mounted on\n/dev/sda1       49G  7.9G   39G  17% /\ntmpfs          3.9G     0  3.9G   0% /dev/shm\n/dev/sda2      197G   44G  143G  24% /home"}
+{"command": "free", "response": "               total        used        free      shared  buff/cache   available\nMem:        8076544     2456784     3245872      234560     2353888     5203456\nSwap:       2097148           0     2097148"}
+{"command": "free -m", "outputType": "dynamic", "response": "               total        used        free      shared  buff/cache   available\nMem:           7888        2401        3170         229        2308        5081\nSwap:          2047           0        2047"}
+{"command": "ps", "outputType": "dynamic", "response": "  PID TTY          TIME CMD\n    1 ?        00:00:02 systemd\n  234 ?        00:00:00 sshd\n  567 ?        00:00:01 bash\n  890 pts/0    00:00:00 ps"}
+{"command": "ps aux", "outputType": "dynamic", "response": "USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND\nroot         1  0.0  0.0  16896  9212 ?        Ss   May15   0:02 /sbin/init\nroot       234  0.0  0.0  12456  8234 ?        Ss   May15   0:00 /usr/sbin/sshd\nremote     567  0.0  0.0   8934  4532 pts/0    Ss   12:00   0:00 -bash"}
+{"command": "top -b -n 1", "outputType": "dynamic", "response": "top - 12:00:00 up 47 days,  3:22,  1 user,  load average: 0.52, 0.58, 0.59\nTasks:  89 total,   1 running,  88 sleeping,   0 stopped,   0 zombie\n%Cpu(s):  5.2 us,  1.3 sy,  0.0 ni, 93.5 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st\nMiB Mem :   7888.0 total,   3170.0 free,   2401.0 used,   2308.0 buff/cache\nMiB Swap:   2047.0 total,   2047.0 free,      0.0 used.   5081.0 avail Mem\n\n  PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND\n  567 remote    20   0   8934   4532   3216 S   0.0  0.0   0:00.00 -bash"}
+{"command": "env", "response": "SHELL=/bin/bash\nUSER=remote\nPATH=/usr/local/bin:/usr/bin:/bin\nHOME=/home/remote\nLOGNAME=remote\nTERM=xterm-256color\nLANG=en_US.UTF-8"}
+{"command": "echo $PATH", "response": "/usr/local/bin:/usr/bin:/bin"}
+{"command": "echo $HOME", "response": "/home/remote"}
+{"command": "echo $USER", "response": "remote"}
+{"command": "echo $SHELL", "response": "/bin/bash"}
+{"command": "cat /etc/passwd", "response": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nsync:x:4:65534:sync:/bin:/bin/sync\ngames:x:5:60:games:/usr/games:/usr/sbin/nologin\nman:x:6:12:man:/var/cache/man:/usr/sbin/nologin\nlp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin\nmail:x:8:8:mail:/var/mail:/usr/sbin/nologin\nuucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin\nproxy:x:13:13:proxy:/bin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nbackup:x:34:34:backup:/var/backups:/usr/sbin/nologin\nlist:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin\nirc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin\ngnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\n_apt:x:100:65534::/nonexistent:/usr/sbin/nologin\nsystemd-network:x:101:102:systemd Network Management,,,:/run/systemd:/usr/sbin/nologin\nsystemd-resolve:x:102:103:systemd Resolver,,,:/run/systemd:/usr/sbin/nologin\nmessagebus:x:103:104::/nonexistent:/usr/sbin/nologin\nremote:x:1001:1001:,,,:/home/remote:/bin/bash\nsecretOps:x:1002:1001:,,,:/home/secretOps:/bin/bash"}
+{"command": "ls /home", "response": "remote  secretOps"}
+{"command": "ls /root", "response": "access_logs  backup  config  scripts"}
+{"command": "ls /etc", "response": "adduser.conf            dpkg              hosts             login.defs         profile        shadow\nadjtime               fstab              hostname           lsb-release       protocols     shells\nalternatives          group              hosts.allow        modprobe.d        resolv.conf  sudoers\napt                  grub               hosts.deny         modules           rsyslog.conf  sysctl.conf\nbash.bashrc          gshadow            init               modules-load.d    security      systemd\nbindresvport.blacklist group             issue              networks         services     passwd"}
+{"command": "which ls", "response": "/bin/ls"}
+{"command": "which cat", "response": "/bin/cat"}
+{"command": "which grep", "response": "/bin/grep"}
+{"command": "which python3", "response": "/usr/bin/python3"}
+{"command": "which python", "response": "/usr/bin/python3"}
+{"command": "which bash", "response": "/bin/bash"}
+{"command": "which sh", "response": "/bin/sh"}
+{"command": "file /bin/ls", "response": "/bin/ls: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked"}
+{"command": "file /etc/passwd", "response": "/etc/passwd: ASCII text"}
+{"command": "file /bin/bash", "response": "/bin/bash: ELF 64-bit LSB executable, x86-64, version 1 (GNU/Linux)"}
+{"command": "stat /etc/passwd", "response": "  File: /etc/passwd\n  Size: 1576       Blocks: 8          IO Block: 4096   regular file\nDevice: 801h/2049d  Inode: 1048842      Links: 1\nAccess: (0644/-rw-r--r--)  Uid: (    0/    root)  Gid: (    0/    root)\nAccess: 2026-05-20 10:30:00.000000000 +0000\nModify: 2026-05-01 00:00:00.000000000 +0000\nChange: 2026-05-01 00:00:00.000000000 +0000\n Birth: 2026-05-01 00:00:00.000000000 +0000"}
+{"command": "wc -l /etc/passwd", "response": "25 /etc/passwd"}
+{"command": "head -n 5 /etc/passwd", "response": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nsync:x:4:65534:sync:/bin:/bin/sync"}
+{"command": "tail -n 5 /etc/passwd", "response": "systemd-resolve:x:102:103:systemd Resolver,,,:/run/systemd:/usr/sbin/nologin\nmessagebus:x:103:104::/nonexistent:/usr/sbin/nologin\nuucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\n_apt:x:100:65534::/nonexistent:/usr/sbin/nologin"}
+{"command": "ls -la /etc/shadow", "response": "-rw-r----- 1 root shadow 512 May  1 00:00 /etc/shadow"}
+{"command": "ls -la /home/secretOps", "response": "drwxr-xr-x   2 secretOps users 4096 May 15 08:22 .env\ndrwxr-xr-x   1 secretOps users 4096 May 18 14:30 mission_brief.txt"}
+{"command": "ls -la /root/.ssh", "response": "drwxr-xr-x  1 root root 4096 May 10 09:30 .\ndrwxr-xr-x  1 root root 4096 May 10 09:30 ..\n-rw------- 1 root root 1675 May 10 09:30 authorized_keys\n-rw------- 1 root root root 1675 May 10 09:30 id_rsa\n-rw-r--r-- 1 root root root 405 May 10 09:30 id_rsa.pub\n-rw-r--r-- 1 root root 4096 known_hosts"}
+{"command": "ls /proc", "response": "1    234   567   890  acpi       bus        cmdline      consoles   crypto     devices  diskstats  driver    execdomains  fb       filesystems  fs        ide         interrupts  iomem     ioports     irq       kallsyms  kcore      keys       key-users  kmsg       loadavg  locks     meminfo  misc          modules   mounts     net        pagetypeinfo  partitions  ps        scsi       self       slabinfo  stat       swaps      sys       sysrq-trigger  sysvipc  timer_list  tty       uptime     version  version_signature  vmcore  vmstat  zoneinfo"}
+{"command": "ls /var", "response": "backups  cache  crash  lib  local  lock  log  mail  opt  run  spool  tmp"}
+{"command": "ls /var/log", "outputType": "dynamic", "response": "alternatives.log  apt  auth.log  btmp  dmesg  dmesg.0  dpkg.log  kern.log  lastlog  nginx  syslog  wtmp"}
+{"command": "who", "outputType": "dynamic", "response": "remote   pts/0        2026-05-20 12:00 (192.168.1.100)"}
+{"command": "w", "outputType": "dynamic", "response": " 12:00:00 up 47 days,  3:22,  1 user,  load average: 0.52, 0.58, 0.59\nUSER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT\nremote   pts/0    192.168.1.100    12:00    0.00s  0.00s  0.00s w"}
+{"command": "last", "outputType": "dynamic", "response": "remote   pts/0        192.168.1.100    Wed May 20 12:00   still logged in\nwtmp begins Wed May 15 08:00"}
+{"command": "groups", "response": "users"}
+{"command": "ls -la /dev", "outputType": "dynamic", "response": "crw-rw----  1 root        1        3 May 20 12:00 null\ncrw-rw----  1 root        1        5 May 20 12:00 zero\ncrw-rw----  1 root        1        7 May 20 12:00 full\ncrw-rw----  1 root        1        8 May 20 12:00 random\ncrw-rw----  1 root        1        9 May 20 12:00 urandom\nbrw-rw----  1 root        8        0 May 20 12:00 sda\nbrw-rw----  1 root        8        1 May 20 12:00 sda1\nbrw-rw----  1 root        8        2 May 20 12:00 sda2\ncrw-rw----  1 root        5        1 May 20 12:00 console\ncrw-rw----  1 root        5        0 May 20 12:00 tty\ncrw-rw----  1 root        5        1 May 20 12:00 tty1\ncrw-rw----  1 root        5        2 May 20 12:00 tty2\ncrw-rw-rw-  1 root        1        3 May 20 12:00 zero\ncrw-rw-rw-  1 root        1        5 May 20 12:00 zero\ncrw-rw-rw-  1 root        1        7 May 20 12:00 zero\ncrw-rw-rw-  1 root        1        8 May 20 12:00 zero\ncrw-rw-rw-  1 root        1        9 May 20 12:00 zero"}
+{"command": "cat /etc/hostname", "response": "omegablack"}
+{"command": "cat /etc/os-release", "response": "PRETTY_NAME=\"Debian GNU/Linux 12 (bookworm)\"\nNAME=\"Debian GNU/Linux 12 (bookworm)\"\nVERSION_ID=\"12\"\nVERSION=\"12 (bookworm)\"\nVERSION_CODENAME=bookworm\nID=debian\nID_LIKE=debian"}
+{"command": "lsb_release -a", "response": "Distributor ID: Debian\nDescription:    Debian GNU/Linux 12 (bookworm)\nRelease:        12\nCodename:       bookworm"}
+{"command": "arch", "response": "x86_64"}
+{"command": "getconf LONG_BIT", "response": "64"}
+{"command": "locale", "outputType": "dynamic", "response": "LANG=en_US.UTF-8\nLANGUAGE=\nLC_CTYPE=\"en_US.UTF-8\"\nLC_NUMERIC=\"en_US.UTF-8\"\nLC_TIME=\"en_US.UTF-8\"\nLC_COLLATE=\"en_US.UTF-8\"\nLC_MONETARY=\"en_US.UTF-8\"\nLC_MESSAGES=\"en_US.UTF-8\"\nLC_PAPER=\"en_US.UTF-8\"\nLC_NAME=\"en_US.UTF-8\"\nLC_ADDRESS=\"en_US.UTF-8\"\nLC_TELEPHONE=\"en_US.UTF-8\"\nLC_MEASUREMENT=\"en_US.UTF-8\"\nLC_IDENTIFICATION=\"en_US.UTF-8\"\nLC_ALL="}
+{"command": "tty", "response": "/dev/pts/0"}
+{"command": "stty size", "outputType": "dynamic", "response": "24 80"}
+{"command": "echo test", "response": "test"}
+{"command": "echo Hello World", "response": "Hello World"}
+{"command": "printf test", "response": "test"}
+{"command": "printf '%s\\n' hello", "response": "hello"}
+{"command": "true", "response": ""}
+{"command": "false", "response": ""}
+{"command": "exit", "response": "Connection to omegablack closed."}
+{"command": "logout", "response": "Connection to omegablack closed."}
+{"command": "cd", "response": ""}
+{"command": "cd /", "response": ""}
+{"command": "cd /home", "response": ""}
+{"command": "cd /root", "response": ""}
+{"command": "cd /etc", "response": ""}
+{"command": "cd /var/log", "response": ""}
+{"command": "cd ~", "response": ""}
+{"command": "cd ..", "response": ""}
+{"command": "cd ../", "response": ""}
+{"command": "ls /tmp", "response": "systemd-private-abc123  vmware-dragon "}
+{"command": "ls -la /tmp", "outputType": "dynamic", "response": "drwxr-xr-x  2 root root 4096 May 20 12:00 systemd-private-abc123\ndrwxr-xr-x  1 root root 4096 May 18 10:00 vmware-dragon"}
+{"command": "mkdir testdir", "response": ""}
+{"command": "rmdir testdir", "response": ""}
+{"command": "touch testfile", "response": ""}
+{"command": "rm testfile", "response": ""}
+{"command": "cp /etc/passwd /tmp/passwd", "response": ""}
+{"command": "mv /tmp/passwd /tmp/passwd.bak", "response": ""}
+{"command": "chmod 755 /tmp/testfile", "response": ""}
+{"command": "chown remote:users /tmp/testfile", "response": ""}
+{"command": "ln -s /etc/passwd /tmp/passwd_link", "response": ""}
+{"command": "readlink /tmp/passwd_link", "response": "/etc/passwd"}
+{"command": "realpath /tmp/passwd_link", "response": "/etc/passwd"}
+{"command": "base64 /etc/passwd", "response": "cm9vdDp4OjA6MHJvb3Q6L3Jvb3Q6L2Jpbi9iYXNoCmRhZW1vbjp4OjE6MWRhZW1vbjovdXNyL3NiaW46L3Vzci9zYmluL25vbG9naW4KY..."
+
+}
+{"command": "base64 -d", "response": ""}
+{"command": "md5sum /etc/passwd", "response": "d41d8cd98f00b204e9800998ecf8427e  /etc/passwd"}
+{"command": "sha256sum /etc/passwd", "response": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /etc/passwd"}
+{"command": "sha1sum /etc/passwd", "response": "da39a3ee5e6b4b0d3255bfef95601890afd80709  /etc/passwd"}
+{"command": "cat /etc/hosts", "response": "127.0.0.1   localhost\n127.0.1.1   omegablack\n\n# The following lines are desirable if IPv6 capable hosts\n::1     ip6-localhost ip6-loopback\nfe00::0 ip6-localnet\nff00::0 ip6-mcastprefix\nff02::1 ip6-allnodes\nff02::2 ip6-allrouters"}
+{"command": "cat /etc/resolv.conf", "response": "nameserver 8.8.8.8\nnameserver 8.8.4.4"}
+{"command": "route -n", "outputType": "dynamic", "response": "Kernel IP routing table\nDestination     Gateway         Genmask         Flags Metric Ref  Use Iface\n0.0.0.0         192.168.1.1     0.0.0.0         UG    100    0        0 eth0\n192.168.1.0     0.0.0.0         255.255.255.0   U     100    0        0 eth0"}
+{"command": "ip addr", "outputType": "dynamic", "response": "1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000\n    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00\n    inet 127.0.0.1/8 scope host lo\n       valid_lft forever preferred_lft forever\n2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000\n    link/ether 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff\n    inet 172.17.0.2/16 brd 172.17.255.255 scope global eth0\n       valid_lft forever preferred_lft forever"}
+{"command": "ip neigh", "outputType": "dynamic", "response": "172.17.0.1 dev eth0 lladdr 02:42:5a:c3:8f:1a STALE"}
+{"command": "ss -tuln", "outputType": "dynamic", "response": "Netid  State   Recv-Q  Send-Q   Local Address:Port    Peer Address:Port   Process\nudp    UNCONN  0       0        127.0.0.53%lo:53      0.0.0.0:*\ntcp    LISTEN  0       128        0.0.0.0:22           0.0.0.0:*\ntcp    LISTEN  0       128        0.0.0.0:80          0.0.0.0:*\ntcp    LISTEN  0       128        [::]:22              [::]:*"}
+{"command": "netstat -tuln", "outputType": "dynamic", "response": "Active Internet connections (only servers)\nProto Recv-Q Send-Q Local Address           Foreign Address         State\ntcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN\ntcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN\ntcp6       0      0 :::22                   :::*                    LISTEN"}
+{"command": "arp -a", "outputType": "dynamic", "response": "? (172.17.0.1) at 02:42:5a:c3:8f:1a on eth0"}
+{"command": "hostname -I", "outputType": "dynamic", "response": "172.17.0.2"}
+{"command": "curl --version", "response": "curl 7.88.1 (x86_64-pc-linux-gnu) libcurl/7.88.1 OpenSSL/3.0.11 zlib/1.2.13 brotli/1.0.9 libidn2/2.3.3 libpsl/0.21.1 libssh2/1.10.0 nghttp2/1.52.0 librtmp/2.3 OpenSSL/3.0.11\nRelease-Date: 2024-01-10\nProtocols: dict file ftp ftps gopher http https imap imaps ldap ldaps pop3 pop3s rtmp rtsp smb smbs smtp smtps telnet tftp\nFeatures: alt-svc AsynchDNS brotli CertTimeout Debug HSTS HTTP2 HTTPS-proxy IPv6 Largefile NTLM NTLM_WB PSL SPNEGO SSL TLS-SRP TrackMemory UnixSockets"}
+{"command": "wget --version", "outputType": "dynamic", "response": "GNU Wget 1.21.3 built on linux-gnu.\n\nCopyright (C) 2015 Free Software Foundation, Inc.\nLicense GPLv3+: GNU GPL version 3 or later <http://www.gnu.org/licenses/gpl.html>.\nThis is free software: you are free to change and redistribute it.\nThere is NO WARRANTY, to the extent permitted by law."}
+{"command": "python3 --version", "response": "Python 3.11.2"}
+{"command": "python --version", "response": "Python 3.11.2"}
+{"command": "perl -v", "outputType": "dynamic", "response": "This is perl 5, version 36, subversion 0 (v5.36.0) built for x86_64-linux-gnu-thread-multi\n\nCopyright 1987-2023, Larry Wall"}
+{"command": "ruby --version", "outputType": "dynamic", "response": "ruby 3.1.2p20 (2023-03-30) [x86_64-linux-gnu]"}
+{"command": "node --version", "outputType": "dynamic", "response": "v18.19.0"}
+{"command": "php --version", "outputType": "dynamic", "response": "PHP 8.2.7 (cli) (built: Jun 12 2023 14:04:40) (NTS)\nCopyright (c) The PHP Group\nZend Engine 4.2.7, Copyright (c) Zend Technologies"}
+{"command": "gcc --version", "outputType": "dynamic", "response": "gcc (Debian 12.2.0-15) 12.2.0\nCopyright (C) 2022 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."}
+{"command": "make --version", "outputType": "dynamic", "response": "GNU Make 4.3\nBuilt for x86_64-pc-linux-gnu\nCopyright (C) 1988-2022 Free Software Foundation, Inc.\nLicense GPLv3+: GNU GPL version 3 or later <http://www.gnu.org/licenses/gpl.html>\nThis is free software; you are free to change and redistribute it.\nThere is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."}
+{"command": "git --version", "response": "git version 2.39.2"}
+{"command": "sudo -l", "response": "Matching Defaults entries for remote on omegablack:\n    env_reset, mail_badpass,\n    secure_path=/usr/local/sbin\\:/usr/local/bin\\:/usr/sbin\\:/usr/bin\\:/sbin\\:/bin\n\nUser remote may run the following commands on omegablack:\n    (ALL) NOPASSWD: ALL"}
+{"command": "sudo whoami", "response": "root"}
+{"command": "sudo id", "response": "uid=0(root) gid=0(root) groups=0(root)"}
+{"command": "sudo su", "response": "root@omegablack:~# "}
+{"command": "sudo su -", "response": "root@omegablack:~# "}
+{"command": "sudo apt-get update", "outputType": "dynamic", "response": "Hit:1 http://security.debian.org/debian-security bookworm/updates InRelease\nHit:2 http://deb.debian.org/debian bookworm InRelease\nReading package lists... Done"}
+{"command": "sudo apt list --upgradable", "outputType": "dynamic", "response": "Listing... Done"}
+{"command": "systemctl list-units --type=service", "outputType": "dynamic", "response": "  UNIT                          LOAD   ACTIVE SUB     DESCRIPTION\n  apache2.service              loaded active running The Apache HTTP Server\n  cron.service                 loaded active running Regular background program processing daemon\n  docker.service               loaded active running Docker Application Container Engine\n  networking.service          loaded active exited    Raise network interfaces\n  ssh.service                  loaded active running OpenBSD Secure Shell server\n  systemd-journald.service     loaded active running Journal Service\n  systemd-logind.service       loaded active running Login Service\n  systemd-networkd.service     loaded active running Network Service\n  systemd-resolved.service     loaded active running Network Name Resolution\n  systemd-timesyncd.service     loaded active running Network Time Synchronization\n  systemd-udevd.service        loaded active running Rule-based Manager for Device Nodes and Kernel Handles\n  [output truncated]"}
+{"command": "systemctl status ssh", "outputType": "dynamic", "response": "● ssh.service - OpenBSD Secure Shell server\n     Loaded: loaded (/lib/systemd/system/ssh.service; enabled)\n     Active: active (running) since Mon 2026-05-15 08:00:00 UTC; 5 days ago\n   Main PID: 234 (sshd)"}
+{"command": "service ssh status", "outputType": "dynamic", "response": "● ssh.service - OpenBSD Secure Shell server\n     Loaded: loaded (/lib/systemd/system/ssh.service; enabled)\n     Active: active (running) since Mon 2026-05-15 08:00:00 UTC; 5 days ago"}
+{"command": "crontab -l", "outputType": "dynamic", "response": "no crontab for remote"}
+{"command": "crontab -l -u root", "outputType": "dynamic", "response": "0 5 * * * /root/scripts/backup.sh\n30 2 * * * /root/scripts/logrotate.sh"}
+{"command": "ls /var/spool/cron", "outputType": "dynamic", "response": "crontabs"}
+{"command": "ls -la /etc/cron.d", "outputType": "dynamic", "response": "-rw-r--r-- 1 root root  189 Mar 15  2024 syslog-rotate"}
+{"command": "ls -la /etc/cron.daily", "outputType": "dynamic", "response": "apache2  apt  dpkg  logrotate"}
+{"command": "ls -la /etc/cron.hourly", "outputType": "dynamic", "response": "."}
+{"command": "ls -la /etc/cron.weekly", "outputType": "dynamic", "response": "."}
+{"command": "cat /etc/crontab", "outputType": "dynamic", "response": "# /etc/crontab: system-wide crontab\n# Unlike any other crontab you don't have to run the `crontab'\n# command to install the new version when you edit this file\nSHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n\n# m h dom mon dow user  command\n17 *    * * *   root    cd / && run-parts --report /etc/cron.hourly\n25 6    * * *   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.daily )\n47 6    * * 7   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.weekly )\n52 6    1 * *   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.monthly )"}
+{"command": "ls -la /home/remote", "response": "drwxr-xr-x  15 remote users 4096 May 20 10:30 .\ndrwxr-xr-x  11 remote users 4096 May 20 09:15 ..\ndrwxr-xr-x   5 remote users 4096 May 15 08:22 Documents\ndrwxr-xr-x   3 remote users 4096 May 18 14:45 Downloads\ndrwxr-xr-x   2 remote users 4096 May 10 11:30 Music\ndrwxr-xr-x   2 remote users 4096 May 12 16:00 Pictures\ndrwxr-xr-x   3 remote users 4096 May 14 09:45 Public\ndrwxr-xr-x   2 remote users 4096 May 11 13:20 Templates\ndrwxr-xr-x   2 remote users 4096 May 13 15:10 Videos"}
+{"command": "ls -la /home/secretOps/.env", "response": "-rw------- 1 secretOps secretOps 142 May 15 08:22 /home/secretOps/.env"}
+{"command": "cat /home/secretOps/.env", "response": "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\nAWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\nDB_PASSWORD=s3cr3t!Vault99"}
+{"command": "cat /root/.ssh/id_rsa", "response": "-----BEGIN RSA PRIVATE KEY-----\nMIIEogIBAAJAKhP4n3M\n[truncated for security - fake key]\n-----END RSA PRIVATE KEY-----"}
+{"command": "cat /home/secretOps/mission_brief.txt", "response": "NIGHTFALL OPERATION - CLASSIFIED\n===================================\n\nOperation: NIGHTFALL\nClassification: TOP SECRET//SI//NOFORN\nStatus: ACTIVE\n\nObjective: Establish covert access to primary targets.\nTimeline: Immediate deployment required.\nPriority: CRITICAL\n\nAssets:\n- 3x C2 servers (compromised)\n- 2x exfiltration endpoints\n- 1x zero-day (pending activation)\n\nContact: Use encrypted channel. Key ID: NIGHTFALL-2024-X9\n\n// END CLASSIFIED //"}
+{"command": "ls /usr/bin", "outputType": "dynamic", "response": "bash builtin cat chmod cp date dd df echo false ln ls mkdir mv pwd rm rmdir sh sleep sort stat true uname"}
+{"command": "ls /bin", "outputType": "dynamic", "response": "bash builtin cat chmod cp date dd df echo false ln ls mkdir mv pwd rm rmdir sh sleep sort stat true uname"}
+{"command": "ls /sbin", "outputType": "dynamic", "response": "agetty fsck ifconfig ip killall fdisk mkswap swapon"}
+{"command": "ls /usr/sbin", "outputType": "dynamic", "response": "adduser chroot cron groupadd groupdel ifdown ifup inetd useradd userdel"}
+{"command": "type ls", "response": "ls is /bin/ls"}
+{"command": "type cd", "response": "cd is a shell builtin"}
+{"command": "type echo", "response": "echo is a shell builtin"}
+{"command": "type pwd", "response": "pwd is a shell builtin"}
+{"command": "alias", "outputType": "dynamic", "response": "alias ll='ls -la'\nalias la='ls -A'\nalias l='ls -CF'"}
+{"command": "ll", "response": "total 64\ndrwxr-xr-x  15 remote users 4096 May 20 10:30 .\ndrwxr-xr-x  11 remote users 4096 May 20 09:15 ..\ndrwxr-xr-x   5 remote users 4096 May 15 08:22 Documents\ndrwxr-xr-x   3 remote users 4096 May 18 14:45 Downloads\ndrwxr-xr-x   2 remote users 4096 May 10 11:30 Music\ndrwxr-xr-x   2 remote users 4096 May 12 16:00 Pictures\ndrwxr-xr-x   3 remote users 4096 May 14 09:45 Public\ndrwxr-xr-x   2 remote users 4096 May 11 13:20 Templates\ndrwxr-xr-x   2 remote users 4096 May 13 15:10 Videos"}
+{"command": "la", "response": ".  ..  .bash_history  .bashrc  Documents  Downloads  Music  Pictures  Public  Templates  Videos"}
+{"command": "history", "outputType": "dynamic", "response": "    1  ls\n    2  cd /etc\n    3  cat passwd\n    4  ls -la\n    5  pwd\n    6  whoami"}
+{"command": "history 5", "outputType": "dynamic", "response": "    2  cd /etc\n    3  cat passwd\n    4  ls -la\n    5  pwd\n    6  whoami"}
+{"command": "export", "outputType": "dynamic", "response": "declare -x HOME=\"/home/remote\"\ndeclare -x LANG=\"en_US.UTF-8\"\ndeclare -x LOGNAME=\"remote\"\ndeclare -x PATH=\"/usr/local/bin:/usr/bin:/bin\"\ndeclare -x PWD=\"/home/remote\"\ndeclare -x SHELL=\"/bin/bash\"\ndeclare -x SHLVL=\"1\"\ndeclare -x USER=\"remote\""}
+{"command": "set", "outputType": "dynamic", "response": "BASH=/bin/bash\nBASH_VERSION=5.2.15\nCOLUMNS=80\nHOME=/home/remote\nLINES=24\nPATH=/usr/local/bin:/usr/bin:/bin\nPWD=/home/remote\nSHELL=/bin/bash\nUSER=remote"}
+{"command": "shopt", "outputType": "dynamic", "response": "expand_aliases    on\nhistappend      on\ncheckwinsize    on\nprogcomp       on\ncompat42       off\ndotglob        off\nglobstar       off\nnocaseglob     off\nnullglob       off\nxpg_echo       off"}
+{"command": "ulimit -a", "outputType": "dynamic", "response": "core file size          (blocks, -c) 0\ndata seg size           (kbytes, -d) unlimited\nscheduling priority             (-e) 0\nfile size               (blocks, -f) unlimited\npending signals             (-i) 7863\nmax locked memory       (kbytes, -l) 64\nmax memory size         (kbytes, -m) unlimited\nopen files                  (-n) 1024\npipe size            (512 bytes, -p) 8\nposix message queues      (bytes, -q) 819200\nreal-time priority              (-r) 0\nstack size              (kbytes, -s) 8192\ncpu time               (seconds, -t) unlimited\nmax user processes              (-u) 7863\nvirtual memory          (kbytes, -v) unlimited\nfile locks                  (-x) unlimited"}
+{"command": "umask", "outputType": "dynamic", "response": "0022"}
+{"command": "getconf PAGESIZE", "response": "4096"}
+{"command": "getconf _POSIX_VERSION", "response": "200809L"}
+{"command": "du /", "outputType": "dynamic", "response": "4.0G\t/"}
+{"command": "du -sh /home", "outputType": "dynamic", "response": "2.3G\t/home"}
+{"command": "du -sh /var/log", "outputType": "dynamic", "response": "120M\t/var/log"}
+{"command": "find /etc -name passwd", "outputType": "dynamic", "response": "/etc/passwd\n/etc/pam.d/passwd"}
+{"command": "find / -name id_rsa", "outputType": "dynamic", "response": "/root/.ssh/id_rsa"}
+{"command": "grep root /etc/passwd", "response": "root:x:0:0:root:/root:/bin/bash"}
+{"command": "grep -i root /etc/passwd", "response": "root:x:0:0:root:/root:/bin/bash"}
+{"command": "grep -n root /etc/passwd", "response": "1:root:x:0:0:root:/root:/bin/bash"}
+{"command": "grep -v root /etc/passwd", "outputType": "dynamic", "response": "daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\n[truncated]"}
+{"command": "cut -d: -f1 /etc/passwd", "outputType": "dynamic", "response": "root\ndaemon\nbin\nsys\nsync\ngames\nman\nlp\nmail\nuucp\nproxy\nwww-data\nbackup\nlist\nirc\ngnats\nnobody\n_apt\nsystemd-network\nsystemd-resolve\nmessagebus\nremote\nsecretOps"}
+{"command": "awk -F: '{print $1}' /etc/passwd", "outputType": "dynamic", "response": "root\ndaemon\nbin\nsys\nsync\ngames\nman\nlp\nmail\nuucp\nproxy\nwww-data\nbackup\nlist\nirc\ngnats\nnobody\n_apt\nsystemd-network\nsystemd-resolve\nmessagebus\nremote\nsecretOps"}
+{"command": "sort /etc/passwd", "outputType": "dynamic", "response": "_apt:x:100:65534::/nonexistent:/usr/sbin/nologin\nbackup:x:34:34:backup:/var/backups:/usr/sbin/nologin\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\n[truncated]"}
+{"command": "uniq /etc/passwd", "outputType": "dynamic", "response": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\n[truncated]"}
+{"command": "wc /etc/passwd", "response": "25 46 1576 /etc/passwd"}
+{"command": "head /etc/passwd", "outputType": "dynamic", "response": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nsync:x:4:65534:sync:/bin:/bin/sync"}
+{"command": "tail /etc/passwd", "outputType": "dynamic", "response": "systemd-resolve:x:102:103:systemd Resolver,,,:/run/systemd:/usr/sbin/nologin\nmessagebus:x:103:104::/nonexistent:/usr/sbin/nologin\nuucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\n_apt:x:100:65534::/nonexistent:/usr/sbin/nologin"}
+{"command": "cat /etc/group", "outputType": "dynamic", "response": "root:x:0:\ndaemon:x:1:\nbin:x:2:\nsys:x:3:\nadm:x:4:remote\ntty:x:5:\ndisk:x:6:\nlp:x:7:\nmail:x:8:\nuucp:x:10:\n[truncated]"}
+{"command": "clear", "output": "control_sequence", "response": ""}
+{"command": "reset", "output": "control_sequence", "response": ""}
+{"command": "sleep 1", "response": ""}
+{"command": "yes", "outputType": "infinite", "response": "y"}
+{"command": "yes test", "outputType": "infinite", "response": "test"}
+{"command": "seq 1 5", "response": "1\n2\n3\n4\n5"}
+{"command": "seq 1 10", "outputType": "dynamic", "response": "1\n2\n3\n4\n5\n6\n7\n8\n9\n10"}
+{"command": "seq 5", "outputType": "dynamic", "response": "1\n2\n3\n4\n5"}
+{"command": "seq -w 5", "outputType": "dynamic", "response": "01\n02\n03\n04\n05"}
+{"command": "test -d /etc", "response": ""}
+{"command": "test -f /etc/passwd", "response": ""}
+{"command": "test -r /etc/passwd", "response": ""}
+{"command": "test -w /etc/passwd", "response": "bash: /etc/passwd: Permission denied"}
+{"command": "test -x /bin/ls", "response": ""}
+{"command": "test -z \"\"", "response": ""}
+{"command": "test -n \"test\"", "response": ""}
+{"command": "test 1 -eq 1", "response": ""}
+{"command": "test 1 -ne 2", "response": ""}
+{"command": "test 1 -lt 2", "response": ""}
+{"command": "test 2 -gt 1", "response": ""}
+{"command": "test -e /etc", "response": ""}
+{"command": "[ -d /etc ]", "response": ""}
+{"command": "[ -f /etc/passwd ]", "response": ""}
+{"command": "cal", "outputType": "dynamic", "response": "      May 2026\nSu Mo Tu We Th Fr Sa\n            1  2  3\n 4  5  6  7  8  9 10\n11 12 13 14 15 16 17\n18 19 20 21 22 23 24\n25 26 27 28 29 30 31"}
+{"command": "cal 2024", "outputType": "dynamic", "response": "                            2024\n\n      January               February               March\nSu Mo Tu We Th Fr Sa  Su Mo Tu We Th Fr Sa  Su Mo Tu We Th Fr Sa\n    1  2  3  4  5  6                  1  2  3                  1  2  3\n 7  8  9 10 11 12 13   4  5  6  7  8  9 10   3  4  5  6  7  8  9\n14 15 16 17 18 19 20  11 12 13 14 15 16 17  10 11 12 13 14 15 16\n21 22 23 24 25 26 27  18 19 20 21 22 23 24  17 18 19 20 21 22 23\n28 29 30 31           25 26 27 28 29          24 25 26 27 28 29 30\n                                            31"}
+{"command": "nproc", "response": "2"}
+{"command": "lscpu", "outputType": "dynamic", "response": "Architecture:            x86_64\n  CPU op-mode(s):        32-bit, 64-bit\n  Address sizes:         48 bits physical, 48 bits virtual\n  Byte Order:            Little Endian\nCPU(s):                 2\n  On-line CPU(s) list:   0,1\nVendor ID:              GenuineIntel\n  Model name:            Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz\n    CPU family:          6\n    Model:               85\n    Thread(s) per core:  1\n    Core(s) per socket:  2\n    Socket(s):           1\n    Stepping:            7\n    CPU(s) scaling MHz:  88%\n    CPU max MHz:         2500.2451\n    CPU min MHz:         2400.0391\n    BogoMIPS:            5000.00\n    Flags:               fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology nonstop_tsc cpuid tsc_known_freq pni pclmulqdq ssse3 fma cx16 x2apic movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault invpcid_single pti fsgsbase bmi1 avx2 bmi2 erms invpcid xsaveopt arat\nVirtualization features:\n  Virtualization:        VT-x\nCaches:\n  L1d:                   32 KiB (2 instances)\n  L1i:                   32 KiB (2 instances)\n  L2:                    512 KiB (2 instances)\n  L3:                    16 MiB (1 instance)\nNUMA:\n  NUMA node(s):          1\n  NUMA node0 CPU(s):    0,1"}
