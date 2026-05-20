@@ -2044,6 +2044,9 @@ static class Logger
 
     public static void LogYaml(string eventType, object data)
     {
+        if (IsPrivateEndpoint(data))
+            return;
+
         var sessionKey = TryGetSessionKey(data);
 
         lock (_lock)
@@ -2096,8 +2099,27 @@ static class Logger
         Task.Run(() => PushToGit(sessionId));
     }
 
+    static bool IsPrivateEndpoint(object data)
+    {
+        var ip = TryGetRemoteIp(data);
+        if (string.IsNullOrEmpty(ip))
+            return false;
+        if (ip == "127.0.0.1")
+            return true;
+        if (ip.StartsWith("10.") || ip.StartsWith("172.16.") || ip.StartsWith("172.17.") || ip.StartsWith("172.18.") || ip.StartsWith("172.19.") ||
+            ip.StartsWith("172.20.") || ip.StartsWith("172.21.") || ip.StartsWith("172.22.") || ip.StartsWith("172.23.") ||
+            ip.StartsWith("172.24.") || ip.StartsWith("172.25.") || ip.StartsWith("172.26.") || ip.StartsWith("172.27.") ||
+            ip.StartsWith("172.28.") || ip.StartsWith("172.29.") || ip.StartsWith("172.30.") || ip.StartsWith("172.31.") ||
+            ip.StartsWith("192.168."))
+            return true;
+        return false;
+    }
+
     static void LogHarvestUnsafe(string eventType, object data)
     {
+        if (IsPrivateEndpoint(data))
+            return;
+
         var harvestedEvent = new HarvestedEvent
         {
             Timestamp = DateTime.UtcNow.ToString("o"),
@@ -2351,6 +2373,18 @@ static class Logger
                 using var repo = new Repository(repoPath);
                 string dataBranch = Environment.GetEnvironmentVariable("GITHUB_DATA_BRANCH") ?? "data";
                 SyncPublicationBranch(repo, dataBranch, gitUser, gitToken);
+
+                string statsFile = Path.Combine(repoPath, "global_stats.json");
+                if (File.Exists(statsFile))
+                {
+                    string json = File.ReadAllText(statsFile);
+                    if (!json.Contains("SessionsByBanner"))
+                    {
+                        File.WriteAllText(statsFile, JsonSerializer.Serialize(new GlobalStats(), new JsonSerializerOptions { WriteIndented = true }));
+                        LogMsg("Reinitialized global_stats.json with correct schema (was missing SessionsByBanner).");
+                    }
+                }
+
                 LogMsg($"Static dashboard repository prepared on {dataBranch} branch.");
             }
             catch (Exception ex)
