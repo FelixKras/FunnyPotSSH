@@ -26,7 +26,7 @@ commit_submodule_if_needed() {
   local branch="$2"
   local message="$3"
 
-  if [ ! -d "$path/.git" ]; then
+  if [ ! -e "$path/.git" ]; then
     return
   fi
 
