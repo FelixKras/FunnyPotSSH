@@ -39,6 +39,7 @@ class Program
 
     static readonly List<string> BannerPool = ParseBannerPool();
     static volatile int _currentBannerIndex = 0;
+    static int _activeConnections = 0;
     static string _currentBanner = BannerPool.Count > 0 ? BannerPool[0] : SshBanner;
     static SshServer? _sshServer;
     static readonly object _serverLock = new();
@@ -96,6 +97,12 @@ class Program
     static void RotateBanner()
     {
         if (BannerPool.Count <= 1) return;
+        if (Volatile.Read(ref _activeConnections) > 0)
+        {
+            Logger.LogMsg("Banner rotation deferred while SSH sessions are active.");
+            return;
+        }
+
         var nextIndex = Interlocked.Increment(ref _currentBannerIndex) % BannerPool.Count;
         var banner = BannerPool[nextIndex];
         Interlocked.Exchange(ref _currentBanner, banner);
@@ -199,6 +206,8 @@ class Program
             return;
         }
 
+        Interlocked.Increment(ref _activeConnections);
+
         var connectionReleased = 0;
         session.Disconnected += (_, _) =>
         {
@@ -214,7 +223,10 @@ class Program
             });
 
             if (Interlocked.Exchange(ref connectionReleased, 1) == 0)
+            {
+                Interlocked.Decrement(ref _activeConnections);
                 ConnectionLimit.Release();
+            }
         };
 
         Logger.LogMsg($"Connection accepted [{sessionKey}] from {remoteEndpoint} banner: {sshBanner}");
@@ -2119,13 +2131,7 @@ static class Logger
         var ip = TryGetRemoteIp(data);
         if (string.IsNullOrEmpty(ip))
             return false;
-        if (ip == "127.0.0.1")
-            return true;
-        if (ip.StartsWith("10.") || ip.StartsWith("172.16.") || ip.StartsWith("172.17.") || ip.StartsWith("172.18.") || ip.StartsWith("172.19.") ||
-            ip.StartsWith("172.20.") || ip.StartsWith("172.21.") || ip.StartsWith("172.22.") || ip.StartsWith("172.23.") ||
-            ip.StartsWith("172.24.") || ip.StartsWith("172.25.") || ip.StartsWith("172.26.") || ip.StartsWith("172.27.") ||
-            ip.StartsWith("172.28.") || ip.StartsWith("172.29.") || ip.StartsWith("172.30.") || ip.StartsWith("172.31.") ||
-            ip.StartsWith("192.168."))
+        if (ip == "127.0.0.1" || ip == "::1")
             return true;
         return false;
     }
