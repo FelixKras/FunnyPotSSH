@@ -383,7 +383,9 @@ class Program
 
         conn.CommandOpened += (_, args) =>
         {
-            if (args.ShellType != "shell") return;
+            var isInteractiveShell = args.ShellType == "shell";
+            var isExecCommand = args.ShellType == "exec";
+            if (!isInteractiveShell && !isExecCommand) return;
 
             var username = args.AttachedUserauthArgs?.Username ?? "remote";
             var channel = args.Channel;
@@ -415,7 +417,7 @@ class Program
                 Username = username,
                 ClientVersion = args.AttachedUserauthArgs?.Session?.ClientVersion ?? "unknown",
                 SshBanner = sshBanner,
-                Event = "ShellOpened",
+                Event = isInteractiveShell ? "ShellOpened" : "ExecOpened",
                 DurationSeconds = (DateTime.UtcNow - connectionStartedAt).TotalSeconds,
                 TimeToCompromiseMs = (long)(DateTime.UtcNow - connectionStartedAt).TotalMilliseconds
             });
@@ -489,7 +491,10 @@ class Program
 
                 if (string.IsNullOrEmpty(line))
                 {
-                    SendPrompt();
+                    if (isInteractiveShell)
+                        SendPrompt();
+                    else
+                        CloseShell("ExecCompleted");
                     return;
                 }
 
@@ -550,7 +555,10 @@ class Program
                     blockedOps++;
                     Logger.LogMsg($"[Session {sessionId}] Blocked SCP/SFTP: {line}");
                     channel.SendData(Encoding.UTF8.GetBytes("Operation not allowed\r\n"));
-                    SendPrompt();
+                    if (isInteractiveShell)
+                        SendPrompt();
+                    else
+                        CloseShell("BlockedCommand");
                     return;
                 }
 
@@ -597,7 +605,8 @@ class Program
                 }
 
                 channel.SendData(Encoding.UTF8.GetBytes(response + "\r\n"));
-                SendPrompt();
+                if (isInteractiveShell)
+                    SendPrompt();
 
                 var failedCommand = DataHarvester.IsFailureResponse(response);
                 shellAnalytics.RecordResult(failedCommand);
@@ -633,6 +642,9 @@ class Program
                     SemanticDrift = shellAnalytics.SemanticDrift,
                     TuringMultiplier = shellAnalytics.CalculateTuringMultiplier()
                 });
+
+                if (!isInteractiveShell)
+                    CloseShell("ExecCompleted");
             }
 
             channel.DataReceived += (_, data) =>
@@ -681,7 +693,10 @@ class Program
             };
 
             ResetIdle();
-            SendPrompt();
+            if (isInteractiveShell)
+                SendPrompt();
+            else
+                ProcessLine(args.CommandText ?? "");
         };
     }
 
