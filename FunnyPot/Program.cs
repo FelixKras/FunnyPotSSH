@@ -647,6 +647,7 @@ class Program
                     RemoteEndpoint = remoteEndpoint,
                     Username = username,
                     Command = line,
+                    Response = response,
                     FailedCommand = failedCommand,
                     ResponseDurationMs = stopwatch.ElapsedMilliseconds,
                     HallucinationFeedback = DataHarvester.DetectHallucinationFeedback(line, response),
@@ -880,6 +881,7 @@ public class CommandResultLogEntry
     public string RemoteEndpoint { get; set; } = "";
     public string Username { get; set; } = "";
     public string Command { get; set; } = "";
+    public string Response { get; set; } = "";
     public bool FailedCommand { get; set; }
     public long ResponseDurationMs { get; set; }
     public bool HallucinationFeedback { get; set; }
