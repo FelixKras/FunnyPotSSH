@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
@@ -2338,6 +2339,8 @@ static class Logger
                 string dataDir = Path.Combine(repoPath, "data");
                 string dataBranch = Environment.GetEnvironmentVariable("GITHUB_DATA_BRANCH") ?? "data";
 
+                EnrichHarvestWithMetricResponses(repoPath);
+
                 if (File.Exists(metricsFile))
                     Commands.Stage(repo, Path.GetRelativePath(repoPath, metricsFile));
                 if (File.Exists(appLogFile))
@@ -2374,6 +2377,98 @@ static class Logger
         }
     }
 
+    static bool EnrichHarvestWithMetricResponses(string repoPath)
+    {
+        try
+        {
+            var harvestPath = Path.Combine(repoPath, "data", "harvest.jsonl");
+            var sessionsDir = Path.Combine(repoPath, "sessions");
+            if (!File.Exists(harvestPath) || !Directory.Exists(sessionsDir))
+                return false;
+
+            var responses = LoadMetricResponses(sessionsDir);
+            if (responses.Count == 0)
+                return false;
+
+            var changed = false;
+            var lines = File.ReadAllLines(harvestPath);
+            for (var i = 0; i < lines.Length; i++)
+            {
+                if (string.IsNullOrWhiteSpace(lines[i]) || !lines[i].Contains("\"command_result\""))
+                    continue;
+
+                var node = JsonNode.Parse(lines[i]) as JsonObject;
+                var data = node?["Data"] as JsonObject;
+                if (data is null)
+                    continue;
+
+                if (!string.IsNullOrEmpty(data["Response"]?.GetValue<string>()))
+                    continue;
+
+                var shellSessionId = data["ShellSessionId"]?.GetValue<string>() ?? "";
+                var command = data["Command"]?.GetValue<string>() ?? "";
+                if (string.IsNullOrEmpty(shellSessionId) || string.IsNullOrEmpty(command))
+                    continue;
+
+                var key = MetricResponseKey(shellSessionId, command);
+                if (!responses.TryGetValue(key, out var queuedResponses) || queuedResponses.Count == 0)
+                    continue;
+
+                data["Response"] = queuedResponses.Dequeue();
+                lines[i] = node!.ToJsonString();
+                changed = true;
+            }
+
+            if (!changed)
+                return false;
+
+            if (changed)
+                File.WriteAllLines(harvestPath, lines);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            LogMsg($"Failed to enrich harvest responses: {ex.Message}");
+            return false;
+        }
+    }
+
+    static Dictionary<string, Queue<string>> LoadMetricResponses(string sessionsDir)
+    {
+        var responses = new Dictionary<string, Queue<string>>(StringComparer.Ordinal);
+        foreach (var path in Directory.EnumerateFiles(sessionsDir, "metrics-*.log").OrderBy(path => path, StringComparer.Ordinal))
+        {
+            foreach (var line in File.ReadLines(path))
+            {
+                var first = line.IndexOf('|');
+                var second = first < 0 ? -1 : line.IndexOf('|', first + 1);
+                var third = second < 0 ? -1 : line.IndexOf('|', second + 1);
+                if (third < 0)
+                    continue;
+
+                var sessionId = line[(first + 1)..second];
+                var payloadJson = line[(third + 1)..];
+                using var payload = JsonDocument.Parse(payloadJson);
+                if (!payload.RootElement.TryGetProperty("Input", out var inputElement) ||
+                    !payload.RootElement.TryGetProperty("Response", out var responseElement))
+                    continue;
+
+                var input = inputElement.GetString() ?? "";
+                if (string.IsNullOrEmpty(sessionId) || string.IsNullOrEmpty(input))
+                    continue;
+
+                var key = MetricResponseKey(sessionId, input);
+                if (!responses.TryGetValue(key, out var queue))
+                    responses[key] = queue = new Queue<string>();
+                queue.Enqueue(responseElement.GetString() ?? "");
+            }
+        }
+
+        return responses;
+    }
+
+    static string MetricResponseKey(string sessionId, string command) => $"{sessionId}\u001f{command}";
+
     public static void PreparePublicationRepository()
     {
         lock (_lock)
@@ -2406,6 +2501,21 @@ static class Logger
                         File.WriteAllText(statsFile, JsonSerializer.Serialize(new GlobalStats(), new JsonSerializerOptions { WriteIndented = true }));
                         LogMsg("Reinitialized global_stats.json with correct schema (was missing SessionsByBanner).");
                     }
+                }
+
+                if (EnrichHarvestWithMetricResponses(repoPath))
+                {
+                    Commands.Stage(repo, "data");
+                    var author = new Signature(gitUser!, $"{gitUser}@users.noreply.github.com", DateTimeOffset.Now);
+                    repo.Commit("Backfill command response data", author, author);
+                    repo.Network.Push(repo.Network.Remotes["origin"],
+                        $@"refs/heads/{repo.Head.FriendlyName}:refs/heads/{dataBranch}",
+                        new PushOptions
+                        {
+                            CredentialsProvider = (_, _, _) =>
+                                new UsernamePasswordCredentials { Username = gitUser!, Password = gitToken! }
+                        });
+                    LogMsg("Backfilled command responses in harvest data.");
                 }
 
                 LogMsg($"Static dashboard repository prepared on {dataBranch} branch.");
