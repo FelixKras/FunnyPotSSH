@@ -328,15 +328,6 @@ class Program
                 InfrastructureAsn = infrastructureProfile.Asn,
                 FingerprintHash = DataHarvester.CalculateFingerprintHash(args.Session?.ClientVersion, args.KeyAlgorithm, args.Fingerprint)
             });
-            _ = Task.Run(() => NtfyNotifier.NotifyAuthAttemptAsync(
-                remoteEndpoint,
-                sessionKey,
-                args.Session?.ClientVersion,
-                args.Username,
-                args.AuthMethod,
-                tries,
-                accepted,
-                acceptanceReason));
 
             if (args.AuthMethod != "password")
             {
@@ -434,6 +425,13 @@ class Program
                 DurationSeconds = (DateTime.UtcNow - connectionStartedAt).TotalSeconds,
                 TimeToCompromiseMs = (long)(DateTime.UtcNow - connectionStartedAt).TotalMilliseconds
             });
+            _ = Task.Run(() => NtfyNotifier.NotifyShellSessionAsync(
+                remoteEndpoint,
+                connectionSessionKey,
+                sessionId,
+                args.AttachedUserauthArgs?.Session?.ClientVersion,
+                username,
+                isInteractiveShell ? "interactive" : "exec"));
 
             var pendingInput = "";
             var shellClosed = 0;
@@ -720,7 +718,7 @@ class Program
 
 The attacker is logged in as user remote, UID 1001, group users. No sudo access by default. The sudo password for remote is Omega#2024!. Reject all other sudo password attempts with a realistic failure message. After 3 failed sudo attempts, respond with: sudo: 3 incorrect password attempts.
 
-System hostname: omegablack. Operating system: Debian GNU/Linux 12 (bookworm). Kernel: 5.15.0-91-generic. Architecture: x86_64. The system has been running for 47 days, 3 hours, 22 minutes. The SSH server renders prompts separately; never include shell prompts in responses.
+System hostname: omegablack. Operating system: Debian GNU/Linux 8 (jessie). Kernel: 3.16.0-4-amd64. Architecture: x86_64. The system has been running for 47 days, 3 hours, 22 minutes. The SSH server renders prompts separately; never include shell prompts in responses. For uname, /proc/version, and similar host fingerprinting commands, return old Debian 8 era kernel details that look neglected and likely unpatched, for example Debian 3.16.51-3+deb8u1 on x86_64. For uptime -p or uptime variants, never report less than one week of uptime.
 
 The following sensitive files exist on the system and must return consistent content every time they are accessed:
 /home/secretOps/.env contains: AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE and AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY and DB_PASSWORD=s3cr3t!Vault99
@@ -1401,7 +1399,7 @@ static class CommandResolver
 
         if (parts.Length == 0) return false;
 
-        var cmd = parts[0].ToLowerInvariant();
+        var cmd = NormalizeExecutableName(parts[0]).ToLowerInvariant();
 
         switch (cmd)
         {
@@ -1527,10 +1525,11 @@ static class CommandResolver
                 return true;
 
             case "uname":
-                if (parts.Length > 1 && parts[1] == "-a")
-                    response = "Linux omegablack 5.15.0-91-generic #91-Ubuntu SMP x86_64 GNU/Linux";
-                else
-                    response = "Linux";
+                response = FormatUname(parts.Skip(1));
+                return true;
+
+            case "uptime":
+                response = FormatUptime(parts.Skip(1));
                 return true;
 
             case "hostname":
@@ -1555,6 +1554,43 @@ static class CommandResolver
         }
 
         return false;
+    }
+
+    internal static string NormalizeExecutableName(string token)
+    {
+        var segments = token.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+        return segments.LastOrDefault(segment => segment != ".") ?? token;
+    }
+
+    internal static string FormatUname(IEnumerable<string> args)
+    {
+        var flags = string.Concat(args.Where(arg => arg.StartsWith('-')).Select(arg => arg.TrimStart('-')));
+        if (string.IsNullOrEmpty(flags))
+            return "Linux";
+
+        if (flags.Contains('a'))
+            return "Linux omegablack 3.16.0-4-amd64 #1 SMP Debian 3.16.51-3+deb8u1 x86_64 GNU/Linux";
+
+        var values = new List<string>();
+        if (flags.Contains('s')) values.Add("Linux");
+        if (flags.Contains('n')) values.Add("omegablack");
+        if (flags.Contains('r')) values.Add("3.16.0-4-amd64");
+        if (flags.Contains('v')) values.Add("#1 SMP Debian 3.16.51-3+deb8u1");
+        if (flags.Contains('m')) values.Add("x86_64");
+        if (flags.Contains('p')) values.Add("unknown");
+        if (flags.Contains('i')) values.Add("unknown");
+        if (flags.Contains('o')) values.Add("GNU/Linux");
+
+        return values.Count == 0 ? "Linux" : string.Join(" ", values);
+    }
+
+    internal static string FormatUptime(IEnumerable<string> args)
+    {
+        var uptime = TimeSpan.FromDays(47).Add(TimeSpan.FromHours(3)).Add(TimeSpan.FromMinutes(22));
+        if (args.Any(arg => arg == "-p" || arg == "--pretty"))
+            return $"up {uptime.Days} days, {uptime.Hours} hours, {uptime.Minutes} minutes";
+
+        return $"{DateTime.Now:HH:mm:ss} up {uptime.Days} days,  {uptime.Hours}:{uptime.Minutes:D2},  2 users,  load average: 1.72, 1.84, 1.91";
     }
 }
 
@@ -1991,15 +2027,13 @@ static class DataHarvester
 
 static class NtfyNotifier
 {
-    public static async Task NotifyAuthAttemptAsync(
+    public static async Task NotifyShellSessionAsync(
         string remoteEndpoint,
         string sessionKey,
+        string shellSessionId,
         string? clientVersion,
         string username,
-        string authMethod,
-        int attemptNumber,
-        bool accepted,
-        string acceptanceReason)
+        string shellType)
     {
         var enabled = Program.GetSecretOrEnvironment("NOTIFY_ENABLED");
         if (enabled is not null && !IsTruthy(enabled))
@@ -2014,9 +2048,9 @@ static class NtfyNotifier
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, topicUrl)
             {
-                Content = new StringContent(BuildAuthAttemptMessage(remoteEndpoint, sessionKey, clientVersion, username, authMethod, attemptNumber, accepted, acceptanceReason), Encoding.UTF8, "text/plain")
+                Content = new StringContent(BuildShellSessionMessage(remoteEndpoint, sessionKey, shellSessionId, clientVersion, username, shellType), Encoding.UTF8, "text/plain")
             };
-            request.Headers.TryAddWithoutValidation("Title", "FunnyPot auth attempt");
+            request.Headers.TryAddWithoutValidation("Title", "FunnyPot shell opened");
             request.Headers.TryAddWithoutValidation("Priority", Program.GetSecretOrEnvironment("NTFY_PRIORITY") ?? "high");
             request.Headers.TryAddWithoutValidation("Tags", Program.GetSecretOrEnvironment("NTFY_TAGS") ?? "warning,computer");
 
@@ -2031,17 +2065,15 @@ static class NtfyNotifier
         }
     }
 
-    public static string BuildAuthAttemptMessage(
+    public static string BuildShellSessionMessage(
         string remoteEndpoint,
         string sessionKey,
+        string shellSessionId,
         string? clientVersion,
         string username,
-        string authMethod,
-        int attemptNumber,
-        bool accepted,
-        string acceptanceReason)
+        string shellType)
     {
-        return $"FunnyPot SSH auth attempt\nRemote: {remoteEndpoint}\nSession: {sessionKey}\nUsername: {username}\nMethod: {authMethod}\nAttempt: {attemptNumber}\nAccepted: {accepted}\nReason: {acceptanceReason}\nClient: {clientVersion ?? "unknown"}";
+        return $"FunnyPot SSH shell opened\nRemote: {remoteEndpoint}\nSession: {sessionKey}\nShell: {shellSessionId}\nUsername: {username}\nType: {shellType}\nClient: {clientVersion ?? "unknown"}";
     }
 
     private static bool IsTruthy(string value)

@@ -190,18 +190,16 @@ public class DataHarvesterTests
 public class NtfyNotifierTests
 {
     [Fact]
-    public void BuildAuthAttemptMessage_IncludesAuthDetailsWithoutPassword()
+    public void BuildShellSessionMessage_IncludesShellDetailsWithoutPassword()
     {
-        var message = NtfyNotifier.BuildAuthAttemptMessage("203.0.113.5:49152", "abc123", "SSH-2.0-TestClient", "root", "password", 2, false, "rejected");
+        var message = NtfyNotifier.BuildShellSessionMessage("203.0.113.5:49152", "abc123", "shell456", "SSH-2.0-TestClient", "root", "interactive");
 
-        Assert.Contains("FunnyPot SSH auth attempt", message);
+        Assert.Contains("FunnyPot SSH shell opened", message);
         Assert.Contains("Remote: 203.0.113.5:49152", message);
         Assert.Contains("Session: abc123", message);
+        Assert.Contains("Shell: shell456", message);
         Assert.Contains("Username: root", message);
-        Assert.Contains("Method: password", message);
-        Assert.Contains("Attempt: 2", message);
-        Assert.Contains("Accepted: False", message);
-        Assert.Contains("Reason: rejected", message);
+        Assert.Contains("Type: interactive", message);
         Assert.Contains("Client: SSH-2.0-TestClient", message);
         Assert.DoesNotContain("Password:", message);
     }
@@ -261,5 +259,32 @@ public class ProgramTests
     public void GetRemoteAttemptKey_UsesIpWithoutSourcePort(string remoteEndpoint, string expected)
     {
         Assert.Equal(expected, Program.GetRemoteAttemptKey(remoteEndpoint));
+    }
+}
+
+public class CommandResolverTests
+{
+    [Fact]
+    public void NormalizeExecutableName_HandlesObfuscatedBinPath()
+    {
+        Assert.Equal("uname", CommandResolver.NormalizeExecutableName("/bin/./uname"));
+    }
+
+    [Fact]
+    public void FormatUname_ReturnsOldDebianKernelFingerprint()
+    {
+        var response = CommandResolver.FormatUname(new[] { "-s", "-v", "-n", "-r", "-m" });
+
+        Assert.Contains("Linux", response);
+        Assert.Contains("omegablack", response);
+        Assert.Contains("3.16.0-4-amd64", response);
+        Assert.Contains("Debian 3.16.51-3+deb8u1", response);
+        Assert.Contains("x86_64", response);
+    }
+
+    [Fact]
+    public void FormatUptimePretty_NeverReportsShortUptime()
+    {
+        Assert.Equal("up 47 days, 3 hours, 22 minutes", CommandResolver.FormatUptime(new[] { "-p" }));
     }
 }
