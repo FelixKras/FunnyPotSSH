@@ -2434,8 +2434,15 @@ static class Logger
 
         string sessionName = Environment.GetEnvironmentVariable("SESSION_NAME") ?? "default";
         string dateString = DateTime.Now.ToString("yyyyMMdd");
-        string uniquePart = (sessionName == "default" && sessionId != null) ? sessionId[..8] : sessionName;
+        string uniquePart = GetSessionLogUniquePart(sessionName, sessionId);
         return Path.Combine(baseDir, $"{prefix}-{uniquePart}-{dateString}.log");
+    }
+
+    internal static string GetSessionLogUniquePart(string sessionName, string? sessionId)
+    {
+        return sessionName == "default" && sessionId != null
+            ? sessionId[..Math.Min(8, sessionId.Length)]
+            : sessionName;
     }
 
     public static void LogMsg(string message, string? sessionId = null)

@@ -208,6 +208,14 @@ public class NtfyNotifierTests
 public class LoggerTests
 {
     [Fact]
+    public void GetSessionLogUniquePart_HandlesShortSessionIds()
+    {
+        Assert.Equal("abc", Logger.GetSessionLogUniquePart("default", "abc"));
+        Assert.Equal("abcdefgh", Logger.GetSessionLogUniquePart("default", "abcdefghijk"));
+        Assert.Equal("custom", Logger.GetSessionLogUniquePart("custom", "abcdefghijk"));
+    }
+
+    [Fact]
     public void ShouldRequestDataPush_AllowsInitialAndElapsedRequests()
     {
         var now = DateTime.UtcNow;
