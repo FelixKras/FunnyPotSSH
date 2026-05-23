@@ -14,20 +14,24 @@ using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using FxSsh;
 using FxSsh.Services;
+using System.IO;
+using FunnyPot;
 
 class Program
 {
     static readonly HttpClient httpClient = new();
     internal static HttpClient SharedHttpClient => httpClient;
+    static AppConfiguration Config => _config ??= AppConfiguration.Load();
+    static AppConfiguration? _config;
 
-    static readonly int AuthMaxTries = int.Parse(Environment.GetEnvironmentVariable("AUTH_MAX_TRIES") ?? "3");
+    static readonly int AuthMaxTries = Config.Ssh.AuthMaxTries;
     static readonly int PasswordHarvestAttempt = Math.Max(1, Math.Min(AuthMaxTries, 3));
-    static readonly int LlmDelayMs = int.Parse(Environment.GetEnvironmentVariable("LLM_DELAY_MS") ?? "500");
-    static readonly int MaxSessions = int.Parse(Environment.GetEnvironmentVariable("MAX_SESSIONS") ?? "50");
-    static readonly int SessionIdleTimeoutSecs = int.Parse(Environment.GetEnvironmentVariable("SESSION_IDLE_TIMEOUT_SECONDS") ?? "300");
-    static readonly string SshBanner = Environment.GetEnvironmentVariable("SSH_BANNER") ?? "SSH-2.0-OmegaBlack_Classified_Server_v1.0";
-    static readonly int SshPort = int.Parse(Environment.GetEnvironmentVariable("SSH_PORT") ?? "22422");
-    internal static readonly string LogDir = Environment.GetEnvironmentVariable("LOG_DIR") ?? "/var/log/funnypot";
+    static readonly int LlmDelayMs = Config.Llm.DelayMs;
+    static readonly int MaxSessions = Config.Ssh.MaxSessions;
+    static readonly int SessionIdleTimeoutSecs = Config.Ssh.SessionIdleTimeoutSeconds;
+    static readonly string SshBanner = Config.Ssh.Banner;
+    static readonly int SshPort = Config.Ssh.Port;
+    internal static readonly string LogDir = Config.Logging.LogDir;
     internal static readonly string AppDir = AppDomain.CurrentDomain.BaseDirectory;
 
     static readonly ConcurrentDictionary<string, int> AuthAttempts = new(StringComparer.OrdinalIgnoreCase);
@@ -256,8 +260,11 @@ class Program
         {
             if (SessionSocketField?.GetValue(session) is Socket socket)
                 return socket.RemoteEndPoint?.ToString() ?? "unknown";
-        }
-        catch { }
+         }
+         catch (Exception ex)
+         {
+             Logger.LogMsg($"Error getting remote endpoint: {ex.Message}");
+         }
 
         return "unknown";
     }
@@ -1097,7 +1104,11 @@ static class SCPUploadHandler
 
     static SCPUploadHandler()
     {
-        try { Directory.CreateDirectory(UploadDir); } catch { }
+        try { Directory.CreateDirectory(UploadDir); }
+        catch (Exception ex)
+        {
+            Logger.LogMsg($"Failed to create upload directory: {ex.Message}");
+        }
     }
 
     public static void EnsureUploadDir() { }
@@ -1634,7 +1645,10 @@ static class StaticResponseStore
                         Responses[entry.Command] = entry;
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    Logger.LogMsg($"Error parsing static response entry: {ex.Message}");
+                }
             }
             Logger.LogMsg($"Loaded {Responses.Count} static command responses");
         }
@@ -1927,25 +1941,27 @@ static class DataHarvester
             }
 
             await using var stream = await response.Content.ReadAsStreamAsync(cts.Token);
-            using var memory = new MemoryStream();
+            using var sha256 = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
             var buffer = new byte[81920];
+            long bytesCaptured = 0;
             int read;
             while ((read = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length), cts.Token)) > 0)
             {
-                if (memory.Length + read > MaxPayloadCaptureBytes)
+                if (bytesCaptured + read > MaxPayloadCaptureBytes)
                 {
                     entry.Status = "too_large";
                     break;
                 }
 
-                memory.Write(buffer, 0, read);
+                sha256.AppendData(buffer, 0, read);
+                bytesCaptured += read;
             }
 
             if (entry.Status != "too_large")
                 entry.Status = "captured";
 
-            entry.BytesCaptured = memory.Length;
-            entry.Sha256 = Convert.ToHexString(SHA256.HashData(memory.ToArray())).ToLowerInvariant();
+            entry.BytesCaptured = bytesCaptured;
+            entry.Sha256 = Convert.ToHexString(sha256.GetHashAndReset()).ToLowerInvariant();
         }
         catch (Exception ex)
         {
@@ -2096,7 +2112,11 @@ static class Logger
 
     static Logger()
     {
-        try { Directory.CreateDirectory(Program.LogDir); } catch { }
+        try { Directory.CreateDirectory(Program.LogDir); }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Failed to create log directory: {ex.Message}");
+        }
     }
 
     static readonly Lazy<ISerializer> YamlSerializer = new(() =>
@@ -2125,7 +2145,10 @@ static class Logger
                 File.AppendAllText(path, "---\n" + yaml);
                 LogHarvestUnsafe(eventType, data);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Failed to write yaml log entry: {ex.Message}");
+            }
         }
 
         RequestDataPush(sessionKey ?? eventType, force: IsPublicationBoundaryEvent(eventType));
@@ -2326,7 +2349,10 @@ static class Logger
                 using var writer = new StreamWriter(GetLogFilePath(sessionId, "app"), append: true);
                 writer.WriteLine($"{DateTime.Now:u} [{sessionId ?? "GLOBAL"}] - {message}");
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Failed to write app log entry: {ex.Message}");
+            }
         }
     }
 
@@ -2341,7 +2367,10 @@ static class Logger
                 using var writer = new StreamWriter(GetLogFilePath(sessionId, "metrics"), append: true);
                 writer.WriteLine(logEntry);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Failed to write metric log entry: {ex.Message}");
+            }
         }
     }
 

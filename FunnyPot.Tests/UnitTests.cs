@@ -288,3 +288,36 @@ public class CommandResolverTests
         Assert.Equal("up 47 days, 3 hours, 22 minutes", CommandResolver.FormatUptime(new[] { "-p" }));
     }
 }
+
+public class AppConfigurationTests
+{
+    [Fact]
+    public void Load_WhenConfigMissing_ReturnsDefaults()
+    {
+        var config = AppConfiguration.Load("/tmp/non-existent-funnypot-config.yaml");
+
+        Assert.Equal(22422, config.Ssh.Port);
+        Assert.Equal(50, config.Ssh.MaxSessions);
+        Assert.Equal(500, config.Llm.DelayMs);
+    }
+
+    [Fact]
+    public void Load_WhenConfigExists_UsesFileValues()
+    {
+        var tempPath = Path.Combine(Path.GetTempPath(), $"funnypot-config-{Guid.NewGuid():N}.yaml");
+        File.WriteAllText(tempPath, "ssh:\n  port: 23000\n  max-sessions: 10\nllm:\n  delay-ms: 250\n");
+
+        try
+        {
+            var config = AppConfiguration.Load(tempPath);
+
+            Assert.Equal(23000, config.Ssh.Port);
+            Assert.Equal(10, config.Ssh.MaxSessions);
+            Assert.Equal(250, config.Llm.DelayMs);
+        }
+        finally
+        {
+            File.Delete(tempPath);
+        }
+    }
+}
