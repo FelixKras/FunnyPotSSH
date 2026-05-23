@@ -48,6 +48,7 @@ class Program
     static string _currentBanner = BannerPool.Count > 0 ? BannerPool[0] : SshBanner;
     static SshServer? _sshServer;
     static readonly object _serverLock = new();
+    static readonly ReaderWriterLockSlim ServerLifecycleLock = new();
 
     static string GetBannerForSession(Session session) => _currentBanner;
 
@@ -86,6 +87,19 @@ class Program
 
     static void StartSshServer(string banner, int port)
     {
+        ServerLifecycleLock.EnterWriteLock();
+        try
+        {
+            StartSshServerUnlocked(banner, port);
+        }
+        finally
+        {
+            ServerLifecycleLock.ExitWriteLock();
+        }
+    }
+
+    static void StartSshServerUnlocked(string banner, int port)
+    {
         lock (_serverLock)
         {
             _sshServer?.Stop();
@@ -102,17 +116,26 @@ class Program
     static void RotateBanner()
     {
         if (BannerPool.Count <= 1) return;
-        if (Volatile.Read(ref _activeConnections) > 0)
-        {
-            Logger.LogMsg("Banner rotation deferred while SSH sessions are active.");
-            return;
-        }
 
-        var nextIndex = Interlocked.Increment(ref _currentBannerIndex) % BannerPool.Count;
-        var banner = BannerPool[nextIndex];
-        Interlocked.Exchange(ref _currentBanner, banner);
-        Logger.LogMsg($"Rotating banner to [{banner}]");
-        StartSshServer(banner, SshPort);
+        ServerLifecycleLock.EnterWriteLock();
+        try
+        {
+            if (Volatile.Read(ref _activeConnections) > 0)
+            {
+                Logger.LogMsg("Banner rotation deferred while SSH sessions are active.");
+                return;
+            }
+
+            var nextIndex = Interlocked.Increment(ref _currentBannerIndex) % BannerPool.Count;
+            var banner = BannerPool[nextIndex];
+            Interlocked.Exchange(ref _currentBanner, banner);
+            Logger.LogMsg($"Rotating banner to [{banner}]");
+            StartSshServerUnlocked(banner, SshPort);
+        }
+        finally
+        {
+            ServerLifecycleLock.ExitWriteLock();
+        }
     }
 
     static readonly string hostKeyPem = GetHostKeyPem();
@@ -198,60 +221,68 @@ class Program
 
     static void OnConnectionAccepted(object? sender, Session session)
     {
-        // FxSsh raises ConnectionAccepted before key exchange, so SessionId and services are not ready yet.
-        var sessionKey = Guid.NewGuid().ToString("N")[..16];
-        var remoteEndpoint = GetRemoteEndpoint(session);
-        var connectionStartedAt = DateTime.UtcNow;
-        var sshBanner = GetBannerForSession(session);
-
-        if (!ConnectionLimit.Wait(0))
+        ServerLifecycleLock.EnterReadLock();
+        try
         {
-            Logger.LogMsg($"Connection rejected (max {MaxSessions}) from {remoteEndpoint}");
-            session.Disconnect(DisconnectReason.TooManyConnections, "Too many connections");
-            return;
-        }
+            // FxSsh raises ConnectionAccepted before key exchange, so SessionId and services are not ready yet.
+            var sessionKey = Guid.NewGuid().ToString("N")[..16];
+            var remoteEndpoint = GetRemoteEndpoint(session);
+            var connectionStartedAt = DateTime.UtcNow;
+            var sshBanner = GetBannerForSession(session);
 
-        Interlocked.Increment(ref _activeConnections);
-
-        var connectionReleased = 0;
-        session.Disconnected += (_, _) =>
-        {
-            Logger.LogYaml("session_end", new SessionLogEntry
+            if (!ConnectionLimit.Wait(0))
             {
-                Timestamp = DateTime.UtcNow,
+                Logger.LogMsg($"Connection rejected (max {MaxSessions}) from {remoteEndpoint}");
+                session.Disconnect(DisconnectReason.TooManyConnections, "Too many connections");
+                return;
+            }
+
+            Interlocked.Increment(ref _activeConnections);
+
+            var connectionReleased = 0;
+            session.Disconnected += (_, _) =>
+            {
+                Logger.LogYaml("session_end", new SessionLogEntry
+                {
+                    Timestamp = DateTime.UtcNow,
+                    SessionKey = sessionKey,
+                    RemoteEndpoint = remoteEndpoint,
+                    ClientVersion = session.ClientVersion ?? "unknown",
+                    SshBanner = sshBanner,
+                    Event = "Disconnected",
+                    DurationSeconds = (DateTime.UtcNow - connectionStartedAt).TotalSeconds
+                });
+
+                if (Interlocked.Exchange(ref connectionReleased, 1) == 0)
+                {
+                    Interlocked.Decrement(ref _activeConnections);
+                    ConnectionLimit.Release();
+                }
+            };
+
+            Logger.LogMsg($"Connection accepted [{sessionKey}] from {remoteEndpoint} banner: {sshBanner}");
+            Logger.LogYaml("session_start", new SessionLogEntry
+            {
+                Timestamp = connectionStartedAt,
                 SessionKey = sessionKey,
                 RemoteEndpoint = remoteEndpoint,
-                ClientVersion = session.ClientVersion ?? "unknown",
+                ClientVersion = session.ClientVersion ?? "pending",
                 SshBanner = sshBanner,
-                Event = "Disconnected",
-                DurationSeconds = (DateTime.UtcNow - connectionStartedAt).TotalSeconds
+                Event = "ConnectionAccepted"
             });
 
-            if (Interlocked.Exchange(ref connectionReleased, 1) == 0)
+            session.ServiceRegistered += (_, service) =>
             {
-                Interlocked.Decrement(ref _activeConnections);
-                ConnectionLimit.Release();
-            }
-        };
-
-        Logger.LogMsg($"Connection accepted [{sessionKey}] from {remoteEndpoint} banner: {sshBanner}");
-        Logger.LogYaml("session_start", new SessionLogEntry
+                if (service is UserauthService userauth)
+                    SetupUserauth(userauth, sessionKey, remoteEndpoint);
+                else if (service is ConnectionService conn)
+                    SetupShell(conn, sessionKey, remoteEndpoint, connectionStartedAt, sshBanner);
+            };
+        }
+        finally
         {
-            Timestamp = connectionStartedAt,
-            SessionKey = sessionKey,
-            RemoteEndpoint = remoteEndpoint,
-            ClientVersion = session.ClientVersion ?? "pending",
-            SshBanner = sshBanner,
-            Event = "ConnectionAccepted"
-        });
-
-        session.ServiceRegistered += (_, service) =>
-        {
-            if (service is UserauthService userauth)
-                SetupUserauth(userauth, sessionKey, remoteEndpoint);
-            else if (service is ConnectionService conn)
-                SetupShell(conn, sessionKey, remoteEndpoint, connectionStartedAt, sshBanner);
-        };
+            ServerLifecycleLock.ExitReadLock();
+        }
     }
 
     static string GetRemoteEndpoint(Session session)
@@ -444,6 +475,7 @@ class Program
             var shellClosed = 0;
             var shellFinalized = 0;
             var idleTimer = new System.Timers.Timer(SessionIdleTimeoutSecs * 1000) { AutoReset = false };
+            SessionCommandWorker? commandWorker = null;
             idleTimer.Elapsed += (_, _) => CloseShell("IdleTimeout", "\r\nConnection closed due to inactivity.\r\n");
             void ResetIdle() { idleTimer.Stop(); idleTimer.Start(); }
 
@@ -476,6 +508,7 @@ class Program
                 Logger.UpdateGlobalStats(username, messageCount, blockedOps, (int)totalPromptTokens, (int)totalCompletionTokens, sessionDurationMs, shellAnalytics, sshBanner);
                 ShellAnalyticsBySession.TryRemove(sessionId, out ShellSessionAnalytics? _);
                 FakeFileSystem.Remove(sessionId);
+                commandWorker?.Dispose();
                 Task.Run(() => Logger.PushToGit(sessionId));
             }
 
@@ -580,28 +613,21 @@ class Program
                     return;
                 }
 
-                var remoteIp = Program.GetRemoteAttemptKey(remoteEndpoint);
+                var rateLimitKey = sessionId;
                 var stopwatch = Stopwatch.StartNew();
-                var (response, usedStatic, rateLimited) = CommandResolver.ResolveCommand(
+                var (response, usedStatic, rateLimited, promptTokens, completionTokens) = CommandResolver.ResolveCommand(
                     line,
                     sessionId,
-                    remoteIp,
+                    rateLimitKey,
                     fakeFs,
                     messageHistory);
 
                 stopwatch.Stop();
                 LastCommandEndedAt[sessionId] = DateTime.UtcNow;
 
-                int promptTokens = 0, completionTokens = 0;
                 if (!usedStatic && !rateLimited)
                 {
                     messageHistory.Add(new() { role = "assistant", content = response });
-                    var tokensMatch = Regex.Match(response, @"\[token usage: (\d+) prompt, (\d+) completion\]");
-                    if (tokensMatch.Success)
-                    {
-                        promptTokens = int.Parse(tokensMatch.Groups[1].Value);
-                        completionTokens = int.Parse(tokensMatch.Groups[2].Value);
-                    }
                 }
                 else if (usedStatic)
                 {
@@ -666,6 +692,8 @@ class Program
                     CloseShell("ExecCompleted");
             }
 
+            commandWorker = new SessionCommandWorker(sessionId);
+
             channel.DataReceived += (_, data) =>
             {
                 if (Volatile.Read(ref shellClosed) != 0)
@@ -682,7 +710,8 @@ class Program
                         channel.SendData(Encoding.UTF8.GetBytes("\r\n"));
                         var line = pendingInput;
                         pendingInput = "";
-                        ProcessLine(line);
+                        if (!commandWorker.TryPost(() => ProcessLine(line)))
+                            CloseShell("CommandWorkerStopped");
                         continue;
                     }
 
@@ -1290,6 +1319,69 @@ class FakeFileSystem
     }
 }
 
+internal sealed class SessionCommandWorker : IDisposable
+{
+    private readonly BlockingCollection<Action> _queue = new();
+    private readonly Thread _thread;
+    private int _disposed;
+
+    public SessionCommandWorker(string sessionId)
+    {
+        _thread = new Thread(ProcessQueue)
+        {
+            IsBackground = true,
+            Name = $"funnypot-session-{sessionId}"
+        };
+        _thread.Start();
+    }
+
+    internal int WorkerThreadId => _thread.ManagedThreadId;
+
+    public bool TryPost(Action work)
+    {
+        if (Volatile.Read(ref _disposed) != 0)
+            return false;
+
+        try
+        {
+            _queue.Add(work);
+            return true;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+    }
+
+    private void ProcessQueue()
+    {
+        foreach (var work in _queue.GetConsumingEnumerable())
+        {
+            try
+            {
+                work();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogMsg($"Session worker exception: {ex.Message}");
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            return;
+
+        _queue.CompleteAdding();
+        if (Thread.CurrentThread.ManagedThreadId == _thread.ManagedThreadId)
+            return;
+
+        _thread.Join(TimeSpan.FromSeconds(2));
+        _queue.Dispose();
+    }
+}
+
 static class LlmRateLimiter
 {
     private static readonly ConcurrentDictionary<string, RateLimitInfo> IpLimits = new(StringComparer.OrdinalIgnoreCase);
@@ -1350,17 +1442,17 @@ static class LlmRateLimiter
 
 static class CommandResolver
 {
-    public static (string response, bool usedStatic, bool rateLimited) ResolveCommand(
+    public static (string response, bool usedStatic, bool rateLimited, int promptTokens, int completionTokens) ResolveCommand(
         string command,
         string sessionId,
-        string remoteIp,
+        string rateLimitKey,
         FakeFileSystem fs,
         List<ChatRequestData.ChatMessage> messageHistory)
     {
         var (isValid, errorMsg) = InputValidator.Validate(command);
         if (!isValid)
         {
-            return ($"{errorMsg} - connection terminated.", false, false);
+            return ($"{errorMsg} - connection terminated.", false, false, 0, 0);
         }
 
         if (SCPDetector.IsSCPCommand(command))
@@ -1368,14 +1460,14 @@ static class CommandResolver
             if (SCPDetector.IsSCPUpload(command))
             {
                 var (_, filename) = SCPDetector.ParseSCPUpload(command);
-                return ($"SCP upload detected: {filename ?? "unknown file"} - operation not allowed", false, false);
+                return ($"SCP upload detected: {filename ?? "unknown file"} - operation not allowed", false, false, 0, 0);
             }
-            return ("Operation not allowed", false, false);
+            return ("Operation not allowed", false, false, 0, 0);
         }
 
         if (IsBuiltInCommand(command, fs, out var builtinResponse))
         {
-            return (builtinResponse!, false, false);
+            return (builtinResponse!, false, false, 0, 0);
         }
 
         var staticResponse = StaticResponseStore.GetResponse(command, fs.CurrentDirectory);
@@ -1386,21 +1478,21 @@ static class CommandResolver
                 var targetDir = command[3..].Trim();
                 fs.ChangeDirectory(targetDir);
             }
-            return (staticResponse, true, false);
+            return (staticResponse, true, false, 0, 0);
         }
 
-        if (!LlmRateLimiter.IsAllowed(remoteIp, out var fallbackMessage))
+        if (!LlmRateLimiter.IsAllowed(rateLimitKey, out var fallbackMessage))
         {
-            Logger.LogMsg($"Rate limit triggered for {remoteIp}, using fallback response");
-            return (fallbackMessage ?? "Rate limit exceeded. Please wait.", false, true);
+            Logger.LogMsg($"Rate limit triggered for session {sessionId}, using fallback response");
+            return (fallbackMessage ?? "Rate limit exceeded. Please wait.", false, true, 0, 0);
         }
 
-        LlmRateLimiter.LogLimitStatus(remoteIp);
+        LlmRateLimiter.LogLimitStatus(rateLimitKey);
 
         var (response, promptTokens, completionTokens, _) = Program.GetLLMResponse(messageHistory, command);
         response = Program.NormalizeTerminalOutput(response);
 
-        return (response, false, false);
+        return (response, false, false, promptTokens, completionTokens);
     }
 
     private static bool IsBuiltInCommand(string command, FakeFileSystem fs, out string? response)

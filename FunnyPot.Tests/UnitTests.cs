@@ -321,3 +321,63 @@ public class AppConfigurationTests
         }
     }
 }
+
+public class SessionCommandWorkerTests
+{
+    [Fact]
+    public void TryPost_RunsWorkOnDedicatedThreadInOrder()
+    {
+        using var worker = new SessionCommandWorker(Guid.NewGuid().ToString("N"));
+        using var completed = new ManualResetEventSlim(false);
+        var order = new List<int>();
+        var executingThreadId = 0;
+
+        Assert.True(worker.TryPost(() =>
+        {
+            executingThreadId = Environment.CurrentManagedThreadId;
+            order.Add(1);
+        }));
+        Assert.True(worker.TryPost(() => order.Add(2)));
+        Assert.True(worker.TryPost(() =>
+        {
+            order.Add(3);
+            completed.Set();
+        }));
+
+        Assert.True(completed.Wait(TimeSpan.FromSeconds(2)));
+        Assert.Equal(new[] { 1, 2, 3 }, order);
+        Assert.Equal(worker.WorkerThreadId, executingThreadId);
+        Assert.NotEqual(Environment.CurrentManagedThreadId, executingThreadId);
+    }
+
+    [Fact]
+    public void TryPost_ReturnsFalseAfterDispose()
+    {
+        var worker = new SessionCommandWorker(Guid.NewGuid().ToString("N"));
+        worker.Dispose();
+
+        Assert.False(worker.TryPost(() => { }));
+    }
+}
+
+public class LlmRateLimiterTests
+{
+    [Fact]
+    public void IsAllowed_LimitsEachSessionIndependently()
+    {
+        var sessionA = $"test-session-{Guid.NewGuid():N}";
+        var sessionB = $"test-session-{Guid.NewGuid():N}";
+        LlmRateLimiter.Reset(sessionA);
+        LlmRateLimiter.Reset(sessionB);
+
+        for (var i = 0; i < 20; i++)
+            Assert.True(LlmRateLimiter.IsAllowed(sessionA, out _));
+
+        Assert.False(LlmRateLimiter.IsAllowed(sessionA, out var fallbackMessage));
+        Assert.Contains("Rate limit exceeded", fallbackMessage);
+        Assert.True(LlmRateLimiter.IsAllowed(sessionB, out _));
+
+        LlmRateLimiter.Reset(sessionA);
+        LlmRateLimiter.Reset(sessionB);
+    }
+}

@@ -1,16 +1,16 @@
 # Graph Report - FunnyPot  (2026-05-23)
 
 ## Corpus Check
-- 50 files · ~66,647 words
+- 49 files · ~66,750 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2213 nodes · 2786 edges · 394 communities (273 shown, 121 thin omitted)
+- 2227 nodes · 2807 edges · 400 communities (280 shown, 120 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8a02fcf8`
+- Built from commit: `0fa712b4`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -73,6 +73,7 @@
 - [[_COMMUNITY_Community 65|Community 65]]
 - [[_COMMUNITY_Community 66|Community 66]]
 - [[_COMMUNITY_Community 67|Community 67]]
+- [[_COMMUNITY_Community 68|Community 68]]
 - [[_COMMUNITY_Community 69|Community 69]]
 - [[_COMMUNITY_Community 70|Community 70]]
 - [[_COMMUNITY_Community 71|Community 71]]
@@ -390,7 +391,13 @@
 - [[_COMMUNITY_Community 383|Community 383]]
 - [[_COMMUNITY_Community 384|Community 384]]
 - [[_COMMUNITY_Community 385|Community 385]]
+- [[_COMMUNITY_Community 386|Community 386]]
 - [[_COMMUNITY_Community 394|Community 394]]
+- [[_COMMUNITY_Community 395|Community 395]]
+- [[_COMMUNITY_Community 396|Community 396]]
+- [[_COMMUNITY_Community 397|Community 397]]
+- [[_COMMUNITY_Community 398|Community 398]]
+- [[_COMMUNITY_Community 399|Community 399]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `runtime` - 162 edges
@@ -400,7 +407,7 @@
 5. `resources` - 40 edges
 6. `System.Runtime` - 40 edges
 7. `resource` - 40 edges
-8. `Program` - 29 edges
+8. `Program` - 31 edges
 9. `Microsoft.NETCore.Platforms` - 28 edges
 10. `resources` - 27 edges
 
@@ -411,31 +418,31 @@
   FunnyPot/Program.cs → FunnyPot/Program.cs  _Bridges community 2 → community 1_
 - `Program` --references--> `bool`  [EXTRACTED]
   FunnyPot/Program.cs → FunnyPot/Program.cs  _Bridges community 2 → community 9_
+- `SessionCommandWorker` --references--> `int`  [EXTRACTED]
+  FunnyPot/Program.cs → FunnyPot/Program.cs  _Bridges community 3 → community 38_
 - `DataHarvester` --references--> `int`  [EXTRACTED]
   FunnyPot/Program.cs → FunnyPot/Program.cs  _Bridges community 3 → community 4_
-- `FakeFileSystem` --references--> `object`  [EXTRACTED]
-  FunnyPot/Program.cs → FunnyPot/Program.cs  _Bridges community 1 → community 8_
 
-## Communities (394 total, 121 thin omitted)
+## Communities (400 total, 120 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.05
-Nodes (8): AppConfigurationTests, CommandResolverTests, DataHarvesterTests, InputValidatorTests, LoggerTests, NtfyNotifierTests, ProgramTests, SCPDetectorTests
+Nodes (10): AppConfigurationTests, CommandResolverTests, DataHarvesterTests, InputValidatorTests, LlmRateLimiterTests, LoggerTests, NtfyNotifierTests, ProgramTests (+2 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.09
 Nodes (20): AuthAttemptLogEntry, BannerSlot, ChatMessage, ChatRequestData, CommandLogEntry, CommandResultLogEntry, DhsCommandAnalysis, GlobalStats (+12 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.20
-Nodes (7): AppConfiguration, FieldInfo, Program, HttpClient, List, SemaphoreSlim, SshServer
+Cohesion: 0.15
+Nodes (8): AppConfiguration, FieldInfo, Program, HttpClient, List, ReaderWriterLockSlim, SemaphoreSlim, SshServer
 
 ### Community 3 - "Community 3"
-Cohesion: 0.24
-Nodes (4): ConcurrentDictionary, InputValidator, LlmRateLimiter, int
+Cohesion: 0.13
+Nodes (7): ConcurrentDictionary, CommandResolver, InputValidator, LlmRateLimiter, SCPDetector, int, Regex
 
 ### Community 5 - "Community 5"
-Cohesion: 0.21
+Cohesion: 0.19
 Nodes (4): DateTime, Logger, Lazy, TimeSpan
 
 ### Community 6 - "Community 6"
@@ -443,8 +450,8 @@ Cohesion: 0.12
 Nodes (15): Asset Value Perception, Data Acquisition Architecture, Data Collection Modules, Data Harvesting Specification: LLM-Driven SSH Analytics, GitHub Pages Publication, Log Format, M-1: SSH Protocol and Authentication Metadata, M-2: Behavioral and Tactical Metrics (+7 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.08
-Nodes (44): Microsoft.NETCore.Platforms, Microsoft.NETCore.Targets, System.Runtime, System.Runtime.Handles, dependencies, Microsoft.Win32.Primitives/4.3.0, runtime.native.System/4.3.0, runtime.native.System.IO.Compression/4.3.0 (+36 more)
+Cohesion: 0.07
+Nodes (47): Microsoft.NETCore.Platforms, Microsoft.NETCore.Targets, dependencies, Microsoft.NETCore.Platforms/1.1.1, Microsoft.NETCore.Targets/1.1.3, Microsoft.Win32.Primitives/4.3.0, runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2, runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2 (+39 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.39
@@ -459,8 +466,8 @@ Cohesion: 0.04
 Nodes (46): runtimeTargets, LibGit2Sharp.NativeBinaries/2.0.322, assetType, fileVersion, rid, assetType, fileVersion, rid (+38 more)
 
 ### Community 24 - "Community 24"
-Cohesion: 0.06
-Nodes (42): format, Microsoft.NETCore.App, net8.0, frameworks, restore, runtimes, version, frameworks (+34 more)
+Cohesion: 0.24
+Nodes (14): restore, restore, configFilePaths, originalTargetFrameworks, outputPath, packagesPath, projectName, projectPath (+6 more)
 
 ### Community 25 - "Community 25"
 Cohesion: 0.05
@@ -475,60 +482,60 @@ Cohesion: 0.07
 Nodes (33): build/netcoreapp3.1/Microsoft.TestPlatform.TestHost.props, lib/netcoreapp3.1/Microsoft.TestPlatform.CommunicationUtilities.dll, lib/netcoreapp3.1/Microsoft.TestPlatform.CoreUtilities.dll, lib/netcoreapp3.1/Microsoft.TestPlatform.CrossPlatEngine.dll, lib/netcoreapp3.1/Microsoft.TestPlatform.PlatformAbstractions.dll, lib/netcoreapp3.1/Microsoft.TestPlatform.Utilities.dll, lib/netcoreapp3.1/Microsoft.VisualStudio.TestPlatform.Common.dll, lib/netcoreapp3.1/Microsoft.VisualStudio.TestPlatform.ObjectModel.dll (+25 more)
 
 ### Community 28 - "Community 28"
-Cohesion: 0.11
-Nodes (29): Microsoft.NETCore.Platforms, Microsoft.NETCore.Targets, System.Runtime, System.Text.Encoding, System.Threading.Tasks, dependencies, Microsoft.Win32.Primitives/4.3.0, runtime.native.System/4.3.0 (+21 more)
+Cohesion: 0.14
+Nodes (20): Microsoft.NETCore.Platforms, Microsoft.NETCore.Targets, dependencies, Microsoft.Win32.Primitives/4.3.0, runtime.native.System/4.3.0, runtime.native.System.IO.Compression/4.3.0, runtime.native.System.Net.Http/4.3.0, System.Collections/4.3.0 (+12 more)
 
 ### Community 29 - "Community 29"
-Cohesion: 0.07
-Nodes (29): include, suppressParent, target, version, coverlet.collector, DotNetEnv, FxSsh, LibGit2Sharp (+21 more)
+Cohesion: 0.11
+Nodes (18): include, suppressParent, target, version, coverlet.collector, DotNetEnv, FxSsh, Microsoft.NET.Test.Sdk (+10 more)
 
 ### Community 30 - "Community 30"
 Cohesion: 0.07
-Nodes (33): Microsoft.Win32.Primitives, System.AppContext, System.Buffers, System.Collections.Concurrent, System.Console, System.Diagnostics.Tools, System.Globalization.Calendars, System.IO (+25 more)
+Nodes (29): Microsoft.Win32.Primitives, System.AppContext, System.Collections.Concurrent, System.Console, System.Diagnostics.Tools, System.Globalization, System.Globalization.Calendars, System.IO.Compression.ZipFile (+21 more)
 
 ### Community 31 - "Community 31"
-Cohesion: 0.11
-Nodes (35): runtime.native.System, runtime.native.System.IO.Compression, System.Collections, System.Diagnostics.Debug, System.Diagnostics.Tracing, System.Globalization, System.ObjectModel, System.Reflection.Emit (+27 more)
+Cohesion: 0.13
+Nodes (28): runtime.native.System, runtime.native.System.IO.Compression, System.Collections, System.Diagnostics.Debug, System.Diagnostics.Tracing, System.Reflection.Extensions, System.Resources.ResourceManager, System.Runtime.Extensions (+20 more)
 
 ### Community 32 - "Community 32"
 Cohesion: 0.07
 Nodes (27): Microsoft.Win32.Primitives, System.AppContext, System.Collections.Concurrent, System.Console, System.Diagnostics.Tools, System.Globalization.Calendars, System.IO.Compression, System.IO.Compression.ZipFile (+19 more)
 
 ### Community 33 - "Community 33"
-Cohesion: 0.29
-Nodes (7): Microsoft.Extensions.Primitives, assemblyVersion, fileVersion, dependencies, runtime, Microsoft.Extensions.Configuration.Abstractions/1.1.2, lib/netstandard1.0/Microsoft.Extensions.Configuration.Abstractions.dll
+Cohesion: 0.13
+Nodes (15): Microsoft.Extensions.Primitives, NETStandard.Library, System.Runtime.CompilerServices.Unsafe, assemblyVersion, fileVersion, assemblyVersion, fileVersion, dependencies (+7 more)
 
 ### Community 34 - "Community 34"
-Cohesion: 0.12
-Nodes (25): runtime.native.System, runtime.native.System.IO.Compression, System.Buffers, System.Collections, System.Diagnostics.Debug, System.Diagnostics.Tracing, System.IO, System.Reflection (+17 more)
+Cohesion: 0.16
+Nodes (23): runtime.native.System, runtime.native.System.IO.Compression, System.Collections, System.Diagnostics.Debug, System.Diagnostics.Tracing, System.Reflection, System.Resources.ResourceManager, System.Runtime (+15 more)
 
 ### Community 35 - "Community 35"
-Cohesion: 0.09
-Nodes (25): Microsoft.Extensions.Configuration, Microsoft.Win32.Primitives, Sprache, System.AppContext, System.Collections.Concurrent, System.Console, System.Diagnostics.Tools, System.Globalization.Calendars (+17 more)
+Cohesion: 0.08
+Nodes (26): Microsoft.Win32.Primitives, System.AppContext, System.Collections.Concurrent, System.Console, System.Diagnostics.Tools, System.Globalization.Calendars, System.IO.Compression.ZipFile, System.Linq (+18 more)
 
 ### Community 36 - "Community 36"
-Cohesion: 0.24
-Nodes (11): System.Reflection, System.Reflection.Emit.ILGeneration, System.Reflection.Primitives, System.Reflection.Emit/4.3.0, System.Reflection.Emit.ILGeneration/4.3.0, System.Reflection.Emit.Lightweight/4.3.0, System.Reflection.TypeExtensions/4.3.0, dependencies (+3 more)
+Cohesion: 0.15
+Nodes (17): System.ObjectModel, System.Reflection, System.Reflection.Emit, System.Reflection.Emit.ILGeneration, System.Reflection.Emit.Lightweight, System.Reflection.Primitives, System.Reflection.TypeExtensions, System.Linq.Expressions/4.3.0 (+9 more)
 
 ### Community 37 - "Community 37"
-Cohesion: 0.09
-Nodes (24): Microsoft.Extensions.Configuration, Microsoft.Extensions.Configuration.Abstractions, NETStandard.Library, Sprache, System.Net.Http, System.Runtime.CompilerServices.Unsafe, dependencies, runtime (+16 more)
+Cohesion: 0.12
+Nodes (16): Microsoft.Extensions.Configuration, Microsoft.Extensions.Configuration.Abstractions, Sprache, System.Net.Http, dependencies, runtime, assemblyVersion, fileVersion (+8 more)
 
 ### Community 38 - "Community 38"
-Cohesion: 0.20
-Nodes (3): SCPDetector, ShellSessionAnalytics, Regex
+Cohesion: 0.17
+Nodes (5): BlockingCollection, SessionCommandWorker, ShellSessionAnalytics, IDisposable, Thread
 
 ### Community 39 - "Community 39"
-Cohesion: 0.09
-Nodes (23): Microsoft.CodeCoverage, Microsoft.TestPlatform.TestHost, runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.Apple, dependencies, coverlet.collector/6.0.0, Microsoft.NET.Test.Sdk/17.8.0, Microsoft.NETCore.Platforms/1.1.1, Microsoft.NETCore.Targets/1.1.3 (+15 more)
+Cohesion: 0.07
+Nodes (27): Microsoft.CodeCoverage, Microsoft.TestPlatform.TestHost, runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.Apple, dependencies, coverlet.collector/6.0.0, Microsoft.NET.Test.Sdk/17.8.0, Microsoft.NETCore.Platforms/1.1.1, Microsoft.NETCore.Targets/1.1.3 (+19 more)
 
 ### Community 40 - "Community 40"
-Cohesion: 0.09
-Nodes (22): Microsoft.Extensions.Configuration.Abstractions, Microsoft.Extensions.Primitives, NETStandard.Library, System.Runtime.CompilerServices.Unsafe, assemblyVersion, fileVersion, assemblyVersion, fileVersion (+14 more)
+Cohesion: 0.07
+Nodes (31): Microsoft.Extensions.Configuration, Microsoft.Extensions.Configuration.Abstractions, Microsoft.Extensions.Primitives, NETStandard.Library, Sprache, System.Net.Http, System.Runtime.CompilerServices.Unsafe, dependencies (+23 more)
 
 ### Community 41 - "Community 41"
 Cohesion: 0.08
-Nodes (34): lib/netstandard1.0/_._, runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.Apple, compile, runtime, type, compile, runtime, type (+26 more)
+Nodes (28): lib/netstandard1.0/_._, runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.Apple, compile, runtime, type, compile, runtime, type (+20 more)
 
 ### Community 42 - "Community 42"
 Cohesion: 0.11
@@ -539,16 +546,16 @@ Cohesion: 0.10
 Nodes (20): Microsoft.TestPlatform.ObjectModel, Newtonsoft.Json, assemblyVersion, fileVersion, assemblyVersion, fileVersion, assemblyVersion, fileVersion (+12 more)
 
 ### Community 44 - "Community 44"
-Cohesion: 0.14
-Nodes (33): Microsoft.NETCore.Platforms, Microsoft.NETCore.Targets, runtime.native.System, runtime.native.System.IO.Compression, System.Collections, System.Diagnostics.Debug, System.Diagnostics.Tracing, System.Globalization (+25 more)
+Cohesion: 0.21
+Nodes (17): runtime.native.System, runtime.native.System.IO.Compression, System.Collections, System.Diagnostics.Debug, System.Diagnostics.Tracing, System.Reflection, System.Resources.ResourceManager, System.Runtime.Extensions (+9 more)
 
 ### Community 45 - "Community 45"
-Cohesion: 0.09
-Nodes (22): runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.Apple, Microsoft.NETCore.Platforms/1.1.1, Microsoft.NETCore.Targets/1.1.3, runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2, runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2, runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2, runtime.native.System.Security.Cryptography.Apple/4.3.0, runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2 (+14 more)
+Cohesion: 0.18
+Nodes (12): System.Runtime, System.Runtime.Handles, System.AppContext/4.3.0, System.IO.FileSystem.Primitives/4.3.0, System.Net.Primitives/4.3.0, System.Runtime.CompilerServices.Unsafe/4.3.0, System.Runtime.InteropServices/4.3.0, dependencies (+4 more)
 
 ### Community 46 - "Community 46"
-Cohesion: 0.18
-Nodes (11): runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.rhel.7-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl (+3 more)
+Cohesion: 0.13
+Nodes (15): runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.rhel.7-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl (+7 more)
 
 ### Community 47 - "Community 47"
 Cohesion: 0.14
@@ -564,7 +571,7 @@ Nodes (11): ApiConfig, AppConfiguration, DataHarvesterConfig, FunnyPot, GitConfi
 
 ### Community 50 - "Community 50"
 Cohesion: 0.15
-Nodes (13): locale, locale, locale, locale, locale, locale, resources, lib/netcoreapp3.1/it/Microsoft.TestPlatform.CoreUtilities.resources.dll (+5 more)
+Nodes (13): locale, locale, locale, locale, locale, locale, resources, lib/netcoreapp3.1/de/Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll (+5 more)
 
 ### Community 51 - "Community 51"
 Cohesion: 0.15
@@ -579,8 +586,8 @@ Cohesion: 0.17
 Nodes (8): System.Reflection.Metadata.MetadataUpdater.IsSupported, System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization, name, version, runtimeOptions, configProperties, framework, tfm
 
 ### Community 54 - "Community 54"
-Cohesion: 0.17
-Nodes (12): runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.rhel.7-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl (+4 more)
+Cohesion: 0.12
+Nodes (17): compilationOptions, runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.rhel.7-x64.runtime.native.System.Security.Cryptography.OpenSsl (+9 more)
 
 ### Community 55 - "Community 55"
 Cohesion: 0.17
@@ -615,8 +622,8 @@ Cohesion: 0.20
 Nodes (8): System.Reflection.Metadata.MetadataUpdater.IsSupported, System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization, name, version, runtimeOptions, configProperties, framework, tfm
 
 ### Community 63 - "Community 63"
-Cohesion: 0.39
-Nodes (5): compilationOptions, runtimeTarget, name, signature, targets
+Cohesion: 0.29
+Nodes (16): Microsoft.NETCore.Platforms, Microsoft.NETCore.Targets, System.Runtime, System.Text.Encoding, dependencies, dependencies, dependencies, dependencies (+8 more)
 
 ### Community 64 - "Community 64"
 Cohesion: 0.22
@@ -634,6 +641,10 @@ Nodes (9): lib/net6.0/LibGit2Sharp.dll, LibGit2Sharp.NativeBinaries, related, co
 Cohesion: 0.25
 Nodes (7): System.Reflection.Metadata.MetadataUpdater.IsSupported, System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization, System.Text.Json.JsonSerializer.IsReflectionEnabledByDefault, runtimeOptions, configProperties, includedFrameworks, tfm
 
+### Community 68 - "Community 68"
+Cohesion: 0.18
+Nodes (14): System.Buffers, System.IO, System.IO.Compression, System.IO.FileSystem, System.IO.FileSystem.Primitives, System.Text.Encoding, System.Console/4.3.0, System.IO.Compression.ZipFile/4.3.0 (+6 more)
+
 ### Community 69 - "Community 69"
 Cohesion: 0.25
 Nodes (8): DotNetEnv, FxSsh, LibGit2Sharp, YamlDotNet, dependencies, runtime, FunnyPot/1.0.0, FunnyPot.dll
@@ -647,8 +658,8 @@ Cohesion: 0.25
 Nodes (8): frameworks, runtimes, version, #import, /home/felix/FunnyPot/FunnyPot/FunnyPot.csproj, linux-x64, win-x64, #import
 
 ### Community 72 - "Community 72"
-Cohesion: 0.50
-Nodes (4): build/netstandard1.0/coverlet.collector.targets, build, type, coverlet.collector/6.0.0
+Cohesion: 0.15
+Nodes (13): Microsoft.NETCore.App, net8.0, privateAssets, assetTargetFallback, downloadDependencies, frameworkReferences, imports, projectReferences (+5 more)
 
 ### Community 73 - "Community 73"
 Cohesion: 0.25
@@ -659,12 +670,16 @@ Cohesion: 0.25
 Nodes (8): ref/netstandard1.6/System.AppContext.dll, System.AppContext/4.3.0, related, lib/netstandard1.6/System.AppContext.dll, compile, dependencies, runtime, type
 
 ### Community 76 - "Community 76"
-Cohesion: 0.15
-Nodes (12): compilationOptions, LibGit2Sharp.NativeBinaries, assemblyVersion, fileVersion, dependencies, runtime, LibGit2Sharp/0.30.0, lib/net6.0/LibGit2Sharp.dll (+4 more)
+Cohesion: 0.38
+Nodes (5): compilationOptions, runtimeTarget, name, signature, targets
 
 ### Community 77 - "Community 77"
 Cohesion: 0.29
 Nodes (7): LibGit2Sharp.NativeBinaries, assemblyVersion, fileVersion, dependencies, runtime, LibGit2Sharp/0.30.0, lib/net6.0/LibGit2Sharp.dll
+
+### Community 78 - "Community 78"
+Cohesion: 0.25
+Nodes (7): format, frameworks, version, projects, /home/felix/FunnyPot/FunnyPot.Tests/FunnyPot.Tests.csproj, restore, /home/felix/FunnyPot/FunnyPot.Tests/FunnyPot.Tests.csproj
 
 ### Community 79 - "Community 79"
 Cohesion: 0.67
@@ -675,20 +690,20 @@ Cohesion: 0.33
 Nodes (7): lib/netstandard2.0/Newtonsoft.Json.dll, related, Newtonsoft.Json/13.0.1, compile, runtime, type, lib/netstandard2.0/Newtonsoft.Json.dll
 
 ### Community 81 - "Community 81"
-Cohesion: 0.20
-Nodes (11): lib/netstandard2.1/Sprache.dll, System.Linq, System.Private.Uri, System.Text.RegularExpressions, related, Sprache/2.3.1, lib/netstandard2.1/Sprache.dll, compile (+3 more)
+Cohesion: 0.33
+Nodes (7): lib/netstandard2.1/Sprache.dll, related, Sprache/2.3.1, lib/netstandard2.1/Sprache.dll, compile, runtime, type
 
 ### Community 82 - "Community 82"
 Cohesion: 0.29
 Nodes (7): ref/netstandard1.3/System.Collections.Concurrent.dll, System.Collections.Concurrent/4.3.0, related, lib/netstandard1.3/System.Collections.Concurrent.dll, compile, runtime, type
 
 ### Community 83 - "Community 83"
-Cohesion: 0.29
-Nodes (7): ref/netstandard1.3/System.IO.Compression.ZipFile.dll, System.IO.Compression.ZipFile/4.3.0, related, lib/netstandard1.3/System.IO.Compression.ZipFile.dll, compile, runtime, type
+Cohesion: 0.15
+Nodes (13): ref/netstandard1.3/System.IO.Compression.ZipFile.dll, System.Buffers, System.IO, System.IO.Compression, System.IO.FileSystem, System.IO.FileSystem.Primitives, System.IO.Compression.ZipFile/4.3.0, related (+5 more)
 
 ### Community 84 - "Community 84"
 Cohesion: 0.29
-Nodes (7): locale, locale, locale, resource, lib/netcoreapp3.1/cs/Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll, lib/netcoreapp3.1/de/Microsoft.TestPlatform.CoreUtilities.resources.dll, lib/netcoreapp3.1/tr/Microsoft.TestPlatform.CoreUtilities.resources.dll
+Nodes (7): locale, locale, locale, resource, lib/netcoreapp3.1/cs/Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll, lib/netcoreapp3.1/de/Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll, lib/netcoreapp3.1/tr/Microsoft.TestPlatform.CoreUtilities.resources.dll
 
 ### Community 85 - "Community 85"
 Cohesion: 0.33
@@ -711,8 +726,8 @@ Cohesion: 0.33
 Nodes (6): lib/netstandard2.0/NuGet.Frameworks.dll, NuGet.Frameworks/6.5.0, compile, runtime, type, lib/netstandard2.0/NuGet.Frameworks.dll
 
 ### Community 90 - "Community 90"
-Cohesion: 0.08
-Nodes (31): runtime.native.System.Net.Http, runtime.native.System.Security.Cryptography.OpenSsl, System.Buffers, System.Diagnostics.DiagnosticSource, System.Globalization.Extensions, System.IO, System.IO.Compression, System.IO.FileSystem (+23 more)
+Cohesion: 0.12
+Nodes (17): runtime.native.System.Net.Http, runtime.native.System.Security.Cryptography.OpenSsl, System.Diagnostics.DiagnosticSource, System.Globalization.Extensions, System.Net.Primitives, System.Security.Cryptography.Algorithms, System.Security.Cryptography.Encoding, System.Security.Cryptography.OpenSsl (+9 more)
 
 ### Community 91 - "Community 91"
 Cohesion: 0.33
@@ -767,8 +782,8 @@ Cohesion: 0.67
 Nodes (3): System.Text.Encoding.Extensions.dll, assemblyVersion, fileVersion
 
 ### Community 104 - "Community 104"
-Cohesion: 0.40
-Nodes (5): runtime, assemblyVersion, fileVersion, DotNetEnv/3.1.1, lib/netstandard1.3/DotNetEnv.dll
+Cohesion: 0.25
+Nodes (8): frameworks, runtimes, version, #import, /home/felix/FunnyPot/FunnyPot/FunnyPot.csproj, linux-x64, win-x64, #import
 
 ### Community 105 - "Community 105"
 Cohesion: 0.40
@@ -791,8 +806,8 @@ Cohesion: 0.67
 Nodes (3): System.Transactions.Local.dll, assemblyVersion, fileVersion
 
 ### Community 110 - "Community 110"
-Cohesion: 0.40
-Nodes (5): assemblyVersion, fileVersion, Sprache/2.3.1, lib/netstandard2.1/Sprache.dll, runtime
+Cohesion: 0.29
+Nodes (7): LibGit2Sharp.NativeBinaries, assemblyVersion, fileVersion, dependencies, runtime, LibGit2Sharp/0.30.0, lib/net6.0/LibGit2Sharp.dll
 
 ### Community 112 - "Community 112"
 Cohesion: 0.67
@@ -815,8 +830,8 @@ Cohesion: 0.40
 Nodes (5): ref/netstandard1.5/System.Diagnostics.Tracing.dll, System.Diagnostics.Tracing/4.3.0, related, compile, type
 
 ### Community 117 - "Community 117"
-Cohesion: 0.40
-Nodes (5): ref/netstandard1.5/System.IO.dll, System.IO/4.3.0, related, compile, type
+Cohesion: 0.15
+Nodes (13): build/netstandard1.0/coverlet.collector.targets, ref/netstandard1.5/System.IO.dll, build, type, coverlet.collector/6.0.0, NETStandard.Library/1.6.1, System.IO/4.3.0, System.IO.FileSystem/4.3.0 (+5 more)
 
 ### Community 119 - "Community 119"
 Cohesion: 0.83
@@ -888,7 +903,7 @@ Nodes (3): System.ComponentModel.Primitives.dll, assemblyVersion, fileVersion
 
 ### Community 137 - "Community 137"
 Cohesion: 0.09
-Nodes (23): System.ComponentModel.dll, System.Data.dll, System.Net.NameResolution.dll, System.Private.Xml.dll, System.Runtime.Extensions.dll, System.ServiceModel.Web.dll, System.Threading.ThreadPool.dll, System.Xml.XPath.dll (+15 more)
+Nodes (23): System.ComponentModel.EventBasedAsync.dll, System.Diagnostics.Debug.dll, System.Net.NetworkInformation.dll, System.Private.Uri.dll, System.Runtime.InteropServices.JavaScript.dll, System.Text.Encoding.CodePages.dll, System.Threading.ThreadPool.dll, System.Xml.XPath.dll (+15 more)
 
 ### Community 138 - "Community 138"
 Cohesion: 0.67
@@ -911,8 +926,8 @@ Cohesion: 0.40
 Nodes (5): ref/netstandard1.3/System.Collections.dll, System.Collections/4.3.0, related, compile, type
 
 ### Community 143 - "Community 143"
-Cohesion: 0.67
-Nodes (3): System.Diagnostics.Debug.dll, assemblyVersion, fileVersion
+Cohesion: 0.29
+Nodes (7): System.Buffers, System.IO, System.Text.Encoding, System.Console/4.3.0, System.IO.Compression.ZipFile/4.3.0, dependencies, dependencies
 
 ### Community 144 - "Community 144"
 Cohesion: 0.67
@@ -1083,16 +1098,16 @@ Cohesion: 0.67
 Nodes (3): System.Net.Mail.dll, assemblyVersion, fileVersion
 
 ### Community 186 - "Community 186"
-Cohesion: 0.67
-Nodes (3): System.Net.NetworkInformation.dll, assemblyVersion, fileVersion
+Cohesion: 0.40
+Nodes (5): System.Globalization, System.Globalization.Calendars/4.3.0, System.Resources.ResourceManager/4.3.0, dependencies, dependencies
 
 ### Community 187 - "Community 187"
 Cohesion: 0.40
 Nodes (5): ref/netstandard1.3/System.Globalization.dll, System.Globalization/4.3.0, related, compile, type
 
 ### Community 188 - "Community 188"
-Cohesion: 0.67
-Nodes (3): System.ComponentModel.EventBasedAsync.dll, assemblyVersion, fileVersion
+Cohesion: 0.40
+Nodes (5): xunit.runner.visualstudio, include, suppressParent, target, version
 
 ### Community 189 - "Community 189"
 Cohesion: 0.67
@@ -1168,7 +1183,7 @@ Nodes (3): System.Diagnostics.Contracts.dll, assemblyVersion, fileVersion
 
 ### Community 207 - "Community 207"
 Cohesion: 0.67
-Nodes (3): System.Private.Uri.dll, assemblyVersion, fileVersion
+Nodes (3): System.ComponentModel.dll, assemblyVersion, fileVersion
 
 ### Community 208 - "Community 208"
 Cohesion: 0.67
@@ -1228,7 +1243,7 @@ Nodes (3): System.Runtime.InteropServices.dll, assemblyVersion, fileVersion
 
 ### Community 223 - "Community 223"
 Cohesion: 0.67
-Nodes (3): System.Runtime.InteropServices.JavaScript.dll, assemblyVersion, fileVersion
+Nodes (3): System.Data.dll, assemblyVersion, fileVersion
 
 ### Community 224 - "Community 224"
 Cohesion: 0.67
@@ -1322,6 +1337,10 @@ Nodes (3): System.Security.Principal.Windows.dll, assemblyVersion, fileVersion
 Cohesion: 0.67
 Nodes (3): System.Security.SecureString.dll, assemblyVersion, fileVersion
 
+### Community 247 - "Community 247"
+Cohesion: 0.67
+Nodes (3): System.Net.NameResolution.dll, assemblyVersion, fileVersion
+
 ### Community 248 - "Community 248"
 Cohesion: 0.67
 Nodes (3): System.ServiceProcess.dll, assemblyVersion, fileVersion
@@ -1376,7 +1395,7 @@ Nodes (3): System.Threading.Tasks.Parallel.dll, assemblyVersion, fileVersion
 
 ### Community 261 - "Community 261"
 Cohesion: 0.67
-Nodes (3): System.Text.Encoding.CodePages.dll, assemblyVersion, fileVersion
+Nodes (3): System.Private.Xml.dll, assemblyVersion, fileVersion
 
 ### Community 262 - "Community 262"
 Cohesion: 0.67
@@ -1430,6 +1449,10 @@ Nodes (3): System.Xml.XPath.XDocument.dll, assemblyVersion, fileVersion
 Cohesion: 0.67
 Nodes (3): System.Reflection.DispatchProxy.dll, assemblyVersion, fileVersion
 
+### Community 294 - "Community 294"
+Cohesion: 0.67
+Nodes (3): System.Runtime.Extensions.dll, assemblyVersion, fileVersion
+
 ### Community 325 - "Community 325"
 Cohesion: 0.67
 Nodes (3): System.Runtime.dll, assemblyVersion, fileVersion
@@ -1438,25 +1461,41 @@ Nodes (3): System.Runtime.dll, assemblyVersion, fileVersion
 Cohesion: 0.67
 Nodes (3): System.Text.Encoding.dll, assemblyVersion, fileVersion
 
+### Community 371 - "Community 371"
+Cohesion: 0.67
+Nodes (3): System.ServiceModel.Web.dll, assemblyVersion, fileVersion
+
+### Community 386 - "Community 386"
+Cohesion: 0.67
+Nodes (3): runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.Apple, runtime.native.System.Security.Cryptography.Apple/4.3.0, dependencies
+
+### Community 395 - "Community 395"
+Cohesion: 0.67
+Nodes (3): LibGit2Sharp, target, version
+
+### Community 396 - "Community 396"
+Cohesion: 0.67
+Nodes (3): YamlDotNet, target, version
+
 ## Knowledge Gaps
-- **1053 isolated node(s):** `name`, `signature`, `FunnyPot`, `Microsoft.NET.Test.Sdk`, `coverlet.collector` (+1048 more)
+- **1056 isolated node(s):** `name`, `signature`, `FunnyPot`, `Microsoft.NET.Test.Sdk`, `coverlet.collector` (+1051 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **121 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **120 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `net8.0` connect `Community 41` to `Community 135`, `Community 142`, `Community 25`, `Community 26`, `Community 27`, `Community 30`, `Community 48`, `Community 58`, `Community 187`, `Community 59`, `Community 65`, `Community 66`, `Community 197`, `Community 72`, `Community 73`, `Community 74`, `Community 80`, `Community 81`, `Community 82`, `Community 83`, `Community 87`, `Community 88`, `Community 89`, `Community 91`, `Community 92`, `Community 93`, `Community 94`, `Community 95`, `Community 96`, `Community 97`, `Community 98`, `Community 99`, `Community 100`, `Community 101`, `Community 113`, `Community 114`, `Community 115`, `Community 116`, `Community 117`, `Community 118`?**
-  _High betweenness centrality (0.077) - this node is a cross-community bridge._
-- **Why does `runtime` connect `Community 137` to `Community 42`, `Community 79`, `Community 103`, `Community 109`, `Community 112`, `Community 121`, `Community 122`, `Community 123`, `Community 124`, `Community 125`, `Community 126`, `Community 127`, `Community 128`, `Community 129`, `Community 130`, `Community 131`, `Community 132`, `Community 133`, `Community 134`, `Community 136`, `Community 138`, `Community 139`, `Community 140`, `Community 141`, `Community 143`, `Community 144`, `Community 145`, `Community 146`, `Community 147`, `Community 148`, `Community 149`, `Community 150`, `Community 151`, `Community 152`, `Community 153`, `Community 154`, `Community 155`, `Community 156`, `Community 157`, `Community 158`, `Community 159`, `Community 160`, `Community 161`, `Community 162`, `Community 163`, `Community 164`, `Community 165`, `Community 166`, `Community 167`, `Community 168`, `Community 169`, `Community 170`, `Community 171`, `Community 172`, `Community 173`, `Community 174`, `Community 175`, `Community 176`, `Community 177`, `Community 178`, `Community 179`, `Community 180`, `Community 181`, `Community 182`, `Community 183`, `Community 184`, `Community 185`, `Community 186`, `Community 188`, `Community 189`, `Community 190`, `Community 191`, `Community 192`, `Community 193`, `Community 194`, `Community 195`, `Community 196`, `Community 198`, `Community 199`, `Community 200`, `Community 201`, `Community 202`, `Community 203`, `Community 204`, `Community 205`, `Community 206`, `Community 207`, `Community 208`, `Community 209`, `Community 210`, `Community 211`, `Community 212`, `Community 213`, `Community 214`, `Community 215`, `Community 216`, `Community 218`, `Community 219`, `Community 220`, `Community 221`, `Community 222`, `Community 223`, `Community 224`, `Community 225`, `Community 226`, `Community 227`, `Community 228`, `Community 229`, `Community 230`, `Community 231`, `Community 232`, `Community 233`, `Community 234`, `Community 235`, `Community 236`, `Community 237`, `Community 238`, `Community 239`, `Community 240`, `Community 241`, `Community 242`, `Community 243`, `Community 244`, `Community 245`, `Community 246`, `Community 248`, `Community 249`, `Community 250`, `Community 251`, `Community 252`, `Community 253`, `Community 254`, `Community 255`, `Community 256`, `Community 257`, `Community 258`, `Community 259`, `Community 260`, `Community 261`, `Community 262`, `Community 263`, `Community 264`, `Community 265`, `Community 266`, `Community 267`, `Community 268`, `Community 269`, `Community 270`, `Community 271`, `Community 272`, `Community 273`, `Community 283`, `Community 325`, `Community 332`?**
+- **Why does `net8.0` connect `Community 117` to `Community 135`, `Community 142`, `Community 25`, `Community 26`, `Community 27`, `Community 41`, `Community 46`, `Community 48`, `Community 58`, `Community 187`, `Community 59`, `Community 65`, `Community 66`, `Community 197`, `Community 73`, `Community 74`, `Community 80`, `Community 81`, `Community 82`, `Community 83`, `Community 87`, `Community 88`, `Community 89`, `Community 91`, `Community 92`, `Community 93`, `Community 94`, `Community 95`, `Community 96`, `Community 97`, `Community 98`, `Community 99`, `Community 100`, `Community 101`, `Community 113`, `Community 114`, `Community 115`, `Community 116`, `Community 118`?**
+  _High betweenness centrality (0.078) - this node is a cross-community bridge._
+- **Why does `runtime` connect `Community 137` to `Community 42`, `Community 79`, `Community 103`, `Community 109`, `Community 112`, `Community 121`, `Community 122`, `Community 123`, `Community 124`, `Community 125`, `Community 126`, `Community 127`, `Community 128`, `Community 129`, `Community 130`, `Community 131`, `Community 132`, `Community 133`, `Community 134`, `Community 136`, `Community 138`, `Community 139`, `Community 140`, `Community 141`, `Community 144`, `Community 145`, `Community 146`, `Community 147`, `Community 148`, `Community 149`, `Community 150`, `Community 151`, `Community 152`, `Community 153`, `Community 154`, `Community 155`, `Community 156`, `Community 157`, `Community 158`, `Community 159`, `Community 160`, `Community 161`, `Community 162`, `Community 163`, `Community 164`, `Community 165`, `Community 166`, `Community 167`, `Community 168`, `Community 169`, `Community 170`, `Community 171`, `Community 172`, `Community 173`, `Community 174`, `Community 175`, `Community 176`, `Community 177`, `Community 178`, `Community 179`, `Community 180`, `Community 181`, `Community 182`, `Community 183`, `Community 184`, `Community 185`, `Community 189`, `Community 190`, `Community 191`, `Community 192`, `Community 193`, `Community 194`, `Community 195`, `Community 196`, `Community 198`, `Community 199`, `Community 200`, `Community 201`, `Community 202`, `Community 203`, `Community 204`, `Community 205`, `Community 206`, `Community 207`, `Community 208`, `Community 209`, `Community 210`, `Community 211`, `Community 212`, `Community 213`, `Community 214`, `Community 215`, `Community 216`, `Community 218`, `Community 219`, `Community 220`, `Community 221`, `Community 222`, `Community 223`, `Community 224`, `Community 225`, `Community 226`, `Community 227`, `Community 228`, `Community 229`, `Community 230`, `Community 231`, `Community 232`, `Community 233`, `Community 234`, `Community 235`, `Community 236`, `Community 237`, `Community 238`, `Community 239`, `Community 240`, `Community 241`, `Community 242`, `Community 243`, `Community 244`, `Community 245`, `Community 246`, `Community 247`, `Community 248`, `Community 249`, `Community 250`, `Community 251`, `Community 252`, `Community 253`, `Community 254`, `Community 255`, `Community 256`, `Community 257`, `Community 258`, `Community 259`, `Community 260`, `Community 261`, `Community 262`, `Community 263`, `Community 264`, `Community 265`, `Community 266`, `Community 267`, `Community 268`, `Community 269`, `Community 270`, `Community 271`, `Community 272`, `Community 273`, `Community 283`, `Community 294`, `Community 325`, `Community 332`, `Community 371`?**
   _High betweenness centrality (0.045) - this node is a cross-community bridge._
-- **Why does `.NETCoreApp,Version=v8.0` connect `Community 39` to `Community 64`, `Community 33`, `Community 34`, `Community 37`, `Community 105`, `Community 106`, `Community 43`, `Community 76`, `Community 107`, `Community 108`, `Community 47`, `Community 55`, `Community 23`, `Community 56`, `Community 28`?**
-  _High betweenness centrality (0.037) - this node is a cross-community bridge._
+- **Why does `.NETCoreApp,Version=v8.0` connect `Community 39` to `Community 64`, `Community 33`, `Community 34`, `Community 37`, `Community 105`, `Community 106`, `Community 43`, `Community 76`, `Community 107`, `Community 110`, `Community 47`, `Community 108`, `Community 143`, `Community 55`, `Community 23`, `Community 56`, `Community 28`?**
+  _High betweenness centrality (0.038) - this node is a cross-community bridge._
 - **What connects `name`, `signature`, `FunnyPot` to the rest of the system?**
-  _1053 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1056 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.05128205128205128 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.045454545454545456 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.09090909090909091 - nodes in this community are weakly interconnected._
-- **Should `Community 6` be split into smaller, more focused modules?**
-  _Cohesion score 0.125 - nodes in this community are weakly interconnected._
+- **Should `Community 3` be split into smaller, more focused modules?**
+  _Cohesion score 0.1341991341991342 - nodes in this community are weakly interconnected._
