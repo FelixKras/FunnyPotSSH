@@ -24,14 +24,14 @@ class Program
     static AppConfiguration Config => _config ??= AppConfiguration.Load();
     static AppConfiguration? _config;
 
-    static readonly int AuthMaxTries = Config.Ssh.AuthMaxTries;
+    static readonly int AuthMaxTries = GetIntEnvironmentOrDefault("AUTH_MAX_TRIES", Config.Ssh.AuthMaxTries);
     static readonly int PasswordHarvestAttempt = Math.Max(1, Math.Min(AuthMaxTries, 3));
-    static readonly int LlmDelayMs = Config.Llm.DelayMs;
-    static readonly int MaxSessions = Config.Ssh.MaxSessions;
-    static readonly int SessionIdleTimeoutSecs = Config.Ssh.SessionIdleTimeoutSeconds;
-    static readonly string SshBanner = Config.Ssh.Banner;
-    static readonly int SshPort = Config.Ssh.Port;
-    internal static readonly string LogDir = Config.Logging.LogDir;
+    static readonly int LlmDelayMs = GetIntEnvironmentOrDefault("LLM_DELAY_MS", Config.Llm.DelayMs);
+    static readonly int MaxSessions = GetIntEnvironmentOrDefault("MAX_SESSIONS", Config.Ssh.MaxSessions);
+    static readonly int SessionIdleTimeoutSecs = GetIntEnvironmentOrDefault("SESSION_IDLE_TIMEOUT_SECONDS", Config.Ssh.SessionIdleTimeoutSeconds);
+    static readonly string SshBanner = Environment.GetEnvironmentVariable("SSH_BANNER") ?? Config.Ssh.Banner;
+    static readonly int SshPort = GetIntEnvironmentOrDefault("SSH_PORT", Config.Ssh.Port);
+    internal static readonly string LogDir = Environment.GetEnvironmentVariable("LOG_DIR") ?? Config.Logging.LogDir;
     internal static readonly string AppDir = AppDomain.CurrentDomain.BaseDirectory;
 
     static readonly ConcurrentDictionary<string, int> AuthAttempts = new(StringComparer.OrdinalIgnoreCase);
@@ -51,6 +51,12 @@ class Program
     static readonly ReaderWriterLockSlim ServerLifecycleLock = new();
 
     static string GetBannerForSession(Session session) => _currentBanner;
+
+    internal static int GetIntEnvironmentOrDefault(string name, int defaultValue)
+    {
+        var value = Environment.GetEnvironmentVariable(name);
+        return int.TryParse(value, out var parsed) ? parsed : defaultValue;
+    }
 
     static List<string> ParseBannerPool()
     {

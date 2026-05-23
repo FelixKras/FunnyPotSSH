@@ -260,6 +260,41 @@ public class ProgramTests
     {
         Assert.Equal(expected, Program.GetRemoteAttemptKey(remoteEndpoint));
     }
+
+    [Fact]
+    public void GetIntEnvironmentOrDefault_UsesValidEnvironmentValue()
+    {
+        var name = $"FUNNYPOT_TEST_INT_{Guid.NewGuid():N}";
+        Environment.SetEnvironmentVariable(name, "22722");
+
+        try
+        {
+            Assert.Equal(22722, Program.GetIntEnvironmentOrDefault(name, 22422));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(name, null);
+        }
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("not-a-number")]
+    public void GetIntEnvironmentOrDefault_FallsBackForMissingOrInvalidValue(string? value)
+    {
+        var name = $"FUNNYPOT_TEST_INT_{Guid.NewGuid():N}";
+        Environment.SetEnvironmentVariable(name, value);
+
+        try
+        {
+            Assert.Equal(22422, Program.GetIntEnvironmentOrDefault(name, 22422));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(name, null);
+        }
+    }
 }
 
 public class CommandResolverTests
