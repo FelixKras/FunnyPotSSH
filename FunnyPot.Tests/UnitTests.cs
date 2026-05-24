@@ -341,6 +341,18 @@ public class CommandResolverTests
     }
 
     [Fact]
+    public void BuildSystemPrompt_InstructsLlmAboutRedirectionAndBinaryCatOutput()
+    {
+        var prompt = Program.BuildSystemPrompt("remote");
+
+        Assert.Contains("echo 1 > /dev/null", prompt);
+        Assert.Contains("following `&&` command should still run", prompt);
+        Assert.Contains("/bin/echo", prompt);
+        Assert.Contains("\\x7fELF", prompt);
+        Assert.Contains("Never replace binary file contents with only the path or a single `/`", prompt);
+    }
+
+    [Fact]
     public void IsModelFailureResponse_DetectsApiAndNetworkErrors()
     {
         Assert.True(CommandResolver.IsModelFailureResponse("[api error] 401: missing key"));
