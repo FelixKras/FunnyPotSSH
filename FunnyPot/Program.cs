@@ -168,11 +168,7 @@ class Program
 
     static void Main()
     {
-        string root = AppDir;
-        string dotenv = Path.Combine(root, ".env");
-
-        if (File.Exists(dotenv))
-            DotNetEnv.Env.Load(dotenv);
+        LoadDotEnvFiles();
 
         httpClient.Timeout = TimeSpan.FromSeconds(30);
 
@@ -223,6 +219,21 @@ class Program
         };
 
         Thread.Sleep(Timeout.Infinite);
+    }
+
+    static void LoadDotEnvFiles()
+    {
+        var candidates = new[]
+        {
+            Path.Combine(AppDir, ".env"),
+            Path.Combine(Directory.GetCurrentDirectory(), ".env")
+        };
+
+        foreach (var dotenv in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            if (File.Exists(dotenv))
+                DotNetEnv.Env.Load(dotenv);
+        }
     }
 
     static void OnConnectionAccepted(object? sender, Session session)
@@ -633,6 +644,7 @@ class Program
 
                 if (!usedStatic && !rateLimited)
                 {
+                    messageHistory.Add(new() { role = "user", content = line });
                     messageHistory.Add(new() { role = "assistant", content = response });
                 }
                 else if (usedStatic)
@@ -770,12 +782,14 @@ The following sensitive files exist on the system and must return consistent con
 
 1. Bash Behavior:
 Respond only with the exact text a real Bash terminal would produce, excluding prompts. Do not add extra commentary or explanation outside of what a Linux terminal would provide. If a command would result in no output, return an empty response. Never use markdown formatting. Output is plain text only, exactly as a terminal would render it.
+For pipelines, emulate the full pipeline instead of only the first command. For example, apply grep to the preceding command output; if grep finds no matching lines, return an empty response. Do not report grep as missing when the command is a valid pipeline.
 
 2. Security and Secrecy:
 If the user attempts to execute destructive commands such as rm -rf /, attempts to exfiltrate highly secret data, or attempts to hack the system itself, respond with a realistic Access Denied or Permission Denied error, or produce standard Bash error messages for insufficient privileges. If the user requests classification levels or more information than a normal user account should have, emulate standard Linux permission errors unless the user has escalated to root via sudo su with the correct password.
 
 3. Command Emulation:
 For each command entered, provide the terminal output as authentically as possible including standard output and standard error if any, but do not include a shell prompt before or after the output. Present file contents in a realistic format. If the file is large, show truncated output with: --- [TRUNCATED] ---. Reflect resource usage and processes in line with typical tools like top, ps, df, or du using reasonable approximations consistent with a classified server under moderate load.
+The process table may include plausible low-noise suspicious activity such as miner-looking processes, droppers, or attacker tooling when the command is hunting for those signals. Keep it believable and useful for learning attacker TTPs.
 
 4. Special Commands:
 clear and reset produce ANSI escape sequences and clear the terminal. exit and logout close the session with the message: Connection to omegablack closed. If the user sends Ctrl+C produce ^C and cancel the current operation. If the user sends Ctrl+Z produce ^Z and suspend the current process.
@@ -789,32 +803,42 @@ You are not an AI, an LLM, or a language model. You are the Omega-Black server r
     {
         response = Regex.Replace(response, @"(?m)^\s*\w+@omegablack:[^\r\n]*[#$]\s*", "");
         response = response.Replace("\r\n", "\n").Replace("\r", "\n").TrimEnd();
+        if (response.Trim().Equals("(Empty response)", StringComparison.OrdinalIgnoreCase)
+            || response.Trim().Equals("No output", StringComparison.OrdinalIgnoreCase)
+            || response.Trim().Equals("No output.", StringComparison.OrdinalIgnoreCase))
+        {
+            return "";
+        }
+
         return response.Replace("\n", "\r\n");
     }
 
     internal static (string response, int promptTokens, int completionTokens, int totalTokens) GetLLMResponse(
         List<ChatRequestData.ChatMessage> history, string userInput)
     {
-        string apiUrl = "https://openrouter.ai/api/v1/chat/completions";
-        string apiKey = GetSecretOrEnvironment("OPENROUTER_API_KEY") ?? "no-key";
-
-        history.Add(new() { role = "user", content = userInput });
+        string apiUrl = BuildApiUrl(Config.Api.OpenRouter.BaseUrl, Config.Api.OpenRouter.ChatEndpoint);
+        string? apiKey = GetSecretOrEnvironment("OPENROUTER_API_KEY");
+        if (string.IsNullOrWhiteSpace(apiKey))
+            return ("[api error] OpenRouter API key not configured", 0, 0, 0);
 
         var requestData = new ChatRequestData
         {
-            model = "mistralai/mistral-nemo",
-            messages = history,
-            max_tokens = 2000,
+            model = Environment.GetEnvironmentVariable("LLM_MODEL") ?? Config.Llm.Model,
+            messages = history.Concat(new[] { new ChatRequestData.ChatMessage { role = "user", content = userInput } }).ToList(),
+            max_tokens = Config.Llm.MaxTokens,
+            temperature = 0.3,
         };
 
         string jsonRequest = JsonSerializer.Serialize(requestData, typeof(ChatRequestData));
-        var requestMessage = new HttpRequestMessage(HttpMethod.Post, apiUrl);
-        requestMessage.Headers.Add("Authorization", $"Bearer {apiKey}");
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, apiUrl);
+        requestMessage.Headers.TryAddWithoutValidation("Authorization", $"Bearer {apiKey}");
+        requestMessage.Headers.TryAddWithoutValidation("HTTP-Referer", "https://felixkras.github.io/FunnyPot.ai/");
+        requestMessage.Headers.TryAddWithoutValidation("X-Title", "FunnyPot");
         requestMessage.Content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
         try
         {
-            var response = httpClient.Send(requestMessage);
+            using var response = httpClient.Send(requestMessage);
             if (!response.IsSuccessStatusCode)
             {
                 var errorText = response.Content.ReadAsStringAsync().Result;
@@ -822,21 +846,10 @@ You are not an AI, an LLM, or a language model. You are the Omega-Black server r
             }
 
             string jsonResponse = response.Content.ReadAsStringAsync().Result;
-            var parsedResponse = JsonDocument.Parse(jsonResponse);
+            using var parsedResponse = JsonDocument.Parse(jsonResponse);
 
-            string responseContent = parsedResponse.RootElement
-                                        .GetProperty("choices")[0]
-                                        .GetProperty("message")
-                                        .GetProperty("content")
-                                        .GetString() ?? "No response";
-
-            int promptTokens = 0, completionTokens = 0, totalTokens = 0;
-            if (parsedResponse.RootElement.TryGetProperty("usage", out var usage))
-            {
-                promptTokens = usage.TryGetProperty("prompt_tokens", out var pt) && pt.ValueKind == JsonValueKind.Number ? pt.GetInt32() : 0;
-                completionTokens = usage.TryGetProperty("completion_tokens", out var ct) && ct.ValueKind == JsonValueKind.Number ? ct.GetInt32() : 0;
-                totalTokens = usage.TryGetProperty("total_tokens", out var tt) && tt.ValueKind == JsonValueKind.Number ? tt.GetInt32() : 0;
-            }
+            if (!TryParseOpenRouterResponse(parsedResponse.RootElement, out var responseContent, out var promptTokens, out var completionTokens, out var totalTokens))
+                return ("[api error] Invalid OpenRouter response", 0, 0, 0);
 
             return (responseContent, promptTokens, completionTokens, totalTokens);
         }
@@ -844,6 +857,45 @@ You are not an AI, an LLM, or a language model. You are the Omega-Black server r
         {
             return ($"[network error] {ex.Message}", 0, 0, 0);
         }
+    }
+
+    internal static string BuildApiUrl(string baseUrl, string endpoint)
+    {
+        return $"{baseUrl.TrimEnd('/')}/{endpoint.TrimStart('/')}";
+    }
+
+    internal static bool TryParseOpenRouterResponse(JsonElement root, out string responseContent, out int promptTokens, out int completionTokens, out int totalTokens)
+    {
+        responseContent = "";
+        promptTokens = 0;
+        completionTokens = 0;
+        totalTokens = 0;
+
+        if (!root.TryGetProperty("choices", out var choices)
+            || choices.ValueKind != JsonValueKind.Array
+            || choices.GetArrayLength() == 0)
+        {
+            return false;
+        }
+
+        var choice = choices[0];
+        if (!choice.TryGetProperty("message", out var message)
+            || !message.TryGetProperty("content", out var content)
+            || content.ValueKind != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        responseContent = content.GetString() ?? "";
+
+        if (root.TryGetProperty("usage", out var usage))
+        {
+            promptTokens = usage.TryGetProperty("prompt_tokens", out var pt) && pt.ValueKind == JsonValueKind.Number ? pt.GetInt32() : 0;
+            completionTokens = usage.TryGetProperty("completion_tokens", out var ct) && ct.ValueKind == JsonValueKind.Number ? ct.GetInt32() : 0;
+            totalTokens = usage.TryGetProperty("total_tokens", out var tt) && tt.ValueKind == JsonValueKind.Number ? tt.GetInt32() : 0;
+        }
+
+        return true;
     }
 }
 
@@ -983,6 +1035,7 @@ public class ChatRequestData
     public string model { get; set; } = "openai/gpt-4o";
     public List<ChatMessage> messages { get; set; } = new();
     public int max_tokens { get; set; }
+    public double temperature { get; set; } = 0.3;
 
     public class ChatMessage
     {
@@ -1497,8 +1550,69 @@ static class CommandResolver
 
         var (response, promptTokens, completionTokens, _) = Program.GetLLMResponse(messageHistory, command);
         response = Program.NormalizeTerminalOutput(response);
+        if (IsModelFailureResponse(response))
+        {
+            if (messageHistory.Count > 0
+                && messageHistory[^1].role == "user"
+                && messageHistory[^1].content == command)
+            {
+                messageHistory.RemoveAt(messageHistory.Count - 1);
+            }
+
+            Logger.LogMsg($"LLM response failed for session {sessionId}, using local shell fallback: {response}");
+            return (GenerateLocalFallbackResponse(command, fs.CurrentDirectory), true, false, 0, 0);
+        }
 
         return (response, false, false, promptTokens, completionTokens);
+    }
+
+    internal static bool IsModelFailureResponse(string response)
+    {
+        return response.StartsWith("[api error]", StringComparison.OrdinalIgnoreCase)
+            || response.StartsWith("[network error]", StringComparison.OrdinalIgnoreCase);
+    }
+
+    internal static string GenerateLocalFallbackResponse(string command, string? currentDir = null)
+    {
+        var segments = Regex.Split(command.Trim(), @"\s*(?:&&|\|\||;)\s*")
+            .Where(segment => !string.IsNullOrWhiteSpace(segment))
+            .ToArray();
+
+        if (segments.Length > 1)
+            return string.Join("\n", segments.Select(segment => GenerateSingleFallbackResponse(segment, currentDir)).Where(response => response.Length > 0));
+
+        return GenerateSingleFallbackResponse(command, currentDir);
+    }
+
+    private static string GenerateSingleFallbackResponse(string command, string? currentDir)
+    {
+        var cleanCommand = command.Trim();
+        if (cleanCommand.Length == 0)
+            return "";
+
+        var staticResponse = StaticResponseStore.GetResponse(cleanCommand, currentDir);
+        if (staticResponse is not null)
+            return staticResponse;
+
+        var parts = cleanCommand.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+            return "";
+
+        var executable = NormalizeExecutableName(parts[0]).ToLowerInvariant();
+        var lower = cleanCommand.ToLowerInvariant();
+
+        if (lower == "cat /etc/passwd | grep root" || lower == "grep root /etc/passwd")
+            return StaticResponseStore.GetResponse("grep root /etc/passwd", currentDir) ?? "root:x:0:0:root:/root:/bin/bash";
+
+        return executable switch
+        {
+            "ls" => StaticResponseStore.GetResponse("ls", currentDir) ?? "Documents  Downloads  Music  Pictures  Public  Templates  Videos",
+            "cat" => parts.Length > 1 ? $"cat: {parts[1]}: No such file or directory" : "",
+            "grep" => "",
+            "curl" or "wget" or "fetch" or "tftp" => "",
+            "chmod" or "chown" or "mkdir" or "rmdir" or "touch" or "cp" or "mv" or "rm" or "sleep" => "",
+            _ => $"bash: {parts[0]}: command not found"
+        };
     }
 
     private static bool IsBuiltInCommand(string command, FakeFileSystem fs, out string? response)
@@ -1706,6 +1820,7 @@ static class CommandResolver
 static class StaticResponseStore
 {
     private static readonly Dictionary<string, StaticResponseEntry> Responses = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly JsonSerializerOptions ResponseJsonOptions = new() { PropertyNameCaseInsensitive = true };
     private static bool _loaded = false;
     private static readonly object _loadLock = new();
 
@@ -1722,7 +1837,7 @@ static class StaticResponseStore
 
     private static void LoadResponses()
     {
-        var dataPath = Path.Combine(Program.AppDir, "data", "ssh_responses.jsonl");
+        var dataPath = ResolveDataPath();
         if (!File.Exists(dataPath))
         {
             Logger.LogMsg($"Static response data not found at {dataPath}");
@@ -1737,7 +1852,7 @@ static class StaticResponseStore
                 if (string.IsNullOrWhiteSpace(line)) continue;
                 try
                 {
-                    var entry = JsonSerializer.Deserialize<StaticResponseEntry>(line);
+                    var entry = JsonSerializer.Deserialize<StaticResponseEntry>(line, ResponseJsonOptions);
                     if (entry is not null && !string.IsNullOrEmpty(entry.Command))
                     {
                         Responses[entry.Command] = entry;
@@ -1754,6 +1869,21 @@ static class StaticResponseStore
         {
             Logger.LogMsg($"Failed to load static responses: {ex.Message}");
         }
+    }
+
+    private static string ResolveDataPath()
+    {
+        var candidates = new List<string>
+        {
+            Path.Combine(Program.AppDir, "data", "ssh_responses.jsonl"),
+            Path.Combine(Directory.GetCurrentDirectory(), "FunnyPot", "data", "ssh_responses.jsonl"),
+            Path.Combine(Directory.GetCurrentDirectory(), "data", "ssh_responses.jsonl")
+        };
+
+        for (var dir = new DirectoryInfo(Directory.GetCurrentDirectory()); dir is not null; dir = dir.Parent)
+            candidates.Add(Path.Combine(dir.FullName, "FunnyPot", "data", "ssh_responses.jsonl"));
+
+        return candidates.FirstOrDefault(File.Exists) ?? candidates[0];
     }
 
     public static string? GetResponse(string command, string? currentDir = null)
@@ -1783,7 +1913,7 @@ static class StaticResponseStore
         return null;
     }
 
-    private static string GenerateDynamicResponse(string command, string? currentDir)
+    private static string? GenerateDynamicResponse(string command, string? currentDir)
     {
         var lower = command.ToLowerInvariant();
         var random = new Random();
@@ -1892,7 +2022,7 @@ static class StaticResponseStore
             return "top - 12:00:00 up 47 days,  3:22,  1 user,  load average: 0.52, 0.58, 0.59\nTasks:  89 total,   1 running,  88 sleeping";
         }
 
-        return Responses.GetValueOrDefault("ls")?.Response ?? "ls: command not found";
+        return null;
     }
 
     public static bool IsKnownCommand(string command)

@@ -19,29 +19,30 @@ SSH:
   # Banner Rotation
   BannerRotationInterval: 0  # 0 = disabled, set to seconds to enable
   
-  # LLM Configuration
-  LLM:
-    DelayMs: 500
-    RateLimitMaxPerWindow: 20
-    RateLimitWindowSeconds: 60
-    Model: "mistralai/mistral-nemo"
-    MaxTokens: 2000
-    TimeoutSeconds: 30
-  
-  # Logging
+# LLM Configuration
+LLM:
+  DelayMs: 500
+  RateLimitMaxPerWindow: 20
+  RateLimitWindowSeconds: 60
+  Model: "mistralai/mistral-nemo"
+  MaxTokens: 2000
+  TimeoutSeconds: 30
+
+# Logging
+Logging:
   LogDir: "/var/log/funnypot"
-  
-  # Data Harvesting Thresholds
-  DataHarvester:
-    MaxInputLength: 4096
-    MaxRepetitiveChars: 100
-    MaxPayloadCaptureBytes: 10485760  # 10 * 1024 * 1024
-    
-  # Notification Settings
-  Notification:
-    Enabled: false
-    Priority: "high"
-    Tags: "warning,computer"
+
+# Data Harvesting Thresholds
+DataHarvester:
+  MaxInputLength: 4096
+  MaxRepetitiveChars: 100
+  MaxPayloadCaptureBytes: 10485760  # 10 * 1024 * 1024
+
+# Notification Settings
+Notification:
+  Enabled: false
+  Priority: "high"
+  Tags: "warning,computer"
 
 # API Endpoints
 API:

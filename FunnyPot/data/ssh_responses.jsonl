@@ -88,9 +88,7 @@
 {"command": "ln -s /etc/passwd /tmp/passwd_link", "response": ""}
 {"command": "readlink /tmp/passwd_link", "response": "/etc/passwd"}
 {"command": "realpath /tmp/passwd_link", "response": "/etc/passwd"}
-{"command": "base64 /etc/passwd", "response": "cm9vdDp4OjA6MHJvb3Q6L3Jvb3Q6L2Jpbi9iYXNoCmRhZW1vbjp4OjE6MWRhZW1vbjovdXNyL3NiaW46L3Vzci9zYmluL25vbG9naW4KY..."
-
-}
+{"command": "base64 /etc/passwd", "response": "cm9vdDp4OjA6MHJvb3Q6L3Jvb3Q6L2Jpbi9iYXNoCmRhZW1vbjp4OjE6MWRhZW1vbjovdXNyL3NiaW46L3Vzci9zYmluL25vbG9naW4KY..."}
 {"command": "base64 -d", "response": ""}
 {"command": "md5sum /etc/passwd", "response": "d41d8cd98f00b204e9800998ecf8427e  /etc/passwd"}
 {"command": "sha256sum /etc/passwd", "response": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /etc/passwd"}
