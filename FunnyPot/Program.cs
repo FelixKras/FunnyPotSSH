@@ -659,17 +659,6 @@ class Program
 
                 Logger.LogMsg($"[Session {sessionId}] Response (static={usedStatic}, rateLimited={rateLimited}): {response}");
 
-                if (IsExitCommand(response))
-                {
-                    channel.SendData(Encoding.UTF8.GetBytes(response + "\r\n"));
-                    CloseShell("ClientExit");
-                    return;
-                }
-
-                channel.SendData(Encoding.UTF8.GetBytes(response + "\r\n"));
-                if (isInteractiveShell)
-                    SendPrompt();
-
                 var failedCommand = DataHarvester.IsFailureResponse(response);
                 shellAnalytics.RecordResult(failedCommand);
 
@@ -705,6 +694,17 @@ class Program
                     SemanticDrift = shellAnalytics.SemanticDrift,
                     TuringMultiplier = shellAnalytics.CalculateTuringMultiplier()
                 });
+
+                if (IsExitCommand(response))
+                {
+                    channel.SendData(Encoding.UTF8.GetBytes(response + "\r\n"));
+                    CloseShell("ClientExit");
+                    return;
+                }
+
+                channel.SendData(Encoding.UTF8.GetBytes(response + "\r\n"));
+                if (isInteractiveShell)
+                    SendPrompt();
 
                 if (!isInteractiveShell)
                     CloseShell("ExecCompleted");
@@ -1522,7 +1522,7 @@ static class CommandResolver
             return CommandResolutionPath.Blocked;
 
         var isCompoundCommand = IsCompoundShellCommand(command);
-        if (!isCompoundCommand && IsBuiltInCommandName(command))
+        if (!isCompoundCommand && (IsBinaryExecutableCatCommand(command) || IsBuiltInCommandName(command)))
             return CommandResolutionPath.BuiltIn;
 
         if (!isCompoundCommand && StaticResponseStore.GetResponse(command, fs.CurrentDirectory) is not null)
@@ -1555,6 +1555,11 @@ static class CommandResolver
         }
 
         var isCompoundCommand = IsCompoundShellCommand(command);
+        if (!isCompoundCommand && IsBinaryExecutableCatCommand(command))
+        {
+            return (BinaryExecutableCatResponse(), false, false, 0, 0);
+        }
+
         if (!isCompoundCommand && IsBuiltInCommand(command, fs, out var builtinResponse))
         {
             return (builtinResponse!, false, false, 0, 0);
@@ -1642,6 +1647,9 @@ static class CommandResolver
 
         if (lower == "cat /etc/passwd | grep root" || lower == "grep root /etc/passwd")
             return StaticResponseStore.GetResponse("grep root /etc/passwd", currentDir) ?? "root:x:0:0:root:/root:/bin/bash";
+
+        if (IsBinaryExecutableCatCommand(cleanCommand))
+            return BinaryExecutableCatResponse();
 
         return executable switch
         {
@@ -1816,6 +1824,22 @@ static class CommandResolver
         }
 
         return false;
+    }
+
+    internal static bool IsBinaryExecutableCatCommand(string command)
+    {
+        var normalized = Regex.Replace(command.Trim(), @"\s+", " ");
+        return normalized.Equals("cat /bin/echo", StringComparison.Ordinal)
+            || normalized.Equals("/bin/cat /bin/echo", StringComparison.Ordinal)
+            || normalized.Equals("cat /usr/bin/echo", StringComparison.Ordinal)
+            || normalized.Equals("/bin/cat /usr/bin/echo", StringComparison.Ordinal);
+    }
+
+    internal static string BinaryExecutableCatResponse()
+    {
+        return "\u007fELF\u0002\u0001\u0001\0\0\0\0\0\0\0\0\0\u0003\0>\0\u0001\0\0\0\u0080\u0031\0\0\0\0\0\0" +
+            "\n/lib64/ld-linux-x86-64.so.2\nGNU\0GNU C Library (Debian GLIBC 2.31-13+deb11u7) stable release version 2.31" +
+            "\nUsage: echo [SHORT-OPTION]... [STRING]...\nEcho the STRING(s) to standard output.\n--- [binary output truncated] ---";
     }
 
     private static bool IsBuiltInCommandName(string command)
