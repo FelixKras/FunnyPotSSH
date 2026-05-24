@@ -1501,6 +1501,34 @@ static class LlmRateLimiter
 
 static class CommandResolver
 {
+    internal enum CommandResolutionPath
+    {
+        Invalid,
+        Blocked,
+        BuiltIn,
+        StaticDataset,
+        Llm
+    }
+
+    internal static CommandResolutionPath ClassifyCommand(string command, FakeFileSystem fs)
+    {
+        var (isValid, _) = InputValidator.Validate(command);
+        if (!isValid)
+            return CommandResolutionPath.Invalid;
+
+        if (SCPDetector.IsSCPCommand(command))
+            return CommandResolutionPath.Blocked;
+
+        var isCompoundCommand = IsCompoundShellCommand(command);
+        if (!isCompoundCommand && IsBuiltInCommandName(command))
+            return CommandResolutionPath.BuiltIn;
+
+        if (!isCompoundCommand && StaticResponseStore.GetResponse(command, fs.CurrentDirectory) is not null)
+            return CommandResolutionPath.StaticDataset;
+
+        return CommandResolutionPath.Llm;
+    }
+
     public static (string response, bool usedStatic, bool rateLimited, int promptTokens, int completionTokens) ResolveCommand(
         string command,
         string sessionId,
@@ -1524,20 +1552,24 @@ static class CommandResolver
             return ("Operation not allowed", false, false, 0, 0);
         }
 
-        if (IsBuiltInCommand(command, fs, out var builtinResponse))
+        var isCompoundCommand = IsCompoundShellCommand(command);
+        if (!isCompoundCommand && IsBuiltInCommand(command, fs, out var builtinResponse))
         {
             return (builtinResponse!, false, false, 0, 0);
         }
 
-        var staticResponse = StaticResponseStore.GetResponse(command, fs.CurrentDirectory);
-        if (staticResponse is not null)
+        if (!isCompoundCommand)
         {
-            if (command.StartsWith("cd "))
+            var staticResponse = StaticResponseStore.GetResponse(command, fs.CurrentDirectory);
+            if (staticResponse is not null)
             {
-                var targetDir = command[3..].Trim();
-                fs.ChangeDirectory(targetDir);
+                if (command.StartsWith("cd "))
+                {
+                    var targetDir = command[3..].Trim();
+                    fs.ChangeDirectory(targetDir);
+                }
+                return (staticResponse, true, false, 0, 0);
             }
-            return (staticResponse, true, false, 0, 0);
         }
 
         if (!LlmRateLimiter.IsAllowed(rateLimitKey, out var fallbackMessage))
@@ -1570,6 +1602,11 @@ static class CommandResolver
     {
         return response.StartsWith("[api error]", StringComparison.OrdinalIgnoreCase)
             || response.StartsWith("[network error]", StringComparison.OrdinalIgnoreCase);
+    }
+
+    internal static bool IsCompoundShellCommand(string command)
+    {
+        return Regex.IsMatch(command, @"&&|\|\||;|(?<!\|)\|(?!\|)");
     }
 
     internal static string GenerateLocalFallbackResponse(string command, string? currentDir = null)
@@ -1777,6 +1814,19 @@ static class CommandResolver
         }
 
         return false;
+    }
+
+    private static bool IsBuiltInCommandName(string command)
+    {
+        var parts = command.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+            return false;
+
+        var cmd = NormalizeExecutableName(parts[0]).ToLowerInvariant();
+        return cmd is "cd" or "exit" or "logout" or "quit" or "clear" or "reset" or "pwd"
+            or "echo" or "true" or "false" or "alias" or "history" or "type" or "which" or "help"
+            or "whoami" or "id" or "groups" or "umask" or "nproc" or "getconf" or "arch"
+            or "uname" or "uptime" or "hostname" or "date" or "who" or "tty" or "stty";
     }
 
     internal static string NormalizeExecutableName(string token)
