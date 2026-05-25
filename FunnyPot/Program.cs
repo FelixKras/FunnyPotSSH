@@ -22,16 +22,17 @@ class Program
     static readonly HttpClient httpClient = new();
     internal static HttpClient SharedHttpClient => httpClient;
     static AppConfiguration Config => _config ??= AppConfiguration.Load();
+    internal static AppConfiguration RuntimeConfig => Config;
     static AppConfiguration? _config;
 
-    static readonly int AuthMaxTries = GetIntEnvironmentOrDefault("AUTH_MAX_TRIES", Config.Ssh.AuthMaxTries);
-    static readonly int PasswordHarvestAttempt = Math.Max(1, Math.Min(AuthMaxTries, 3));
-    static readonly int LlmDelayMs = GetIntEnvironmentOrDefault("LLM_DELAY_MS", Config.Llm.DelayMs);
-    static readonly int MaxSessions = GetIntEnvironmentOrDefault("MAX_SESSIONS", Config.Ssh.MaxSessions);
-    static readonly int SessionIdleTimeoutSecs = GetIntEnvironmentOrDefault("SESSION_IDLE_TIMEOUT_SECONDS", Config.Ssh.SessionIdleTimeoutSeconds);
-    static readonly string SshBanner = Environment.GetEnvironmentVariable("SSH_BANNER") ?? Config.Ssh.Banner;
-    static readonly int SshPort = GetIntEnvironmentOrDefault("SSH_PORT", Config.Ssh.Port);
-    internal static readonly string LogDir = Environment.GetEnvironmentVariable("LOG_DIR") ?? Config.Logging.LogDir;
+    static int AuthMaxTries = Config.Ssh.AuthMaxTries;
+    static int PasswordHarvestAttempt = Math.Max(1, Math.Min(AuthMaxTries, Config.Ssh.PasswordHarvestAttempt));
+    static int LlmDelayMs = Config.Llm.DelayMs;
+    static int MaxSessions = Config.Ssh.MaxSessions;
+    static int SessionIdleTimeoutSecs = Config.Ssh.SessionIdleTimeoutSeconds;
+    static string SshBanner = Config.Ssh.Banner;
+    static int SshPort = Config.Ssh.Port;
+    internal static string LogDir = Config.Logging.LogDir;
     internal static readonly string AppDir = AppDomain.CurrentDomain.BaseDirectory;
 
     static readonly ConcurrentDictionary<string, int> AuthAttempts = new(StringComparer.OrdinalIgnoreCase);
@@ -39,10 +40,10 @@ class Program
     static readonly ConcurrentDictionary<string, string> LastCredentials = new(StringComparer.OrdinalIgnoreCase);
     static readonly ConcurrentDictionary<string, DateTime> LastCommandEndedAt = new(StringComparer.OrdinalIgnoreCase);
     static readonly ConcurrentDictionary<string, ShellSessionAnalytics> ShellAnalyticsBySession = new(StringComparer.OrdinalIgnoreCase);
-    static readonly SemaphoreSlim ConnectionLimit = new(MaxSessions, MaxSessions);
+    static SemaphoreSlim ConnectionLimit = new(MaxSessions, MaxSessions);
     static readonly FieldInfo? SessionSocketField = typeof(Session).GetField("_socket", BindingFlags.Instance | BindingFlags.NonPublic);
 
-    static readonly List<string> BannerPool = ParseBannerPool();
+    static List<string> BannerPool = new() { SshBanner };
     static volatile int _currentBannerIndex = 0;
     static int _activeConnections = 0;
     static string _currentBanner = BannerPool.Count > 0 ? BannerPool[0] : SshBanner;
@@ -56,6 +57,24 @@ class Program
     {
         var value = Environment.GetEnvironmentVariable(name);
         return int.TryParse(value, out var parsed) ? parsed : defaultValue;
+    }
+
+    static void LoadRuntimeSettings()
+    {
+        _config = AppConfiguration.Load();
+        AuthMaxTries = GetIntEnvironmentOrDefault("AUTH_MAX_TRIES", Config.Ssh.AuthMaxTries);
+        PasswordHarvestAttempt = Math.Max(1, Math.Min(AuthMaxTries, GetIntEnvironmentOrDefault("PASSWORD_HARVEST_ATTEMPT", Config.Ssh.PasswordHarvestAttempt)));
+        LlmDelayMs = GetIntEnvironmentOrDefault("LLM_DELAY_MS", Config.Llm.DelayMs);
+        MaxSessions = Math.Max(1, GetIntEnvironmentOrDefault("MAX_SESSIONS", Config.Ssh.MaxSessions));
+        SessionIdleTimeoutSecs = Math.Max(1, GetIntEnvironmentOrDefault("SESSION_IDLE_TIMEOUT_SECONDS", Config.Ssh.SessionIdleTimeoutSeconds));
+        SshBanner = Environment.GetEnvironmentVariable("SSH_BANNER") ?? Config.Ssh.Banner;
+        SshPort = GetIntEnvironmentOrDefault("SSH_PORT", Config.Ssh.Port);
+        LogDir = Environment.GetEnvironmentVariable("LOG_DIR") ?? Config.Logging.LogDir;
+        ConnectionLimit = new SemaphoreSlim(MaxSessions, MaxSessions);
+        BannerPool = ParseBannerPool();
+        _currentBannerIndex = 0;
+        _currentBanner = BannerPool.Count > 0 ? BannerPool[0] : SshBanner;
+        hostKeyPem = GetHostKeyPem();
     }
 
     static List<string> ParseBannerPool()
@@ -132,7 +151,7 @@ class Program
                 return;
             }
 
-            var nextIndex = Interlocked.Increment(ref _currentBannerIndex) % BannerPool.Count;
+            var nextIndex = Math.Abs(Interlocked.Increment(ref _currentBannerIndex) % BannerPool.Count);
             var banner = BannerPool[nextIndex];
             Interlocked.Exchange(ref _currentBanner, banner);
             Logger.LogMsg($"Rotating banner to [{banner}]");
@@ -144,7 +163,7 @@ class Program
         }
     }
 
-    static readonly string hostKeyPem = GetHostKeyPem();
+    static string hostKeyPem = "";
 
     private static string GetPrompt(string? username = null)
     {
@@ -169,6 +188,7 @@ class Program
     static void Main()
     {
         LoadDotEnvFiles();
+        LoadRuntimeSettings();
 
         httpClient.Timeout = TimeSpan.FromSeconds(30);
 
@@ -202,7 +222,7 @@ class Program
         _currentBanner = initialBanner;
         StartSshServer(initialBanner, SshPort);
 
-        var rotationInterval = int.Parse(Environment.GetEnvironmentVariable("SSH_BANNER_ROTATION_INTERVAL") ?? "0");
+        var rotationInterval = Math.Max(0, GetIntEnvironmentOrDefault("SSH_BANNER_ROTATION_INTERVAL", Config.Ssh.BannerRotationInterval));
         if (rotationInterval > 0 && BannerPool.Count > 1)
         {
             var rotationTimer = new System.Timers.Timer(rotationInterval * 1000) { AutoReset = true };
@@ -761,8 +781,8 @@ class Program
             ResetIdle();
             if (isInteractiveShell)
                 SendPrompt();
-            else
-                ProcessLine(args.CommandText ?? "");
+            else if (!commandWorker.TryPost(() => ProcessLine(args.CommandText ?? "")))
+                CloseShell("CommandWorkerStopped");
         };
     }
 
@@ -1157,7 +1177,7 @@ static class SCPDetector
 {
     private static readonly Regex ScpUploadPattern = new(@"(?i)^\s*scp\s+.*(-t|-r|-p)\s+", RegexOptions.Compiled);
     private static readonly Regex ScpDownloadPattern = new(@"(?i)^\s*scp\s+.*(-f)\s+", RegexOptions.Compiled);
-    private static readonly Regex SftpPattern = new(@"(?i)^\s*(sftp|ssh|sftp\-server)", RegexOptions.Compiled);
+    private static readonly Regex SftpPattern = new(@"(?i)^\s*(sftp|sftp\-server)\b", RegexOptions.Compiled);
 
     public static bool IsSCPCommand(string input)
     {
@@ -1287,7 +1307,11 @@ class FakeFileSystem
             return NormalizePath(path);
 
         if (path == "..")
-            return CurrentDirectory == "/" ? "/" : CurrentDirectory[..CurrentDirectory.LastIndexOf('/')];
+        {
+            if (CurrentDirectory == "/") return "/";
+            var slash = CurrentDirectory.LastIndexOf('/');
+            return slash <= 0 ? "/" : CurrentDirectory[..slash];
+        }
 
         if (path == ".")
             return CurrentDirectory;
@@ -1446,8 +1470,8 @@ internal sealed class SessionCommandWorker : IDisposable
 static class LlmRateLimiter
 {
     private static readonly ConcurrentDictionary<string, RateLimitInfo> IpLimits = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly int MaxRequestsPerWindow = int.Parse(Environment.GetEnvironmentVariable("LLM_RATE_LIMIT_MAX") ?? "20");
-    private static readonly int RateLimitWindowSeconds = int.Parse(Environment.GetEnvironmentVariable("LLM_RATE_LIMIT_WINDOW_SECONDS") ?? "60");
+    private static readonly int MaxRequestsPerWindow = Program.GetIntEnvironmentOrDefault("LLM_RATE_LIMIT_MAX", 20);
+    private static readonly int RateLimitWindowSeconds = Program.GetIntEnvironmentOrDefault("LLM_RATE_LIMIT_WINDOW_SECONDS", 60);
 
     public static bool IsAllowed(string ip, out string? fallbackMessage)
     {
@@ -1457,6 +1481,7 @@ static class LlmRateLimiter
             return true;
 
         var now = DateTime.UtcNow;
+        CleanupExpired(now);
         var info = IpLimits.GetOrAdd(ip, _ => new RateLimitInfo());
 
         lock (info._lock)
@@ -1482,6 +1507,16 @@ static class LlmRateLimiter
     public static void Reset(string ip)
     {
         IpLimits.TryRemove(ip, out _);
+    }
+
+    private static void CleanupExpired(DateTime now)
+    {
+        var expiry = TimeSpan.FromSeconds(Math.Max(1, RateLimitWindowSeconds) * 2);
+        foreach (var (key, info) in IpLimits)
+        {
+            if (now - info.WindowStart > expiry)
+                IpLimits.TryRemove(key, out _);
+        }
     }
 
     public static void LogLimitStatus(string ip)
@@ -1613,7 +1648,37 @@ static class CommandResolver
 
     internal static bool IsCompoundShellCommand(string command)
     {
-        return Regex.IsMatch(command, @"&&|\|\||;|(?<!\|)\|(?!\|)");
+        var inSingleQuote = false;
+        var inDoubleQuote = false;
+        for (var i = 0; i < command.Length; i++)
+        {
+            var c = command[i];
+            if (c == '\'' && !inDoubleQuote)
+            {
+                inSingleQuote = !inSingleQuote;
+                continue;
+            }
+
+            if (c == '"' && !inSingleQuote)
+            {
+                inDoubleQuote = !inDoubleQuote;
+                continue;
+            }
+
+            if (inSingleQuote || inDoubleQuote)
+                continue;
+
+            if (c == ';')
+                return true;
+            if (c == '&' && i + 1 < command.Length && command[i + 1] == '&')
+                return true;
+            if (c == '|' && (i + 1 >= command.Length || command[i + 1] != '|') && (i == 0 || command[i - 1] != '|'))
+                return true;
+            if (c == '|' && i + 1 < command.Length && command[i + 1] == '|')
+                return true;
+        }
+
+        return false;
     }
 
     internal static string GenerateLocalFallbackResponse(string command, string? currentDir = null)
@@ -1701,7 +1766,7 @@ static class CommandResolver
                 return true;
 
             case "echo":
-                response = string.Join(" ", parts.Skip(1));
+                response = StripShellQuotes(command.Trim()[parts[0].Length..].TrimStart());
                 return true;
 
             case "true":
@@ -1734,6 +1799,10 @@ static class CommandResolver
                         _ => $"type: {target}: not found"
                     };
                 }
+                else
+                {
+                    response = "type: usage: type [-afptP] name [name ...]";
+                }
                 return true;
 
             case "which":
@@ -1750,6 +1819,10 @@ static class CommandResolver
                         "bash" => "/bin/bash",
                         _ => $"which: {target}: not found"
                     };
+                }
+                else
+                {
+                    response = "Usage: which [-a] args";
                 }
                 return true;
 
@@ -1788,6 +1861,10 @@ static class CommandResolver
                         _ => ""
                     };
                 }
+                else
+                {
+                    response = "Usage: getconf [-v specification] variable_name [pathname]";
+                }
                 return true;
 
             case "arch":
@@ -1807,11 +1884,11 @@ static class CommandResolver
                 return true;
 
             case "date":
-                response = DateTime.Now.ToString("ddd MMM dd HH:mm:ss UTC yyyy");
+                response = DateTime.UtcNow.ToString("ddd MMM dd HH:mm:ss UTC yyyy");
                 return true;
 
             case "who":
-                response = $"{Environment.UserName}   pts/0        {DateTime.Now:yyyy-MM-dd} {DateTime.Now:HH:mm} (192.168.1.100)";
+                response = $"remote   pts/0        {DateTime.UtcNow:yyyy-MM-dd} {DateTime.UtcNow:HH:mm} (192.168.1.100)";
                 return true;
 
             case "tty":
@@ -1824,6 +1901,32 @@ static class CommandResolver
         }
 
         return false;
+    }
+
+    internal static string StripShellQuotes(string value)
+    {
+        var result = new StringBuilder(value.Length);
+        var inSingleQuote = false;
+        var inDoubleQuote = false;
+        for (var i = 0; i < value.Length; i++)
+        {
+            var c = value[i];
+            if (c == '\'' && !inDoubleQuote)
+            {
+                inSingleQuote = !inSingleQuote;
+                continue;
+            }
+
+            if (c == '"' && !inSingleQuote)
+            {
+                inDoubleQuote = !inDoubleQuote;
+                continue;
+            }
+
+            result.Append(c);
+        }
+
+        return result.ToString();
     }
 
     internal static bool IsBinaryExecutableCatCommand(string command)
@@ -2006,16 +2109,15 @@ static class StaticResponseStore
             return string.Join("\n", files);
         }
 
-        if (lower.StartsWith("who") || lower == "w")
+        if (lower == "who" || lower.StartsWith("who ") || lower == "w")
         {
-            var hour = DateTime.Now.Hour;
-            var min = DateTime.Now.Minute;
-            return $"{Environment.UserName}   pts/0        {DateTime.Now:yyyy-MM-dd} {hour:D2}:{min:D2} (192.168.1.100)";
+            var now = DateTime.UtcNow;
+            return $"remote   pts/0        {now:yyyy-MM-dd} {now:HH:mm} (192.168.1.100)";
         }
 
         if (lower.StartsWith("last"))
         {
-            return $"{Environment.UserName}   pts/0        192.168.1.100    {DateTime.Now:ddd MMM dd HH:mm}   still logged in\nwtmp begins {DateTime.Now.AddDays(-5):ddd MMM dd HH:mm}";
+            return $"remote   pts/0        192.168.1.100    {DateTime.UtcNow:ddd MMM dd HH:mm}   still logged in\nwtmp begins {DateTime.UtcNow.AddDays(-5):ddd MMM dd HH:mm}";
         }
 
         if (lower.StartsWith("free"))
@@ -2189,7 +2291,7 @@ static class DataHarvester
 
     public static InfrastructureProfile CategorizeInfrastructure(string remoteEndpoint)
     {
-        var host = remoteEndpoint.Split(':')[0];
+        var host = Program.GetRemoteAttemptKey(remoteEndpoint);
         if (!IPAddress.TryParse(host, out var ip))
             return new InfrastructureProfile { Category = "unknown", Asn = "unknown" };
 
@@ -2279,7 +2381,7 @@ static class DataHarvester
     public static bool IsFailureResponse(string response)
     {
         var lower = response.ToLowerInvariant();
-        return lower.Contains("command not found") || lower.Contains("permission denied") || lower.Contains("no such file") || lower.Contains("error") || lower.Contains("failed");
+        return Regex.IsMatch(lower, @"\b(command not found|permission denied|no such file or directory|operation not permitted|authentication failed|connection failed)\b");
     }
 
     public static bool DetectHallucinationFeedback(string command, string response)
@@ -2358,6 +2460,8 @@ static class NtfyNotifier
         var enabled = Program.GetSecretOrEnvironment("NOTIFY_ENABLED");
         if (enabled is not null && !IsTruthy(enabled))
             return;
+        if (enabled is null && !Program.RuntimeConfig.Notification.Enabled)
+            return;
 
         var topicUrl = Program.GetSecretOrEnvironment("NTFY_TOPIC_URL")
             ?? Program.GetSecretOrEnvironment("NOTIFY_NTFY_URL");
@@ -2371,8 +2475,8 @@ static class NtfyNotifier
                 Content = new StringContent(BuildShellSessionMessage(remoteEndpoint, sessionKey, shellSessionId, clientVersion, username, shellType), Encoding.UTF8, "text/plain")
             };
             request.Headers.TryAddWithoutValidation("Title", "FunnyPot shell opened");
-            request.Headers.TryAddWithoutValidation("Priority", Program.GetSecretOrEnvironment("NTFY_PRIORITY") ?? "high");
-            request.Headers.TryAddWithoutValidation("Tags", Program.GetSecretOrEnvironment("NTFY_TAGS") ?? "warning,computer");
+            request.Headers.TryAddWithoutValidation("Priority", Program.GetSecretOrEnvironment("NTFY_PRIORITY") ?? Program.RuntimeConfig.Notification.Priority);
+            request.Headers.TryAddWithoutValidation("Tags", Program.GetSecretOrEnvironment("NTFY_TAGS") ?? Program.RuntimeConfig.Notification.Tags);
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             using var response = await Program.SharedHttpClient.SendAsync(request, cts.Token);
@@ -2412,7 +2516,7 @@ static class Logger
     private static readonly object _statsLock = new();
     private static readonly object _pushLock = new();
     private static DateTime _lastDataPushRequestedAt = DateTime.MinValue;
-    private static readonly TimeSpan DataPushInterval = TimeSpan.FromSeconds(Math.Max(1, int.Parse(Environment.GetEnvironmentVariable("DATA_PUSH_INTERVAL_SECONDS") ?? "300")));
+    private static readonly TimeSpan DataPushInterval = TimeSpan.FromSeconds(Math.Max(1, Program.GetIntEnvironmentOrDefault("DATA_PUSH_INTERVAL_SECONDS", Program.RuntimeConfig.Git.DataPushIntervalSeconds)));
 
     static Logger()
     {
@@ -2794,8 +2898,7 @@ static class Logger
             if (!changed)
                 return false;
 
-            if (changed)
-                File.WriteAllLines(harvestPath, lines);
+            File.WriteAllLines(harvestPath, lines);
             return true;
         }
         catch (Exception ex)

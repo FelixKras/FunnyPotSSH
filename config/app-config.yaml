@@ -1,62 +1,62 @@
 # Application Configuration
 # Centralized configuration for magic numbers and tunable parameters
 
-SSH:
+ssh:
   # SSH Server Configuration
-  Port: 22422
-  Banner: "SSH-2.0-OmegaBlack_Classified_Server_v1.0"
-  User: "remote"
-  Password: "test"
+  port: 22422
+  banner: "SSH-2.0-OmegaBlack_Classified_Server_v1.0"
+  user: "remote"
+  password: "test"
   
   # Connection Limits
-  MaxSessions: 50
-  SessionIdleTimeoutSeconds: 300
+  max-sessions: 50
+  session-idle-timeout-seconds: 300
   
   # Authentication
-  AuthMaxTries: 3
-  PasswordHarvestAttempt: 3  # Max(1, Min(AuthMaxTries, 3))
+  auth-max-tries: 3
+  password-harvest-attempt: 3  # Max(1, Min(auth-max-tries, 3))
   
   # Banner Rotation
-  BannerRotationInterval: 0  # 0 = disabled, set to seconds to enable
+  banner-rotation-interval: 0  # 0 = disabled, set to seconds to enable
   
 # LLM Configuration
-LLM:
-  DelayMs: 500
-  RateLimitMaxPerWindow: 20
-  RateLimitWindowSeconds: 60
-  Model: "mistralai/mistral-nemo"
-  MaxTokens: 2000
-  TimeoutSeconds: 30
+llm:
+  delay-ms: 500
+  rate-limit-max-per-window: 20
+  rate-limit-window-seconds: 60
+  model: "mistralai/mistral-nemo"
+  max-tokens: 2000
+  timeout-seconds: 30
 
 # Logging
-Logging:
-  LogDir: "/var/log/funnypot"
+logging:
+  log-dir: "/var/log/funnypot"
 
 # Data Harvesting Thresholds
-DataHarvester:
-  MaxInputLength: 4096
-  MaxRepetitiveChars: 100
-  MaxPayloadCaptureBytes: 10485760  # 10 * 1024 * 1024
+data-harvester:
+  max-input-length: 4096
+  max-repetitive-chars: 100
+  max-payload-capture-bytes: 10485760  # 10 * 1024 * 1024
 
 # Notification Settings
-Notification:
-  Enabled: false
-  Priority: "high"
-  Tags: "warning,computer"
+notification:
+  enabled: false
+  priority: "high"
+  tags: "warning,computer"
 
 # API Endpoints
-API:
-  OpenRouter:
-    BaseUrl: "https://openrouter.ai/api/v1"
-    AuthEndpoint: "/auth/key"
-    ChatEndpoint: "/chat/completions"
+api:
+  open-router:
+    base-url: "https://openrouter.ai/api/v1"
+    auth-endpoint: "/auth/key"
+    chat-endpoint: "/chat/completions"
     
 # Git Integration
-Git:
-  DataBranch: "data"
-  User: ""  # Set via GITHUB_TOKEN env var or secrets
-  Token: ""  # Set via GITHUB_USER env var or secrets
+git:
+  data-branch: "data"
+  user: ""  # Set via GITHUB_USER env var or secrets
+  token: ""  # Set via GITHUB_TOKEN env var or secrets
 
 # Static Response Files
-StaticResponses:
-  DataPath: "data/ssh_responses.jsonl"
+static-responses:
+  data-path: "data/ssh_responses.jsonl"

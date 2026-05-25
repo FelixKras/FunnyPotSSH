@@ -104,6 +104,8 @@ public class SCPDetectorTests
     [InlineData("scp -f somefile", true)]
     [InlineData("sftp", true)]
     [InlineData("SFTP", true)]
+    [InlineData("ssh -D 1080 host", false)]
+    [InlineData("ssh user@host", false)]
     [InlineData("ls -la", false)]
     [InlineData("cat file.txt", false)]
     [InlineData("cd /home", false)]
@@ -168,6 +170,22 @@ public class DataHarvesterTests
 
         Assert.Equal(category, profile.Category);
         Assert.Equal(asn, profile.Asn);
+    }
+
+    [Fact]
+    public void CategorizeInfrastructure_HandlesBracketedIpv6Endpoint()
+    {
+        var profile = DataHarvester.CategorizeInfrastructure("[2001:db8::1]:49152");
+
+        Assert.Equal("unknown", profile.Category);
+        Assert.Equal("lookup_unavailable", profile.Asn);
+    }
+
+    [Fact]
+    public void IsFailureResponse_DoesNotTreatGenericErrorWordAsFailure()
+    {
+        Assert.False(DataHarvester.IsFailureResponse("/var/log/error.log"));
+        Assert.True(DataHarvester.IsFailureResponse("bash: nope: command not found"));
     }
 
     [Fact]
@@ -370,6 +388,15 @@ public class CommandResolverTests
     }
 
     [Theory]
+    [InlineData("echo 'a;b'")]
+    [InlineData("echo \"a|b\"")]
+    [InlineData("echo 'a&&b'")]
+    public void IsCompoundShellCommand_IgnoresOperatorsInsideQuotes(string command)
+    {
+        Assert.False(CommandResolver.IsCompoundShellCommand(command));
+    }
+
+    [Theory]
     [InlineData("cd /tmp")]
     [InlineData("uname -a")]
     [InlineData("ls -la")]
@@ -423,6 +450,43 @@ public class CommandResolverTests
 
         Assert.Equal(CommandResolver.CommandResolutionPath.BuiltIn, path);
         Assert.Equal("/home/remote", fs.CurrentDirectory);
+    }
+
+    [Fact]
+    public void FakeFileSystem_ResolveParentFromTopLevelReturnsRoot()
+    {
+        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
+        fs.ChangeDirectory("/home");
+
+        Assert.Equal("/", fs.ResolvePath(".."));
+    }
+
+    [Fact]
+    public void StripShellQuotes_RemovesSimpleShellQuotes()
+    {
+        Assert.Equal("hello world", CommandResolver.StripShellQuotes("\"hello world\""));
+        Assert.Equal("hello world", CommandResolver.StripShellQuotes("'hello world'"));
+    }
+
+    [Theory]
+    [InlineData("echo \"hello world\"", "hello world")]
+    [InlineData("type", "type: usage")]
+    [InlineData("which", "Usage: which")]
+    [InlineData("getconf", "Usage: getconf")]
+    [InlineData("who", "remote   pts/0")]
+    public void ResolveCommand_BuiltInsReturnExpectedOutput(string command, string expectedFragment)
+    {
+        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
+        var history = new List<ChatRequestData.ChatMessage>();
+
+        var (response, _, _, _, _) = CommandResolver.ResolveCommand(
+            command,
+            Guid.NewGuid().ToString("N"),
+            Guid.NewGuid().ToString("N"),
+            fs,
+            history);
+
+        Assert.Contains(expectedFragment, response);
     }
 
     [Fact]
@@ -551,6 +615,8 @@ public class AppConfigurationTests
         Assert.Equal("mistralai/mistral-nemo", config.Llm.Model);
         Assert.Equal("/var/log/funnypot", config.Logging.LogDir);
         Assert.False(config.Notification.Enabled);
+        Assert.Equal(3, config.Ssh.PasswordHarvestAttempt);
+        Assert.Equal("/chat/completions", config.Api.OpenRouter.ChatEndpoint);
     }
 }
 
