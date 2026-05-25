@@ -1940,9 +1940,20 @@ static class CommandResolver
 
     internal static string BinaryExecutableCatResponse()
     {
-        return "\u007fELF\u0002\u0001\u0001\0\0\0\0\0\0\0\0\0\u0003\0>\0\u0001\0\0\0\u0080\u0031\0\0\0\0\0\0" +
-            "\n/lib64/ld-linux-x86-64.so.2\nGNU\0GNU C Library (Debian GLIBC 2.31-13+deb11u7) stable release version 2.31" +
-            "\nUsage: echo [SHORT-OPTION]... [STRING]...\nEcho the STRING(s) to standard output.\n--- [binary output truncated] ---";
+        return "ELF'@@8\n" +
+            "       @@@$$$ $$ȋȋȋ  Std PtdpypypyQtdRtd``GNUGNU^.NOtl5D/lib/ld-linux-aarch64.so.1=\n" +
+            " =>?;c,y!cr\n" +
+            "1nl_langinfoerror_message_countprogram_invocation_short_namefputc_unlockeddcgettextstack_chk_failprintf_chkfree" +
+            "assert_failfcntlctype_get_mb_cur_maxstrrchrfflusherrorstrlenctype_b_locfpendingfreadingvfprintf_chkmbsinit" +
+            "fflush_unlockedstdoutrealloc_exitbindtextdomainerror_one_per_linefprintf_chkmalloclibc_start_mainiswprinterror_at_line" +
+            "stderrcxa_finalizesetlocalegetenvcallocmemcmpfclosememsetfputs_unlockedprogram_invocation_namememcpyfilenofwrite" +
+            "strcm pfseekoerrno_locationabortstrerror_rmbrtoc32overflowerror_print_prognamelseekstrncmpprogname_fullprogname" +
+            "cxa_atexitstack_chk_guardlibc.so.6ld-linux-aarch64.so.1GLIBC_2.17GLIBC_2.34_ITM_deregisterTMCloneTable" +
+            "gmon_start___ITM_registerTMCloneTable  (h'psxsssssttt,(@lHr r(Xr0pr8r@rHrPrXrrhrr0\n" +
+            "\n 27\n \n08@HPXhp. /(10384@5H6P8X9:h;p<?#{:{#__${F7   _$F7  _$F7  _$G8  _$G\"8  _$\n" +
+            "GB8  _$Gb8  _$G8  _$G8  _$G8  _$G8  _$\"G9  _$&G\"9  _$*GB9  _$.Gb9  _$2G9  _$6G9" +
+            "  _$:G9  _$>G9  _$BG:  _$FG\":  _$JGB:  _$NGb:  _$RG:  _$VG:  _$ZG:  _$^G:  _$bG;\n" +
+            "--- [binary output truncated] ---";
     }
 
     private static bool IsBuiltInCommandName(string command)

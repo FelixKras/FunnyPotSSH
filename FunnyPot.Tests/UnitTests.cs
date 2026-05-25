@@ -512,7 +512,9 @@ public class CommandResolverTests
             fs,
             history);
 
-        Assert.Contains("ELF", response);
+        Assert.StartsWith("ELF'@@8", response);
+        Assert.Contains("/lib/ld-linux-aarch64.so.1", response);
+        Assert.Contains("GLIBC_2.17", response);
         Assert.Contains("binary output truncated", response);
         Assert.False(usedStatic);
         Assert.False(rateLimited);
