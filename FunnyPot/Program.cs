@@ -513,6 +513,7 @@ class Program
             var shellFinalized = 0;
             var idleTimer = new System.Timers.Timer(SessionIdleTimeoutSecs * 1000) { AutoReset = false };
             SessionCommandWorker? commandWorker = null;
+            SCPUploadSession? scpUploadSession = null;
             idleTimer.Elapsed += (_, _) => CloseShell("IdleTimeout", "\r\nConnection closed due to inactivity.\r\n");
             void ResetIdle() { idleTimer.Stop(); idleTimer.Start(); }
 
@@ -732,12 +733,29 @@ class Program
 
             commandWorker = new SessionCommandWorker(sessionId);
 
+            if (isExecCommand && SCPDetector.IsSCPUpload(args.CommandText ?? ""))
+            {
+                var (_, filename) = SCPDetector.ParseSCPUpload(args.CommandText ?? "");
+                scpUploadSession = new SCPUploadSession(connectionSessionKey, filename ?? "upload.bin");
+                channel.SendData(new byte[] { 0 });
+            }
+
             channel.DataReceived += (_, data) =>
             {
                 if (Volatile.Read(ref shellClosed) != 0)
                     return;
 
                 ResetIdle();
+
+                if (scpUploadSession is not null)
+                {
+                    scpUploadSession.HandleData(
+                        data,
+                        ack => channel.SendData(ack),
+                        reason => CloseShell(reason));
+                    return;
+                }
+
                 foreach (var c in Encoding.UTF8.GetString(data))
                 {
                     if (Volatile.Read(ref shellClosed) != 0)
@@ -781,7 +799,7 @@ class Program
             ResetIdle();
             if (isInteractiveShell)
                 SendPrompt();
-            else if (!commandWorker.TryPost(() => ProcessLine(args.CommandText ?? "")))
+            else if (scpUploadSession is null && !commandWorker.TryPost(() => ProcessLine(args.CommandText ?? "")))
                 CloseShell("CommandWorkerStopped");
         };
     }
@@ -1211,6 +1229,7 @@ static class SCPUploadHandler
 {
     private static readonly string UploadDir = Path.Combine(Program.LogDir, "uploads");
     private static readonly object _lock = new();
+    internal const int MaxUploadBytes = 5 * 1024 * 1024;
 
     static SCPUploadHandler()
     {
@@ -1229,6 +1248,23 @@ static class SCPUploadHandler
         {
             try
             {
+                if (data.Length > MaxUploadBytes)
+                {
+                    var rejectedSha256 = Convert.ToHexString(SHA256.HashData(data)).ToLowerInvariant();
+                    Logger.LogYaml("scp_upload_rejected", new SCPUploadLogEntry
+                    {
+                        Timestamp = DateTime.UtcNow,
+                        SessionKey = sessionKey,
+                        Filename = filename,
+                        Bytes = data.Length,
+                        Sha256 = rejectedSha256,
+                        Path = "",
+                        Status = "too_large"
+                    });
+                    Logger.LogMsg($"SCP upload rejected: {filename} ({data.Length} bytes) exceeds {MaxUploadBytes} bytes from session {sessionKey}");
+                    return "";
+                }
+
                 var sessionDir = Path.Combine(UploadDir, sessionKey[..Math.Min(8, sessionKey.Length)]);
                 Directory.CreateDirectory(sessionDir);
 
@@ -1246,7 +1282,8 @@ static class SCPUploadHandler
                     Filename = filename,
                     Bytes = data.Length,
                     Sha256 = sha256,
-                    Path = destPath
+                    Path = destPath,
+                    Status = "captured"
                 });
 
                 Logger.LogMsg($"SCP upload captured: {filename} ({data.Length} bytes) from session {sessionKey}");
@@ -1261,6 +1298,155 @@ static class SCPUploadHandler
     }
 }
 
+internal sealed class SCPUploadSession
+{
+    private const int MaxHeaderBytes = 4096;
+    private static readonly byte[] Ack = { 0 };
+    private static readonly byte[] Deny = Encoding.UTF8.GetBytes("\u0002Upload too large\n");
+    private readonly string _sessionKey;
+    private readonly string _fallbackFilename;
+    private readonly MemoryStream _header = new();
+    private MemoryStream? _content;
+    private string _filename = "upload.bin";
+    private long _expectedBytes;
+    private long _receivedBytes;
+    private State _state = State.Header;
+
+    public SCPUploadSession(string sessionKey, string fallbackFilename)
+    {
+        _sessionKey = sessionKey;
+        _fallbackFilename = string.IsNullOrWhiteSpace(fallbackFilename) ? "upload.bin" : fallbackFilename;
+    }
+
+    public void HandleData(byte[] data, Action<byte[]> sendData, Action<string> close)
+    {
+        var offset = 0;
+        while (offset < data.Length && _state is not State.Done and not State.Rejected)
+        {
+            switch (_state)
+            {
+                case State.Header:
+                    ReadHeader(data, ref offset, sendData, close);
+                    break;
+                case State.Content:
+                    ReadContent(data, ref offset, sendData, close);
+                    break;
+                case State.Terminator:
+                    ReadTerminator(data, ref offset, sendData, close);
+                    break;
+            }
+        }
+    }
+
+    private void ReadHeader(byte[] data, ref int offset, Action<byte[]> sendData, Action<string> close)
+    {
+        var b = data[offset++];
+        if (b == (byte)'\n')
+        {
+            var headerLine = Encoding.ASCII.GetString(_header.ToArray()).TrimEnd('\r');
+            _header.SetLength(0);
+            if (!TryParseHeader(headerLine, out _expectedBytes, out _filename))
+            {
+                _state = State.Rejected;
+                sendData(Encoding.UTF8.GetBytes("\u0002Invalid SCP upload header\n"));
+                close("SCPUploadInvalidHeader");
+                return;
+            }
+
+            if (_expectedBytes > SCPUploadHandler.MaxUploadBytes)
+            {
+                _state = State.Rejected;
+                Logger.LogYaml("scp_upload_rejected", new SCPUploadLogEntry
+                {
+                    Timestamp = DateTime.UtcNow,
+                    SessionKey = _sessionKey,
+                    Filename = _filename,
+                    Bytes = _expectedBytes,
+                    Path = "",
+                    Status = "too_large"
+                });
+                Logger.LogMsg($"SCP upload rejected before transfer: {_filename} ({_expectedBytes} bytes) exceeds {SCPUploadHandler.MaxUploadBytes} bytes from session {_sessionKey}");
+                sendData(Deny);
+                close("SCPUploadTooLarge");
+                return;
+            }
+
+            _content = new MemoryStream((int)_expectedBytes);
+            _receivedBytes = 0;
+            _state = State.Content;
+            sendData(Ack);
+            return;
+        }
+
+        _header.WriteByte(b);
+        if (_header.Length > MaxHeaderBytes)
+        {
+            _state = State.Rejected;
+            sendData(Encoding.UTF8.GetBytes("\u0002SCP upload header too long\n"));
+            close("SCPUploadHeaderTooLong");
+        }
+    }
+
+    private void ReadContent(byte[] data, ref int offset, Action<byte[]> sendData, Action<string> close)
+    {
+        var remainingData = data.Length - offset;
+        var remainingFile = _expectedBytes - _receivedBytes;
+        var toCopy = (int)Math.Min(remainingData, remainingFile);
+
+        if (toCopy > 0)
+        {
+            _content!.Write(data, offset, toCopy);
+            offset += toCopy;
+            _receivedBytes += toCopy;
+        }
+
+        if (_receivedBytes == _expectedBytes)
+            _state = State.Terminator;
+    }
+
+    private void ReadTerminator(byte[] data, ref int offset, Action<byte[]> sendData, Action<string> close)
+    {
+        var terminator = data[offset++];
+        if (terminator != 0)
+        {
+            _state = State.Rejected;
+            sendData(Encoding.UTF8.GetBytes("\u0002Invalid SCP upload terminator\n"));
+            close("SCPUploadInvalidTerminator");
+            return;
+        }
+
+        SCPUploadHandler.CaptureUpload(_sessionKey, _filename, _content!.ToArray());
+        _state = State.Done;
+        sendData(Ack);
+        close("SCPUploadCaptured");
+    }
+
+    private bool TryParseHeader(string headerLine, out long size, out string filename)
+    {
+        size = 0;
+        filename = _fallbackFilename;
+
+        if (string.IsNullOrWhiteSpace(headerLine) || headerLine[0] != 'C')
+            return false;
+
+        var parts = headerLine.Split(' ', 3, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 3 || !long.TryParse(parts[1], out size) || size < 0)
+            return false;
+
+        filename = string.IsNullOrWhiteSpace(parts[2]) ? _fallbackFilename : parts[2];
+        return true;
+    }
+
+    private enum State
+    {
+        Header,
+        Content,
+        Terminator,
+        Done,
+        Rejected
+    }
+}
+
 public class SCPUploadLogEntry
 {
     public DateTime Timestamp { get; set; }
@@ -1269,6 +1455,7 @@ public class SCPUploadLogEntry
     public long Bytes { get; set; }
     public string Sha256 { get; set; } = "";
     public string Path { get; set; } = "";
+    public string Status { get; set; } = "";
 }
 
 class FakeFileSystem

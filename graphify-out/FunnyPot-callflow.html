@@ -60,7 +60,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
 <div class="container">
 
 <h1>FunnyPot — Complete Call Flow &amp; Architecture Documentation</h1>
-<p class="subtitle">Generated from graphify knowledge graph: 2307 nodes, 2918 edges, 405 communities. Commit: 9108337</p>
+<p class="subtitle">Generated from graphify knowledge graph: 2320 nodes, 2944 edges, 410 communities. Commit: 451e955</p>
 
 <div class="nav">
     <a href="#overview">Architecture Overview</a>
@@ -70,14 +70,14 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
     <a href="#community-45">Community 45</a>
     <a href="#community-2">Community 2</a>
     <a href="#community-5">Community 5</a>
-    <a href="#community-1">Community 1</a>
     <a href="#community-68">Community 68</a>
+    <a href="#community-1">Community 1</a>
     <a href="#community-8">Community 8</a>
-    <a href="#community-4">Community 4</a>
-    <a href="#community-6">Community 6</a>
     <a href="#community-3">Community 3</a>
+    <a href="#community-6">Community 6</a>
+    <a href="#community-4">Community 4</a>
+    <a href="#community-79">Community 79</a>
     <a href="#community-49">Community 49</a>
-    <a href="#community-38">Community 38</a>
     <a href="#other">Other</a>
 </div>
 
@@ -92,44 +92,44 @@ flowchart LR
     class BUILD_GRAPH_321CBB04 module;
     CLI_SKILLS_9964CBB8("CLI &amp; Skill Installers<br/><small>5 nodes</small>")
     class CLI_SKILLS_9964CBB8 module;
-    TESTS_FIXTURES_B84B1DCC("Tests &amp; Fixtures<br/><small>590 nodes</small>")
+    TESTS_FIXTURES_B84B1DCC("Tests &amp; Fixtures<br/><small>593 nodes</small>")
     class TESTS_FIXTURES_B84B1DCC module;
     COMMUNITY_45_E4978FE7("Community 45<br/><small>35 nodes</small>")
     class COMMUNITY_45_E4978FE7 module;
     COMMUNITY_2_8C8DF7B9("Community 2<br/><small>27 nodes</small>")
     class COMMUNITY_2_8C8DF7B9 module;
-    COMMUNITY_5_2966028D("Community 5<br/><small>27 nodes</small>")
+    COMMUNITY_5_2966028D("Community 5<br/><small>26 nodes</small>")
     class COMMUNITY_5_2966028D module;
-    COMMUNITY_1_3073A0DB("Community 1<br/><small>23 nodes</small>")
-    class COMMUNITY_1_3073A0DB module;
     COMMUNITY_68_304F5ED6("Community 68<br/><small>23 nodes</small>")
     class COMMUNITY_68_304F5ED6 module;
-    COMMUNITY_8_9FC4FAC0("Community 8<br/><small>18 nodes</small>")
+    COMMUNITY_1_3073A0DB("Community 1<br/><small>21 nodes</small>")
+    class COMMUNITY_1_3073A0DB module;
+    COMMUNITY_8_9FC4FAC0("Community 8<br/><small>20 nodes</small>")
     class COMMUNITY_8_9FC4FAC0 module;
-    COMMUNITY_4_AC2DC2A9("Community 4<br/><small>16 nodes</small>")
-    class COMMUNITY_4_AC2DC2A9 module;
+    COMMUNITY_3_D8DFCEA7("Community 3<br/><small>16 nodes</small>")
+    class COMMUNITY_3_D8DFCEA7 module;
     COMMUNITY_6_7D637A07("Community 6<br/><small>16 nodes</small>")
     class COMMUNITY_6_7D637A07 module;
-    COMMUNITY_3_D8DFCEA7("Community 3<br/><small>14 nodes</small>")
-    class COMMUNITY_3_D8DFCEA7 module;
+    COMMUNITY_4_AC2DC2A9("Community 4<br/><small>15 nodes</small>")
+    class COMMUNITY_4_AC2DC2A9 module;
+    COMMUNITY_79_61362360("Community 79<br/><small>15 nodes</small>")
+    class COMMUNITY_79_61362360 module;
     COMMUNITY_49_2104F0AE("Community 49<br/><small>13 nodes</small>")
     class COMMUNITY_49_2104F0AE module;
-    COMMUNITY_38_353E518F("Community 38<br/><small>11 nodes</small>")
-    class COMMUNITY_38_353E518F module;
-    OTHER_D0941E68("Other<br/><small>34 nodes</small>")
+    OTHER_D0941E68("Other<br/><small>40 nodes</small>")
     class OTHER_D0941E68 module;
-    COMMUNITY_2_8C8DF7B9 -->|calls x7| COMMUNITY_5_2966028D
+    COMMUNITY_2_8C8DF7B9 -->|calls x6| COMMUNITY_5_2966028D
+    COMMUNITY_2_8C8DF7B9 -->|calls x5| OTHER_D0941E68
     COMMUNITY_2_8C8DF7B9 -->|method x5| COMMUNITY_3_D8DFCEA7
+    COMMUNITY_3_D8DFCEA7 -->|calls x5| COMMUNITY_68_304F5ED6
     COMMUNITY_8_9FC4FAC0 -->|calls x5| COMMUNITY_68_304F5ED6
     COMMUNITY_5_2966028D -->|calls x5| COMMUNITY_2_8C8DF7B9
-    COMMUNITY_1_3073A0DB -->|contains x4| COMMUNITY_8_9FC4FAC0
-    COMMUNITY_2_8C8DF7B9 -->|calls x4| OTHER_D0941E68
+    COMMUNITY_1_3073A0DB -->|contains x4| COMMUNITY_68_304F5ED6
+    OTHER_D0941E68 -->|calls x4| COMMUNITY_2_8C8DF7B9
     COMMUNITY_3_D8DFCEA7 -->|calls x4| COMMUNITY_2_8C8DF7B9
-    COMMUNITY_3_D8DFCEA7 -->|calls x4| COMMUNITY_4_AC2DC2A9
     COMMUNITY_3_D8DFCEA7 -->|calls x4| COMMUNITY_5_2966028D
-    COMMUNITY_38_353E518F -->|calls x4| COMMUNITY_68_304F5ED6
-    COMMUNITY_1_3073A0DB -->|contains x3| COMMUNITY_5_2966028D
-    OTHER_D0941E68 -->|calls x3| COMMUNITY_2_8C8DF7B9
+    COMMUNITY_1_3073A0DB -->|contains x3| COMMUNITY_8_9FC4FAC0
+    COMMUNITY_2_8C8DF7B9 -->|method x3| COMMUNITY_4_AC2DC2A9
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -146,19 +146,19 @@ flowchart LR
     <h4>Architecture Layers</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>Layer</th><th>Nodes</th><th>Communities</th></tr>
-      <tr><td>Graph Build</td><td>1455</td><td><code>22, 25, 41, 31, 27, 40, 7, 30, 9, 35, 36, 351, 42, 138, 63, 26, 90, 221, 51, 52, 72, 53, 54, 57, 58, 59, 46, 61, 135, 142, 65, 66, 67, 69, 71, 73, 74, 149, 177, 195, 44, 80, 81, 82, 83, 84, 100, 114, 116, 276, 284, 293, 85, 87, 88, 89, 91, 93, 94, 98, 99, 102, 115, 117, 203, 218, 223, 225, 332, 70, 96, 112, 206, 101, 103, 104, 109, 113, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 136, 137, 139, 141, 143, 144, 145, 146, 147, 148, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 178, 179, 180, 181, 182, 184, 185, 186, 188, 189, 190, 191, 192, 193, 194, 196, 197, 198, 199, 200, 201, 202, 204, 205, 207, 208, 210, 211, 212, 213, 214, 215, 216, 219, 220, 224, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 275, 282, 286, 288, 331, 333, 335, 342, 345, 347, 355, 79, 92, 97, 111, 283, 285, 290, 294, 330, 334, 336, 337, 338, 339, 340, 341, 343, 344, 348, 350, 352, 353, 354, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 395, 396, 397, 398, 399, 400, 401, 403, 406</code></td></tr><tr><td>CLI &amp; Skill Installers</td><td>5</td><td><code>274, 387</code></td></tr><tr><td>Tests &amp; Fixtures</td><td>590</td><td><code>23, 24, 28, 29, 32, 34, 37, 95, 39, 43, 47, 48, 50, 0, 55, 56, 60, 62, 183, 64, 78, 110, 118, 76, 86, 105, 106, 107, 108, 187, 140, 33, 77, 209, 217, 222, 277, 278, 279, 280, 281, 287, 289, 291, 292, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 346, 349, 356, 371, 372, 394, 402, 12, 13, 14, 15</code></td></tr><tr><td>Community 45</td><td>35</td><td><code>45</code></td></tr><tr><td>Community 2</td><td>27</td><td><code>2</code></td></tr><tr><td>Community 5</td><td>27</td><td><code>5</code></td></tr><tr><td>Community 1</td><td>23</td><td><code>1</code></td></tr><tr><td>Community 68</td><td>23</td><td><code>68</code></td></tr><tr><td>Community 8</td><td>18</td><td><code>8</code></td></tr><tr><td>Community 4</td><td>16</td><td><code>4</code></td></tr><tr><td>Community 6</td><td>16</td><td><code>6</code></td></tr><tr><td>Community 3</td><td>14</td><td><code>3</code></td></tr><tr><td>Community 49</td><td>13</td><td><code>49</code></td></tr><tr><td>Community 38</td><td>11</td><td><code>38</code></td></tr><tr><td>Other</td><td>34</td><td><code>10, 75, 119, 11, 16, 17, 18, 19, 20, 21, 388, 389, 390, 391, 392, 393</code></td></tr>
+      <tr><td>Graph Build</td><td>1455</td><td><code>22, 25, 26, 27, 40, 7, 31, 41, 9, 30, 35, 351, 36, 42, 138, 221, 72, 90, 223, 51, 52, 53, 54, 57, 58, 59, 81, 101, 46, 61, 135, 63, 65, 66, 67, 69, 71, 73, 74, 44, 80, 82, 83, 84, 100, 114, 116, 142, 276, 284, 293, 85, 87, 88, 89, 91, 93, 94, 98, 99, 102, 115, 177, 186, 203, 218, 225, 332, 70, 96, 112, 103, 104, 109, 113, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 136, 137, 139, 141, 143, 144, 145, 146, 147, 148, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 178, 179, 180, 181, 182, 184, 185, 188, 189, 190, 191, 192, 194, 195, 196, 197, 198, 199, 200, 201, 202, 204, 205, 206, 207, 208, 210, 211, 212, 213, 214, 215, 216, 219, 220, 224, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 275, 282, 286, 288, 299, 331, 333, 335, 342, 345, 347, 355, 356, 359, 97, 111, 283, 285, 290, 294, 330, 334, 336, 337, 338, 339, 340, 341, 343, 344, 348, 350, 352, 353, 354, 357, 358, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 395, 396, 397, 398, 399, 400, 403, 406, 408, 409</code></td></tr><tr><td>CLI &amp; Skill Installers</td><td>5</td><td><code>274, 387</code></td></tr><tr><td>Tests &amp; Fixtures</td><td>593</td><td><code>23, 28, 32, 34, 95, 39, 43, 29, 37, 118, 24, 47, 48, 50, 92, 0, 55, 56, 78, 60, 62, 183, 64, 117, 140, 110, 76, 86, 105, 106, 107, 108, 149, 187, 33, 77, 193, 401, 404, 209, 217, 222, 277, 278, 279, 280, 281, 287, 289, 291, 292, 295, 296, 297, 298, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 346, 349, 371, 372, 394, 402, 405, 407, 12, 13, 14, 15</code></td></tr><tr><td>Community 45</td><td>35</td><td><code>45</code></td></tr><tr><td>Community 2</td><td>27</td><td><code>2</code></td></tr><tr><td>Community 5</td><td>26</td><td><code>5</code></td></tr><tr><td>Community 68</td><td>23</td><td><code>68</code></td></tr><tr><td>Community 1</td><td>21</td><td><code>1</code></td></tr><tr><td>Community 8</td><td>20</td><td><code>8</code></td></tr><tr><td>Community 3</td><td>16</td><td><code>3</code></td></tr><tr><td>Community 6</td><td>16</td><td><code>6</code></td></tr><tr><td>Community 4</td><td>15</td><td><code>4</code></td></tr><tr><td>Community 79</td><td>15</td><td><code>79</code></td></tr><tr><td>Community 49</td><td>13</td><td><code>49</code></td></tr><tr><td>Other</td><td>40</td><td><code>10, 75, 38, 119, 11, 16, 17, 18, 19, 20, 21, 388, 389, 390, 391, 392, 393</code></td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Core Flow</h4>
-    <div class="arrow-chain">Graph Build -&gt; Tests &amp; Fixtures -&gt; CLI &amp; Skill Installers -&gt; Community 45 -&gt; Community 2 -&gt; Community 5 -&gt; Community 4</div>
+    <div class="arrow-chain">Graph Build -&gt; Tests &amp; Fixtures -&gt; CLI &amp; Skill Installers -&gt; Community 45 -&gt; Community 2 -&gt; Community 5 -&gt; Community 68</div>
   </div>
 </div>
 <div class="grid">
   <div class="card">
     <h4>Graph Report Highlights</h4>
     <ul>
-      <li>2307 nodes · 2918 edges · 405 communities (279 shown, 126 thin omitted)</li>
+      <li>2320 nodes · 2944 edges · 410 communities (283 shown, 127 thin omitted)</li>
       <li>Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS</li>
       <li>Token cost: 0 input · 0 output</li>
       <li>1. `runtime` - 162 edges</li>
@@ -622,12 +622,12 @@ flowchart LR
 
 <!-- ====== 4. Tests & Fixtures ====== -->
 <h2 id="tests-fixtures">4. Tests &amp; Fixtures</h2>
-<p>Tests &amp; Fixtures groups implementation around funnypottests, net80, release, bin, mostly in Release/net8.0/FunnyPot.Tests.deps.json, FunnyPot.Tests/obj/FunnyPot.Tests.csproj.nuget.dgspec.json, FunnyPot.Tests/UnitTests.cs. This section covers 590 nodes and 683 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Tests &amp; Fixtures groups implementation around funnypottests, net80, release, bin, mostly in Release/net8.0/FunnyPot.Tests.deps.json, FunnyPot.Tests/UnitTests.cs, FunnyPot.Tests/obj/FunnyPot.Tests.csproj.nuget.dgspec.json. This section covers 593 nodes and 686 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Tests &amp; Fixtures (590 nodes, 683 edges)
+    %% Section: Tests &amp; Fixtures (593 nodes, 686 edges)
     funnypot_tests_unittests_commandresolvertests_548a5a17("CommandResolverTests<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
     funnypot_tests_unittests_inputvalidatortests_e1a69f58("InputValidatorTests<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
     funnypot_tests_unittests_dataharvestertests_0bb85aeb("DataHarvesterTests<br/><small>FunnyPot.Tests/UnitTests.cs</small>")
@@ -657,7 +657,7 @@ flowchart LR
     funnypot_tests_unittests_inputvalidatortests_e1a69f58 -->|method| funnypot_tests_unittests_inputvalidatortests_val_40d3c9e7
     funnypot_tests_unittests_inputvalidatortests_e1a69f58 -->|method| funnypot_tests_unittests_inputvalidatortests_val_3ba49c27
     funnypot_tests_unittests_inputvalidatortests_e1a69f58 -->|method| funnypot_tests_unittests_inputvalidatortests_val_914e8433
-    %% Omitted for readability: 572 nodes, 0 edges
+    %% Omitted for readability: 575 nodes, 0 edges
     class funnypot_tests_unittests_commandresolvertests_548a5a17 test;
     class funnypot_tests_unittests_inputvalidatortests_e1a69f58 test;
     class funnypot_tests_unittests_dataharvestertests_0bb85aeb test;
@@ -945,8 +945,8 @@ flowchart LR
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>File</th><th>Coverage</th></tr>
       <tr><td><code>Release/net8.0/FunnyPot.Tests.deps.json</code></td><td>413 nodes</td></tr>
+<tr><td><code>FunnyPot.Tests/UnitTests.cs</code></td><td>73 nodes</td></tr>
 <tr><td><code>FunnyPot.Tests/obj/FunnyPot.Tests.csproj.nuget.dgspec.json</code></td><td>72 nodes</td></tr>
-<tr><td><code>FunnyPot.Tests/UnitTests.cs</code></td><td>70 nodes</td></tr>
 <tr><td><code>FunnyPot.Tests/obj/project.assets.json</code></td><td>14 nodes</td></tr>
 <tr><td><code>Release/net8.0/FunnyPot.Tests.runtimeconfig.json</code></td><td>9 nodes</td></tr>
 <tr><td><code>Release/net8.0/FunnyPot.Tests.sourcelink.json</code></td><td>5 nodes</td></tr>
@@ -956,7 +956,7 @@ flowchart LR
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x624, method x59. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x625, method x61. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
@@ -1626,31 +1626,30 @@ flowchart LR
 
 <!-- ====== 7. Community 5 ====== -->
 <h2 id="community-5">7. Community 5</h2>
-<p>Community 5 groups implementation around funnypot, programcs, getremoteattemptkey, capturepayloadmetadataasync, mostly in FunnyPot/Program.cs. This section covers 27 nodes and 50 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Community 5 groups implementation around funnypot, programcs, capturepayloadmetadataasync, logger, mostly in FunnyPot/Program.cs. This section covers 26 nodes and 49 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Community 5 (27 nodes, 50 edges)
+    %% Section: Community 5 (26 nodes, 49 edges)
     funnypot_program_logger_b0696d9a("Logger<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_logger_logyaml_f08d7238("LogYaml()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_logger_getlogfilepath_0cd11470("GetLogFilePath()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_logger_enrichharvestwithmetricr_cf696712("EnrichHarvestWithMetricResponses()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_dataharvester_capturepayloadmet_39e517e0("CapturePayloadMetadataAsync()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_program_getremoteattemptkey_4be16093("GetRemoteAttemptKey()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_logger_trygetremoteip_9d7f5344("TryGetRemoteIp()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_logger_isprivateendpoint_843b92b2("IsPrivateEndpoint()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_logger_trygetsessionkey_43b9fa66("TryGetSessionKey()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_logger_ispublicationboundaryeve_ad2f3fbc("IsPublicationBoundaryEvent()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_logger_shouldrequestdatapush_4190fd1b("ShouldRequestDataPush()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_logger_requestdatapush_7d8d004b("RequestDataPush()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_logger_isprivateendpoint_843b92b2("IsPrivateEndpoint()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_logger_logharvestunsafe_0a8cb186("LogHarvestUnsafe()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_logger_updateharvestsummaryunsa_bd872dc3("UpdateHarvestSummaryUnsafe()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_logger_applyharvestsummaryevent_d38c510e("ApplyHarvestSummaryEvent()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_logger_trygetremoteip_9d7f5344("TryGetRemoteIp()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_logger_getsessionloguniquepart_003a9ffd("GetSessionLogUniquePart()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_logger_logmetric_2a9179e4("LogMetric()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_logger_pushtogit_a27324d6("PushToGit()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_program_getremoteattemptkey_4be16093 -->|calls| funnypot_program_logger_trygetremoteip_9d7f5344
+    funnypot_program_logger_loadmetricresponses_9061b653("LoadMetricResponses()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_dataharvester_capturepayloadmet_39e517e0 -->|calls| funnypot_program_logger_logyaml_f08d7238
     funnypot_program_logger_b0696d9a -->|method| funnypot_program_logger_logyaml_f08d7238
     funnypot_program_logger_b0696d9a -->|method| funnypot_program_logger_trygetsessionkey_43b9fa66
@@ -1667,6 +1666,7 @@ flowchart LR
     funnypot_program_logger_b0696d9a -->|method| funnypot_program_logger_logmetric_2a9179e4
     funnypot_program_logger_b0696d9a -->|method| funnypot_program_logger_pushtogit_a27324d6
     funnypot_program_logger_b0696d9a -->|method| funnypot_program_logger_enrichharvestwithmetricr_cf696712
+    funnypot_program_logger_b0696d9a -->|method| funnypot_program_logger_loadmetricresponses_9061b653
     funnypot_program_logger_logyaml_f08d7238 -->|calls| funnypot_program_logger_isprivateendpoint_843b92b2
     funnypot_program_logger_logyaml_f08d7238 -->|calls| funnypot_program_logger_trygetsessionkey_43b9fa66
     funnypot_program_logger_logyaml_f08d7238 -->|calls| funnypot_program_logger_logharvestunsafe_0a8cb186
@@ -1674,25 +1674,25 @@ flowchart LR
     funnypot_program_logger_logyaml_f08d7238 -->|calls| funnypot_program_logger_ispublicationboundaryeve_ad2f3fbc
     funnypot_program_logger_shouldrequestdatapush_4190fd1b -->|calls| funnypot_program_logger_requestdatapush_7d8d004b
     funnypot_program_logger_requestdatapush_7d8d004b -->|calls| funnypot_program_logger_pushtogit_a27324d6
-    %% Omitted for readability: 9 nodes, 9 edges
+    %% Omitted for readability: 8 nodes, 10 edges
     class funnypot_program_logger_b0696d9a klass;
     class funnypot_program_logger_logyaml_f08d7238 function;
     class funnypot_program_logger_getlogfilepath_0cd11470 function;
     class funnypot_program_logger_enrichharvestwithmetricr_cf696712 function;
     class funnypot_program_dataharvester_capturepayloadmet_39e517e0 async;
-    class funnypot_program_program_getremoteattemptkey_4be16093 function;
-    class funnypot_program_logger_trygetremoteip_9d7f5344 function;
+    class funnypot_program_logger_isprivateendpoint_843b92b2 api;
     class funnypot_program_logger_trygetsessionkey_43b9fa66 function;
     class funnypot_program_logger_ispublicationboundaryeve_ad2f3fbc function;
     class funnypot_program_logger_shouldrequestdatapush_4190fd1b function;
     class funnypot_program_logger_requestdatapush_7d8d004b function;
-    class funnypot_program_logger_isprivateendpoint_843b92b2 api;
     class funnypot_program_logger_logharvestunsafe_0a8cb186 function;
     class funnypot_program_logger_updateharvestsummaryunsa_bd872dc3 function;
     class funnypot_program_logger_applyharvestsummaryevent_d38c510e function;
+    class funnypot_program_logger_trygetremoteip_9d7f5344 function;
     class funnypot_program_logger_getsessionloguniquepart_003a9ffd function;
     class funnypot_program_logger_logmetric_2a9179e4 function;
     class funnypot_program_logger_pushtogit_a27324d6 function;
+    class funnypot_program_logger_loadmetricresponses_9061b653 function;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -1716,14 +1716,6 @@ flowchart LR
 </tr>
 <tr>
   <td>1</td>
-  <td><code>.GetRemoteAttemptKey()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>TryGetRemoteIp()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>.GetRemoteAttemptKey() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>2</td>
   <td><code>.CapturePayloadMetadataAsync()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-async">Async</span></td>
   <td>External entry / no inbound edge</td>
@@ -1731,7 +1723,7 @@ flowchart LR
   <td>.CapturePayloadMetadataAsync() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>3</td>
+  <td>2</td>
   <td><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -1739,7 +1731,7 @@ flowchart LR
   <td>Logger node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>4</td>
+  <td>3</td>
   <td><code>DateTime</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -1747,7 +1739,7 @@ flowchart LR
   <td>DateTime node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>5</td>
+  <td>4</td>
   <td><code>TimeSpan</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -1755,7 +1747,7 @@ flowchart LR
   <td>TimeSpan node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>6</td>
+  <td>5</td>
   <td><code>Lazy</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -1763,7 +1755,7 @@ flowchart LR
   <td>Lazy node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>7</td>
+  <td>6</td>
   <td><code>.LogYaml()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>CapturePayloadMetadataAsync()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1771,7 +1763,7 @@ flowchart LR
   <td>.LogYaml() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>8</td>
+  <td>7</td>
   <td><code>.TryGetSessionKey()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>LogYaml()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1779,7 +1771,7 @@ flowchart LR
   <td>.TryGetSessionKey() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>9</td>
+  <td>8</td>
   <td><code>.IsPublicationBoundaryEvent()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>LogYaml()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1787,7 +1779,7 @@ flowchart LR
   <td>.IsPublicationBoundaryEvent() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>10</td>
+  <td>9</td>
   <td><code>.ShouldRequestDataPush()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1795,7 +1787,7 @@ flowchart LR
   <td>.ShouldRequestDataPush() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>11</td>
+  <td>10</td>
   <td><code>.RequestDataPush()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>LogYaml()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ShouldRequestDataPush()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1803,7 +1795,7 @@ flowchart LR
   <td>.RequestDataPush() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>12</td>
+  <td>11</td>
   <td><code>.IsPrivateEndpoint()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-endpoint">API</span></td>
   <td><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>LogYaml()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1811,7 +1803,7 @@ flowchart LR
   <td>.IsPrivateEndpoint() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>13</td>
+  <td>12</td>
   <td><code>.LogHarvestUnsafe()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>IsPrivateEndpoint()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>LogYaml()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1819,7 +1811,7 @@ flowchart LR
   <td>.LogHarvestUnsafe() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>14</td>
+  <td>13</td>
   <td><code>.UpdateHarvestSummaryUnsafe()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>LogHarvestUnsafe()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1827,7 +1819,7 @@ flowchart LR
   <td>.UpdateHarvestSummaryUnsafe() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>15</td>
+  <td>14</td>
   <td><code>.ApplyHarvestSummaryEvent()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>UpdateHarvestSummaryUnsafe()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1835,15 +1827,15 @@ flowchart LR
   <td>.ApplyHarvestSummaryEvent() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>16</td>
+  <td>15</td>
   <td><code>.TryGetRemoteIp()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>ApplyHarvestSummaryEvent()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>GetRemoteAttemptKey()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>IsPrivateEndpoint()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br>+1 more</td>
+  <td><code>ApplyHarvestSummaryEvent()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>IsPrivateEndpoint()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td>No direct outbound edge</td>
   <td>.TryGetRemoteIp() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>17</td>
+  <td>16</td>
   <td><code>.GetLogFilePath()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1851,7 +1843,7 @@ flowchart LR
   <td>.GetLogFilePath() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>18</td>
+  <td>17</td>
   <td><code>.GetSessionLogUniquePart()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>GetLogFilePath()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1859,7 +1851,7 @@ flowchart LR
   <td>.GetSessionLogUniquePart() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>19</td>
+  <td>18</td>
   <td><code>.LogMetric()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>GetLogFilePath()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1867,7 +1859,7 @@ flowchart LR
   <td>.LogMetric() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>20</td>
+  <td>19</td>
   <td><code>.PushToGit()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>GetLogFilePath()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>RequestDataPush()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1875,7 +1867,7 @@ flowchart LR
   <td>Turns a local path or remote repository into analysis context.</td>
 </tr>
 <tr>
-  <td>21</td>
+  <td>20</td>
   <td><code>.EnrichHarvestWithMetricResponses()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>PushToGit()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1883,7 +1875,7 @@ flowchart LR
   <td>.EnrichHarvestWithMetricResponses() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>22</td>
+  <td>21</td>
   <td><code>.LoadMetricResponses()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>EnrichHarvestWithMetricResponses()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1891,7 +1883,7 @@ flowchart LR
   <td>.LoadMetricResponses() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>23</td>
+  <td>22</td>
   <td><code>.MetricResponseKey()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>EnrichHarvestWithMetricResponses()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>LoadMetricResponses()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1899,7 +1891,7 @@ flowchart LR
   <td>.MetricResponseKey() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>24</td>
+  <td>23</td>
   <td><code>.PreparePublicationRepository()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>EnrichHarvestWithMetricResponses()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1907,7 +1899,7 @@ flowchart LR
   <td>.PreparePublicationRepository() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>25</td>
+  <td>24</td>
   <td><code>.SyncPublicationBranch()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>PreparePublicationRepository()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1915,7 +1907,7 @@ flowchart LR
   <td>.SyncPublicationBranch() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>26</td>
+  <td>25</td>
   <td><code>.EnsurePublicationRepository()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>PreparePublicationRepository()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>PushToGit()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1923,7 +1915,7 @@ flowchart LR
   <td>.EnsurePublicationRepository() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>27</td>
+  <td>26</td>
   <td><code>.GetStaticDashboardRemoteUrl()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>EnsurePublicationRepository()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Logger</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -1937,287 +1929,18 @@ flowchart LR
     <h4>Key Files</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>FunnyPot/Program.cs</code></td><td>27 nodes</td></tr>
+      <tr><td><code>FunnyPot/Program.cs</code></td><td>26 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: calls x26, method x21, references x3. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: calls x25, method x21, references x3. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
 
-<!-- ====== 8. Community 1 ====== -->
-<h2 id="community-1">8. Community 1</h2>
-<p>Community 1 groups implementation around programcs, funnypot, string, object, mostly in FunnyPot/Program.cs. This section covers 23 nodes and 23 internal edges; the diagram shows only representative relationships to stay readable.</p>
-
-<div class="mermaid">
-%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
-flowchart LR
-    %% Section: Community 1 (23 nodes, 23 edges)
-    funnypot_program_scpuploadhandler_a2111ccd("SCPUploadHandler<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_scpuploadhandler_ensureuploaddi_20374dcd("EnsureUploadDir()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_scpuploadhandler_captureupload_cafdae70("CaptureUpload()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_authattemptlogentry_d40a24fc("AuthAttemptLogEntry<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_bannerslot_c57daad5("BannerSlot<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_chatmessage_47cfd94d("ChatMessage<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_chatrequestdata_169a93cb("ChatRequestData<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_commandlogentry_468b6b57("CommandLogEntry<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_commandresultlogentry_4857043f("CommandResultLogEntry<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_dhscommandanalysis_9c63f765("DhsCommandAnalysis<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_globalstats_bf0b0c32("GlobalStats<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_harvestsummary_dcf99ff2("HarvestSummary<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_harvestedcredential_992dc727("HarvestedCredential<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_harvestedevent_bd91302b("HarvestedEvent<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_infrastructureprofile_ffac131c("InfrastructureProfile<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_payloadcapturelogentry_02e8a9ba("PayloadCaptureLogEntry<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_cs_a5d7913e("Program.cs")
-    funnypot_program_ratelimitinfo_b6617965("RateLimitInfo<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_scpuploadhandler_a2111ccd -->|method| funnypot_program_scpuploadhandler_ensureuploaddi_20374dcd
-    funnypot_program_scpuploadhandler_a2111ccd -->|method| funnypot_program_scpuploadhandler_captureupload_cafdae70
-    %% Omitted for readability: 5 nodes, 0 edges
-    class funnypot_program_scpuploadhandler_a2111ccd klass;
-    class funnypot_program_scpuploadhandler_ensureuploaddi_20374dcd function;
-    class funnypot_program_scpuploadhandler_captureupload_cafdae70 function;
-    class funnypot_program_authattemptlogentry_d40a24fc klass;
-    class funnypot_program_bannerslot_c57daad5 klass;
-    class funnypot_program_chatmessage_47cfd94d klass;
-    class funnypot_program_chatrequestdata_169a93cb klass;
-    class funnypot_program_commandlogentry_468b6b57 entry;
-    class funnypot_program_commandresultlogentry_4857043f entry;
-    class funnypot_program_dhscommandanalysis_9c63f765 entry;
-    class funnypot_program_globalstats_bf0b0c32 klass;
-    class funnypot_program_harvestsummary_dcf99ff2 klass;
-    class funnypot_program_harvestedcredential_992dc727 klass;
-    class funnypot_program_harvestedevent_bd91302b klass;
-    class funnypot_program_infrastructureprofile_ffac131c klass;
-    class funnypot_program_payloadcapturelogentry_02e8a9ba klass;
-    class funnypot_program_cs_a5d7913e klass;
-    class funnypot_program_ratelimitinfo_b6617965 klass;
-    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
-    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
-    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
-    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
-    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
-    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
-    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
-    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
-    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
-</div>
-
-<h3>Call Details</h3>
-<table class="call-table">
-<tr>
-  <th style="width:5%">#</th>
-  <th style="width:28%">Node</th>
-  <th style="width:10%">Type</th>
-  <th style="width:17%">Caller</th>
-  <th style="width:20%">Callees</th>
-  <th style="width:20%">Description</th>
-</tr>
-<tr>
-  <td>1</td>
-  <td><code>Program.cs</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Program.cs node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>2</td>
-  <td><code>string</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>string node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>3</td>
-  <td><code>object</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>object node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>4</td>
-  <td><code>HarvestedCredential</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>HarvestedCredential node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>5</td>
-  <td><code>AuthAttemptLogEntry</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>AuthAttemptLogEntry node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>6</td>
-  <td><code>SessionLogEntry</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>SessionLogEntry node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>7</td>
-  <td><code>CommandLogEntry</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-cmd">Entry</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>CommandLogEntry node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>8</td>
-  <td><code>CommandResultLogEntry</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-cmd">Entry</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>CommandResultLogEntry node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>9</td>
-  <td><code>PayloadCaptureLogEntry</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>PayloadCaptureLogEntry node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>10</td>
-  <td><code>HarvestedEvent</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>HarvestedEvent node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>11</td>
-  <td><code>HarvestSummary</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>HarvestSummary node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>12</td>
-  <td><code>DhsCommandAnalysis</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-cmd">Entry</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Orchestrates analysis and returns structured documentation data.</td>
-</tr>
-<tr>
-  <td>13</td>
-  <td><code>ChatRequestData</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
-</tr>
-<tr>
-  <td>14</td>
-  <td><code>ChatMessage</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
-</tr>
-<tr>
-  <td>15</td>
-  <td><code>GlobalStats</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>GlobalStats node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>16</td>
-  <td><code>InfrastructureProfile</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>InfrastructureProfile node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>17</td>
-  <td><code>SCPUploadHandler</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>CaptureUpload()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>EnsureUploadDir()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>SCPUploadHandler node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>18</td>
-  <td><code>.EnsureUploadDir()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>SCPUploadHandler</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.EnsureUploadDir() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>19</td>
-  <td><code>.CaptureUpload()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>SCPUploadHandler</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.CaptureUpload() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>20</td>
-  <td><code>SCPUploadLogEntry</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>SCPUploadLogEntry node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>21</td>
-  <td><code>RateLimitInfo</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>RateLimitInfo node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>22</td>
-  <td><code>StaticResponseEntry</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>StaticResponseEntry node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>23</td>
-  <td><code>BannerSlot</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>BannerSlot node in FunnyPot/Program.cs.</td>
-</tr>
-</table>
-
-<div class="grid">
-  <div class="card">
-    <h4>Key Files</h4>
-    <table style="width:100%;font-size:0.85rem;">
-      <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>FunnyPot/Program.cs</code></td><td>23 nodes</td></tr>
-    </table>
-  </div>
-  <div class="card">
-    <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x18, references x3, method x2. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
-  </div>
-</div>
-<hr>
-
-<!-- ====== 9. Community 68 ====== -->
-<h2 id="community-68">9. Community 68</h2>
+<!-- ====== 8. Community 68 ====== -->
+<h2 id="community-68">8. Community 68</h2>
 <p>Community 68 groups implementation around funnypot, programcs, scpdetector, regex, mostly in FunnyPot/Program.cs. This section covers 23 nodes and 47 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -2507,14 +2230,270 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 10. Community 8 ====== -->
-<h2 id="community-8">10. Community 8</h2>
-<p>Community 8 groups implementation around funnypot, programcs, fakefilesystem, dictionary, mostly in FunnyPot/Program.cs. This section covers 18 nodes and 26 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<!-- ====== 9. Community 1 ====== -->
+<h2 id="community-1">9. Community 1</h2>
+<p>Community 1 groups implementation around programcs, funnypot, harvestedcredential, authattemptlogentry, mostly in FunnyPot/Program.cs. This section covers 21 nodes and 22 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Community 8 (18 nodes, 26 edges)
+    %% Section: Community 1 (21 nodes, 22 edges)
+    funnypot_program_inputvalidator_dadda68a("InputValidator<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_inputvalidator_validate_05e69817("Validate()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_inputvalidator_containsnullbyte_83d0efaa("ContainsNullBytes()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_inputvalidator_isrepetitivenois_7c4fae4d("IsRepetitiveNoise()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_authattemptlogentry_d40a24fc("AuthAttemptLogEntry<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_bannerslot_c57daad5("BannerSlot<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_chatmessage_47cfd94d("ChatMessage<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_chatrequestdata_169a93cb("ChatRequestData<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_commandlogentry_468b6b57("CommandLogEntry<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_commandresultlogentry_4857043f("CommandResultLogEntry<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_dhscommandanalysis_9c63f765("DhsCommandAnalysis<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_globalstats_bf0b0c32("GlobalStats<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_harvestsummary_dcf99ff2("HarvestSummary<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_harvestedcredential_992dc727("HarvestedCredential<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_harvestedevent_bd91302b("HarvestedEvent<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_infrastructureprofile_ffac131c("InfrastructureProfile<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_payloadcapturelogentry_02e8a9ba("PayloadCaptureLogEntry<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_cs_a5d7913e("Program.cs")
+    funnypot_program_inputvalidator_dadda68a -->|method| funnypot_program_inputvalidator_validate_05e69817
+    funnypot_program_inputvalidator_dadda68a -->|method| funnypot_program_inputvalidator_containsnullbyte_83d0efaa
+    funnypot_program_inputvalidator_dadda68a -->|method| funnypot_program_inputvalidator_isrepetitivenois_7c4fae4d
+    funnypot_program_inputvalidator_validate_05e69817 -->|calls| funnypot_program_inputvalidator_containsnullbyte_83d0efaa
+    funnypot_program_inputvalidator_validate_05e69817 -->|calls| funnypot_program_inputvalidator_isrepetitivenois_7c4fae4d
+    %% Omitted for readability: 3 nodes, 0 edges
+    class funnypot_program_inputvalidator_dadda68a klass;
+    class funnypot_program_inputvalidator_validate_05e69817 function;
+    class funnypot_program_inputvalidator_containsnullbyte_83d0efaa function;
+    class funnypot_program_inputvalidator_isrepetitivenois_7c4fae4d function;
+    class funnypot_program_authattemptlogentry_d40a24fc klass;
+    class funnypot_program_bannerslot_c57daad5 klass;
+    class funnypot_program_chatmessage_47cfd94d klass;
+    class funnypot_program_chatrequestdata_169a93cb klass;
+    class funnypot_program_commandlogentry_468b6b57 entry;
+    class funnypot_program_commandresultlogentry_4857043f entry;
+    class funnypot_program_dhscommandanalysis_9c63f765 entry;
+    class funnypot_program_globalstats_bf0b0c32 klass;
+    class funnypot_program_harvestsummary_dcf99ff2 klass;
+    class funnypot_program_harvestedcredential_992dc727 klass;
+    class funnypot_program_harvestedevent_bd91302b klass;
+    class funnypot_program_infrastructureprofile_ffac131c klass;
+    class funnypot_program_payloadcapturelogentry_02e8a9ba klass;
+    class funnypot_program_cs_a5d7913e klass;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>Program.cs</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Program.cs node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>HarvestedCredential</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>HarvestedCredential node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>AuthAttemptLogEntry</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>AuthAttemptLogEntry node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>SessionLogEntry</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>SessionLogEntry node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>CommandLogEntry</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-cmd">Entry</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>CommandLogEntry node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>CommandResultLogEntry</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-cmd">Entry</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>CommandResultLogEntry node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>PayloadCaptureLogEntry</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>PayloadCaptureLogEntry node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>HarvestedEvent</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>HarvestedEvent node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>HarvestSummary</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>HarvestSummary node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>DhsCommandAnalysis</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-cmd">Entry</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Orchestrates analysis and returns structured documentation data.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>ChatRequestData</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>ChatMessage</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>GlobalStats</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>GlobalStats node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>InfrastructureProfile</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>InfrastructureProfile node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>InputValidator</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>ContainsNullBytes()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>IsRepetitiveNoise()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Validate()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>InputValidator node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>.Validate()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>InputValidator</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>ContainsNullBytes()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>IsRepetitiveNoise()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>.Validate() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>17</td>
+  <td><code>.ContainsNullBytes()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>InputValidator</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Validate()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.ContainsNullBytes() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>18</td>
+  <td><code>.IsRepetitiveNoise()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>InputValidator</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Validate()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.IsRepetitiveNoise() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>19</td>
+  <td><code>SCPUploadLogEntry</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>SCPUploadLogEntry node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>20</td>
+  <td><code>StaticResponseEntry</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>StaticResponseEntry node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>21</td>
+  <td><code>BannerSlot</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>BannerSlot node in FunnyPot/Program.cs.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>FunnyPot/Program.cs</code></td><td>21 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x17, method x3, calls x2. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 10. Community 8 ====== -->
+<h2 id="community-8">10. Community 8</h2>
+<p>Community 8 groups implementation around funnypot, programcs, object, fakefilesystem, mostly in FunnyPot/Program.cs. This section covers 20 nodes and 29 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Community 8 (20 nodes, 29 edges)
     funnypot_program_fakefilesystem_07431b96("FakeFileSystem<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_fakefilesystem_resolvepath_86839c54("ResolvePath()<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_staticresponsestore_a8571b5d("StaticResponseStore<br/><small>FunnyPot/Program.cs</small>")
@@ -2532,7 +2511,7 @@ flowchart LR
     funnypot_program_staticresponsestore_isknowncomm_cb636a16("IsKnownCommand()<br/><small>FunnyPot/Program.cs</small>")
     dictionary_f18bfb74("Dictionary<br/><small>FunnyPot/Program.cs</small>")
     jsonserializeroptions_03759767("JsonSerializerOptions<br/><small>FunnyPot/Program.cs</small>")
-    bool_5039d155("bool<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_ratelimitinfo_b6617965("RateLimitInfo<br/><small>FunnyPot/Program.cs</small>")
     funnypot_program_fakefilesystem_07431b96 -->|method| funnypot_program_fakefilesystem_getorcreate_07a04033
     funnypot_program_fakefilesystem_07431b96 -->|method| funnypot_program_fakefilesystem_remove_5d666ee0
     funnypot_program_fakefilesystem_07431b96 -->|method| funnypot_program_fakefilesystem_resolvepath_86839c54
@@ -2555,6 +2534,7 @@ flowchart LR
     funnypot_program_staticresponsestore_ensureloade_c623d607 -->|calls| funnypot_program_staticresponsestore_loadrespons_f15ca469
     funnypot_program_staticresponsestore_ensureloade_c623d607 -->|calls| funnypot_program_staticresponsestore_isknowncomm_cb636a16
     funnypot_program_staticresponsestore_loadrespons_f15ca469 -->|calls| funnypot_program_staticresponsestore_resolvedata_b952a7ac
+    %% Omitted for readability: 2 nodes, 0 edges
     class funnypot_program_fakefilesystem_07431b96 klass;
     class funnypot_program_fakefilesystem_resolvepath_86839c54 function;
     class funnypot_program_staticresponsestore_a8571b5d ui;
@@ -2572,7 +2552,7 @@ flowchart LR
     class funnypot_program_staticresponsestore_isknowncomm_cb636a16 entry;
     class dictionary_f18bfb74 klass;
     class jsonserializeroptions_03759767 klass;
-    class bool_5039d155 function;
+    class funnypot_program_ratelimitinfo_b6617965 klass;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -2596,6 +2576,14 @@ flowchart LR
 </tr>
 <tr>
   <td>1</td>
+  <td><code>object</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>object node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>2</td>
   <td><code>FakeFileSystem</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -2603,7 +2591,7 @@ flowchart LR
   <td>FakeFileSystem node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>2</td>
+  <td>3</td>
   <td><code>Dictionary</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -2611,7 +2599,7 @@ flowchart LR
   <td>Dictionary node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>3</td>
+  <td>4</td>
   <td><code>.GetOrCreate()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>FakeFileSystem</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -2619,7 +2607,7 @@ flowchart LR
   <td>.GetOrCreate() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>4</td>
+  <td>5</td>
   <td><code>.Remove()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>FakeFileSystem</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -2627,7 +2615,7 @@ flowchart LR
   <td>.Remove() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>5</td>
+  <td>6</td>
   <td><code>.ResolvePath()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>FakeFileSystem</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -2635,7 +2623,7 @@ flowchart LR
   <td>.ResolvePath() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>6</td>
+  <td>7</td>
   <td><code>.NormalizePath()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>FakeFileSystem</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ResolvePath()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -2643,7 +2631,7 @@ flowchart LR
   <td>.NormalizePath() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>7</td>
+  <td>8</td>
   <td><code>.ChangeDirectory()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>FakeFileSystem</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ResolvePath()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -2651,7 +2639,7 @@ flowchart LR
   <td>.ChangeDirectory() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>8</td>
+  <td>9</td>
   <td><code>.IsValidDirectory()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>FakeFileSystem</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ResolvePath()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -2659,7 +2647,7 @@ flowchart LR
   <td>.IsValidDirectory() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>9</td>
+  <td>10</td>
   <td><code>.ListDirectory()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>FakeFileSystem</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ResolvePath()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -2667,7 +2655,7 @@ flowchart LR
   <td>.ListDirectory() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>10</td>
+  <td>11</td>
   <td><code>.FileExists()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>FakeFileSystem</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ResolvePath()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -2675,7 +2663,7 @@ flowchart LR
   <td>.FileExists() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>11</td>
+  <td>12</td>
   <td><code>.ReadFile()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>FakeFileSystem</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ResolvePath()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -2683,7 +2671,15 @@ flowchart LR
   <td>.ReadFile() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>12</td>
+  <td>13</td>
+  <td><code>RateLimitInfo</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>RateLimitInfo node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>14</td>
   <td><code>StaticResponseStore</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
@@ -2691,7 +2687,7 @@ flowchart LR
   <td>StaticResponseStore node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>13</td>
+  <td>15</td>
   <td><code>JsonSerializerOptions</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -2699,7 +2695,7 @@ flowchart LR
   <td>JsonSerializerOptions node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>14</td>
+  <td>16</td>
   <td><code>bool</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -2707,7 +2703,7 @@ flowchart LR
   <td>bool node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>15</td>
+  <td>17</td>
   <td><code>.EnsureLoaded()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>StaticResponseStore</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -2715,7 +2711,7 @@ flowchart LR
   <td>.EnsureLoaded() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>16</td>
+  <td>18</td>
   <td><code>.LoadResponses()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>EnsureLoaded()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>StaticResponseStore</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -2723,7 +2719,7 @@ flowchart LR
   <td>.LoadResponses() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>17</td>
+  <td>19</td>
   <td><code>.ResolveDataPath()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>LoadResponses()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>StaticResponseStore</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -2731,7 +2727,7 @@ flowchart LR
   <td>.ResolveDataPath() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>18</td>
+  <td>20</td>
   <td><code>.IsKnownCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-cmd">Entry</span></td>
   <td><code>EnsureLoaded()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>StaticResponseStore</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -2745,81 +2741,74 @@ flowchart LR
     <h4>Key Files</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>FunnyPot/Program.cs</code></td><td>18 nodes</td></tr>
+      <tr><td><code>FunnyPot/Program.cs</code></td><td>20 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: method x13, calls x9, references x4. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: method x13, calls x9, references x7. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
 
-<!-- ====== 11. Community 4 ====== -->
-<h2 id="community-4">11. Community 4</h2>
-<p>Community 4 groups implementation around funnypot, programcs, setupuserauth, dataharvester, mostly in FunnyPot/Program.cs. This section covers 16 nodes and 26 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<!-- ====== 11. Community 3 ====== -->
+<h2 id="community-3">11. Community 3</h2>
+<p>Community 3 groups implementation around funnypot, programcs, setupshell, buildsystemprompt, mostly in FunnyPot/Program.cs. This section covers 16 nodes and 19 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Community 4 (16 nodes, 26 edges)
-    funnypot_program_dataharvester_8273647d("DataHarvester<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_dataharvester_analyzecommand_3960e4c4("AnalyzeCommand()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_program_setupuserauth_603e3cb8("SetupUserauth()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_dataharvester_isfailureresponse_24584d23("IsFailureResponse()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_dataharvester_categorizeinfrast_be5bf551("CategorizeInfrastructure()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_dataharvester_levenshteindistan_0756b87c("LevenshteinDistance()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_dataharvester_calculateentropy_d53d128d("CalculateEntropy()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_dataharvester_calculatefingerpr_b8394d5f("CalculateFingerprintHash()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_dataharvester_detecthallucinati_868bcba3("DetectHallucinationFeedback()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_dataharvester_calculatediscover_188d3def("CalculateDiscoveryDepthScore()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_dataharvester_detectpersistence_930ca54f("DetectPersistenceVector()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_dataharvester_detecttunnelingin_d307325b("DetectTunnelingIntent()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_dataharvester_detectpersonabrea_25884074("DetectPersonaBreakout()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_dataharvester_calculatesemantic_381b4bbb("CalculateSemanticComplexity()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_dataharvester_extractegresstarg_7589606c("ExtractEgressTargets()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_dataharvester_islikelycloudorho_be26efb7("IsLikelyCloudOrHosting()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_program_setupuserauth_603e3cb8 -->|calls| funnypot_program_dataharvester_levenshteindistan_0756b87c
-    funnypot_program_program_setupuserauth_603e3cb8 -->|calls| funnypot_program_dataharvester_calculateentropy_d53d128d
-    funnypot_program_program_setupuserauth_603e3cb8 -->|calls| funnypot_program_dataharvester_categorizeinfrast_be5bf551
-    funnypot_program_program_setupuserauth_603e3cb8 -->|calls| funnypot_program_dataharvester_calculatefingerpr_b8394d5f
-    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_analyzecommand_3960e4c4
-    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_calculateentropy_d53d128d
-    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_levenshteindistan_0756b87c
-    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_categorizeinfrast_be5bf551
-    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_calculatefingerpr_b8394d5f
-    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_isfailureresponse_24584d23
-    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_detecthallucinati_868bcba3
-    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_calculatediscover_188d3def
-    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_detectpersistence_930ca54f
-    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_detecttunnelingin_d307325b
-    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_detectpersonabrea_25884074
-    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_calculatesemantic_381b4bbb
-    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_extractegresstarg_7589606c
-    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_islikelycloudorho_be26efb7
-    funnypot_program_dataharvester_analyzecommand_3960e4c4 -->|calls| funnypot_program_dataharvester_calculatediscover_188d3def
-    funnypot_program_dataharvester_analyzecommand_3960e4c4 -->|calls| funnypot_program_dataharvester_detectpersistence_930ca54f
-    funnypot_program_dataharvester_analyzecommand_3960e4c4 -->|calls| funnypot_program_dataharvester_extractegresstarg_7589606c
-    funnypot_program_dataharvester_analyzecommand_3960e4c4 -->|calls| funnypot_program_dataharvester_detecttunnelingin_d307325b
-    funnypot_program_dataharvester_analyzecommand_3960e4c4 -->|calls| funnypot_program_dataharvester_detectpersonabrea_25884074
-    funnypot_program_dataharvester_analyzecommand_3960e4c4 -->|calls| funnypot_program_dataharvester_calculatesemantic_381b4bbb
-    %% Omitted for readability: 0 nodes, 2 edges
-    class funnypot_program_dataharvester_8273647d klass;
-    class funnypot_program_dataharvester_analyzecommand_3960e4c4 entry;
-    class funnypot_program_program_setupuserauth_603e3cb8 function;
+    %% Section: Community 3 (16 nodes, 19 edges)
+    subgraph community_3_FunnyPot_Program_cs_d601fba1["FunnyPot/Program.cs"]
+        funnypot_program_program_setupshell_041bd507("SetupShell()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_sessioncommandworker_c943dce6("SessionCommandWorker<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_shellsessionanalytics_609871de("ShellSessionAnalytics<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_dataharvester_isfailureresponse_24584d23("IsFailureResponse()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_program_buildsystemprompt_a9af69ce("BuildSystemPrompt()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_sessioncommandworker_dispose_f990c20b("Dispose()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_shellsessionanalytics_recordcom_95ed18cf("RecordCommand()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_shellsessionanalytics_recordres_1c8e6a40("RecordResult()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_dataharvester_detecthallucinati_868bcba3("DetectHallucinationFeedback()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_shellsessionanalytics_calculate_804ea923("CalculateTuringMultiplier()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_sessioncommandworker_trypost_68210bd1("TryPost()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_program_normalizeterminaloutput_6054217c("NormalizeTerminalOutput()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_sessioncommandworker_processque_34c02de7("ProcessQueue()<br/><small>FunnyPot/Program.cs</small>")
+        blockingcollection_1e48d126("BlockingCollection<br/><small>FunnyPot/Program.cs</small>")
+        thread_c283e375("Thread<br/><small>FunnyPot/Program.cs</small>")
+    end
+    idisposable_9eb33165("IDisposable")
+    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_program_buildsystemprompt_a9af69ce
+    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_sessioncommandworker_dispose_f990c20b
+    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_shellsessionanalytics_recordcom_95ed18cf
+    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_dataharvester_isfailureresponse_24584d23
+    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_shellsessionanalytics_recordres_1c8e6a40
+    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_dataharvester_detecthallucinati_868bcba3
+    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_shellsessionanalytics_calculate_804ea923
+    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_sessioncommandworker_trypost_68210bd1
+    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_program_normalizeterminaloutput_6054217c
+    funnypot_program_shellsessionanalytics_609871de -->|method| funnypot_program_shellsessionanalytics_recordcom_95ed18cf
+    funnypot_program_shellsessionanalytics_609871de -->|method| funnypot_program_shellsessionanalytics_recordres_1c8e6a40
+    funnypot_program_shellsessionanalytics_609871de -->|method| funnypot_program_shellsessionanalytics_calculate_804ea923
+    funnypot_program_sessioncommandworker_c943dce6 -->|method| funnypot_program_sessioncommandworker_trypost_68210bd1
+    funnypot_program_sessioncommandworker_c943dce6 -->|method| funnypot_program_sessioncommandworker_processque_34c02de7
+    funnypot_program_sessioncommandworker_c943dce6 -->|method| funnypot_program_sessioncommandworker_dispose_f990c20b
+    funnypot_program_dataharvester_isfailureresponse_24584d23 -->|calls| funnypot_program_dataharvester_detecthallucinati_868bcba3
+    class funnypot_program_program_setupshell_041bd507 function;
+    class funnypot_program_sessioncommandworker_c943dce6 entry;
+    class funnypot_program_shellsessionanalytics_609871de klass;
     class funnypot_program_dataharvester_isfailureresponse_24584d23 function;
-    class funnypot_program_dataharvester_categorizeinfrast_be5bf551 function;
-    class funnypot_program_dataharvester_levenshteindistan_0756b87c function;
-    class funnypot_program_dataharvester_calculateentropy_d53d128d function;
-    class funnypot_program_dataharvester_calculatefingerpr_b8394d5f function;
+    class funnypot_program_program_buildsystemprompt_a9af69ce function;
+    class funnypot_program_sessioncommandworker_dispose_f990c20b function;
+    class funnypot_program_shellsessionanalytics_recordcom_95ed18cf entry;
+    class funnypot_program_shellsessionanalytics_recordres_1c8e6a40 function;
     class funnypot_program_dataharvester_detecthallucinati_868bcba3 function;
-    class funnypot_program_dataharvester_calculatediscover_188d3def function;
-    class funnypot_program_dataharvester_detectpersistence_930ca54f function;
-    class funnypot_program_dataharvester_detecttunnelingin_d307325b function;
-    class funnypot_program_dataharvester_detectpersonabrea_25884074 function;
-    class funnypot_program_dataharvester_calculatesemantic_381b4bbb function;
-    class funnypot_program_dataharvester_extractegresstarg_7589606c function;
-    class funnypot_program_dataharvester_islikelycloudorho_be26efb7 function;
+    class funnypot_program_shellsessionanalytics_calculate_804ea923 function;
+    class funnypot_program_sessioncommandworker_trypost_68210bd1 function;
+    class funnypot_program_program_normalizeterminaloutput_6054217c function;
+    class funnypot_program_sessioncommandworker_processque_34c02de7 function;
+    class blockingcollection_1e48d126 klass;
+    class thread_c283e375 klass;
+    class idisposable_9eb33165 klass;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -2843,131 +2832,131 @@ flowchart LR
 </tr>
 <tr>
   <td>1</td>
-  <td><code>.SetupUserauth()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>.SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>CalculateEntropy()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>CalculateFingerprintHash()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>CategorizeInfrastructure()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br>+1 more</td>
-  <td>.SetupUserauth() node in FunnyPot/Program.cs.</td>
+  <td><code>BuildSystemPrompt()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>CalculateTuringMultiplier()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>DetectHallucinationFeedback()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br>+6 more</td>
+  <td>.SetupShell() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
   <td>2</td>
-  <td><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>AnalyzeCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>CalculateDiscoveryDepthScore()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>CalculateEntropy()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br>+11 more</td>
-  <td>DataHarvester node in FunnyPot/Program.cs.</td>
+  <td><code>.BuildSystemPrompt()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>Builds structured prompts for model calls.</td>
 </tr>
 <tr>
   <td>3</td>
-  <td><code>.AnalyzeCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-cmd">Entry</span></td>
-  <td><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><code>CalculateDiscoveryDepthScore()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>CalculateSemanticComplexity()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>DetectPersistenceVector()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br>+3 more</td>
-  <td>Orchestrates analysis and returns structured documentation data.</td>
+  <td><code>.NormalizeTerminalOutput()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.NormalizeTerminalOutput() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
   <td>4</td>
-  <td><code>.CalculateEntropy()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SetupUserauth()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.CalculateEntropy() node in FunnyPot/Program.cs.</td>
+  <td><code>ShellSessionAnalytics</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>CalculateTuringMultiplier()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>RecordCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>RecordResult()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>Orchestrates analysis and returns structured documentation data.</td>
 </tr>
 <tr>
   <td>5</td>
-  <td><code>.LevenshteinDistance()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SetupUserauth()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>.RecordCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-cmd">Entry</span></td>
+  <td><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ShellSessionAnalytics</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td>No direct outbound edge</td>
-  <td>.LevenshteinDistance() node in FunnyPot/Program.cs.</td>
+  <td>.RecordCommand() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
   <td>6</td>
-  <td><code>.CategorizeInfrastructure()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>.RecordResult()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SetupUserauth()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><code>IsLikelyCloudOrHosting()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>.CategorizeInfrastructure() node in FunnyPot/Program.cs.</td>
+  <td><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ShellSessionAnalytics</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.RecordResult() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
   <td>7</td>
-  <td><code>.CalculateFingerprintHash()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>.CalculateTuringMultiplier()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SetupUserauth()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ShellSessionAnalytics</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td>No direct outbound edge</td>
-  <td>Caches analysis results or computes cache keys.</td>
+  <td>.CalculateTuringMultiplier() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
   <td>8</td>
+  <td><code>SessionCommandWorker</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-cmd">Entry</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>Dispose()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ProcessQueue()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>TryPost()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>SessionCommandWorker node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>IDisposable</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>IDisposable node in project.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>BlockingCollection</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>BlockingCollection node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>Thread</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Thread node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>.TryPost()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>SessionCommandWorker</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.TryPost() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>.ProcessQueue()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>SessionCommandWorker</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.ProcessQueue() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>.Dispose()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>SessionCommandWorker</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.Dispose() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>15</td>
   <td><code>.IsFailureResponse()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><code>DetectHallucinationFeedback()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td>.IsFailureResponse() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>9</td>
+  <td>16</td>
   <td><code>.DetectHallucinationFeedback()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>IsFailureResponse()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>IsFailureResponse()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td>No direct outbound edge</td>
   <td>.DetectHallucinationFeedback() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>10</td>
-  <td><code>.CalculateDiscoveryDepthScore()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>AnalyzeCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.CalculateDiscoveryDepthScore() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>11</td>
-  <td><code>.DetectPersistenceVector()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>AnalyzeCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.DetectPersistenceVector() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>12</td>
-  <td><code>.DetectTunnelingIntent()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>AnalyzeCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.DetectTunnelingIntent() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>13</td>
-  <td><code>.DetectPersonaBreakout()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>AnalyzeCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.DetectPersonaBreakout() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>14</td>
-  <td><code>.CalculateSemanticComplexity()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>AnalyzeCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.CalculateSemanticComplexity() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>15</td>
-  <td><code>.ExtractEgressTargets()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>AnalyzeCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.ExtractEgressTargets() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>16</td>
-  <td><code>.IsLikelyCloudOrHosting()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>CategorizeInfrastructure()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.IsLikelyCloudOrHosting() node in FunnyPot/Program.cs.</td>
 </tr>
 </table>
 
@@ -2976,12 +2965,12 @@ flowchart LR
     <h4>Key Files</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>FunnyPot/Program.cs</code></td><td>16 nodes</td></tr>
+      <tr><td><code>FunnyPot/Program.cs</code></td><td>15 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: method x14, calls x12. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: calls x10, method x6, references x2, inherits x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
@@ -3207,57 +3196,69 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 13. Community 3 ====== -->
-<h2 id="community-3">13. Community 3</h2>
-<p>Community 3 groups implementation around funnypot, programcs, setupshell, buildsystemprompt, mostly in FunnyPot/Program.cs. This section covers 14 nodes and 16 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<!-- ====== 13. Community 4 ====== -->
+<h2 id="community-4">13. Community 4</h2>
+<p>Community 4 groups implementation around funnypot, programcs, getremoteattemptkey, setupuserauth, mostly in FunnyPot/Program.cs. This section covers 15 nodes and 25 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Community 3 (14 nodes, 16 edges)
-    subgraph community_3_FunnyPot_Program_cs_d601fba1["FunnyPot/Program.cs"]
-        funnypot_program_program_setupshell_041bd507("SetupShell()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_sessioncommandworker_c943dce6("SessionCommandWorker<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_shellsessionanalytics_609871de("ShellSessionAnalytics<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_program_buildsystemprompt_a9af69ce("BuildSystemPrompt()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_sessioncommandworker_dispose_f990c20b("Dispose()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_shellsessionanalytics_recordcom_95ed18cf("RecordCommand()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_shellsessionanalytics_recordres_1c8e6a40("RecordResult()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_shellsessionanalytics_calculate_804ea923("CalculateTuringMultiplier()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_sessioncommandworker_trypost_68210bd1("TryPost()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_program_normalizeterminaloutput_6054217c("NormalizeTerminalOutput()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_sessioncommandworker_processque_34c02de7("ProcessQueue()<br/><small>FunnyPot/Program.cs</small>")
-        blockingcollection_1e48d126("BlockingCollection<br/><small>FunnyPot/Program.cs</small>")
-        thread_c283e375("Thread<br/><small>FunnyPot/Program.cs</small>")
-    end
-    idisposable_9eb33165("IDisposable")
-    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_program_buildsystemprompt_a9af69ce
-    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_sessioncommandworker_dispose_f990c20b
-    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_shellsessionanalytics_recordcom_95ed18cf
-    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_shellsessionanalytics_recordres_1c8e6a40
-    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_shellsessionanalytics_calculate_804ea923
-    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_sessioncommandworker_trypost_68210bd1
-    funnypot_program_program_setupshell_041bd507 -->|calls| funnypot_program_program_normalizeterminaloutput_6054217c
-    funnypot_program_shellsessionanalytics_609871de -->|method| funnypot_program_shellsessionanalytics_recordcom_95ed18cf
-    funnypot_program_shellsessionanalytics_609871de -->|method| funnypot_program_shellsessionanalytics_recordres_1c8e6a40
-    funnypot_program_shellsessionanalytics_609871de -->|method| funnypot_program_shellsessionanalytics_calculate_804ea923
-    funnypot_program_sessioncommandworker_c943dce6 -->|method| funnypot_program_sessioncommandworker_trypost_68210bd1
-    funnypot_program_sessioncommandworker_c943dce6 -->|method| funnypot_program_sessioncommandworker_processque_34c02de7
-    funnypot_program_sessioncommandworker_c943dce6 -->|method| funnypot_program_sessioncommandworker_dispose_f990c20b
-    class funnypot_program_program_setupshell_041bd507 function;
-    class funnypot_program_sessioncommandworker_c943dce6 entry;
-    class funnypot_program_shellsessionanalytics_609871de klass;
-    class funnypot_program_program_buildsystemprompt_a9af69ce function;
-    class funnypot_program_sessioncommandworker_dispose_f990c20b function;
-    class funnypot_program_shellsessionanalytics_recordcom_95ed18cf entry;
-    class funnypot_program_shellsessionanalytics_recordres_1c8e6a40 function;
-    class funnypot_program_shellsessionanalytics_calculate_804ea923 function;
-    class funnypot_program_sessioncommandworker_trypost_68210bd1 function;
-    class funnypot_program_program_normalizeterminaloutput_6054217c function;
-    class funnypot_program_sessioncommandworker_processque_34c02de7 function;
-    class blockingcollection_1e48d126 klass;
-    class thread_c283e375 klass;
-    class idisposable_9eb33165 klass;
+    %% Section: Community 4 (15 nodes, 25 edges)
+    funnypot_program_dataharvester_8273647d("DataHarvester<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_dataharvester_analyzecommand_3960e4c4("AnalyzeCommand()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_program_setupuserauth_603e3cb8("SetupUserauth()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_program_getremoteattemptkey_4be16093("GetRemoteAttemptKey()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_dataharvester_categorizeinfrast_be5bf551("CategorizeInfrastructure()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_dataharvester_levenshteindistan_0756b87c("LevenshteinDistance()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_dataharvester_calculateentropy_d53d128d("CalculateEntropy()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_dataharvester_calculatefingerpr_b8394d5f("CalculateFingerprintHash()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_dataharvester_calculatediscover_188d3def("CalculateDiscoveryDepthScore()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_dataharvester_detectpersistence_930ca54f("DetectPersistenceVector()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_dataharvester_detecttunnelingin_d307325b("DetectTunnelingIntent()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_dataharvester_detectpersonabrea_25884074("DetectPersonaBreakout()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_dataharvester_calculatesemantic_381b4bbb("CalculateSemanticComplexity()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_dataharvester_extractegresstarg_7589606c("ExtractEgressTargets()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_dataharvester_islikelycloudorho_be26efb7("IsLikelyCloudOrHosting()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_program_getremoteattemptkey_4be16093 -->|calls| funnypot_program_program_setupuserauth_603e3cb8
+    funnypot_program_program_getremoteattemptkey_4be16093 -->|calls| funnypot_program_dataharvester_categorizeinfrast_be5bf551
+    funnypot_program_program_setupuserauth_603e3cb8 -->|calls| funnypot_program_dataharvester_levenshteindistan_0756b87c
+    funnypot_program_program_setupuserauth_603e3cb8 -->|calls| funnypot_program_dataharvester_calculateentropy_d53d128d
+    funnypot_program_program_setupuserauth_603e3cb8 -->|calls| funnypot_program_dataharvester_categorizeinfrast_be5bf551
+    funnypot_program_program_setupuserauth_603e3cb8 -->|calls| funnypot_program_dataharvester_calculatefingerpr_b8394d5f
+    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_analyzecommand_3960e4c4
+    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_calculateentropy_d53d128d
+    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_levenshteindistan_0756b87c
+    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_categorizeinfrast_be5bf551
+    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_calculatefingerpr_b8394d5f
+    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_calculatediscover_188d3def
+    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_detectpersistence_930ca54f
+    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_detecttunnelingin_d307325b
+    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_detectpersonabrea_25884074
+    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_calculatesemantic_381b4bbb
+    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_extractegresstarg_7589606c
+    funnypot_program_dataharvester_8273647d -->|method| funnypot_program_dataharvester_islikelycloudorho_be26efb7
+    funnypot_program_dataharvester_analyzecommand_3960e4c4 -->|calls| funnypot_program_dataharvester_calculatediscover_188d3def
+    funnypot_program_dataharvester_analyzecommand_3960e4c4 -->|calls| funnypot_program_dataharvester_detectpersistence_930ca54f
+    funnypot_program_dataharvester_analyzecommand_3960e4c4 -->|calls| funnypot_program_dataharvester_extractegresstarg_7589606c
+    funnypot_program_dataharvester_analyzecommand_3960e4c4 -->|calls| funnypot_program_dataharvester_detecttunnelingin_d307325b
+    funnypot_program_dataharvester_analyzecommand_3960e4c4 -->|calls| funnypot_program_dataharvester_detectpersonabrea_25884074
+    funnypot_program_dataharvester_analyzecommand_3960e4c4 -->|calls| funnypot_program_dataharvester_calculatesemantic_381b4bbb
+    %% Omitted for readability: 0 nodes, 1 edges
+    class funnypot_program_dataharvester_8273647d klass;
+    class funnypot_program_dataharvester_analyzecommand_3960e4c4 entry;
+    class funnypot_program_program_setupuserauth_603e3cb8 function;
+    class funnypot_program_program_getremoteattemptkey_4be16093 function;
+    class funnypot_program_dataharvester_categorizeinfrast_be5bf551 function;
+    class funnypot_program_dataharvester_levenshteindistan_0756b87c function;
+    class funnypot_program_dataharvester_calculateentropy_d53d128d function;
+    class funnypot_program_dataharvester_calculatefingerpr_b8394d5f function;
+    class funnypot_program_dataharvester_calculatediscover_188d3def function;
+    class funnypot_program_dataharvester_detectpersistence_930ca54f function;
+    class funnypot_program_dataharvester_detecttunnelingin_d307325b function;
+    class funnypot_program_dataharvester_detectpersonabrea_25884074 function;
+    class funnypot_program_dataharvester_calculatesemantic_381b4bbb function;
+    class funnypot_program_dataharvester_extractegresstarg_7589606c function;
+    class funnypot_program_dataharvester_islikelycloudorho_be26efb7 function;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -3281,115 +3282,123 @@ flowchart LR
 </tr>
 <tr>
   <td>1</td>
-  <td><code>.SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>.GetRemoteAttemptKey()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>BuildSystemPrompt()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>CalculateTuringMultiplier()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Dispose()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br>+4 more</td>
-  <td>.SetupShell() node in FunnyPot/Program.cs.</td>
+  <td><code>CategorizeInfrastructure()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SetupUserauth()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>.GetRemoteAttemptKey() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
   <td>2</td>
-  <td><code>.BuildSystemPrompt()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>.SetupUserauth()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>Builds structured prompts for model calls.</td>
+  <td><code>GetRemoteAttemptKey()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>CalculateEntropy()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>CalculateFingerprintHash()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>CategorizeInfrastructure()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br>+1 more</td>
+  <td>.SetupUserauth() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
   <td>3</td>
-  <td><code>.NormalizeTerminalOutput()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.NormalizeTerminalOutput() node in FunnyPot/Program.cs.</td>
+  <td><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>AnalyzeCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>CalculateDiscoveryDepthScore()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>CalculateEntropy()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br>+9 more</td>
+  <td>DataHarvester node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
   <td>4</td>
-  <td><code>ShellSessionAnalytics</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>CalculateTuringMultiplier()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>RecordCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>RecordResult()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>.AnalyzeCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-cmd">Entry</span></td>
+  <td><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>CalculateDiscoveryDepthScore()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>CalculateSemanticComplexity()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>DetectPersistenceVector()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br>+3 more</td>
   <td>Orchestrates analysis and returns structured documentation data.</td>
 </tr>
 <tr>
   <td>5</td>
-  <td><code>.RecordCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-cmd">Entry</span></td>
-  <td><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ShellSessionAnalytics</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>.CalculateEntropy()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SetupUserauth()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td>No direct outbound edge</td>
-  <td>.RecordCommand() node in FunnyPot/Program.cs.</td>
+  <td>.CalculateEntropy() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
   <td>6</td>
-  <td><code>.RecordResult()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>.LevenshteinDistance()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ShellSessionAnalytics</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SetupUserauth()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td>No direct outbound edge</td>
-  <td>.RecordResult() node in FunnyPot/Program.cs.</td>
+  <td>.LevenshteinDistance() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
   <td>7</td>
-  <td><code>.CalculateTuringMultiplier()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>.CategorizeInfrastructure()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ShellSessionAnalytics</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.CalculateTuringMultiplier() node in FunnyPot/Program.cs.</td>
+  <td><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>GetRemoteAttemptKey()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SetupUserauth()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>IsLikelyCloudOrHosting()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>.CategorizeInfrastructure() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
   <td>8</td>
-  <td><code>SessionCommandWorker</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-cmd">Entry</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>Dispose()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ProcessQueue()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>TryPost()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>SessionCommandWorker node in FunnyPot/Program.cs.</td>
+  <td><code>.CalculateFingerprintHash()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SetupUserauth()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>Caches analysis results or computes cache keys.</td>
 </tr>
 <tr>
   <td>9</td>
-  <td><code>IDisposable</code><br><small style="color:var(--muted)"></small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
+  <td><code>.CalculateDiscoveryDepthScore()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>AnalyzeCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td>No direct outbound edge</td>
-  <td>IDisposable node in project.</td>
+  <td>.CalculateDiscoveryDepthScore() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
   <td>10</td>
-  <td><code>BlockingCollection</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
+  <td><code>.DetectPersistenceVector()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>AnalyzeCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td>No direct outbound edge</td>
-  <td>BlockingCollection node in FunnyPot/Program.cs.</td>
+  <td>.DetectPersistenceVector() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
   <td>11</td>
-  <td><code>Thread</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
+  <td><code>.DetectTunnelingIntent()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>AnalyzeCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td>No direct outbound edge</td>
-  <td>Thread node in FunnyPot/Program.cs.</td>
+  <td>.DetectTunnelingIntent() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
   <td>12</td>
-  <td><code>.TryPost()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>.DetectPersonaBreakout()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>SessionCommandWorker</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>AnalyzeCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td>No direct outbound edge</td>
-  <td>.TryPost() node in FunnyPot/Program.cs.</td>
+  <td>.DetectPersonaBreakout() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
   <td>13</td>
-  <td><code>.ProcessQueue()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>.CalculateSemanticComplexity()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>SessionCommandWorker</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>AnalyzeCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td>No direct outbound edge</td>
-  <td>.ProcessQueue() node in FunnyPot/Program.cs.</td>
+  <td>.CalculateSemanticComplexity() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
   <td>14</td>
-  <td><code>.Dispose()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>.ExtractEgressTargets()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>SessionCommandWorker</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SetupShell()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>AnalyzeCommand()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td>No direct outbound edge</td>
-  <td>.Dispose() node in FunnyPot/Program.cs.</td>
+  <td>.ExtractEgressTargets() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>.IsLikelyCloudOrHosting()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>CategorizeInfrastructure()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>DataHarvester</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.IsLikelyCloudOrHosting() node in FunnyPot/Program.cs.</td>
 </tr>
 </table>
 
@@ -3398,18 +3407,226 @@ flowchart LR
     <h4>Key Files</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>FunnyPot/Program.cs</code></td><td>13 nodes</td></tr>
+      <tr><td><code>FunnyPot/Program.cs</code></td><td>15 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: calls x7, method x6, references x2, inherits x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: calls x13, method x12. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
 
-<!-- ====== 14. Community 49 ====== -->
-<h2 id="community-49">14. Community 49</h2>
+<!-- ====== 14. Community 79 ====== -->
+<h2 id="community-79">14. Community 79</h2>
+<p>Community 79 groups implementation around funnypot, programcs, int, string, mostly in FunnyPot/Program.cs. This section covers 15 nodes and 20 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Community 79 (15 nodes, 20 edges)
+    funnypot_program_scpuploadsession_bfc45d32("SCPUploadSession<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_scpuploadsession_handledata_b28c0c4e("HandleData()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_scpuploadhandler_a2111ccd("SCPUploadHandler<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_scpuploadhandler_captureupload_cafdae70("CaptureUpload()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_scpuploadhandler_ensureuploaddi_20374dcd("EnsureUploadDir()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_scpuploadsession_readterminator_1bb46958("ReadTerminator()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_scpuploadsession_readheader_38365942("ReadHeader()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_scpuploadsession_readcontent_1adc5f50("ReadContent()<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_scpuploadsession_tryparseheader_382e52ad("TryParseHeader()<br/><small>FunnyPot/Program.cs</small>")
+    memorystream_5e03fc10("MemoryStream<br/><small>FunnyPot/Program.cs</small>")
+    state_aa4a5f81("State<br/><small>FunnyPot/Program.cs</small>")
+    byte_8cf1783f("byte<br/><small>FunnyPot/Program.cs</small>")
+    int_46f8ab7c("int<br/><small>FunnyPot/Program.cs</small>")
+    long_bd3027fa("long<br/><small>FunnyPot/Program.cs</small>")
+    string_ecb25204("string<br/><small>FunnyPot/Program.cs</small>")
+    funnypot_program_scpuploadhandler_a2111ccd -->|method| funnypot_program_scpuploadhandler_ensureuploaddi_20374dcd
+    funnypot_program_scpuploadhandler_a2111ccd -->|method| funnypot_program_scpuploadhandler_captureupload_cafdae70
+    funnypot_program_scpuploadhandler_captureupload_cafdae70 -->|calls| funnypot_program_scpuploadsession_readterminator_1bb46958
+    funnypot_program_scpuploadsession_bfc45d32 -->|method| funnypot_program_scpuploadsession_handledata_b28c0c4e
+    funnypot_program_scpuploadsession_bfc45d32 -->|method| funnypot_program_scpuploadsession_readheader_38365942
+    funnypot_program_scpuploadsession_bfc45d32 -->|method| funnypot_program_scpuploadsession_readcontent_1adc5f50
+    funnypot_program_scpuploadsession_bfc45d32 -->|method| funnypot_program_scpuploadsession_readterminator_1bb46958
+    funnypot_program_scpuploadsession_bfc45d32 -->|method| funnypot_program_scpuploadsession_tryparseheader_382e52ad
+    funnypot_program_scpuploadsession_handledata_b28c0c4e -->|calls| funnypot_program_scpuploadsession_readheader_38365942
+    funnypot_program_scpuploadsession_handledata_b28c0c4e -->|calls| funnypot_program_scpuploadsession_readcontent_1adc5f50
+    funnypot_program_scpuploadsession_handledata_b28c0c4e -->|calls| funnypot_program_scpuploadsession_readterminator_1bb46958
+    funnypot_program_scpuploadsession_readheader_38365942 -->|calls| funnypot_program_scpuploadsession_tryparseheader_382e52ad
+    class funnypot_program_scpuploadsession_bfc45d32 klass;
+    class funnypot_program_scpuploadsession_handledata_b28c0c4e function;
+    class funnypot_program_scpuploadhandler_a2111ccd klass;
+    class funnypot_program_scpuploadhandler_captureupload_cafdae70 function;
+    class funnypot_program_scpuploadhandler_ensureuploaddi_20374dcd function;
+    class funnypot_program_scpuploadsession_readterminator_1bb46958 function;
+    class funnypot_program_scpuploadsession_readheader_38365942 function;
+    class funnypot_program_scpuploadsession_readcontent_1adc5f50 function;
+    class funnypot_program_scpuploadsession_tryparseheader_382e52ad function;
+    class memorystream_5e03fc10 async;
+    class state_aa4a5f81 klass;
+    class byte_8cf1783f function;
+    class int_46f8ab7c function;
+    class long_bd3027fa function;
+    class string_ecb25204 function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>int</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>int node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>string</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>string node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>SCPUploadHandler</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>CaptureUpload()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>EnsureUploadDir()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>SCPUploadHandler node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>.EnsureUploadDir()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>SCPUploadHandler</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.EnsureUploadDir() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>.CaptureUpload()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>SCPUploadHandler</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>ReadTerminator()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>.CaptureUpload() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>SCPUploadSession</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>HandleData()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ReadContent()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ReadHeader()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br>+2 more</td>
+  <td>SCPUploadSession node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>byte</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>byte node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>MemoryStream</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-async">Async</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>MemoryStream node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>long</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>long node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>State</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>State node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>.HandleData()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>SCPUploadSession</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>ReadContent()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ReadHeader()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>ReadTerminator()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>.HandleData() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>.ReadHeader()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>HandleData()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SCPUploadSession</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>TryParseHeader()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>.ReadHeader() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>.ReadContent()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>HandleData()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SCPUploadSession</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.ReadContent() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>.ReadTerminator()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>CaptureUpload()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>HandleData()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SCPUploadSession</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.ReadTerminator() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>.TryParseHeader()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>ReadHeader()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SCPUploadSession</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.TryParseHeader() node in FunnyPot/Program.cs.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>FunnyPot/Program.cs</code></td><td>15 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: references x8, method x7, calls x5. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 15. Community 49 ====== -->
+<h2 id="community-49">15. Community 49</h2>
 <p>Community 49 groups implementation around appconfigurationcs, funnypot, appconfiguration, load, mostly in FunnyPot/AppConfiguration.cs. This section covers 13 nodes and 12 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -3585,209 +3802,46 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 15. Community 38 ====== -->
-<h2 id="community-38">15. Community 38</h2>
-<p>Community 38 groups implementation around funnypot, programcs, int, concurrentdictionary, mostly in FunnyPot/Program.cs. This section covers 11 nodes and 13 internal edges; the diagram shows only representative relationships to stay readable.</p>
-
-<div class="mermaid">
-%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
-flowchart LR
-    %% Section: Community 38 (11 nodes, 13 edges)
-    funnypot_program_llmratelimiter_da06905f("LlmRateLimiter<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_inputvalidator_dadda68a("InputValidator<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_inputvalidator_validate_05e69817("Validate()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_llmratelimiter_isallowed_80b4d6f2("IsAllowed()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_inputvalidator_containsnullbyte_83d0efaa("ContainsNullBytes()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_inputvalidator_isrepetitivenois_7c4fae4d("IsRepetitiveNoise()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_llmratelimiter_reset_4d1b473a("Reset()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_llmratelimiter_cleanupexpired_1066d448("CleanupExpired()<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_llmratelimiter_loglimitstatus_72e55dd1("LogLimitStatus()<br/><small>FunnyPot/Program.cs</small>")
-    concurrentdictionary_542498e0("ConcurrentDictionary<br/><small>FunnyPot/Program.cs</small>")
-    int_46f8ab7c("int<br/><small>FunnyPot/Program.cs</small>")
-    funnypot_program_inputvalidator_dadda68a -->|method| funnypot_program_inputvalidator_validate_05e69817
-    funnypot_program_inputvalidator_dadda68a -->|method| funnypot_program_inputvalidator_containsnullbyte_83d0efaa
-    funnypot_program_inputvalidator_dadda68a -->|method| funnypot_program_inputvalidator_isrepetitivenois_7c4fae4d
-    funnypot_program_inputvalidator_validate_05e69817 -->|calls| funnypot_program_inputvalidator_containsnullbyte_83d0efaa
-    funnypot_program_inputvalidator_validate_05e69817 -->|calls| funnypot_program_inputvalidator_isrepetitivenois_7c4fae4d
-    funnypot_program_llmratelimiter_da06905f -->|method| funnypot_program_llmratelimiter_isallowed_80b4d6f2
-    funnypot_program_llmratelimiter_da06905f -->|method| funnypot_program_llmratelimiter_reset_4d1b473a
-    funnypot_program_llmratelimiter_da06905f -->|method| funnypot_program_llmratelimiter_cleanupexpired_1066d448
-    funnypot_program_llmratelimiter_da06905f -->|method| funnypot_program_llmratelimiter_loglimitstatus_72e55dd1
-    funnypot_program_llmratelimiter_isallowed_80b4d6f2 -->|calls| funnypot_program_llmratelimiter_cleanupexpired_1066d448
-    class funnypot_program_llmratelimiter_da06905f klass;
-    class funnypot_program_inputvalidator_dadda68a klass;
-    class funnypot_program_inputvalidator_validate_05e69817 function;
-    class funnypot_program_llmratelimiter_isallowed_80b4d6f2 function;
-    class funnypot_program_inputvalidator_containsnullbyte_83d0efaa function;
-    class funnypot_program_inputvalidator_isrepetitivenois_7c4fae4d function;
-    class funnypot_program_llmratelimiter_reset_4d1b473a function;
-    class funnypot_program_llmratelimiter_cleanupexpired_1066d448 function;
-    class funnypot_program_llmratelimiter_loglimitstatus_72e55dd1 function;
-    class concurrentdictionary_542498e0 klass;
-    class int_46f8ab7c function;
-    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
-    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
-    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
-    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
-    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
-    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
-    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
-    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
-    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
-</div>
-
-<h3>Call Details</h3>
-<table class="call-table">
-<tr>
-  <th style="width:5%">#</th>
-  <th style="width:28%">Node</th>
-  <th style="width:10%">Type</th>
-  <th style="width:17%">Caller</th>
-  <th style="width:20%">Callees</th>
-  <th style="width:20%">Description</th>
-</tr>
-<tr>
-  <td>1</td>
-  <td><code>int</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>int node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>2</td>
-  <td><code>ConcurrentDictionary</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>ConcurrentDictionary node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>3</td>
-  <td><code>InputValidator</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>ContainsNullBytes()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>IsRepetitiveNoise()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Validate()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>InputValidator node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>4</td>
-  <td><code>.Validate()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>InputValidator</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><code>ContainsNullBytes()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>IsRepetitiveNoise()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>.Validate() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>5</td>
-  <td><code>.ContainsNullBytes()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>InputValidator</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Validate()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.ContainsNullBytes() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>6</td>
-  <td><code>.IsRepetitiveNoise()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>InputValidator</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>Validate()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.IsRepetitiveNoise() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>7</td>
-  <td><code>LlmRateLimiter</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>CleanupExpired()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>IsAllowed()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>LogLimitStatus()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br>+1 more</td>
-  <td>LlmRateLimiter node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>8</td>
-  <td><code>.IsAllowed()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>LlmRateLimiter</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><code>CleanupExpired()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>.IsAllowed() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>9</td>
-  <td><code>.Reset()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>LlmRateLimiter</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.Reset() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>10</td>
-  <td><code>.CleanupExpired()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>IsAllowed()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>LlmRateLimiter</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.CleanupExpired() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>11</td>
-  <td><code>.LogLimitStatus()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>LlmRateLimiter</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.LogLimitStatus() node in FunnyPot/Program.cs.</td>
-</tr>
-</table>
-
-<div class="grid">
-  <div class="card">
-    <h4>Key Files</h4>
-    <table style="width:100%;font-size:0.85rem;">
-      <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>FunnyPot/Program.cs</code></td><td>11 nodes</td></tr>
-    </table>
-  </div>
-  <div class="card">
-    <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: method x7, references x3, calls x3. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
-  </div>
-</div>
-<hr>
-
 <!-- ====== 16. Other ====== -->
 <h2 id="other">16. Other</h2>
-<p>Other groups implementation around funnypot, obj, net80, netcoreappversionv80assemblyattributescs, mostly in FunnyPot/Program.cs, FunnyPot/ILogger.cs, scripts/deploy.sh. This section covers 34 nodes and 28 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Other groups implementation around funnypot, programcs, obj, net80, mostly in FunnyPot/Program.cs, FunnyPot/ILogger.cs, scripts/deploy.sh. This section covers 40 nodes and 34 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Other (34 nodes, 28 edges)
+    %% Section: Other (40 nodes, 34 edges)
     subgraph other_FunnyPot_Program_cs_489f910f["FunnyPot/Program.cs"]
         funnypot_program_ntfynotifier_d9801141("NtfyNotifier<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_llmratelimiter_da06905f("LlmRateLimiter<br/><small>FunnyPot/Program.cs</small>")
         funnypot_program_program_getsecretorenvironment_154729a5("GetSecretOrEnvironment()<br/><small>FunnyPot/Program.cs</small>")
         funnypot_program_ntfynotifier_istruthy_3ff3df8c("IsTruthy()<br/><small>FunnyPot/Program.cs</small>")
         funnypot_program_ntfynotifier_notifyshellsession_01ce0728("NotifyShellSessionAsync()<br/><small>FunnyPot/Program.cs</small>")
         funnypot_program_ntfynotifier_notifyauthattempta_9c90d0bb("NotifyAuthAttemptAsync()<br/><small>FunnyPot/Program.cs</small>")
         funnypot_program_ntfynotifier_notifyconnectionac_abd30796("NotifyConnectionAcceptedAsync()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_llmratelimiter_isallowed_80b4d6f2("IsAllowed()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_llmratelimiter_reset_4d1b473a("Reset()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_llmratelimiter_cleanupexpired_1066d448("CleanupExpired()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_llmratelimiter_loglimitstatus_72e55dd1("LogLimitStatus()<br/><small>FunnyPot/Program.cs</small>")
         funnypot_program_ntfynotifier_buildshellsessionm_20df51af("BuildShellSessionMessage()<br/><small>FunnyPot/Program.cs</small>")
         funnypot_program_ntfynotifier_buildauthattemptme_4b3eed49("BuildAuthAttemptMessage()<br/><small>FunnyPot/Program.cs</small>")
         funnypot_program_ntfynotifier_buildconnectionmes_0273d4f6("BuildConnectionMessage()<br/><small>FunnyPot/Program.cs</small>")
-    end
-    subgraph other_FunnyPot_ILogger_cs_abbf0c06["FunnyPot/ILogger.cs"]
-        funnypot_ilogger_ilogger_66a97e00("ILogger<br/><small>FunnyPot/ILogger.cs</small>")
-        funnypot_ilogger_ilogger_logyaml_e1bbc643("LogYaml()<br/><small>FunnyPot/ILogger.cs</small>")
-        funnypot_ilogger_ilogger_logmsg_66993c57("LogMsg()<br/><small>FunnyPot/ILogger.cs</small>")
-        funnypot_ilogger_ilogger_logmetric_9e735a09("LogMetric()<br/><small>FunnyPot/ILogger.cs</small>")
-        funnypot_ilogger_ilogger_pushtogit_a4f7c04e("PushToGit()<br/><small>FunnyPot/ILogger.cs</small>")
     end
     subgraph other_scripts_deploy_sh_a6a3ebad["scripts/deploy.sh"]
         scripts_deploy_ensure_clean_git_state_b6faa730("ensure_clean_git_state()<br/><small>scripts/deploy.sh</small>")
         scripts_deploy_commit_submodule_if_needed_680f1d0e("commit_submodule_if_needed()<br/><small>scripts/deploy.sh</small>")
         scripts_deploy_commit_parent_if_needed_45aa1936("commit_parent_if_needed()<br/><small>scripts/deploy.sh</small>")
     end
-    funnypot_obj_debug_net8_0_netcoreapp_version_v8_90b9cf55(".NETCoreApp,Version=v8.0.AssemblyAttrib...<br/><small>Debug/net8.0/.NETCoreApp,Version=v8.0.AssemblyAttributes.cs</small>")
+    funnypot_ilogger_ilogger_66a97e00("ILogger<br/><small>FunnyPot/ILogger.cs</small>")
     scripts_deploy_ensure_clean_git_state_b6faa730 -->|calls| scripts_deploy_commit_submodule_if_needed_680f1d0e
     scripts_deploy_ensure_clean_git_state_b6faa730 -->|calls| scripts_deploy_commit_parent_if_needed_45aa1936
     funnypot_program_program_getsecretorenvironment_154729a5 -->|calls| funnypot_program_ntfynotifier_notifyshellsession_01ce0728
     funnypot_program_program_getsecretorenvironment_154729a5 -->|calls| funnypot_program_ntfynotifier_notifyauthattempta_9c90d0bb
     funnypot_program_program_getsecretorenvironment_154729a5 -->|calls| funnypot_program_ntfynotifier_notifyconnectionac_abd30796
+    funnypot_program_llmratelimiter_da06905f -->|method| funnypot_program_llmratelimiter_isallowed_80b4d6f2
+    funnypot_program_llmratelimiter_da06905f -->|method| funnypot_program_llmratelimiter_reset_4d1b473a
+    funnypot_program_llmratelimiter_da06905f -->|method| funnypot_program_llmratelimiter_cleanupexpired_1066d448
+    funnypot_program_llmratelimiter_da06905f -->|method| funnypot_program_llmratelimiter_loglimitstatus_72e55dd1
+    funnypot_program_llmratelimiter_isallowed_80b4d6f2 -->|calls| funnypot_program_llmratelimiter_cleanupexpired_1066d448
     funnypot_program_ntfynotifier_d9801141 -->|method| funnypot_program_ntfynotifier_notifyshellsession_01ce0728
     funnypot_program_ntfynotifier_d9801141 -->|method| funnypot_program_ntfynotifier_buildshellsessionm_20df51af
     funnypot_program_ntfynotifier_d9801141 -->|method| funnypot_program_ntfynotifier_istruthy_3ff3df8c
@@ -3799,31 +3853,27 @@ flowchart LR
     funnypot_program_ntfynotifier_notifyshellsession_01ce0728 -->|calls| funnypot_program_ntfynotifier_buildshellsessionm_20df51af
     funnypot_program_ntfynotifier_istruthy_3ff3df8c -->|calls| funnypot_program_ntfynotifier_notifyauthattempta_9c90d0bb
     funnypot_program_ntfynotifier_istruthy_3ff3df8c -->|calls| funnypot_program_ntfynotifier_notifyconnectionac_abd30796
-    funnypot_ilogger_ilogger_66a97e00 -->|method| funnypot_ilogger_ilogger_logyaml_e1bbc643
-    funnypot_ilogger_ilogger_66a97e00 -->|method| funnypot_ilogger_ilogger_logmsg_66993c57
-    funnypot_ilogger_ilogger_66a97e00 -->|method| funnypot_ilogger_ilogger_logmetric_9e735a09
-    funnypot_ilogger_ilogger_66a97e00 -->|method| funnypot_ilogger_ilogger_pushtogit_a4f7c04e
     funnypot_program_ntfynotifier_notifyauthattempta_9c90d0bb -->|calls| funnypot_program_ntfynotifier_buildauthattemptme_4b3eed49
     funnypot_program_ntfynotifier_notifyconnectionac_abd30796 -->|calls| funnypot_program_ntfynotifier_buildconnectionmes_0273d4f6
-    %% Omitted for readability: 16 nodes, 0 edges
+    %% Omitted for readability: 22 nodes, 0 edges
     class funnypot_program_ntfynotifier_d9801141 klass;
+    class funnypot_program_llmratelimiter_da06905f klass;
     class funnypot_program_program_getsecretorenvironment_154729a5 function;
     class funnypot_program_ntfynotifier_istruthy_3ff3df8c function;
     class funnypot_program_ntfynotifier_notifyshellsession_01ce0728 async;
     class funnypot_program_ntfynotifier_notifyauthattempta_9c90d0bb async;
     class funnypot_program_ntfynotifier_notifyconnectionac_abd30796 async;
+    class funnypot_program_llmratelimiter_isallowed_80b4d6f2 function;
+    class funnypot_program_llmratelimiter_reset_4d1b473a function;
+    class funnypot_program_llmratelimiter_cleanupexpired_1066d448 function;
+    class funnypot_program_llmratelimiter_loglimitstatus_72e55dd1 function;
     class funnypot_program_ntfynotifier_buildshellsessionm_20df51af function;
     class funnypot_program_ntfynotifier_buildauthattemptme_4b3eed49 function;
     class funnypot_program_ntfynotifier_buildconnectionmes_0273d4f6 function;
-    class funnypot_ilogger_ilogger_66a97e00 klass;
-    class funnypot_ilogger_ilogger_logyaml_e1bbc643 function;
-    class funnypot_ilogger_ilogger_logmsg_66993c57 function;
-    class funnypot_ilogger_ilogger_logmetric_9e735a09 function;
-    class funnypot_ilogger_ilogger_pushtogit_a4f7c04e function;
     class scripts_deploy_ensure_clean_git_state_b6faa730 function;
     class scripts_deploy_commit_submodule_if_needed_680f1d0e function;
     class scripts_deploy_commit_parent_if_needed_45aa1936 function;
-    class funnypot_obj_debug_net8_0_netcoreapp_version_v8_90b9cf55 async;
+    class funnypot_ilogger_ilogger_66a97e00 klass;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -3975,6 +4025,54 @@ flowchart LR
 </tr>
 <tr>
   <td>17</td>
+  <td><code>ConcurrentDictionary</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>ConcurrentDictionary node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>18</td>
+  <td><code>LlmRateLimiter</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>CleanupExpired()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>IsAllowed()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>LogLimitStatus()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br>+1 more</td>
+  <td>LlmRateLimiter node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>19</td>
+  <td><code>.IsAllowed()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>LlmRateLimiter</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><code>CleanupExpired()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>.IsAllowed() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>20</td>
+  <td><code>.Reset()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>LlmRateLimiter</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.Reset() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>21</td>
+  <td><code>.CleanupExpired()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>IsAllowed()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>LlmRateLimiter</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.CleanupExpired() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>22</td>
+  <td><code>.LogLimitStatus()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>LlmRateLimiter</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
+  <td>No direct outbound edge</td>
+  <td>.LogLimitStatus() node in FunnyPot/Program.cs.</td>
+</tr>
+<tr>
+  <td>23</td>
   <td><code>deploy.sh</code><br><small style="color:var(--muted)">scripts/deploy.sh</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -3982,7 +4080,7 @@ flowchart LR
   <td>deploy.sh node in scripts/deploy.sh.</td>
 </tr>
 <tr>
-  <td>18</td>
+  <td>24</td>
   <td><code>ensure_clean_git_state()</code><br><small style="color:var(--muted)">scripts/deploy.sh</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -3990,7 +4088,7 @@ flowchart LR
   <td>Turns a local path or remote repository into analysis context.</td>
 </tr>
 <tr>
-  <td>19</td>
+  <td>25</td>
   <td><code>commit_submodule_if_needed()</code><br><small style="color:var(--muted)">scripts/deploy.sh</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>ensure_clean_git_state()</code><br><small style="color:var(--muted)">scripts/deploy.sh</small></td>
@@ -3998,7 +4096,7 @@ flowchart LR
   <td>commit_submodule_if_needed() node in scripts/deploy.sh.</td>
 </tr>
 <tr>
-  <td>20</td>
+  <td>26</td>
   <td><code>commit_parent_if_needed()</code><br><small style="color:var(--muted)">scripts/deploy.sh</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>ensure_clean_git_state()</code><br><small style="color:var(--muted)">scripts/deploy.sh</small></td>
@@ -4006,7 +4104,7 @@ flowchart LR
   <td>commit_parent_if_needed() node in scripts/deploy.sh.</td>
 </tr>
 <tr>
-  <td>21</td>
+  <td>27</td>
   <td><code>AGENTS.md</code><br><small style="color:var(--muted)">AGENTS.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
@@ -4014,7 +4112,7 @@ flowchart LR
   <td>Documentation node describing AGENTS.md.</td>
 </tr>
 <tr>
-  <td>22</td>
+  <td>28</td>
   <td><code>graphify</code><br><small style="color:var(--muted)">AGENTS.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
@@ -4022,7 +4120,7 @@ flowchart LR
   <td>Documentation node describing graphify.</td>
 </tr>
 <tr>
-  <td>23</td>
+  <td>29</td>
   <td><code>FunnyPot.AssemblyInfo.cs</code><br><small style="color:var(--muted)">Debug/net8.0/FunnyPot.AssemblyInfo.cs</small></td>
   <td><span class="tag tag-async">Async</span></td>
   <td>External entry / no inbound edge</td>
@@ -4030,60 +4128,12 @@ flowchart LR
   <td>FunnyPot.AssemblyInfo.cs node in Debug/net8.0/FunnyPot.AssemblyInfo.cs.</td>
 </tr>
 <tr>
-  <td>24</td>
+  <td>30</td>
   <td><code>FunnyPot.GlobalUsings.g.cs</code><br><small style="color:var(--muted)">Debug/net8.0/FunnyPot.GlobalUsings.g.cs</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
   <td>FunnyPot.GlobalUsings.g.cs node in Debug/net8.0/FunnyPot.GlobalUsings.g.cs.</td>
-</tr>
-<tr>
-  <td>25</td>
-  <td><code>FunnyPot.AssemblyInfo.cs</code><br><small style="color:var(--muted)">Release/net8.0/FunnyPot.AssemblyInfo.cs</small></td>
-  <td><span class="tag tag-async">Async</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>FunnyPot.AssemblyInfo.cs node in Release/net8.0/FunnyPot.AssemblyInfo.cs.</td>
-</tr>
-<tr>
-  <td>26</td>
-  <td><code>FunnyPot.GlobalUsings.g.cs</code><br><small style="color:var(--muted)">Release/net8.0/FunnyPot.GlobalUsings.g.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>FunnyPot.GlobalUsings.g.cs node in Release/net8.0/FunnyPot.GlobalUsings.g.cs.</td>
-</tr>
-<tr>
-  <td>27</td>
-  <td><code>FunnyPot.AssemblyInfo.cs</code><br><small style="color:var(--muted)">net8.0/linux-x64/FunnyPot.AssemblyInfo.cs</small></td>
-  <td><span class="tag tag-async">Async</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>FunnyPot.AssemblyInfo.cs node in net8.0/linux-x64/FunnyPot.AssemblyInfo.cs.</td>
-</tr>
-<tr>
-  <td>28</td>
-  <td><code>FunnyPot.GlobalUsings.g.cs</code><br><small style="color:var(--muted)">net8.0/linux-x64/FunnyPot.GlobalUsings.g.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>FunnyPot.GlobalUsings.g.cs node in net8.0/linux-x64/FunnyPot.GlobalUsings.g.cs.</td>
-</tr>
-<tr>
-  <td>29</td>
-  <td><code>.NETCoreApp,Version=v8.0.AssemblyAttributes.cs</code><br><small style="color:var(--muted)">Debug/net8.0/.NETCoreApp,Version=v8.0.AssemblyAttributes.cs</small></td>
-  <td><span class="tag tag-async">Async</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>.NETCoreApp,Version=v8.0.AssemblyAttributes.cs node in Debug/net8.0/.NETCoreApp,Version=v8.0.AssemblyAttributes.cs.</td>
-</tr>
-<tr>
-  <td>30</td>
-  <td><code>.NETCoreApp,Version=v8.0.AssemblyAttributes.cs</code><br><small style="color:var(--muted)">net8.0/linux-x64/.NETCoreApp,Version=v8.0.AssemblyAttributes.cs</small></td>
-  <td><span class="tag tag-async">Async</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>.NETCoreApp,Version=v8.0.AssemblyAttributes.cs node in net8.0/linux-x64/.NETCoreApp,Version=v8.0.AssemblyAttributes.cs.</td>
 </tr>
 </table>
 
@@ -4092,7 +4142,7 @@ flowchart LR
     <h4>Key Files</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>FunnyPot/Program.cs</code></td><td>9 nodes</td></tr>
+      <tr><td><code>FunnyPot/Program.cs</code></td><td>15 nodes</td></tr>
 <tr><td><code>FunnyPot/ILogger.cs</code></td><td>7 nodes</td></tr>
 <tr><td><code>scripts/deploy.sh</code></td><td>4 nodes</td></tr>
 <tr><td><code>AGENTS.md</code></td><td>2 nodes</td></tr>
@@ -4104,7 +4154,7 @@ flowchart LR
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: calls x11, method x11, defines x3, contains x3. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: method x15, calls x12, defines x3, contains x3. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
@@ -4115,17 +4165,17 @@ flowchart LR
   <div class="card">
     <h4>Graph</h4>
     <table style="width:100%;font-size:0.85rem;">
-      <tr><td>Nodes</td><td>2307</td></tr>
-      <tr><td>Edges</td><td>2918</td></tr>
+      <tr><td>Nodes</td><td>2320</td></tr>
+      <tr><td>Edges</td><td>2944</td></tr>
       <tr><td>Hyperedges</td><td>0</td></tr>
-      <tr><td>Communities</td><td>405</td></tr>
+      <tr><td>Communities</td><td>410</td></tr>
       <tr><td>Documented Sections</td><td>15</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Edge Confidence</h4>
     <table style="width:100%;font-size:0.85rem;">
-      <tr><td>EXTRACTED</td><td>2918</td></tr>
+      <tr><td>EXTRACTED</td><td>2944</td></tr>
       <tr><td>INFERRED</td><td>0</td></tr>
       <tr><td>AMBIGUOUS</td><td>0</td></tr>
     </table>
@@ -4134,7 +4184,7 @@ flowchart LR
 
 <div style="text-align:center; padding:40px 0; color: var(--muted); font-size:0.9rem;">
   <p>FunnyPot — Architecture Documentation</p>
-  <p>Generated: 2026-05-25 17:58 UTC · graphify callflow-html</p>
+  <p>Generated: 2026-05-26 05:56 UTC · graphify callflow-html</p>
 </div>
 
 </div><!-- .container -->

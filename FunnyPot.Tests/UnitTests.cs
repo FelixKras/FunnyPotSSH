@@ -120,6 +120,71 @@ public class SCPDetectorTests
     }
 }
 
+public class SCPUploadSessionTests
+{
+    [Fact]
+    public void HandleData_CapturesBinaryUploadToLogDirectory()
+    {
+        var previousLogDir = Program.LogDir;
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Program.LogDir = tempDir;
+
+        try
+        {
+            var session = new SCPUploadSession("abcdef123456", "fallback.bin");
+            var acks = new List<byte[]>();
+            var closeReasons = new List<string>();
+            var payload = new byte[] { 0, 1, 2, 255, 10 };
+            var packet = new byte["C0644 5 payload.bin\n"u8.Length + payload.Length + 1];
+            "C0644 5 payload.bin\n"u8.CopyTo(packet);
+            payload.CopyTo(packet.AsSpan("C0644 5 payload.bin\n"u8.Length));
+            packet[^1] = 0;
+
+            session.HandleData(packet, acks.Add, closeReasons.Add);
+
+            Assert.Equal("SCPUploadCaptured", Assert.Single(closeReasons));
+            Assert.Equal(2, acks.Count);
+            Assert.All(acks, ack => Assert.Equal(new byte[] { 0 }, ack));
+
+            var uploadDir = Path.Combine(tempDir, "uploads", "abcdef12");
+            var path = Assert.Single(Directory.GetFiles(uploadDir, "*_payload.bin"));
+            Assert.Equal(payload, File.ReadAllBytes(path));
+        }
+        finally
+        {
+            Program.LogDir = previousLogDir;
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void HandleData_RejectsUploadsLargerThanFiveMegabytes()
+    {
+        var previousLogDir = Program.LogDir;
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Program.LogDir = tempDir;
+
+        try
+        {
+            var session = new SCPUploadSession("abcdef123456", "fallback.bin");
+            var closeReasons = new List<string>();
+            var header = $"C0644 {SCPUploadHandler.MaxUploadBytes + 1} payload.bin\n";
+
+            session.HandleData(System.Text.Encoding.ASCII.GetBytes(header), _ => { }, closeReasons.Add);
+
+            Assert.Equal("SCPUploadTooLarge", Assert.Single(closeReasons));
+            Assert.False(Directory.Exists(Path.Combine(tempDir, "uploads", "abcdef12")));
+        }
+        finally
+        {
+            Program.LogDir = previousLogDir;
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
+        }
+    }
+}
+
 public class DataHarvesterTests
 {
     [Fact]
