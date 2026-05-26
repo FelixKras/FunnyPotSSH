@@ -201,8 +201,8 @@ public class DataHarvesterTests
 
         Assert.Equal(1, analysis.DiscoveryDepthScore);
         Assert.Contains("http://example.com/a.sh", analysis.PayloadUrls);
-        Assert.Contains("T1105", analysis.MitreAttackTechniques);
-        Assert.Contains("T1083", analysis.MitreAttackTechniques);
+        Assert.Contains("Command and Control", analysis.MitreAttackTechniques);
+        Assert.Contains("Discovery", analysis.MitreAttackTechniques);
     }
 
     [Fact]
@@ -213,6 +213,15 @@ public class DataHarvesterTests
         Assert.Equal("ssh_authorized_keys", analysis.PersistenceVector);
         Assert.Equal("dynamic_forward", analysis.TunnelingIntent);
         Assert.True(analysis.AssetValuePerceptionScore > 0);
+    }
+
+    [Fact]
+    public void AnalyzeCommand_ClassifiesRouterOsProbeAsReconnaissance()
+    {
+        var analysis = DataHarvester.AnalyzeCommand("/ip cloud print");
+
+        Assert.Equal("mikrotik_routeros_probe", analysis.ReconnaissanceProbe);
+        Assert.Contains("Reconnaissance", analysis.MitreAttackTechniques);
     }
 
     [Fact]
@@ -265,7 +274,7 @@ public class DataHarvesterTests
 
         Assert.Equal(0.5, analytics.StandardErrorRatio);
         Assert.True(analytics.SemanticDrift > 0);
-        Assert.Contains("T1105", analytics.MitreTechniqueCounts.Keys);
+        Assert.Contains("Command and Control", analytics.MitreTechniqueCounts.Keys);
         Assert.True(analytics.CalculateTuringMultiplier() > 0);
     }
 }
@@ -525,6 +534,26 @@ public class CommandResolverTests
         var path = CommandResolver.ClassifyCommand(command, fs);
 
         Assert.Equal(expectedPath, path.ToString());
+    }
+
+    [Fact]
+    public void ResolveCommand_ReturnsLinuxErrorForRouterOsProbe()
+    {
+        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
+        var history = new List<ChatRequestData.ChatMessage>();
+
+        var (response, usedStatic, rateLimited, promptTokens, completionTokens) = CommandResolver.ResolveCommand(
+            "/ip cloud print",
+            Guid.NewGuid().ToString("N"),
+            Guid.NewGuid().ToString("N"),
+            fs,
+            history);
+
+        Assert.Equal("bash: /ip: No such file or directory", response);
+        Assert.True(usedStatic);
+        Assert.False(rateLimited);
+        Assert.Equal(0, promptTokens);
+        Assert.Equal(0, completionTokens);
     }
 
     [Theory]

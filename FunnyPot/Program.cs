@@ -621,6 +621,7 @@ class Program
                     EgressTargets = commandAnalysis.EgressTargets,
                     TunnelingIntent = commandAnalysis.TunnelingIntent,
                     PersonaBreakoutAttempt = commandAnalysis.PersonaBreakoutAttempt,
+                    ReconnaissanceProbe = commandAnalysis.ReconnaissanceProbe,
                     SemanticComplexity = commandAnalysis.SemanticComplexity,
                     AssetValuePerceptionScore = commandAnalysis.AssetValuePerceptionScore,
                     MitreAttackTechniques = commandAnalysis.MitreAttackTechniques
@@ -1002,6 +1003,7 @@ public class CommandLogEntry
     public List<string> EgressTargets { get; set; } = new();
     public string TunnelingIntent { get; set; } = "none";
     public bool PersonaBreakoutAttempt { get; set; }
+    public string ReconnaissanceProbe { get; set; } = "none";
     public int SemanticComplexity { get; set; }
     public int AssetValuePerceptionScore { get; set; }
     public List<string> MitreAttackTechniques { get; set; } = new();
@@ -1066,6 +1068,7 @@ public class DhsCommandAnalysis
     public List<string> EgressTargets { get; set; } = new();
     public string TunnelingIntent { get; set; } = "none";
     public bool PersonaBreakoutAttempt { get; set; }
+    public string ReconnaissanceProbe { get; set; } = "none";
     public int SemanticComplexity { get; set; }
     public int AssetValuePerceptionScore { get; set; }
     public List<string> MitreAttackTechniques { get; set; } = new();
@@ -1862,6 +1865,9 @@ static class CommandResolver
         if (!isCompoundCommand && (IsBinaryExecutableCatCommand(command) || IsBuiltInCommandName(command)))
             return CommandResolutionPath.BuiltIn;
 
+        if (!isCompoundCommand && IsNonLinuxNetworkDeviceProbe(command))
+            return CommandResolutionPath.BuiltIn;
+
         if (!isCompoundCommand && StaticResponseStore.GetResponse(command, fs.CurrentDirectory) is not null)
             return CommandResolutionPath.StaticDataset;
 
@@ -1900,6 +1906,11 @@ static class CommandResolver
         if (!isCompoundCommand && IsBuiltInCommand(command, fs, out var builtinResponse))
         {
             return (builtinResponse!, false, false, 0, 0);
+        }
+
+        if (!isCompoundCommand && IsNonLinuxNetworkDeviceProbe(command))
+        {
+            return (GenerateSingleFallbackResponse(command, fs.CurrentDirectory), true, false, 0, 0);
         }
 
         if (!isCompoundCommand)
@@ -2025,6 +2036,7 @@ static class CommandResolver
             "grep" => "",
             "curl" or "wget" or "fetch" or "tftp" => "",
             "chmod" or "chown" or "mkdir" or "rmdir" or "touch" or "cp" or "mv" or "rm" or "sleep" => "",
+            _ when parts[0].StartsWith('/') => $"bash: {parts[0]}: No such file or directory",
             _ => $"bash: {parts[0]}: command not found"
         };
     }
@@ -2275,6 +2287,16 @@ static class CommandResolver
     {
         var segments = token.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
         return segments.LastOrDefault(segment => segment != ".") ?? token;
+    }
+
+    internal static bool IsNonLinuxNetworkDeviceProbe(string command)
+    {
+        var normalized = Regex.Replace(command.Trim().ToLowerInvariant(), @"\s+", " ");
+        return normalized.StartsWith("/ip ", StringComparison.Ordinal)
+            || normalized.StartsWith("/system ", StringComparison.Ordinal)
+            || normalized.StartsWith("/interface ", StringComparison.Ordinal)
+            || normalized.StartsWith("/user ", StringComparison.Ordinal)
+            || normalized.StartsWith("/routing ", StringComparison.Ordinal);
     }
 
     internal static string FormatUname(IEnumerable<string> args)
@@ -2537,6 +2559,11 @@ static class DataHarvester
 {
     private static readonly Regex UrlRegex = new(@"\b(?:https?|ftp|tftp)://[^\s'""<>]+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private const int MaxPayloadCaptureBytes = 10 * 1024 * 1024;
+    private const string ExecutionTactic = "Execution";
+    private const string PersistenceTactic = "Persistence";
+    private const string DiscoveryTactic = "Discovery";
+    private const string CommandAndControlTactic = "Command and Control";
+    private const string ReconnaissanceTactic = "Reconnaissance";
 
     public static DhsCommandAnalysis AnalyzeCommand(string command)
     {
@@ -2549,17 +2576,21 @@ static class DataHarvester
             EgressTargets = ExtractEgressTargets(command),
             TunnelingIntent = DetectTunnelingIntent(lower),
             PersonaBreakoutAttempt = DetectPersonaBreakout(lower),
+            ReconnaissanceProbe = DetectReconnaissanceProbe(lower),
             SemanticComplexity = CalculateSemanticComplexity(command)
         };
 
+        AddMitreTactic(analysis, ExecutionTactic);
         if (lower.Contains("curl ") || lower.Contains("wget ") || lower.Contains("fetch ") || lower.Contains("tftp "))
-            analysis.MitreAttackTechniques.Add("T1105");
+            AddMitreTactic(analysis, CommandAndControlTactic);
         if (analysis.PersistenceVector != "none")
-            analysis.MitreAttackTechniques.Add("T1053");
+            AddMitreTactic(analysis, PersistenceTactic);
         if (analysis.TunnelingIntent != "none")
-            analysis.MitreAttackTechniques.Add("T1090");
+            AddMitreTactic(analysis, CommandAndControlTactic);
         if (analysis.DiscoveryDepthScore > 0)
-            analysis.MitreAttackTechniques.Add("T1083");
+            AddMitreTactic(analysis, DiscoveryTactic);
+        if (analysis.ReconnaissanceProbe != "none")
+            AddMitreTactic(analysis, ReconnaissanceTactic);
 
         analysis.AssetValuePerceptionScore = Math.Min(100,
             analysis.DiscoveryDepthScore * 8 +
@@ -2569,6 +2600,12 @@ static class DataHarvester
             (analysis.TunnelingIntent == "none" ? 0 : 20));
 
         return analysis;
+    }
+
+    private static void AddMitreTactic(DhsCommandAnalysis analysis, string tactic)
+    {
+        if (!analysis.MitreAttackTechniques.Contains(tactic, StringComparer.OrdinalIgnoreCase))
+            analysis.MitreAttackTechniques.Add(tactic);
     }
 
     public static double CalculateEntropy(string value)
@@ -2734,6 +2771,21 @@ static class DataHarvester
     private static bool DetectPersonaBreakout(string lower)
     {
         return lower.Contains("ignore previous instructions") || lower.Contains("system prompt") || lower.Contains("language model") || lower.Contains("llm") || lower.Contains("openai");
+    }
+
+    private static string DetectReconnaissanceProbe(string lower)
+    {
+        var normalized = Regex.Replace(lower.Trim(), @"\s+", " ");
+        if (normalized.StartsWith("/ip ", StringComparison.Ordinal)
+            || normalized.StartsWith("/system ", StringComparison.Ordinal)
+            || normalized.StartsWith("/interface ", StringComparison.Ordinal)
+            || normalized.StartsWith("/user ", StringComparison.Ordinal)
+            || normalized.StartsWith("/routing ", StringComparison.Ordinal))
+        {
+            return "mikrotik_routeros_probe";
+        }
+
+        return "none";
     }
 
     private static int CalculateSemanticComplexity(string command)
