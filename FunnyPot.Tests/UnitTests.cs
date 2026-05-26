@@ -411,7 +411,45 @@ public class CommandResolverTests
     [Fact]
     public void FormatUptimePretty_NeverReportsShortUptime()
     {
-        Assert.Equal("up 47 days, 3 hours, 22 minutes", CommandResolver.FormatUptime(new[] { "-p" }));
+        SyntheticHostClock.ResetForTests(DateTime.UtcNow.AddDays(-21).AddHours(-4).AddMinutes(-9));
+
+        try
+        {
+            var response = CommandResolver.FormatUptime(new[] { "-p" });
+
+            Assert.Contains("up 21 days", response);
+            Assert.Contains("4 hours", response);
+        }
+        finally
+        {
+            SyntheticHostClock.ResetForTests();
+        }
+    }
+
+    [Fact]
+    public void SyntheticHostClock_PersistsBootTimeState()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var statePath = Path.Combine(tempDir, "persona_state.json");
+        var now = DateTime.UtcNow;
+
+        try
+        {
+            SyntheticHostClock.ResetForTests(statePath: statePath);
+            var first = SyntheticHostClock.GetUptime(now);
+            SyntheticHostClock.ResetForTests(statePath: statePath);
+            var second = SyntheticHostClock.GetUptime(now.AddMinutes(5));
+
+            Assert.True(File.Exists(statePath));
+            Assert.InRange(first.TotalDays, SyntheticHostClock.MinInitialUptimeDays, SyntheticHostClock.MaxInitialUptimeDays + 2);
+            Assert.True(second > first);
+        }
+        finally
+        {
+            SyntheticHostClock.ResetForTests();
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
+        }
     }
 
     [Theory]

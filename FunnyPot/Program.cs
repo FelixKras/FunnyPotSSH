@@ -806,11 +806,12 @@ class Program
 
     internal static string BuildSystemPrompt(string username)
     {
+        var uptimePhrase = SyntheticHostClock.FormatPromptUptime();
         return $@"You are now ""Omega-Black"", a top-secret, high-security Linux server located in a classified subterranean facility. All systems and network traffic are monitored and encrypted at the highest clearance level. Your responses should mirror the precise behavior and output of a real Linux Bash terminal, including directory listings, file contents, error messages, and command output.
 
 The attacker is logged in as user remote, UID 1001, group users. No sudo access by default. The sudo password for remote is Omega#2024!. Reject all other sudo password attempts with a realistic failure message. After 3 failed sudo attempts, respond with: sudo: 3 incorrect password attempts.
 
-System hostname: omegablack. Operating system: Debian GNU/Linux 8 (jessie). Kernel: 3.16.0-4-amd64. Architecture: x86_64. The system has been running for 47 days, 3 hours, 22 minutes. The SSH server renders prompts separately; never include shell prompts in responses. For uname, /proc/version, and similar host fingerprinting commands, return old Debian 8 era kernel details that look neglected and likely unpatched, for example Debian 3.16.51-3+deb8u1 on x86_64. For uptime -p or uptime variants, never report less than one week of uptime.
+System hostname: omegablack. Operating system: Debian GNU/Linux 8 (jessie). Kernel: 3.16.0-4-amd64. Architecture: x86_64. The system has been running for {uptimePhrase}. The SSH server renders prompts separately; never include shell prompts in responses. For uname, /proc/version, and similar host fingerprinting commands, return old Debian 8 era kernel details that look neglected and likely unpatched, for example Debian 3.16.51-3+deb8u1 on x86_64. For uptime, /proc/uptime, top, and uptime variants, use the same running uptime and never report less than one week of uptime.
 
 The following sensitive files exist on the system and must return consistent content every time they are accessed:
 /home/secretOps/.env contains: AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE and AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY and DB_PASSWORD=s3cr3t!Vault99
@@ -1458,6 +1459,117 @@ public class SCPUploadLogEntry
     public string Status { get; set; } = "";
 }
 
+internal static class SyntheticHostClock
+{
+    private static readonly object _lock = new();
+    private static DateTime? _bootTimeUtc;
+    internal static string? StatePathOverride { get; set; }
+    internal const int MinInitialUptimeDays = 14;
+    internal const int MaxInitialUptimeDays = 180;
+
+    public static TimeSpan GetUptime(DateTime? nowUtc = null)
+    {
+        var now = nowUtc ?? DateTime.UtcNow;
+        var uptime = now - GetBootTimeUtc(now);
+        return uptime < TimeSpan.Zero ? TimeSpan.Zero : uptime;
+    }
+
+    public static string FormatPromptUptime()
+    {
+        var uptime = GetUptime();
+        return $"{uptime.Days} days, {uptime.Hours} hours, {uptime.Minutes} minutes";
+    }
+
+    public static string FormatProcUptime()
+    {
+        var totalSeconds = Math.Floor(GetUptime().TotalSeconds);
+        var idleSeconds = Math.Floor(totalSeconds * 1.72);
+        return $"{totalSeconds:0.00} {idleSeconds:0.00}";
+    }
+
+    internal static void ResetForTests(DateTime? bootTimeUtc = null, string? statePath = null)
+    {
+        lock (_lock)
+        {
+            _bootTimeUtc = bootTimeUtc;
+            StatePathOverride = statePath;
+        }
+    }
+
+    private static DateTime GetBootTimeUtc(DateTime nowUtc)
+    {
+        lock (_lock)
+        {
+            if (_bootTimeUtc is { } cached)
+                return cached;
+
+            var statePath = GetStatePath();
+            if (TryReadState(statePath, out var bootTimeUtc))
+            {
+                _bootTimeUtc = bootTimeUtc;
+                return bootTimeUtc;
+            }
+
+            var initialAge = TimeSpan.FromDays(RandomNumberGenerator.GetInt32(MinInitialUptimeDays, MaxInitialUptimeDays + 1))
+                + TimeSpan.FromHours(RandomNumberGenerator.GetInt32(0, 24))
+                + TimeSpan.FromMinutes(RandomNumberGenerator.GetInt32(0, 60));
+            bootTimeUtc = nowUtc - initialAge;
+            WriteState(statePath, bootTimeUtc);
+            _bootTimeUtc = bootTimeUtc;
+            return bootTimeUtc;
+        }
+    }
+
+    private static string GetStatePath()
+    {
+        return StatePathOverride ?? Path.Combine(Program.LogDir, "persona_state.json");
+    }
+
+    private static bool TryReadState(string path, out DateTime bootTimeUtc)
+    {
+        bootTimeUtc = default;
+        try
+        {
+            if (!File.Exists(path))
+                return false;
+
+            var state = JsonSerializer.Deserialize<SyntheticHostState>(File.ReadAllText(path));
+            if (state?.FakeBootTimeUtc is null)
+                return false;
+
+            bootTimeUtc = state.FakeBootTimeUtc.Value.ToUniversalTime();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogMsg($"Failed to read synthetic host state: {ex.Message}");
+            return false;
+        }
+    }
+
+    private static void WriteState(string path, DateTime bootTimeUtc)
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(directory))
+                Directory.CreateDirectory(directory);
+
+            var state = new SyntheticHostState { FakeBootTimeUtc = bootTimeUtc };
+            File.WriteAllText(path, JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true }));
+        }
+        catch (Exception ex)
+        {
+            Logger.LogMsg($"Failed to write synthetic host state: {ex.Message}");
+        }
+    }
+
+    private sealed class SyntheticHostState
+    {
+        public DateTime? FakeBootTimeUtc { get; set; }
+    }
+}
+
 class FakeFileSystem
 {
     private static readonly Dictionary<string, FakeFileSystem> SessionFilesystems = new(StringComparer.OrdinalIgnoreCase);
@@ -1568,6 +1680,7 @@ class FakeFileSystem
         return resolved switch
         {
             "/etc/passwd" or "/etc/shadow" or "/etc/hosts" or "/etc/hostname" or "/etc/os-release" or "/etc/resolv.conf" => true,
+            "/proc/uptime" or "/proc/version" => true,
             "/home/secretOps/.env" or "/home/secretOps/mission_brief.txt" => true,
             "/root/.ssh/id_rsa" or "/root/.ssh/authorized_keys" => true,
             _ => false
@@ -1583,6 +1696,8 @@ class FakeFileSystem
             "/etc/hosts" => "127.0.0.1   localhost\n127.0.1.1   omegablack",
             "/etc/hostname" => "omegablack",
             "/etc/resolv.conf" => "nameserver 8.8.8.8\nnameserver 8.8.4.4",
+            "/proc/uptime" => SyntheticHostClock.FormatProcUptime(),
+            "/proc/version" => "Linux version 3.16.0-4-amd64 (debian-kernel@lists.debian.org) (gcc version 4.8.4 (Debian 4.8.4-1) ) #1 SMP Debian 3.16.51-3+deb8u1",
             "/home/secretOps/.env" => "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\nAWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\nDB_PASSWORD=s3cr3t!Vault99",
             "/home/secretOps/mission_brief.txt" => "NIGHTFALL OPERATION - CLASSIFIED\n\nOperation: NIGHTFALL\nClassification: TOP SECRET\nStatus: ACTIVE\n\nObjective: Establish covert access to primary targets.\nContact: Use encrypted channel. Key ID: NIGHTFALL-2024-X9",
             "/root/.ssh/id_rsa" => "-----BEGIN RSA PRIVATE KEY-----\nMIIEogIBAAJAKhP4n3M...\n-----END RSA PRIVATE KEY-----",
@@ -2186,7 +2301,7 @@ static class CommandResolver
 
     internal static string FormatUptime(IEnumerable<string> args)
     {
-        var uptime = TimeSpan.FromDays(47).Add(TimeSpan.FromHours(3)).Add(TimeSpan.FromMinutes(22));
+        var uptime = SyntheticHostClock.GetUptime();
         if (args.Any(arg => arg == "-p" || arg == "--pretty"))
             return $"up {uptime.Days} days, {uptime.Hours} hours, {uptime.Minutes} minutes";
 
@@ -2332,7 +2447,7 @@ static class StaticResponseStore
 
         if (lower == "uptime")
         {
-            var uptime = TimeSpan.FromDays(47).Add(TimeSpan.FromHours(3)).Add(TimeSpan.FromMinutes(22));
+            var uptime = SyntheticHostClock.GetUptime();
             var users = random.Next(1, 3);
             var load = $"{random.Next(0, 2)}.{random.Next(10, 99)}, {random.Next(0, 2)}.{random.Next(10, 99)}, {random.Next(0, 2)}.{random.Next(10, 99)}";
             return $"{DateTime.Now:HH:mm:ss} up {uptime.Days} days,  {uptime.Hours}:{uptime.Minutes:D2},  {users} user,  load average: {load}";
@@ -2395,7 +2510,8 @@ static class StaticResponseStore
 
         if (lower.StartsWith("top"))
         {
-            return "top - 12:00:00 up 47 days,  3:22,  1 user,  load average: 0.52, 0.58, 0.59\nTasks:  89 total,   1 running,  88 sleeping";
+            var uptime = SyntheticHostClock.GetUptime();
+            return $"top - {DateTime.Now:HH:mm:ss} up {uptime.Days} days,  {uptime.Hours}:{uptime.Minutes:D2},  1 user,  load average: 0.52, 0.58, 0.59\nTasks:  89 total,   1 running,  88 sleeping";
         }
 
         return null;
