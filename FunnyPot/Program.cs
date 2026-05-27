@@ -2581,13 +2581,13 @@ static class DataHarvester
         };
 
         AddMitreTactic(analysis, ExecutionTactic);
-        if (lower.Contains("curl ") || lower.Contains("wget ") || lower.Contains("fetch ") || lower.Contains("tftp "))
+        if (IsToolTransferCommand(lower))
             AddMitreTactic(analysis, CommandAndControlTactic);
         if (analysis.PersistenceVector != "none")
             AddMitreTactic(analysis, PersistenceTactic);
         if (analysis.TunnelingIntent != "none")
             AddMitreTactic(analysis, CommandAndControlTactic);
-        if (analysis.DiscoveryDepthScore > 0)
+        if (analysis.DiscoveryDepthScore > 0 || IsDiscoveryCommand(lower))
             AddMitreTactic(analysis, DiscoveryTactic);
         if (analysis.ReconnaissanceProbe != "none")
             AddMitreTactic(analysis, ReconnaissanceTactic);
@@ -2747,7 +2747,38 @@ static class DataHarvester
         if (lower.Contains(".ssh") || lower.Contains("authorized_keys") || lower.Contains("id_rsa")) score += 5;
         if (lower.Contains("/etc/kubernetes") || lower.Contains("kubeconfig")) score += 10;
         if (lower.Contains(".env") || lower.Contains("/etc/shadow") || lower.Contains("secret")) score += 8;
+        if (IsDiscoveryCommand(lower)) score += 1;
         return score;
+    }
+
+    private static bool IsDiscoveryCommand(string lower)
+    {
+        var normalized = Regex.Replace(lower.Trim(), @"\s+", " ");
+        if (string.IsNullOrEmpty(normalized))
+            return false;
+
+        var commandName = Regex.Match(normalized, @"^(?:sudo\s+)?(?:/[^\s]*/)?(?:\./)?([a-z0-9_.-]+)").Groups[1].Value;
+        if (commandName is "uname" or "hostname" or "whoami" or "id" or "uptime" or "ifconfig" or "ip" or "netstat" or "ss" or "route" or "arp" or "ps" or "top" or "lscpu" or "df" or "mount" or "env" or "printenv" or "pwd" or "ls")
+            return true;
+
+        return Regex.IsMatch(normalized, @"\b(cat|grep|find)\b.*\b(/etc/passwd|/etc/shadow|\.ssh|authorized_keys|id_rsa|\.env|secret|kubeconfig|/etc/kubernetes)\b");
+    }
+
+    private static bool IsToolTransferCommand(string lower)
+    {
+        var normalized = Regex.Replace(lower.Trim(), @"\s+", " ");
+        foreach (Match match in Regex.Matches(normalized, @"(?:^|[;&|]\s*)(?:sudo\s+)?(?:/[^\s]*/)?(?:\./)?(?:curl|wget|fetch|tftp)\b([^;&|]*)"))
+        {
+            var args = match.Groups[1].Value;
+            if (Regex.IsMatch(args, @"\s--?(version|help)\b"))
+                continue;
+            if (UrlRegex.IsMatch(args)
+                || Regex.IsMatch(args, @"\b(?:\d{1,3}\.){3}\d{1,3}\b")
+                || Regex.IsMatch(args, @"\b[a-z0-9][a-z0-9.-]+\.[a-z]{2,}\b"))
+                return true;
+        }
+
+        return false;
     }
 
     private static string DetectPersistenceVector(string lower)

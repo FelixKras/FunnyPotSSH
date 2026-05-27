@@ -224,6 +224,28 @@ public class DataHarvesterTests
         Assert.Contains("Reconnaissance", analysis.MitreAttackTechniques);
     }
 
+    [Theory]
+    [InlineData("uname -s -m")]
+    [InlineData("/bin/./uname -s -v -n -r -m")]
+    [InlineData("ifconfig")]
+    [InlineData("ip addr show")]
+    [InlineData("whoami")]
+    public void AnalyzeCommand_ClassifiesHostAndNetworkEnumerationAsDiscovery(string command)
+    {
+        var analysis = DataHarvester.AnalyzeCommand(command);
+
+        Assert.True(analysis.DiscoveryDepthScore > 0);
+        Assert.Contains("Discovery", analysis.MitreAttackTechniques);
+    }
+
+    [Fact]
+    public void AnalyzeCommand_DoesNotClassifyToolVersionCheckAsCommandAndControl()
+    {
+        var analysis = DataHarvester.AnalyzeCommand("curl --version");
+
+        Assert.DoesNotContain("Command and Control", analysis.MitreAttackTechniques);
+    }
+
     [Fact]
     public void CalculateFingerprintHash_IsDeterministicAndNormalizesInput()
     {
