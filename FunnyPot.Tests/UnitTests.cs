@@ -256,27 +256,6 @@ public class DataHarvesterTests
         Assert.Equal(64, first.Length);
     }
 
-    [Theory]
-    [InlineData("127.0.0.1:22", "private", "private")]
-    [InlineData("10.10.1.2:22", "private", "private")]
-    [InlineData("8.8.8.8:22", "unknown", "lookup_unavailable")]
-    public void CategorizeInfrastructure_ProfilesEndpoint(string endpoint, string category, string asn)
-    {
-        var profile = DataHarvester.CategorizeInfrastructure(endpoint);
-
-        Assert.Equal(category, profile.Category);
-        Assert.Equal(asn, profile.Asn);
-    }
-
-    [Fact]
-    public void CategorizeInfrastructure_HandlesBracketedIpv6Endpoint()
-    {
-        var profile = DataHarvester.CategorizeInfrastructure("[2001:db8::1]:49152");
-
-        Assert.Equal("unknown", profile.Category);
-        Assert.Equal("lookup_unavailable", profile.Asn);
-    }
-
     [Fact]
     public void IsFailureResponse_DoesNotTreatGenericErrorWordAsFailure()
     {

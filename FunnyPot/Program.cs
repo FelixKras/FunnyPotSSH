@@ -382,8 +382,6 @@ class Program
             var credentialDistance = previousCredential is null ? 0 : DataHarvester.LevenshteinDistance(previousCredential, credential);
             LastCredentials[sessionKey] = credential;
             var credentialEntropy = args.AuthMethod == "password" ? DataHarvester.CalculateEntropy(args.Password ?? "") : 0;
-            var infrastructureProfile = DataHarvester.CategorizeInfrastructure(remoteEndpoint);
-
             Logger.LogYaml("auth_attempt", new AuthAttemptLogEntry
             {
                 Timestamp = DateTime.UtcNow,
@@ -399,8 +397,6 @@ class Program
                 AcceptanceReason = acceptanceReason,
                 CredentialEntropy = credentialEntropy,
                 PreviousCredentialDistance = credentialDistance,
-                InfrastructureCategory = infrastructureProfile.Category,
-                InfrastructureAsn = infrastructureProfile.Asn,
                 FingerprintHash = DataHarvester.CalculateFingerprintHash(args.Session?.ClientVersion, args.KeyAlgorithm, args.Fingerprint)
             });
 
@@ -480,8 +476,7 @@ class Program
             };
             var shellAnalytics = ShellAnalyticsBySession.GetOrAdd(sessionId, _ => new ShellSessionAnalytics
             {
-                SessionStartedAt = DateTime.UtcNow,
-                InfrastructureCategory = DataHarvester.CategorizeInfrastructure(remoteEndpoint).Category
+                SessionStartedAt = DateTime.UtcNow
             });
 
             var fakeFs = FakeFileSystem.GetOrCreate(sessionId);
@@ -967,8 +962,6 @@ public class AuthAttemptLogEntry
     public string AcceptanceReason { get; set; } = "rejected";
     public double CredentialEntropy { get; set; }
     public int PreviousCredentialDistance { get; set; }
-    public string InfrastructureCategory { get; set; } = "unknown";
-    public string InfrastructureAsn { get; set; } = "unknown";
     public string FingerprintHash { get; set; } = "";
 }
 
@@ -1097,23 +1090,15 @@ public class GlobalStats
     public long TotalCompletionTokens { get; set; }
     public long TotalDurationMs { get; set; }
     public Dictionary<string, int> TopUsers { get; set; } = new();
-    public Dictionary<string, int> SessionsByInfrastructureCategory { get; set; } = new();
     public Dictionary<string, int> SessionsByBanner { get; set; } = new();
     public Dictionary<string, int> MitreTechniqueDistribution { get; set; } = new();
     public double MeanEngagementSeconds { get; set; }
     public DateTime LastUpdated { get; set; }
 }
 
-public class InfrastructureProfile
-{
-    public string Category { get; set; } = "unknown";
-    public string Asn { get; set; } = "unknown";
-}
-
 public class ShellSessionAnalytics
 {
     public DateTime SessionStartedAt { get; set; }
-    public string InfrastructureCategory { get; set; } = "unknown";
     public int TotalCommands { get; private set; }
     public int FailedCommands { get; private set; }
     public int FirstSemanticComplexity { get; private set; }
@@ -2640,22 +2625,6 @@ static class DataHarvester
         return costs[right.Length];
     }
 
-    public static InfrastructureProfile CategorizeInfrastructure(string remoteEndpoint)
-    {
-        var host = Program.GetRemoteAttemptKey(remoteEndpoint);
-        if (!IPAddress.TryParse(host, out var ip))
-            return new InfrastructureProfile { Category = "unknown", Asn = "unknown" };
-
-        if (IPAddress.IsLoopback(ip) || host.StartsWith("10.") || host.StartsWith("192.168.") || Regex.IsMatch(host, @"^172\.(1[6-9]|2\d|3[01])\."))
-            return new InfrastructureProfile { Category = "private", Asn = "private" };
-
-        return new InfrastructureProfile
-        {
-            Category = IsLikelyCloudOrHosting(ip) ? "hosting_cloud" : "unknown",
-            Asn = "lookup_unavailable"
-        };
-    }
-
     public static string CalculateFingerprintHash(params string?[] parts)
     {
         var material = string.Join("|", parts.Where(part => !string.IsNullOrWhiteSpace(part)).Select(part => part!.Trim().ToLowerInvariant()));
@@ -2834,14 +2803,6 @@ static class DataHarvester
         return targets.Distinct().ToList();
     }
 
-    private static bool IsLikelyCloudOrHosting(IPAddress ip)
-    {
-        var bytes = ip.GetAddressBytes();
-        if (bytes.Length != 4)
-            return false;
-
-        return bytes[0] is 3 or 13 or 18 or 20 or 34 or 35 or 40 or 44 or 52 or 54 or 104 or 138 or 139;
-    }
 }
 
 static class NtfyNotifier
@@ -3103,9 +3064,6 @@ static class Logger
 
                 if (analytics is not null)
                 {
-                    stats.SessionsByInfrastructureCategory[analytics.InfrastructureCategory] =
-                        stats.SessionsByInfrastructureCategory.GetValueOrDefault(analytics.InfrastructureCategory) + 1;
-
                     foreach (var (technique, count) in analytics.MitreTechniqueCounts)
                         stats.MitreTechniqueDistribution[technique] = stats.MitreTechniqueDistribution.GetValueOrDefault(technique) + count;
                 }
