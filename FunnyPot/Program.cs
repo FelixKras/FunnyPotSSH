@@ -19,6 +19,10 @@ using FunnyPot;
 
 class Program
 {
+    internal const string KernelRelease = "2.6.32-5-amd64";
+    internal const string KernelVersion = "#1 SMP Mon Jan 16 16:22:28 UTC 2012";
+    internal const string KernelProcVersion = "Linux version 2.6.32-5-amd64 (Debian 2.6.32-41) (dannf@debian.org) (gcc version 4.4.5 (Debian 4.4.5-8) ) #1 SMP Mon Jan 16 16:22:28 UTC 2012";
+
     static readonly HttpClient httpClient = new();
     internal static HttpClient SharedHttpClient => httpClient;
     static AppConfiguration Config => _config ??= AppConfiguration.Load();
@@ -807,7 +811,7 @@ class Program
 
 The attacker is logged in as user remote, UID 1001, group users. No sudo access by default. The sudo password for remote is Omega#2024!. Reject all other sudo password attempts with a realistic failure message. After 3 failed sudo attempts, respond with: sudo: 3 incorrect password attempts.
 
-System hostname: omegablack. Operating system: Debian GNU/Linux 8 (jessie). Kernel: 3.16.0-4-amd64. Architecture: x86_64. The system has been running for {uptimePhrase}. The SSH server renders prompts separately; never include shell prompts in responses. For uname, /proc/version, and similar host fingerprinting commands, return old Debian 8 era kernel details that look neglected and likely unpatched, for example Debian 3.16.51-3+deb8u1 on x86_64. For uptime, /proc/uptime, top, and uptime variants, use the same running uptime and never report less than one week of uptime.
+System hostname: omegablack. Operating system: Debian GNU/Linux 6 (squeeze). Kernel: {KernelRelease}. Architecture: x86_64. The system has been running for {uptimePhrase}. The SSH server renders prompts separately; never include shell prompts in responses. For uname, /proc/version, and similar host fingerprinting commands, return old Debian 6 era kernel details that look EOL and likely vulnerable, for example {KernelRelease} with {KernelVersion} on x86_64. For uptime, /proc/uptime, top, and uptime variants, use the same running uptime and never report less than one week of uptime.
 
 The following sensitive files exist on the system and must return consistent content every time they are accessed:
 /home/secretOps/.env contains: AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE and AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY and DB_PASSWORD=s3cr3t!Vault99
@@ -1685,7 +1689,7 @@ class FakeFileSystem
             "/etc/hostname" => "omegablack",
             "/etc/resolv.conf" => "nameserver 8.8.8.8\nnameserver 8.8.4.4",
             "/proc/uptime" => SyntheticHostClock.FormatProcUptime(),
-            "/proc/version" => "Linux version 3.16.0-4-amd64 (debian-kernel@lists.debian.org) (gcc version 4.8.4 (Debian 4.8.4-1) ) #1 SMP Debian 3.16.51-3+deb8u1",
+            "/proc/version" => Program.KernelProcVersion,
             "/home/secretOps/.env" => "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\nAWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\nDB_PASSWORD=s3cr3t!Vault99",
             "/home/secretOps/mission_brief.txt" => "NIGHTFALL OPERATION - CLASSIFIED\n\nOperation: NIGHTFALL\nClassification: TOP SECRET\nStatus: ACTIVE\n\nObjective: Establish covert access to primary targets.\nContact: Use encrypted channel. Key ID: NIGHTFALL-2024-X9",
             "/root/.ssh/id_rsa" => "-----BEGIN RSA PRIVATE KEY-----\nMIIEogIBAAJAKhP4n3M...\n-----END RSA PRIVATE KEY-----",
@@ -2291,13 +2295,13 @@ static class CommandResolver
             return "Linux";
 
         if (flags.Contains('a'))
-            return "Linux omegablack 3.16.0-4-amd64 #1 SMP Debian 3.16.51-3+deb8u1 x86_64 GNU/Linux";
+            return $"Linux omegablack {Program.KernelRelease} {Program.KernelVersion} x86_64 GNU/Linux";
 
         var values = new List<string>();
         if (flags.Contains('s')) values.Add("Linux");
         if (flags.Contains('n')) values.Add("omegablack");
-        if (flags.Contains('r')) values.Add("3.16.0-4-amd64");
-        if (flags.Contains('v')) values.Add("#1 SMP Debian 3.16.51-3+deb8u1");
+        if (flags.Contains('r')) values.Add(Program.KernelRelease);
+        if (flags.Contains('v')) values.Add(Program.KernelVersion);
         if (flags.Contains('m')) values.Add("x86_64");
         if (flags.Contains('p')) values.Add("unknown");
         if (flags.Contains('i')) values.Add("unknown");

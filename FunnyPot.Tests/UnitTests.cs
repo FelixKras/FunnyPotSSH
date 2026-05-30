@@ -407,14 +407,14 @@ public class CommandResolverTests
     }
 
     [Fact]
-    public void FormatUname_ReturnsOldDebianKernelFingerprint()
+    public void FormatUname_ReturnsOldEolDebianKernelFingerprint()
     {
         var response = CommandResolver.FormatUname(new[] { "-s", "-v", "-n", "-r", "-m" });
 
         Assert.Contains("Linux", response);
         Assert.Contains("omegablack", response);
-        Assert.Contains("3.16.0-4-amd64", response);
-        Assert.Contains("Debian 3.16.51-3+deb8u1", response);
+        Assert.Contains("2.6.32-5-amd64", response);
+        Assert.Contains("Jan 16 16:22:28 UTC 2012", response);
         Assert.Contains("x86_64", response);
     }
 
