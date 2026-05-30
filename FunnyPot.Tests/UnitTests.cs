@@ -419,6 +419,45 @@ public class CommandResolverTests
     }
 
     [Fact]
+    public void FormatCpuInfo_UsesStaticProcCpuinfoShapeWithProvidedValues()
+    {
+        var response = CommandResolver.FormatCpuInfo(new CpuInfoValues
+        {
+            CpuCount = 2,
+            BogoMips = "50.00",
+            Implementer = "0x41",
+            Architecture = 8,
+            Variant = "0x1",
+            Parts = new List<string> { "0xd82", "0xd80" },
+            Revision = 2
+        });
+
+        Assert.Contains("processor\t: 0", response);
+        Assert.Contains("processor\t: 1", response);
+        Assert.Contains("BogoMIPS\t: 50.00", response);
+        Assert.Contains("Features\t: fp asimd", response);
+        Assert.Contains("CPU implementer\t: 0x41", response);
+        Assert.Contains("CPU architecture: 8", response);
+        Assert.Contains("CPU variant\t: 0x1", response);
+        Assert.Contains("CPU part\t: 0xd82", response);
+        Assert.Contains("CPU part\t: 0xd80", response);
+        Assert.Contains("CPU revision\t: 2", response);
+    }
+
+    [Fact]
+    public void TryParseCpuInfoValues_ReadsLlmJsonValues()
+    {
+        var parsed = CommandResolver.TryParseCpuInfoValues(
+            "```json\n{\"cpuCount\":2,\"bogoMips\":\"51.20\",\"implementer\":\"0x41\",\"architecture\":8,\"variant\":\"0x0\",\"parts\":[\"0xd82\",\"0xd80\"],\"revision\":1}\n```",
+            out var values);
+
+        Assert.True(parsed);
+        Assert.Equal(2, values.CpuCount);
+        Assert.Equal("51.20", values.BogoMips);
+        Assert.Equal(new[] { "0xd82", "0xd80" }, values.Parts);
+    }
+
+    [Fact]
     public void FormatUptimePretty_NeverReportsShortUptime()
     {
         SyntheticHostClock.ResetForTests(DateTime.UtcNow.AddDays(-21).AddHours(-4).AddMinutes(-9));
@@ -747,7 +786,7 @@ public class AppConfigurationTests
 
         var config = AppConfiguration.Load(path);
 
-        Assert.Equal("mistralai/mistral-nemo", config.Llm.Model);
+        Assert.Equal("google/gemma-4-31b-it:free", config.Llm.Model);
         Assert.Equal("/var/log/funnypot", config.Logging.LogDir);
         Assert.False(config.Notification.Enabled);
         Assert.Equal(3, config.Ssh.PasswordHarvestAttempt);

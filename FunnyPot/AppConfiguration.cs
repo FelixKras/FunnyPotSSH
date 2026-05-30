@@ -67,7 +67,7 @@ namespace FunnyPot
         public int DelayMs { get; set; } = 500;
         public int RateLimitMaxPerWindow { get; set; } = 20;
         public int RateLimitWindowSeconds { get; set; } = 60;
-        public string Model { get; set; } = "mistralai/mistral-nemo";
+        public string Model { get; set; } = "google/gemma-4-31b-it:free";
         public int MaxTokens { get; set; } = 2000;
         public int TimeoutSeconds { get; set; } = 30;
     }

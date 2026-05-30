@@ -24,7 +24,7 @@ llm:
   delay-ms: 500
   rate-limit-max-per-window: 20
   rate-limit-window-seconds: 60
-  model: "mistralai/mistral-nemo"
+  model: "google/gemma-4-31b-it:free"
   max-tokens: 2000
   timeout-seconds: 30
 

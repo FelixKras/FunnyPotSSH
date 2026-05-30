@@ -1902,6 +1902,19 @@ static class CommandResolver
             return (GenerateSingleFallbackResponse(command, fs.CurrentDirectory), true, false, 0, 0);
         }
 
+        if (!isCompoundCommand && IsCpuInfoCommand(command))
+        {
+            if (!LlmRateLimiter.IsAllowed(rateLimitKey, out var cpuInfoFallbackMessage))
+            {
+                Logger.LogMsg($"Rate limit triggered for session {sessionId}, using fallback response");
+                return (cpuInfoFallbackMessage ?? "Rate limit exceeded. Please wait.", false, true, 0, 0);
+            }
+
+            LlmRateLimiter.LogLimitStatus(rateLimitKey);
+            var (cpuInfo, cpuInfoPromptTokens, cpuInfoCompletionTokens, usedFallback) = GenerateCpuInfoResponse();
+            return (cpuInfo, usedFallback, false, cpuInfoPromptTokens, cpuInfoCompletionTokens);
+        }
+
         if (!isCompoundCommand)
         {
             var staticResponse = StaticResponseStore.GetResponse(command, fs.CurrentDirectory);
@@ -2021,6 +2034,7 @@ static class CommandResolver
         return executable switch
         {
             "ls" => StaticResponseStore.GetResponse("ls", currentDir) ?? "Documents  Downloads  Music  Pictures  Public  Templates  Videos",
+            "cat" when IsCpuInfoCommand(cleanCommand) => FormatCpuInfo(CpuInfoValues.Fallback()),
             "cat" => parts.Length > 1 ? $"cat: {parts[1]}: No such file or directory" : "",
             "grep" => "",
             "curl" or "wget" or "fetch" or "tftp" => "",
@@ -2239,6 +2253,120 @@ static class CommandResolver
             || normalized.Equals("/bin/cat /bin/echo", StringComparison.Ordinal)
             || normalized.Equals("cat /usr/bin/echo", StringComparison.Ordinal)
             || normalized.Equals("/bin/cat /usr/bin/echo", StringComparison.Ordinal);
+    }
+
+    internal static bool IsCpuInfoCommand(string command)
+    {
+        var normalized = Regex.Replace(command.Trim().ToLowerInvariant(), @"\s+", " ");
+        return normalized is "cat /proc/cpuinfo" or "/bin/cat /proc/cpuinfo";
+    }
+
+    internal static (string response, int promptTokens, int completionTokens, bool usedFallback) GenerateCpuInfoResponse()
+    {
+        var prompt = "Return JSON only for a plausible old Linux /proc/cpuinfo response on a low-power ARM or embedded server. " +
+            "Use these properties exactly: cpuCount integer 1-4, bogoMips string decimal, implementer string hex like 0x41, architecture integer, variant string hex like 0x0, parts array of hex CPU part strings, revision integer. " +
+            "Do not include prose or markdown.";
+        var history = new List<ChatRequestData.ChatMessage>
+        {
+            new() { role = "system", content = "Generate realistic machine fingerprint values as JSON only. The caller will place them into a fixed /proc/cpuinfo template." }
+        };
+
+        var (response, promptTokens, completionTokens, _) = Program.GetLLMResponse(history, prompt);
+        if (TryParseCpuInfoValues(response, out var values))
+            return (FormatCpuInfo(values), promptTokens, completionTokens, false);
+
+        return (FormatCpuInfo(CpuInfoValues.Fallback()), 0, 0, true);
+    }
+
+    internal static bool TryParseCpuInfoValues(string response, out CpuInfoValues values)
+    {
+        values = CpuInfoValues.Fallback();
+        var json = ExtractJsonObject(response);
+        if (json is null)
+            return false;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            var parsed = new CpuInfoValues
+            {
+                CpuCount = Math.Clamp(GetInt(root, "cpuCount", values.CpuCount), 1, 8),
+                BogoMips = GetString(root, "bogoMips", values.BogoMips),
+                Implementer = GetString(root, "implementer", values.Implementer),
+                Architecture = Math.Clamp(GetInt(root, "architecture", values.Architecture), 4, 8),
+                Variant = GetString(root, "variant", values.Variant),
+                Revision = Math.Clamp(GetInt(root, "revision", values.Revision), 0, 15),
+                Parts = GetStringArray(root, "parts")
+            };
+
+            if (parsed.Parts.Count == 0)
+                parsed.Parts.AddRange(values.Parts);
+
+            values = parsed;
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static string? ExtractJsonObject(string response)
+    {
+        var start = response.IndexOf('{');
+        var end = response.LastIndexOf('}');
+        return start >= 0 && end > start ? response[start..(end + 1)] : null;
+    }
+
+    private static int GetInt(JsonElement root, string propertyName, int fallback)
+    {
+        return root.TryGetProperty(propertyName, out var property) && property.TryGetInt32(out var value) ? value : fallback;
+    }
+
+    private static string GetString(JsonElement root, string propertyName, string fallback)
+    {
+        return root.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.String
+            ? property.GetString() ?? fallback
+            : fallback;
+    }
+
+    private static List<string> GetStringArray(JsonElement root, string propertyName)
+    {
+        if (!root.TryGetProperty(propertyName, out var property) || property.ValueKind != JsonValueKind.Array)
+            return new List<string>();
+
+        return property.EnumerateArray()
+            .Where(item => item.ValueKind == JsonValueKind.String)
+            .Select(item => item.GetString())
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => value!)
+            .ToList();
+    }
+
+    internal static string FormatCpuInfo(CpuInfoValues values)
+    {
+        const string features = "fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm jscvt fcma lrcpc dcpop sha3 sm3 sm4 asimddp sha512 sve asimdfhm dit uscat ilrcpc flagm sb paca pacg dcpodp sve2 ssbs svepmull svebitperm svesha3 svesm4 flagm2 frint svei8mm svebf16 i8mm bf16 dgh bti ecv afp wfxt";
+        var builder = new StringBuilder();
+        for (var processor = 0; processor < values.CpuCount; processor++)
+        {
+            if (processor > 0)
+                builder.AppendLine();
+
+            var part = values.Parts.Count > processor ? values.Parts[processor] : values.Parts[processor % values.Parts.Count];
+            builder.AppendLine($"processor\t: {processor}");
+            builder.AppendLine($"BogoMIPS\t: {values.BogoMips}");
+            builder.AppendLine($"Features\t: {features}");
+            builder.AppendLine($"CPU implementer\t: {values.Implementer}");
+            builder.AppendLine($"CPU architecture: {values.Architecture}");
+            builder.AppendLine($"CPU variant\t: {values.Variant}");
+            builder.AppendLine($"CPU part\t: {part}");
+            builder.Append($"CPU revision\t: {values.Revision}");
+            if (processor < values.CpuCount - 1)
+                builder.AppendLine().AppendLine();
+        }
+
+        return builder.ToString();
     }
 
     internal static string BinaryExecutableCatResponse()
@@ -2542,6 +2670,28 @@ public class StaticResponseEntry
     public string Command { get; set; } = "";
     public string? Response { get; set; }
     public string? outputType { get; set; }
+}
+
+public class CpuInfoValues
+{
+    public int CpuCount { get; set; }
+    public string BogoMips { get; set; } = "49.15";
+    public string Implementer { get; set; } = "0x41";
+    public int Architecture { get; set; } = 8;
+    public string Variant { get; set; } = "0x0";
+    public List<string> Parts { get; set; } = new();
+    public int Revision { get; set; } = 1;
+
+    public static CpuInfoValues Fallback() => new()
+    {
+        CpuCount = 4,
+        BogoMips = "49.15",
+        Implementer = "0x41",
+        Architecture = 8,
+        Variant = "0x0",
+        Parts = new List<string> { "0xd82", "0xd80", "0xd80", "0xd82" },
+        Revision = 1
+    };
 }
 
 static class DataHarvester
