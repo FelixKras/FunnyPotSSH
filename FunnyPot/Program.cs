@@ -572,6 +572,36 @@ class Program
                     || command.Equals("logout", StringComparison.OrdinalIgnoreCase);
             }
 
+            void LogCommandResult(string line, string response, long responseDurationMs, bool failedCommand)
+            {
+                var hallucinationFeedback = false;
+                try
+                {
+                    hallucinationFeedback = DataHarvester.DetectHallucinationFeedback(line, response);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogMsg($"[Session {sessionId}] Hallucination feedback analysis failed for '{line}': {ex.Message}");
+                }
+
+                Logger.LogYaml("command_result", new CommandResultLogEntry
+                {
+                    Timestamp = DateTime.UtcNow,
+                    SessionKey = connectionSessionKey,
+                    ShellSessionId = sessionId,
+                    RemoteEndpoint = remoteEndpoint,
+                    Username = username,
+                    Command = line,
+                    Response = response,
+                    FailedCommand = failedCommand,
+                    ResponseDurationMs = responseDurationMs,
+                    HallucinationFeedback = hallucinationFeedback,
+                    StandardErrorRatio = shellAnalytics.StandardErrorRatio,
+                    SemanticDrift = shellAnalytics.SemanticDrift,
+                    TuringMultiplier = shellAnalytics.CalculateTuringMultiplier()
+                });
+            }
+
             void ProcessLine(string line)
             {
                 if (Volatile.Read(ref shellClosed) != 0)
@@ -597,8 +627,22 @@ class Program
 
                 Logger.LogMsg($"[Session {sessionId}] User input: {line}");
                 var commandStartedAt = DateTime.UtcNow;
-                var commandAnalysis = DataHarvester.AnalyzeCommand(line);
-                shellAnalytics.RecordCommand(commandAnalysis);
+                var processingStage = "analyzing command";
+                DhsCommandAnalysis commandAnalysis;
+                try
+                {
+                    commandAnalysis = DataHarvester.AnalyzeCommand(line);
+                    shellAnalytics.RecordCommand(commandAnalysis);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogMsg($"[Session {sessionId}] Command analysis failed for '{line}': {ex.Message}");
+                    commandAnalysis = new DhsCommandAnalysis
+                    {
+                        MitreAttackTechniques = new List<string> { "Execution" }
+                    };
+                }
+
                 long? commandSequenceLatencyMs = LastCommandEndedAt.TryGetValue(sessionId, out var previousEndedAt)
                     ? (long)(commandStartedAt - previousEndedAt).TotalMilliseconds
                     : null;
@@ -626,109 +670,143 @@ class Program
                     MitreAttackTechniques = commandAnalysis.MitreAttackTechniques
                 });
 
-                foreach (var payloadUrl in commandAnalysis.PayloadUrls)
-                    _ = Task.Run(() => DataHarvester.CapturePayloadMetadataAsync(payloadUrl, connectionSessionKey, sessionId, remoteEndpoint));
-
-                var (isValid, errorMsg) = InputValidator.Validate(line);
-                if (!isValid)
+                var commandResultLogged = false;
+                try
                 {
-                    blockedOps++;
-                    channel.SendData(Encoding.UTF8.GetBytes(errorMsg + " - connection terminated.\r\n"));
-                    Logger.LogMsg($"[Session {sessionId}] Blocked: {line}");
-                    CloseShell("BlockedCommand");
-                    return;
-                }
+                    processingStage = "starting payload capture";
+                    foreach (var payloadUrl in commandAnalysis.PayloadUrls)
+                        _ = Task.Run(() => DataHarvester.CapturePayloadMetadataAsync(payloadUrl, connectionSessionKey, sessionId, remoteEndpoint));
 
-                if (SCPDetector.IsSCPCommand(line))
-                {
-                    blockedOps++;
-                    Logger.LogMsg($"[Session {sessionId}] Blocked SCP/SFTP: {line}");
-                    channel.SendData(Encoding.UTF8.GetBytes("Operation not allowed\r\n"));
+                    processingStage = "validating input";
+                    var (isValid, errorMsg) = InputValidator.Validate(line);
+                    if (!isValid)
+                    {
+                        blockedOps++;
+                        channel.SendData(Encoding.UTF8.GetBytes(errorMsg + " - connection terminated.\r\n"));
+                        Logger.LogMsg($"[Session {sessionId}] Blocked: {line}");
+                        var blockedResponse = errorMsg + " - connection terminated.";
+                        var blockedFailedCommand = true;
+                        shellAnalytics.RecordResult(blockedFailedCommand);
+                        LastCommandEndedAt[sessionId] = DateTime.UtcNow;
+                        LogCommandResult(line, blockedResponse, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, blockedFailedCommand);
+                        commandResultLogged = true;
+                        CloseShell("BlockedCommand");
+                        return;
+                    }
+
+                    processingStage = "checking file transfer command";
+                    if (SCPDetector.IsSCPCommand(line))
+                    {
+                        blockedOps++;
+                        Logger.LogMsg($"[Session {sessionId}] Blocked SCP/SFTP: {line}");
+                        var blockedResponse = "Operation not allowed";
+                        channel.SendData(Encoding.UTF8.GetBytes(blockedResponse + "\r\n"));
+                        var blockedFailedCommand = true;
+                        shellAnalytics.RecordResult(blockedFailedCommand);
+                        LastCommandEndedAt[sessionId] = DateTime.UtcNow;
+                        LogCommandResult(line, blockedResponse, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, blockedFailedCommand);
+                        commandResultLogged = true;
+                        if (isInteractiveShell)
+                            SendPrompt();
+                        else
+                            CloseShell("BlockedCommand");
+                        return;
+                    }
+
+                    var rateLimitKey = sessionId;
+                    var stopwatch = Stopwatch.StartNew();
+                    processingStage = "resolving command response";
+                    var (response, usedStatic, rateLimited, promptTokens, completionTokens) = CommandResolver.ResolveCommand(
+                        line,
+                        sessionId,
+                        rateLimitKey,
+                        fakeFs,
+                        messageHistory);
+                    response ??= "";
+
+                    stopwatch.Stop();
+                    LastCommandEndedAt[sessionId] = DateTime.UtcNow;
+
+                    processingStage = "updating conversation history";
+                    if (!usedStatic && !rateLimited)
+                    {
+                        messageHistory.Add(new() { role = "user", content = line });
+                        messageHistory.Add(new() { role = "assistant", content = response });
+                    }
+                    else if (usedStatic)
+                    {
+                        promptTokens = 0;
+                        completionTokens = 0;
+                    }
+
+                    totalPromptTokens += promptTokens;
+                    totalCompletionTokens += completionTokens;
+                    sessionDurationMs += stopwatch.ElapsedMilliseconds;
+
+                    Logger.LogMsg($"[Session {sessionId}] Response (static={usedStatic}, rateLimited={rateLimited}): {response}");
+
+                    processingStage = "classifying response";
+                    var failedCommand = DataHarvester.IsFailureResponse(response);
+                    shellAnalytics.RecordResult(failedCommand);
+
+                    processingStage = "recording command metrics";
+                    Logger.LogMetric(sessionId, usedStatic ? "StaticInteraction" : "LLMInteraction", new
+                    {
+                        Input = line,
+                        Response = response,
+                        PromptTokens = promptTokens,
+                        CompletionTokens = completionTokens,
+                        DurationMs = stopwatch.ElapsedMilliseconds,
+                        FailedCommand = failedCommand,
+                        UsedStaticDataset = usedStatic,
+                        RateLimited = rateLimited,
+                        HallucinationFeedback = false,
+                        StandardErrorRatio = shellAnalytics.StandardErrorRatio,
+                        SemanticDrift = shellAnalytics.SemanticDrift,
+                        TuringMultiplier = shellAnalytics.CalculateTuringMultiplier()
+                    });
+
+                    processingStage = "logging command result";
+                    LogCommandResult(line, response, stopwatch.ElapsedMilliseconds, failedCommand);
+                    commandResultLogged = true;
+
+                    processingStage = "sending command response";
+                    if (IsExitCommand(response))
+                    {
+                        channel.SendData(Encoding.UTF8.GetBytes(response + "\r\n"));
+                        CloseShell("ClientExit");
+                        return;
+                    }
+
+                    channel.SendData(Encoding.UTF8.GetBytes(response + "\r\n"));
                     if (isInteractiveShell)
                         SendPrompt();
-                    else
-                        CloseShell("BlockedCommand");
-                    return;
+
+                    if (!isInteractiveShell)
+                        CloseShell("ExecCompleted");
                 }
-
-                var rateLimitKey = sessionId;
-                var stopwatch = Stopwatch.StartNew();
-                var (response, usedStatic, rateLimited, promptTokens, completionTokens) = CommandResolver.ResolveCommand(
-                    line,
-                    sessionId,
-                    rateLimitKey,
-                    fakeFs,
-                    messageHistory);
-
-                stopwatch.Stop();
-                LastCommandEndedAt[sessionId] = DateTime.UtcNow;
-
-                if (!usedStatic && !rateLimited)
+                catch (Exception ex)
                 {
-                    messageHistory.Add(new() { role = "user", content = line });
-                    messageHistory.Add(new() { role = "assistant", content = response });
+                    Logger.LogMsg($"[Session {sessionId}] Command processing failed during {processingStage} for '{line}': {ex.Message}");
+                    if (!commandResultLogged)
+                    {
+                        var failureResponse = $"FunnyPot internal command handling error during {processingStage}: {ex.Message}";
+                        shellAnalytics.RecordResult(true);
+                        LastCommandEndedAt[sessionId] = DateTime.UtcNow;
+                        LogCommandResult(line, failureResponse, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, true);
+                        try
+                        {
+                            if (Volatile.Read(ref shellClosed) == 0)
+                                channel.SendData(Encoding.UTF8.GetBytes("bash: command handling failed\r\n"));
+                        }
+                        catch (Exception sendEx)
+                        {
+                            Logger.LogMsg($"[Session {sessionId}] Failed to send command error response: {sendEx.Message}");
+                        }
+                    }
+
+                    CloseShell("CommandProcessingError");
                 }
-                else if (usedStatic)
-                {
-                    promptTokens = 0;
-                    completionTokens = 0;
-                }
-
-                totalPromptTokens += promptTokens;
-                totalCompletionTokens += completionTokens;
-                sessionDurationMs += stopwatch.ElapsedMilliseconds;
-
-                Logger.LogMsg($"[Session {sessionId}] Response (static={usedStatic}, rateLimited={rateLimited}): {response}");
-
-                var failedCommand = DataHarvester.IsFailureResponse(response);
-                shellAnalytics.RecordResult(failedCommand);
-
-                Logger.LogMetric(sessionId, usedStatic ? "StaticInteraction" : "LLMInteraction", new
-                {
-                    Input = line,
-                    Response = response,
-                    PromptTokens = promptTokens,
-                    CompletionTokens = completionTokens,
-                    DurationMs = stopwatch.ElapsedMilliseconds,
-                    FailedCommand = failedCommand,
-                    UsedStaticDataset = usedStatic,
-                    RateLimited = rateLimited,
-                    HallucinationFeedback = DataHarvester.DetectHallucinationFeedback(line, response),
-                    StandardErrorRatio = shellAnalytics.StandardErrorRatio,
-                    SemanticDrift = shellAnalytics.SemanticDrift,
-                    TuringMultiplier = shellAnalytics.CalculateTuringMultiplier()
-                });
-
-                Logger.LogYaml("command_result", new CommandResultLogEntry
-                {
-                    Timestamp = DateTime.UtcNow,
-                    SessionKey = connectionSessionKey,
-                    ShellSessionId = sessionId,
-                    RemoteEndpoint = remoteEndpoint,
-                    Username = username,
-                    Command = line,
-                    Response = response,
-                    FailedCommand = failedCommand,
-                    ResponseDurationMs = stopwatch.ElapsedMilliseconds,
-                    HallucinationFeedback = DataHarvester.DetectHallucinationFeedback(line, response),
-                    StandardErrorRatio = shellAnalytics.StandardErrorRatio,
-                    SemanticDrift = shellAnalytics.SemanticDrift,
-                    TuringMultiplier = shellAnalytics.CalculateTuringMultiplier()
-                });
-
-                if (IsExitCommand(response))
-                {
-                    channel.SendData(Encoding.UTF8.GetBytes(response + "\r\n"));
-                    CloseShell("ClientExit");
-                    return;
-                }
-
-                channel.SendData(Encoding.UTF8.GetBytes(response + "\r\n"));
-                if (isInteractiveShell)
-                    SendPrompt();
-
-                if (!isInteractiveShell)
-                    CloseShell("ExecCompleted");
             }
 
             commandWorker = new SessionCommandWorker(sessionId);
@@ -1756,7 +1834,7 @@ internal sealed class SessionCommandWorker : IDisposable
         if (Thread.CurrentThread.ManagedThreadId == _thread.ManagedThreadId)
             return;
 
-        _thread.Join(TimeSpan.FromSeconds(2));
+        _thread.Join(TimeSpan.FromSeconds(45));
         _queue.Dispose();
     }
 }
