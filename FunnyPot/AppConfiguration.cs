@@ -11,7 +11,6 @@ namespace FunnyPot
         public LlmConfig Llm { get; set; } = new();
         public LoggingConfig Logging { get; set; } = new();
         public DataHarvesterConfig DataHarvester { get; set; } = new();
-        public NotificationConfig Notification { get; set; } = new();
         public ApiConfig Api { get; set; } = new();
         public GitConfig Git { get; set; } = new();
         public StaticResponsesConfig StaticResponses { get; set; } = new();
@@ -82,13 +81,6 @@ namespace FunnyPot
         public int MaxInputLength { get; set; } = 4096;
         public int MaxRepetitiveChars { get; set; } = 100;
         public long MaxPayloadCaptureBytes { get; set; } = 10485760; // 10 MB
-    }
-
-    public class NotificationConfig
-    {
-        public bool Enabled { get; set; } = false;
-        public string Priority { get; set; } = "high";
-        public string Tags { get; set; } = "warning,computer";
     }
 
     public class ApiConfig

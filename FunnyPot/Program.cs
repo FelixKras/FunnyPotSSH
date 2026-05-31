@@ -499,14 +499,6 @@ class Program
                 DurationSeconds = (DateTime.UtcNow - connectionStartedAt).TotalSeconds,
                 TimeToCompromiseMs = (long)(DateTime.UtcNow - connectionStartedAt).TotalMilliseconds
             });
-            _ = Task.Run(() => NtfyNotifier.NotifyShellSessionAsync(
-                remoteEndpoint,
-                connectionSessionKey,
-                sessionId,
-                args.AttachedUserauthArgs?.Session?.ClientVersion,
-                username,
-                isInteractiveShell ? "interactive" : "exec"));
-
             var pendingInput = "";
             var shellClosed = 0;
             var shellFinalized = 0;
@@ -3035,68 +3027,6 @@ static class DataHarvester
         return targets.Distinct().ToList();
     }
 
-}
-
-static class NtfyNotifier
-{
-    public static async Task NotifyShellSessionAsync(
-        string remoteEndpoint,
-        string sessionKey,
-        string shellSessionId,
-        string? clientVersion,
-        string username,
-        string shellType)
-    {
-        var enabled = Program.GetSecretOrEnvironment("NOTIFY_ENABLED");
-        if (enabled is not null && !IsTruthy(enabled))
-            return;
-        if (enabled is null && !Program.RuntimeConfig.Notification.Enabled)
-            return;
-
-        var topicUrl = Program.GetSecretOrEnvironment("NTFY_TOPIC_URL")
-            ?? Program.GetSecretOrEnvironment("NOTIFY_NTFY_URL");
-        if (string.IsNullOrWhiteSpace(topicUrl))
-            return;
-
-        try
-        {
-            using var request = new HttpRequestMessage(HttpMethod.Post, topicUrl)
-            {
-                Content = new StringContent(BuildShellSessionMessage(remoteEndpoint, sessionKey, shellSessionId, clientVersion, username, shellType), Encoding.UTF8, "text/plain")
-            };
-            request.Headers.TryAddWithoutValidation("Title", "FunnyPot shell opened");
-            request.Headers.TryAddWithoutValidation("Priority", Program.GetSecretOrEnvironment("NTFY_PRIORITY") ?? Program.RuntimeConfig.Notification.Priority);
-            request.Headers.TryAddWithoutValidation("Tags", Program.GetSecretOrEnvironment("NTFY_TAGS") ?? Program.RuntimeConfig.Notification.Tags);
-
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-            using var response = await Program.SharedHttpClient.SendAsync(request, cts.Token);
-            if (!response.IsSuccessStatusCode)
-                Logger.LogMsg($"ntfy notification failed: {(int)response.StatusCode} {response.ReasonPhrase}");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogMsg($"ntfy notification failed: {ex.Message}");
-        }
-    }
-
-    public static string BuildShellSessionMessage(
-        string remoteEndpoint,
-        string sessionKey,
-        string shellSessionId,
-        string? clientVersion,
-        string username,
-        string shellType)
-    {
-        return $"FunnyPot SSH shell opened\nRemote: {remoteEndpoint}\nSession: {sessionKey}\nShell: {shellSessionId}\nUsername: {username}\nType: {shellType}\nClient: {clientVersion ?? "unknown"}";
-    }
-
-    private static bool IsTruthy(string value)
-    {
-        return value.Equals("1", StringComparison.OrdinalIgnoreCase)
-            || value.Equals("true", StringComparison.OrdinalIgnoreCase)
-            || value.Equals("yes", StringComparison.OrdinalIgnoreCase)
-            || value.Equals("on", StringComparison.OrdinalIgnoreCase);
-    }
 }
 
 static class Logger

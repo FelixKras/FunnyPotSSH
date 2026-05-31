@@ -38,12 +38,6 @@ data-harvester:
   max-repetitive-chars: 100
   max-payload-capture-bytes: 10485760  # 10 * 1024 * 1024
 
-# Notification Settings
-notification:
-  enabled: false
-  priority: "high"
-  tags: "warning,computer"
-
 # API Endpoints
 api:
   open-router:

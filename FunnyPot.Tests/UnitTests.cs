@@ -280,24 +280,6 @@ public class DataHarvesterTests
     }
 }
 
-public class NtfyNotifierTests
-{
-    [Fact]
-    public void BuildShellSessionMessage_IncludesShellDetailsWithoutPassword()
-    {
-        var message = NtfyNotifier.BuildShellSessionMessage("203.0.113.5:49152", "abc123", "shell456", "SSH-2.0-TestClient", "root", "interactive");
-
-        Assert.Contains("FunnyPot SSH shell opened", message);
-        Assert.Contains("Remote: 203.0.113.5:49152", message);
-        Assert.Contains("Session: abc123", message);
-        Assert.Contains("Shell: shell456", message);
-        Assert.Contains("Username: root", message);
-        Assert.Contains("Type: interactive", message);
-        Assert.Contains("Client: SSH-2.0-TestClient", message);
-        Assert.DoesNotContain("Password:", message);
-    }
-}
-
 public class LoggerTests
 {
     [Fact]
@@ -788,7 +770,6 @@ public class AppConfigurationTests
 
         Assert.Equal("google/gemma-4-31b-it:free", config.Llm.Model);
         Assert.Equal("/var/log/funnypot", config.Logging.LogDir);
-        Assert.False(config.Notification.Enabled);
         Assert.Equal(3, config.Ssh.PasswordHarvestAttempt);
         Assert.Equal("/chat/completions", config.Api.OpenRouter.ChatEndpoint);
     }

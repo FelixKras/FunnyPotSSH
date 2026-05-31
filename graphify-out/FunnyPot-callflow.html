@@ -60,7 +60,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
 <div class="container">
 
 <h1>FunnyPot — Complete Call Flow &amp; Architecture Documentation</h1>
-<p class="subtitle">Generated from graphify knowledge graph: 2353 nodes, 3020 edges, 401 communities. Commit: 0581b38</p>
+<p class="subtitle">Generated from graphify knowledge graph: 2353 nodes, 3020 edges, 402 communities. Commit: d3aaa73</p>
 
 <div class="nav">
     <a href="#overview">Architecture Overview</a>
@@ -119,10 +119,10 @@ flowchart LR
     OTHER_D0941E68("Other<br/><small>51 nodes</small>")
     class OTHER_D0941E68 module;
     COMMUNITY_5_2966028D -->|method x8| COMMUNITY_2_8C8DF7B9
-    OTHER_D0941E68 -->|calls x7| COMMUNITY_2_8C8DF7B9
+    COMMUNITY_2_8C8DF7B9 -->|calls x7| OTHER_D0941E68
     COMMUNITY_3_D8DFCEA7 -->|calls x7| COMMUNITY_68_304F5ED6
-    COMMUNITY_2_8C8DF7B9 -->|calls x6| OTHER_D0941E68
     COMMUNITY_2_8C8DF7B9 -->|calls x6| COMMUNITY_5_2966028D
+    OTHER_D0941E68 -->|calls x6| COMMUNITY_2_8C8DF7B9
     COMMUNITY_3_D8DFCEA7 -->|calls x5| COMMUNITY_2_8C8DF7B9
     COMMUNITY_3_D8DFCEA7 -->|calls x5| COMMUNITY_4_AC2DC2A9
     COMMUNITY_8_9FC4FAC0 -->|calls x5| COMMUNITY_68_304F5ED6
@@ -146,7 +146,7 @@ flowchart LR
     <h4>Architecture Layers</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>Layer</th><th>Nodes</th><th>Communities</th></tr>
-      <tr><td>Graph Build</td><td>1455</td><td><code>22, 9, 25, 37, 27, 40, 7, 31, 41, 72, 30, 35, 351, 36, 42, 177, 223, 51, 52, 53, 54, 57, 58, 59, 10, 46, 61, 81, 33, 65, 66, 70, 186, 67, 69, 71, 73, 74, 113, 44, 80, 82, 83, 84, 97, 100, 114, 116, 26, 276, 284, 293, 85, 87, 88, 89, 91, 93, 94, 98, 99, 102, 203, 206, 135, 103, 104, 105, 109, 112, 115, 117, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 178, 179, 180, 181, 182, 184, 185, 188, 189, 190, 191, 192, 194, 195, 196, 197, 198, 199, 200, 201, 202, 205, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 218, 219, 220, 221, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 265, 266, 267, 268, 269, 270, 271, 272, 273, 275, 279, 280, 285, 288, 305, 316, 331, 333, 359, 63, 77, 92, 96, 111, 204, 283, 286, 330, 332, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 347, 348, 349, 350, 352, 353, 354, 355, 356, 357, 358, 360, 361, 362, 363, 364, 365, 366, 368, 369, 370, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 395, 396, 397, 398, 401, 406</code></td></tr><tr><td>CLI &amp; Skill Installers</td><td>5</td><td><code>274, 387</code></td></tr><tr><td>Tests &amp; Fixtures</td><td>601</td><td><code>23, 24, 28, 29, 95, 39, 32, 34, 118, 43, 78, 47, 48, 50, 0, 183, 55, 56, 60, 62, 64, 110, 134, 76, 86, 106, 107, 108, 187, 101, 282, 193, 217, 222, 250, 264, 277, 278, 281, 287, 289, 290, 291, 292, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 345, 346, 372, 394, 399, 405, 407, 12, 13, 14, 15</code></td></tr><tr><td>Community 45</td><td>35</td><td><code>45</code></td></tr><tr><td>Community 2</td><td>29</td><td><code>2</code></td></tr><tr><td>Community 68</td><td>28</td><td><code>68</code></td></tr><tr><td>Community 5</td><td>24</td><td><code>5</code></td></tr><tr><td>Community 1</td><td>23</td><td><code>1</code></td></tr><tr><td>Community 4</td><td>20</td><td><code>4</code></td></tr><tr><td>Community 8</td><td>20</td><td><code>8</code></td></tr><tr><td>Community 3</td><td>18</td><td><code>3</code></td></tr><tr><td>Community 6</td><td>16</td><td><code>6</code></td></tr><tr><td>Community 79</td><td>15</td><td><code>79</code></td></tr><tr><td>Community 49</td><td>13</td><td><code>49</code></td></tr><tr><td>Other</td><td>51</td><td><code>38, 90, 75, 149, 119, 11, 16, 17, 18, 19, 20, 21, 388, 389, 390, 391, 392, 393</code></td></tr>
+      <tr><td>Graph Build</td><td>1455</td><td><code>22, 9, 25, 37, 27, 40, 7, 31, 41, 72, 30, 35, 351, 36, 42, 177, 223, 51, 52, 53, 54, 57, 58, 59, 10, 46, 61, 81, 33, 65, 66, 70, 186, 67, 69, 71, 73, 74, 113, 44, 80, 82, 83, 84, 97, 100, 114, 116, 26, 276, 284, 293, 85, 87, 88, 89, 91, 93, 94, 98, 99, 102, 192, 203, 135, 103, 104, 105, 109, 112, 117, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 178, 179, 180, 181, 182, 184, 185, 188, 189, 190, 191, 194, 195, 196, 197, 198, 199, 200, 201, 202, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 218, 219, 220, 221, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 265, 266, 267, 268, 269, 270, 271, 272, 273, 275, 279, 280, 283, 285, 288, 305, 316, 331, 359, 63, 77, 92, 96, 111, 204, 286, 330, 332, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 347, 348, 349, 350, 352, 353, 354, 355, 356, 357, 358, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 395, 396, 397, 398, 401, 406</code></td></tr><tr><td>CLI &amp; Skill Installers</td><td>5</td><td><code>274, 387</code></td></tr><tr><td>Tests &amp; Fixtures</td><td>601</td><td><code>23, 24, 28, 29, 95, 32, 34, 118, 39, 43, 78, 47, 48, 50, 0, 183, 55, 56, 60, 62, 64, 110, 134, 76, 86, 106, 107, 108, 115, 187, 101, 282, 193, 217, 222, 264, 277, 278, 281, 287, 289, 290, 291, 292, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 333, 345, 346, 372, 394, 399, 405, 407, 12, 13, 14, 15</code></td></tr><tr><td>Community 45</td><td>35</td><td><code>45</code></td></tr><tr><td>Community 2</td><td>29</td><td><code>2</code></td></tr><tr><td>Community 68</td><td>28</td><td><code>68</code></td></tr><tr><td>Community 5</td><td>24</td><td><code>5</code></td></tr><tr><td>Community 1</td><td>23</td><td><code>1</code></td></tr><tr><td>Community 4</td><td>20</td><td><code>4</code></td></tr><tr><td>Community 8</td><td>20</td><td><code>8</code></td></tr><tr><td>Community 3</td><td>18</td><td><code>3</code></td></tr><tr><td>Community 6</td><td>16</td><td><code>6</code></td></tr><tr><td>Community 79</td><td>15</td><td><code>79</code></td></tr><tr><td>Community 49</td><td>13</td><td><code>49</code></td></tr><tr><td>Other</td><td>51</td><td><code>38, 90, 75, 149, 119, 11, 16, 17, 18, 19, 20, 21, 388, 389, 390, 391, 392, 393</code></td></tr>
     </table>
   </div>
   <div class="card">
@@ -158,7 +158,7 @@ flowchart LR
   <div class="card">
     <h4>Graph Report Highlights</h4>
     <ul>
-      <li>2353 nodes · 3020 edges · 401 communities (273 shown, 128 thin omitted)</li>
+      <li>2353 nodes · 3020 edges · 402 communities (274 shown, 128 thin omitted)</li>
       <li>Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS</li>
       <li>Token cost: 0 input · 0 output</li>
       <li>1. `runtime` - 162 edges</li>
@@ -3871,14 +3871,6 @@ flowchart LR
 </tr>
 <tr>
   <td>9</td>
-  <td><code>NotificationConfig</code><br><small style="color:var(--muted)">FunnyPot/AppConfiguration.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Reads, resolves, or persists project configuration.</td>
-</tr>
-<tr>
-  <td>10</td>
   <td><code>ApiConfig</code><br><small style="color:var(--muted)">FunnyPot/AppConfiguration.cs</small></td>
   <td><span class="tag tag-endpoint">API</span></td>
   <td>External entry / no inbound edge</td>
@@ -3886,7 +3878,7 @@ flowchart LR
   <td>Reads, resolves, or persists project configuration.</td>
 </tr>
 <tr>
-  <td>11</td>
+  <td>10</td>
   <td><code>OpenRouterConfig</code><br><small style="color:var(--muted)">FunnyPot/AppConfiguration.cs</small></td>
   <td><span class="tag tag-endpoint">API</span></td>
   <td>External entry / no inbound edge</td>
@@ -3894,7 +3886,7 @@ flowchart LR
   <td>Reads, resolves, or persists project configuration.</td>
 </tr>
 <tr>
-  <td>12</td>
+  <td>11</td>
   <td><code>GitConfig</code><br><small style="color:var(--muted)">FunnyPot/AppConfiguration.cs</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -3902,8 +3894,16 @@ flowchart LR
   <td>Reads, resolves, or persists project configuration.</td>
 </tr>
 <tr>
-  <td>13</td>
+  <td>12</td>
   <td><code>StaticResponsesConfig</code><br><small style="color:var(--muted)">FunnyPot/AppConfiguration.cs</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Reads, resolves, or persists project configuration.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>NotificationConfig</code><br><small style="color:var(--muted)">FunnyPot/AppConfiguration.cs</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
@@ -4288,7 +4288,7 @@ flowchart LR
       <tr><td>Nodes</td><td>2353</td></tr>
       <tr><td>Edges</td><td>3020</td></tr>
       <tr><td>Hyperedges</td><td>0</td></tr>
-      <tr><td>Communities</td><td>401</td></tr>
+      <tr><td>Communities</td><td>402</td></tr>
       <tr><td>Documented Sections</td><td>15</td></tr>
     </table>
   </div>
@@ -4304,7 +4304,7 @@ flowchart LR
 
 <div style="text-align:center; padding:40px 0; color: var(--muted); font-size:0.9rem;">
   <p>FunnyPot — Architecture Documentation</p>
-  <p>Generated: 2026-05-31 03:54 UTC · graphify callflow-html</p>
+  <p>Generated: 2026-05-31 05:59 UTC · graphify callflow-html</p>
 </div>
 
 </div><!-- .container -->
