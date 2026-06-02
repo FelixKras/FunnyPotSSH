@@ -505,6 +505,40 @@ public class CommandResolverTests
     }
 
     [Fact]
+    public void BuildSystemPrompt_LocksMetaResponseAndReservesStandardCommandNotFound()
+    {
+        var prompt = Program.BuildSystemPrompt("remote");
+
+        Assert.Contains("bash: who are you: command not found", prompt);
+        Assert.Contains("meta-questions", prompt);
+        Assert.Contains("bash: <command>: command not found", prompt);
+    }
+
+    [Fact]
+    public void BuildSystemPrompt_GivesPlausibleExamplesForObservedAttackerCommands()
+    {
+        var prompt = Program.BuildSystemPrompt("remote");
+
+        Assert.Contains("`echo Hi | cat -n`", prompt);
+        Assert.Contains("`1\\tHi`", prompt);
+        Assert.Contains("`ifconfig`", prompt);
+        Assert.Contains("`lspci | grep VGA | cut -f5- -d ' '`", prompt);
+        Assert.Contains("`locate <pattern>`", prompt);
+    }
+
+    [Fact]
+    public void StaticResponseStore_IfconfigHasPlausibleNetworkDump()
+    {
+        var response = StaticResponseStore.GetResponse("ifconfig", "/root");
+
+        Assert.NotNull(response);
+        Assert.Contains("eth0", response);
+        Assert.Contains("Link encap:Ethernet", response);
+        Assert.Contains("inet addr:", response);
+        Assert.Contains("lo", response);
+    }
+
+    [Fact]
     public void IsModelFailureResponse_DetectsApiAndNetworkErrors()
     {
         Assert.True(CommandResolver.IsModelFailureResponse("[api error] 401: missing key"));
@@ -545,9 +579,11 @@ public class CommandResolverTests
     [InlineData("uname -a", "BuiltIn")]
     [InlineData("echo hello", "BuiltIn")]
     [InlineData("/bin/./uname -a", "BuiltIn")]
+    [InlineData("locate D877F783D5D3EF8Cs", "BuiltIn")]
     [InlineData("cat /etc/passwd", "StaticDataset")]
     [InlineData("ps", "StaticDataset")]
     [InlineData("ls /var/log", "StaticDataset")]
+    [InlineData("ifconfig", "StaticDataset")]
     [InlineData("scp /tmp/a remote:/tmp/a", "Blocked")]
     public void ClassifyCommand_ShortCircuitsSimpleCommands(string command, string expectedPath)
     {
@@ -685,6 +721,9 @@ public class CommandResolverTests
     [InlineData("which", "Usage: which")]
     [InlineData("getconf", "Usage: getconf")]
     [InlineData("who", "remote   pts/0")]
+    [InlineData("locate D877F783D5D3EF8Cs", "Electrum")]
+    [InlineData("locate wallet", "/opt/app/data/wallet")]
+    [InlineData("locate ab", "at least 3 characters")]
     public async Task ResolveCommand_BuiltInsReturnExpectedOutput(string command, string expectedFragment)
     {
         var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
