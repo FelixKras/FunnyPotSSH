@@ -60,11 +60,12 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
 <div class="container">
 
 <h1>FunnyPot — Complete Call Flow &amp; Architecture Documentation</h1>
-<p class="subtitle">Generated from graphify knowledge graph: 2367 nodes, 3068 edges, 402 communities. Commit: 6f9e4c8</p>
+<p class="subtitle">Generated from graphify knowledge graph: 2382 nodes, 3082 edges, 409 communities. Commit: 200c7eb</p>
 
 <div class="nav">
     <a href="#overview">Architecture Overview</a>
     <a href="#build-graph">Graph Build</a>
+    <a href="#analysis-clustering">Analysis &amp; Clustering</a>
     <a href="#cli-skills">CLI &amp; Skill Installers</a>
     <a href="#tests-fixtures">Tests &amp; Fixtures</a>
     <a href="#community-68">Community 68</a>
@@ -77,7 +78,6 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
     <a href="#community-8">Community 8</a>
     <a href="#community-6">Community 6</a>
     <a href="#community-3">Community 3</a>
-    <a href="#community-49">Community 49</a>
     <a href="#other">Other</a>
 </div>
 
@@ -90,6 +90,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
 flowchart LR
     BUILD_GRAPH_321CBB04("Graph Build<br/><small>1455 nodes</small>")
     class BUILD_GRAPH_321CBB04 module;
+    ANALYSIS_CLUSTERING_C79796DA("Analysis &amp; Clustering<br/><small>15 nodes</small>")
+    class ANALYSIS_CLUSTERING_C79796DA module;
     CLI_SKILLS_9964CBB8("CLI &amp; Skill Installers<br/><small>5 nodes</small>")
     class CLI_SKILLS_9964CBB8 module;
     TESTS_FIXTURES_B84B1DCC("Tests &amp; Fixtures<br/><small>608 nodes</small>")
@@ -114,9 +116,7 @@ flowchart LR
     class COMMUNITY_6_7D637A07 module;
     COMMUNITY_3_D8DFCEA7("Community 3<br/><small>15 nodes</small>")
     class COMMUNITY_3_D8DFCEA7 module;
-    COMMUNITY_49_2104F0AE("Community 49<br/><small>13 nodes</small>")
-    class COMMUNITY_49_2104F0AE module;
-    OTHER_D0941E68("Other<br/><small>44 nodes</small>")
+    OTHER_D0941E68("Other<br/><small>57 nodes</small>")
     class OTHER_D0941E68 module;
     COMMUNITY_2_8C8DF7B9 -->|calls x14| COMMUNITY_5_2966028D
     COMMUNITY_3_D8DFCEA7 -->|calls x8| COMMUNITY_5_2966028D
@@ -146,19 +146,19 @@ flowchart LR
     <h4>Architecture Layers</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>Layer</th><th>Nodes</th><th>Communities</th></tr>
-      <tr><td>Graph Build</td><td>1455</td><td><code>7, 22, 25, 37, 27, 40, 30, 31, 41, 9, 105, 54, 42, 10, 177, 36, 33, 63, 113, 51, 52, 351, 53, 57, 58, 59, 81, 46, 61, 65, 66, 67, 69, 71, 73, 74, 44, 80, 82, 83, 84, 101, 112, 116, 134, 26, 276, 293, 85, 87, 88, 90, 91, 93, 94, 98, 99, 102, 186, 192, 203, 223, 283, 331, 70, 77, 92, 97, 135, 103, 104, 109, 117, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 178, 179, 180, 181, 182, 184, 185, 188, 189, 190, 191, 194, 195, 196, 197, 198, 199, 200, 201, 202, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 218, 219, 220, 221, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 265, 266, 267, 268, 269, 270, 271, 272, 273, 275, 277, 279, 280, 282, 284, 285, 286, 288, 35, 359, 96, 111, 204, 316, 330, 332, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 347, 348, 349, 350, 352, 353, 354, 355, 356, 357, 358, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 395, 398, 401, 406</code></td></tr><tr><td>CLI &amp; Skill Installers</td><td>5</td><td><code>274, 387</code></td></tr><tr><td>Tests &amp; Fixtures</td><td>608</td><td><code>23, 24, 95, 28, 29, 32, 34, 118, 39, 43, 78, 47, 48, 50, 0, 183, 55, 56, 60, 62, 64, 110, 76, 89, 86, 106, 107, 108, 115, 187, 100, 114, 193, 217, 222, 264, 278, 281, 287, 289, 290, 291, 292, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 333, 345, 346, 372, 394, 399, 405, 407, 12, 13, 14, 15</code></td></tr><tr><td>Community 68</td><td>38</td><td><code>68</code></td></tr><tr><td>Community 45</td><td>35</td><td><code>45</code></td></tr><tr><td>Community 2</td><td>29</td><td><code>2</code></td></tr><tr><td>Community 5</td><td>27</td><td><code>5</code></td></tr><tr><td>Community 1</td><td>23</td><td><code>1</code></td></tr><tr><td>Community 4</td><td>20</td><td><code>4</code></td></tr><tr><td>Community 79</td><td>20</td><td><code>79</code></td></tr><tr><td>Community 8</td><td>19</td><td><code>8</code></td></tr><tr><td>Community 6</td><td>16</td><td><code>6</code></td></tr><tr><td>Community 3</td><td>15</td><td><code>3</code></td></tr><tr><td>Community 49</td><td>13</td><td><code>49</code></td></tr><tr><td>Other</td><td>44</td><td><code>38, 72, 75, 119, 11, 16, 17, 18, 19, 20, 21, 388, 389, 390, 391, 392, 393</code></td></tr>
+      <tr><td>Graph Build</td><td>1455</td><td><code>7, 22, 25, 37, 31, 27, 40, 9, 30, 41, 181, 36, 42, 63, 33, 46, 177, 113, 51, 52, 53, 54, 57, 58, 59, 70, 61, 195, 65, 66, 210, 67, 69, 71, 73, 74, 44, 80, 81, 82, 83, 84, 101, 112, 116, 134, 26, 276, 293, 85, 87, 88, 91, 93, 94, 98, 99, 102, 186, 192, 203, 223, 283, 331, 77, 92, 97, 135, 103, 104, 105, 109, 117, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 178, 179, 180, 182, 184, 185, 188, 189, 190, 191, 194, 197, 198, 199, 200, 201, 202, 205, 206, 207, 208, 209, 211, 212, 213, 214, 215, 216, 218, 219, 220, 221, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 261, 262, 263, 265, 266, 267, 268, 269, 270, 271, 272, 273, 275, 277, 279, 282, 284, 285, 286, 288, 294, 325, 35, 351, 359, 396, 397, 96, 111, 316, 330, 332, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 347, 348, 349, 350, 352, 353, 354, 355, 356, 357, 358, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 395, 398, 401, 406, 408</code></td></tr><tr><td>Analysis &amp; Clustering</td><td>15</td><td><code>10</code></td></tr><tr><td>CLI &amp; Skill Installers</td><td>5</td><td><code>274, 387</code></td></tr><tr><td>Tests &amp; Fixtures</td><td>608</td><td><code>23, 95, 32, 118, 28, 39, 34, 43, 29, 78, 24, 47, 48, 50, 89, 0, 183, 55, 60, 62, 90, 56, 64, 196, 204, 110, 76, 86, 106, 107, 108, 115, 187, 260, 280, 100, 114, 400, 402, 193, 217, 222, 264, 278, 281, 287, 289, 290, 291, 292, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 317, 318, 319, 320, 321, 322, 323, 324, 326, 327, 328, 329, 333, 345, 346, 372, 394, 399, 403, 404, 405, 407, 12, 13, 14, 15</code></td></tr><tr><td>Community 68</td><td>38</td><td><code>68</code></td></tr><tr><td>Community 45</td><td>35</td><td><code>45</code></td></tr><tr><td>Community 2</td><td>29</td><td><code>2</code></td></tr><tr><td>Community 5</td><td>27</td><td><code>5</code></td></tr><tr><td>Community 1</td><td>23</td><td><code>1</code></td></tr><tr><td>Community 4</td><td>20</td><td><code>4</code></td></tr><tr><td>Community 79</td><td>20</td><td><code>79</code></td></tr><tr><td>Community 8</td><td>19</td><td><code>8</code></td></tr><tr><td>Community 6</td><td>16</td><td><code>6</code></td></tr><tr><td>Community 3</td><td>15</td><td><code>3</code></td></tr><tr><td>Other</td><td>57</td><td><code>49, 38, 72, 75, 119, 11, 16, 17, 18, 19, 20, 21, 388, 389, 390, 391, 392, 393</code></td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Core Flow</h4>
-    <div class="arrow-chain">Graph Build -&gt; Tests &amp; Fixtures -&gt; CLI &amp; Skill Installers -&gt; Community 68 -&gt; Community 5 -&gt; Other -&gt; Community 2</div>
+    <div class="arrow-chain">Graph Build -&gt; Tests &amp; Fixtures -&gt; Analysis &amp; Clustering -&gt; CLI &amp; Skill Installers -&gt; Community 68 -&gt; Community 5 -&gt; Other</div>
   </div>
 </div>
 <div class="grid">
   <div class="card">
     <h4>Graph Report Highlights</h4>
     <ul>
-      <li>2367 nodes · 3068 edges · 402 communities (274 shown, 128 thin omitted)</li>
+      <li>2382 nodes · 3082 edges · 409 communities (281 shown, 128 thin omitted)</li>
       <li>Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS</li>
       <li>Token cost: 0 input · 0 output</li>
       <li>1. `runtime` - 162 edges</li>
@@ -516,8 +516,218 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 3. CLI & Skill Installers ====== -->
-<h2 id="cli-skills">3. CLI &amp; Skill Installers</h2>
+<!-- ====== 3. Analysis & Clustering ====== -->
+<h2 id="analysis-clustering">3. Analysis &amp; Clustering</h2>
+<p>Analysis &amp; Clustering groups implementation around deploymd, docs, codebash, start, mostly in docs/DEPLOY.md. This section covers 15 nodes and 14 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Analysis &amp; Clustering (15 nodes, 14 edges)
+    docs_deploy_deployment_f3cc7a42("Deployment<br/><small>docs/DEPLOY.md</small>")
+    docs_deploy_md_a32f55a2("DEPLOY.md")
+    docs_deploy_cold_start_a3b765e3("Cold start<br/><small>docs/DEPLOY.md</small>")
+    docs_deploy_standard_redeploy_d8e08294("Standard redeploy<br/><small>docs/DEPLOY.md</small>")
+    docs_deploy_stop_start_restart_e097c662("Stop / start / restart<br/><small>docs/DEPLOY.md</small>")
+    docs_deploy_where_this_doc_fits_in_the_graph_0908422b("Where this doc fits in the graph<br/><small>docs/DEPLOY.md</small>")
+    docs_deploy_common_pitfalls_1db345f3("Common pitfalls<br/><small>docs/DEPLOY.md</small>")
+    docs_deploy_deploy_paths_b326c192("Deploy paths<br/><small>docs/DEPLOY.md</small>")
+    docs_deploy_logs_d577b448("Logs<br/><small>docs/DEPLOY.md</small>")
+    docs_deploy_topology_f1700635("Topology<br/><small>docs/DEPLOY.md</small>")
+    docs_deploy_verification_192dea72("Verification<br/><small>docs/DEPLOY.md</small>")
+    docs_deploy_codeblock_3_388488c5("code:bash (docker compose stop gracef...<br/><small>docs/DEPLOY.md</small>")
+    docs_deploy_codeblock_2_f50f77f1("code:bash (docker exec funnypot-contain...<br/><small>docs/DEPLOY.md</small>")
+    docs_deploy_codeblock_1_e4398f5b("code:bash (git push origin main)<br/><small>docs/DEPLOY.md</small>")
+    docs_deploy_codeblock_4_ea56bdf7("code:bash (graphify query 'how is this...<br/><small>docs/DEPLOY.md</small>")
+    docs_deploy_md_a32f55a2 -->|contains| docs_deploy_deployment_f3cc7a42
+    docs_deploy_deployment_f3cc7a42 -->|contains| docs_deploy_topology_f1700635
+    docs_deploy_deployment_f3cc7a42 -->|contains| docs_deploy_deploy_paths_b326c192
+    docs_deploy_deployment_f3cc7a42 -->|contains| docs_deploy_standard_redeploy_d8e08294
+    docs_deploy_deployment_f3cc7a42 -->|contains| docs_deploy_verification_192dea72
+    docs_deploy_deployment_f3cc7a42 -->|contains| docs_deploy_cold_start_a3b765e3
+    docs_deploy_deployment_f3cc7a42 -->|contains| docs_deploy_logs_d577b448
+    docs_deploy_deployment_f3cc7a42 -->|contains| docs_deploy_stop_start_restart_e097c662
+    docs_deploy_deployment_f3cc7a42 -->|contains| docs_deploy_common_pitfalls_1db345f3
+    docs_deploy_deployment_f3cc7a42 -->|contains| docs_deploy_where_this_doc_fits_in_the_graph_0908422b
+    docs_deploy_standard_redeploy_d8e08294 -->|contains| docs_deploy_codeblock_1_e4398f5b
+    docs_deploy_cold_start_a3b765e3 -->|contains| docs_deploy_codeblock_2_f50f77f1
+    docs_deploy_stop_start_restart_e097c662 -->|contains| docs_deploy_codeblock_3_388488c5
+    docs_deploy_where_this_doc_fits_in_the_graph_0908422b -->|contains| docs_deploy_codeblock_4_ea56bdf7
+    class docs_deploy_deployment_f3cc7a42 concept;
+    class docs_deploy_md_a32f55a2 concept;
+    class docs_deploy_cold_start_a3b765e3 concept;
+    class docs_deploy_standard_redeploy_d8e08294 concept;
+    class docs_deploy_stop_start_restart_e097c662 concept;
+    class docs_deploy_where_this_doc_fits_in_the_graph_0908422b concept;
+    class docs_deploy_common_pitfalls_1db345f3 concept;
+    class docs_deploy_deploy_paths_b326c192 concept;
+    class docs_deploy_logs_d577b448 concept;
+    class docs_deploy_topology_f1700635 concept;
+    class docs_deploy_verification_192dea72 concept;
+    class docs_deploy_codeblock_3_388488c5 concept;
+    class docs_deploy_codeblock_2_f50f77f1 concept;
+    class docs_deploy_codeblock_1_e4398f5b concept;
+    class docs_deploy_codeblock_4_ea56bdf7 concept;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>DEPLOY.md</code><br><small style="color:var(--muted)">docs/DEPLOY.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing DEPLOY.md.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>Deployment</code><br><small style="color:var(--muted)">docs/DEPLOY.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Deployment.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>Topology</code><br><small style="color:var(--muted)">docs/DEPLOY.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Topology.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>Deploy paths</code><br><small style="color:var(--muted)">docs/DEPLOY.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Deploy paths.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>Standard redeploy</code><br><small style="color:var(--muted)">docs/DEPLOY.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Standard redeploy.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>code:bash (git push origin main)</code><br><small style="color:var(--muted)">docs/DEPLOY.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing code:bash (git push origin main).</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>Verification</code><br><small style="color:var(--muted)">docs/DEPLOY.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Verification.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>Cold start</code><br><small style="color:var(--muted)">docs/DEPLOY.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Cold start.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>code:bash (docker exec funnypot-container cat /proc/1/net/tcp)</code><br><small style="color:var(--muted)">docs/DEPLOY.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing code:bash (docker exec funnypot-container cat /proc/1/net/tcp).</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>Logs</code><br><small style="color:var(--muted)">docs/DEPLOY.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Logs.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>Stop / start / restart</code><br><small style="color:var(--muted)">docs/DEPLOY.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Stop / start / restart.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>code:bash (docker compose stop             # graceful, leaves container)</code><br><small style="color:var(--muted)">docs/DEPLOY.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing code:bash (docker compose stop             # graceful, leaves container).</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>Common pitfalls</code><br><small style="color:var(--muted)">docs/DEPLOY.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Common pitfalls.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>Where this doc fits in the graph</code><br><small style="color:var(--muted)">docs/DEPLOY.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Where this doc fits in the graph.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>code:bash (graphify query &quot;how is this app deployed&quot;)</code><br><small style="color:var(--muted)">docs/DEPLOY.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing code:bash (graphify query &quot;how is this app deployed&quot;).</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>docs/DEPLOY.md</code></td><td>15 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x14. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 4. CLI & Skill Installers ====== -->
+<h2 id="cli-skills">4. CLI &amp; Skill Installers</h2>
 <p>CLI &amp; Skill Installers groups implementation around opencode, opencodejson, graphifyjs, plugins, mostly in .opencode/opencode.json, .opencode/plugins/graphify.js. This section covers 5 nodes and 3 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -620,8 +830,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 4. Tests & Fixtures ====== -->
-<h2 id="tests-fixtures">4. Tests &amp; Fixtures</h2>
+<!-- ====== 5. Tests & Fixtures ====== -->
+<h2 id="tests-fixtures">5. Tests &amp; Fixtures</h2>
 <p>Tests &amp; Fixtures groups implementation around funnypottests, net80, release, bin, mostly in Release/net8.0/FunnyPot.Tests.deps.json, FunnyPot.Tests/UnitTests.cs, FunnyPot.Tests/obj/FunnyPot.Tests.csproj.nuget.dgspec.json. This section covers 608 nodes and 701 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -961,8 +1171,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 5. Community 68 ====== -->
-<h2 id="community-68">5. Community 68</h2>
+<!-- ====== 6. Community 68 ====== -->
+<h2 id="community-68">6. Community 68</h2>
 <p>Community 68 groups implementation around funnypot, programcs, normalizeterminaloutput, scpdetector, mostly in FunnyPot/Program.cs. This section covers 38 nodes and 100 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -1308,8 +1518,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 6. Community 45 ====== -->
-<h2 id="community-45">6. Community 45</h2>
+<!-- ====== 7. Community 45 ====== -->
+<h2 id="community-45">7. Community 45</h2>
 <p>Community 45 groups implementation around funnypot, product, presentationmd, docs, mostly in docs/funnypot-product-presentation.md. This section covers 35 nodes and 34 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -1648,8 +1858,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 7. Community 2 ====== -->
-<h2 id="community-2">7. Community 2</h2>
+<!-- ====== 8. Community 2 ====== -->
+<h2 id="community-2">8. Community 2</h2>
 <p>Community 2 groups implementation around funnypot, programcs, program, timespan, mostly in FunnyPot/Program.cs. This section covers 29 nodes and 48 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -1987,8 +2197,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 8. Community 5 ====== -->
-<h2 id="community-5">8. Community 5</h2>
+<!-- ====== 9. Community 5 ====== -->
+<h2 id="community-5">9. Community 5</h2>
 <p>Community 5 groups implementation around funnypot, programcs, capturepayloadmetadataasync, logger, mostly in FunnyPot/Program.cs. This section covers 27 nodes and 59 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -2310,8 +2520,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 9. Community 1 ====== -->
-<h2 id="community-1">9. Community 1</h2>
+<!-- ====== 10. Community 1 ====== -->
+<h2 id="community-1">10. Community 1</h2>
 <p>Community 1 groups implementation around programcs, funnypot, harvestedcredential, authattemptlogentry, mostly in FunnyPot/Program.cs. This section covers 23 nodes and 24 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -2582,8 +2792,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 10. Community 4 ====== -->
-<h2 id="community-4">10. Community 4</h2>
+<!-- ====== 11. Community 4 ====== -->
+<h2 id="community-4">11. Community 4</h2>
 <p>Community 4 groups implementation around funnypot, programcs, getremoteattemptkey, setupuserauth, mostly in FunnyPot/Program.cs. This section covers 20 nodes and 35 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -2849,8 +3059,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 11. Community 79 ====== -->
-<h2 id="community-79">11. Community 79</h2>
+<!-- ====== 12. Community 79 ====== -->
+<h2 id="community-79">12. Community 79</h2>
 <p>Community 79 groups implementation around funnypot, programcs, string, int, mostly in FunnyPot/Program.cs. This section covers 20 nodes and 26 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -3108,8 +3318,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 12. Community 8 ====== -->
-<h2 id="community-8">12. Community 8</h2>
+<!-- ====== 13. Community 8 ====== -->
+<h2 id="community-8">13. Community 8</h2>
 <p>Community 8 groups implementation around funnypot, programcs, object, fakefilesystem, mostly in FunnyPot/Program.cs. This section covers 19 nodes and 27 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -3363,8 +3573,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 13. Community 6 ====== -->
-<h2 id="community-6">13. Community 6</h2>
+<!-- ====== 14. Community 6 ====== -->
+<h2 id="community-6">14. Community 6</h2>
 <p>Community 6 groups implementation around data, harvesting, requirementsmd, docs, mostly in docs/data-harvesting-requirements.md. This section covers 16 nodes and 15 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -3584,8 +3794,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 14. Community 3 ====== -->
-<h2 id="community-3">14. Community 3</h2>
+<!-- ====== 15. Community 3 ====== -->
+<h2 id="community-3">15. Community 3</h2>
 <p>Community 3 groups implementation around funnypot, programcs, getprompt, setupshell, mostly in FunnyPot/Program.cs. This section covers 15 nodes and 18 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -3797,41 +4007,77 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 15. Community 49 ====== -->
-<h2 id="community-49">15. Community 49</h2>
-<p>Community 49 groups implementation around appconfigurationcs, funnypot, appconfiguration, load, mostly in FunnyPot/AppConfiguration.cs. This section covers 13 nodes and 12 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<!-- ====== 16. Other ====== -->
+<h2 id="other">16. Other</h2>
+<p>Other groups implementation around funnypot, programcs, appconfigurationcs, obj, mostly in FunnyPot/Program.cs, FunnyPot/AppConfiguration.cs, FunnyPot/ILogger.cs. This section covers 57 nodes and 55 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Community 49 (13 nodes, 12 edges)
-    funnypot_appconfiguration_appconfiguration_5d3c6733("AppConfiguration<br/><small>FunnyPot/AppConfiguration.cs</small>")
-    funnypot_appconfiguration_appconfiguration_load_7e48ba23("Load()<br/><small>FunnyPot/AppConfiguration.cs</small>")
-    funnypot_appconfiguration_apiconfig_70e2f0db("ApiConfig<br/><small>FunnyPot/AppConfiguration.cs</small>")
-    funnypot_appconfiguration_cs_01d94e0b("AppConfiguration.cs")
-    funnypot_appconfiguration_dataharvesterconfig_83ad44da("DataHarvesterConfig<br/><small>FunnyPot/AppConfiguration.cs</small>")
-    funnypot_appconfiguration_funnypot_140a3f30("FunnyPot<br/><small>FunnyPot/AppConfiguration.cs</small>")
-    funnypot_appconfiguration_gitconfig_da1355fb("GitConfig<br/><small>FunnyPot/AppConfiguration.cs</small>")
-    funnypot_appconfiguration_llmconfig_4e2c84c0("LlmConfig<br/><small>FunnyPot/AppConfiguration.cs</small>")
-    funnypot_appconfiguration_loggingconfig_27fb7b79("LoggingConfig<br/><small>FunnyPot/AppConfiguration.cs</small>")
-    funnypot_appconfiguration_notificationconfig_a1d2ebbb("NotificationConfig<br/><small>FunnyPot/AppConfiguration.cs</small>")
-    funnypot_appconfiguration_openrouterconfig_b360d7b3("OpenRouterConfig<br/><small>FunnyPot/AppConfiguration.cs</small>")
-    funnypot_appconfiguration_sshconfig_4d883fcc("SshConfig<br/><small>FunnyPot/AppConfiguration.cs</small>")
-    funnypot_appconfiguration_staticresponsesconfig_8c5a5c14("StaticResponsesConfig<br/><small>FunnyPot/AppConfiguration.cs</small>")
-    funnypot_appconfiguration_appconfiguration_5d3c6733 -->|method| funnypot_appconfiguration_appconfiguration_load_7e48ba23
-    class funnypot_appconfiguration_appconfiguration_5d3c6733 klass;
-    class funnypot_appconfiguration_appconfiguration_load_7e48ba23 function;
-    class funnypot_appconfiguration_apiconfig_70e2f0db api;
-    class funnypot_appconfiguration_cs_01d94e0b klass;
-    class funnypot_appconfiguration_dataharvesterconfig_83ad44da klass;
-    class funnypot_appconfiguration_funnypot_140a3f30 klass;
-    class funnypot_appconfiguration_gitconfig_da1355fb klass;
-    class funnypot_appconfiguration_llmconfig_4e2c84c0 klass;
-    class funnypot_appconfiguration_loggingconfig_27fb7b79 klass;
-    class funnypot_appconfiguration_notificationconfig_a1d2ebbb klass;
-    class funnypot_appconfiguration_openrouterconfig_b360d7b3 api;
-    class funnypot_appconfiguration_sshconfig_4d883fcc klass;
-    class funnypot_appconfiguration_staticresponsesconfig_8c5a5c14 klass;
+    %% Section: Other (57 nodes, 55 edges)
+    subgraph other_FunnyPot_Program_cs_489f910f["FunnyPot/Program.cs"]
+        funnypot_program_synthetichostclock_0f897926("SyntheticHostClock<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_ntfynotifier_d9801141("NtfyNotifier<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_program_getsecretorenvironment_154729a5("GetSecretOrEnvironment()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_synthetichostclock_getuptime_080e06cc("GetUptime()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_ntfynotifier_notifyshellsession_01ce0728("NotifyShellSessionAsync()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_ntfynotifier_notifyauthattempta_9c90d0bb("NotifyAuthAttemptAsync()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_ntfynotifier_notifyconnectionac_abd30796("NotifyConnectionAcceptedAsync()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_synthetichostclock_formatprompt_0f7dc58a("FormatPromptUptime()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_synthetichostclock_formatprocup_397e1012("FormatProcUptime()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_synthetichostclock_resetfortest_6425acc8("ResetForTests()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_synthetichostclock_getboottimeu_a2a0194b("GetBootTimeUtc()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_synthetichostclock_getstatepath_61198101("GetStatePath()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_synthetichostclock_tryreadstate_63e91e84("TryReadState()<br/><small>FunnyPot/Program.cs</small>")
+        funnypot_program_synthetichostclock_writestate_cd4d32b5("WriteState()<br/><small>FunnyPot/Program.cs</small>")
+    end
+    subgraph other_scripts_deploy_sh_a6a3ebad["scripts/deploy.sh"]
+        scripts_deploy_ensure_clean_git_state_b6faa730("ensure_clean_git_state()<br/><small>scripts/deploy.sh</small>")
+        scripts_deploy_commit_submodule_if_needed_680f1d0e("commit_submodule_if_needed()<br/><small>scripts/deploy.sh</small>")
+        scripts_deploy_commit_parent_if_needed_45aa1936("commit_parent_if_needed()<br/><small>scripts/deploy.sh</small>")
+    end
+    funnypot_ilogger_ilogger_66a97e00("ILogger<br/><small>FunnyPot/ILogger.cs</small>")
+    scripts_deploy_ensure_clean_git_state_b6faa730 -->|calls| scripts_deploy_commit_submodule_if_needed_680f1d0e
+    scripts_deploy_ensure_clean_git_state_b6faa730 -->|calls| scripts_deploy_commit_parent_if_needed_45aa1936
+    funnypot_program_program_getsecretorenvironment_154729a5 -->|calls| funnypot_program_ntfynotifier_notifyshellsession_01ce0728
+    funnypot_program_program_getsecretorenvironment_154729a5 -->|calls| funnypot_program_ntfynotifier_notifyauthattempta_9c90d0bb
+    funnypot_program_program_getsecretorenvironment_154729a5 -->|calls| funnypot_program_ntfynotifier_notifyconnectionac_abd30796
+    funnypot_program_synthetichostclock_0f897926 -->|method| funnypot_program_synthetichostclock_getuptime_080e06cc
+    funnypot_program_synthetichostclock_0f897926 -->|method| funnypot_program_synthetichostclock_formatprompt_0f7dc58a
+    funnypot_program_synthetichostclock_0f897926 -->|method| funnypot_program_synthetichostclock_formatprocup_397e1012
+    funnypot_program_synthetichostclock_0f897926 -->|method| funnypot_program_synthetichostclock_resetfortest_6425acc8
+    funnypot_program_synthetichostclock_0f897926 -->|method| funnypot_program_synthetichostclock_getboottimeu_a2a0194b
+    funnypot_program_synthetichostclock_0f897926 -->|method| funnypot_program_synthetichostclock_getstatepath_61198101
+    funnypot_program_synthetichostclock_0f897926 -->|method| funnypot_program_synthetichostclock_tryreadstate_63e91e84
+    funnypot_program_synthetichostclock_0f897926 -->|method| funnypot_program_synthetichostclock_writestate_cd4d32b5
+    funnypot_program_synthetichostclock_getuptime_080e06cc -->|calls| funnypot_program_synthetichostclock_getboottimeu_a2a0194b
+    funnypot_program_synthetichostclock_getuptime_080e06cc -->|calls| funnypot_program_synthetichostclock_formatprompt_0f7dc58a
+    funnypot_program_synthetichostclock_getuptime_080e06cc -->|calls| funnypot_program_synthetichostclock_formatprocup_397e1012
+    funnypot_program_synthetichostclock_getboottimeu_a2a0194b -->|calls| funnypot_program_synthetichostclock_getstatepath_61198101
+    funnypot_program_synthetichostclock_getboottimeu_a2a0194b -->|calls| funnypot_program_synthetichostclock_tryreadstate_63e91e84
+    funnypot_program_synthetichostclock_getboottimeu_a2a0194b -->|calls| funnypot_program_synthetichostclock_writestate_cd4d32b5
+    funnypot_program_ntfynotifier_d9801141 -->|method| funnypot_program_ntfynotifier_notifyshellsession_01ce0728
+    funnypot_program_ntfynotifier_d9801141 -->|method| funnypot_program_ntfynotifier_notifyauthattempta_9c90d0bb
+    funnypot_program_ntfynotifier_d9801141 -->|method| funnypot_program_ntfynotifier_notifyconnectionac_abd30796
+    %% Omitted for readability: 39 nodes, 0 edges
+    class funnypot_program_synthetichostclock_0f897926 klass;
+    class funnypot_program_ntfynotifier_d9801141 klass;
+    class funnypot_program_program_getsecretorenvironment_154729a5 function;
+    class funnypot_program_synthetichostclock_getuptime_080e06cc function;
+    class funnypot_program_ntfynotifier_notifyshellsession_01ce0728 async;
+    class funnypot_program_ntfynotifier_notifyauthattempta_9c90d0bb async;
+    class funnypot_program_ntfynotifier_notifyconnectionac_abd30796 async;
+    class funnypot_program_synthetichostclock_formatprompt_0f7dc58a function;
+    class funnypot_program_synthetichostclock_formatprocup_397e1012 function;
+    class funnypot_program_synthetichostclock_resetfortest_6425acc8 function;
+    class funnypot_program_synthetichostclock_getboottimeu_a2a0194b function;
+    class funnypot_program_synthetichostclock_getstatepath_61198101 function;
+    class funnypot_program_synthetichostclock_tryreadstate_63e91e84 function;
+    class funnypot_program_synthetichostclock_writestate_cd4d32b5 function;
+    class scripts_deploy_ensure_clean_git_state_b6faa730 function;
+    class scripts_deploy_commit_submodule_if_needed_680f1d0e function;
+    class scripts_deploy_commit_parent_if_needed_45aa1936 function;
+    class funnypot_ilogger_ilogger_66a97e00 klass;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -3957,117 +4203,8 @@ flowchart LR
   <td>No direct outbound edge</td>
   <td>Reads, resolves, or persists project configuration.</td>
 </tr>
-</table>
-
-<div class="grid">
-  <div class="card">
-    <h4>Key Files</h4>
-    <table style="width:100%;font-size:0.85rem;">
-      <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>FunnyPot/AppConfiguration.cs</code></td><td>13 nodes</td></tr>
-    </table>
-  </div>
-  <div class="card">
-    <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x11, method x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
-  </div>
-</div>
-<hr>
-
-<!-- ====== 16. Other ====== -->
-<h2 id="other">16. Other</h2>
-<p>Other groups implementation around funnypot, programcs, obj, net80, mostly in FunnyPot/Program.cs, FunnyPot/ILogger.cs, scripts/deploy.sh. This section covers 44 nodes and 43 internal edges; the diagram shows only representative relationships to stay readable.</p>
-
-<div class="mermaid">
-%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
-flowchart LR
-    %% Section: Other (44 nodes, 43 edges)
-    subgraph other_FunnyPot_Program_cs_489f910f["FunnyPot/Program.cs"]
-        funnypot_program_synthetichostclock_0f897926("SyntheticHostClock<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_ntfynotifier_d9801141("NtfyNotifier<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_program_getsecretorenvironment_154729a5("GetSecretOrEnvironment()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_synthetichostclock_getuptime_080e06cc("GetUptime()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_ntfynotifier_notifyshellsession_01ce0728("NotifyShellSessionAsync()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_ntfynotifier_notifyauthattempta_9c90d0bb("NotifyAuthAttemptAsync()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_ntfynotifier_notifyconnectionac_abd30796("NotifyConnectionAcceptedAsync()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_synthetichostclock_formatprompt_0f7dc58a("FormatPromptUptime()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_synthetichostclock_formatprocup_397e1012("FormatProcUptime()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_synthetichostclock_resetfortest_6425acc8("ResetForTests()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_synthetichostclock_getboottimeu_a2a0194b("GetBootTimeUtc()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_synthetichostclock_getstatepath_61198101("GetStatePath()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_synthetichostclock_tryreadstate_63e91e84("TryReadState()<br/><small>FunnyPot/Program.cs</small>")
-        funnypot_program_synthetichostclock_writestate_cd4d32b5("WriteState()<br/><small>FunnyPot/Program.cs</small>")
-    end
-    subgraph other_scripts_deploy_sh_a6a3ebad["scripts/deploy.sh"]
-        scripts_deploy_ensure_clean_git_state_b6faa730("ensure_clean_git_state()<br/><small>scripts/deploy.sh</small>")
-        scripts_deploy_commit_submodule_if_needed_680f1d0e("commit_submodule_if_needed()<br/><small>scripts/deploy.sh</small>")
-        scripts_deploy_commit_parent_if_needed_45aa1936("commit_parent_if_needed()<br/><small>scripts/deploy.sh</small>")
-    end
-    funnypot_ilogger_ilogger_66a97e00("ILogger<br/><small>FunnyPot/ILogger.cs</small>")
-    scripts_deploy_ensure_clean_git_state_b6faa730 -->|calls| scripts_deploy_commit_submodule_if_needed_680f1d0e
-    scripts_deploy_ensure_clean_git_state_b6faa730 -->|calls| scripts_deploy_commit_parent_if_needed_45aa1936
-    funnypot_program_program_getsecretorenvironment_154729a5 -->|calls| funnypot_program_ntfynotifier_notifyshellsession_01ce0728
-    funnypot_program_program_getsecretorenvironment_154729a5 -->|calls| funnypot_program_ntfynotifier_notifyauthattempta_9c90d0bb
-    funnypot_program_program_getsecretorenvironment_154729a5 -->|calls| funnypot_program_ntfynotifier_notifyconnectionac_abd30796
-    funnypot_program_synthetichostclock_0f897926 -->|method| funnypot_program_synthetichostclock_getuptime_080e06cc
-    funnypot_program_synthetichostclock_0f897926 -->|method| funnypot_program_synthetichostclock_formatprompt_0f7dc58a
-    funnypot_program_synthetichostclock_0f897926 -->|method| funnypot_program_synthetichostclock_formatprocup_397e1012
-    funnypot_program_synthetichostclock_0f897926 -->|method| funnypot_program_synthetichostclock_resetfortest_6425acc8
-    funnypot_program_synthetichostclock_0f897926 -->|method| funnypot_program_synthetichostclock_getboottimeu_a2a0194b
-    funnypot_program_synthetichostclock_0f897926 -->|method| funnypot_program_synthetichostclock_getstatepath_61198101
-    funnypot_program_synthetichostclock_0f897926 -->|method| funnypot_program_synthetichostclock_tryreadstate_63e91e84
-    funnypot_program_synthetichostclock_0f897926 -->|method| funnypot_program_synthetichostclock_writestate_cd4d32b5
-    funnypot_program_synthetichostclock_getuptime_080e06cc -->|calls| funnypot_program_synthetichostclock_getboottimeu_a2a0194b
-    funnypot_program_synthetichostclock_getuptime_080e06cc -->|calls| funnypot_program_synthetichostclock_formatprompt_0f7dc58a
-    funnypot_program_synthetichostclock_getuptime_080e06cc -->|calls| funnypot_program_synthetichostclock_formatprocup_397e1012
-    funnypot_program_synthetichostclock_getboottimeu_a2a0194b -->|calls| funnypot_program_synthetichostclock_getstatepath_61198101
-    funnypot_program_synthetichostclock_getboottimeu_a2a0194b -->|calls| funnypot_program_synthetichostclock_tryreadstate_63e91e84
-    funnypot_program_synthetichostclock_getboottimeu_a2a0194b -->|calls| funnypot_program_synthetichostclock_writestate_cd4d32b5
-    funnypot_program_ntfynotifier_d9801141 -->|method| funnypot_program_ntfynotifier_notifyshellsession_01ce0728
-    funnypot_program_ntfynotifier_d9801141 -->|method| funnypot_program_ntfynotifier_notifyauthattempta_9c90d0bb
-    funnypot_program_ntfynotifier_d9801141 -->|method| funnypot_program_ntfynotifier_notifyconnectionac_abd30796
-    %% Omitted for readability: 26 nodes, 0 edges
-    class funnypot_program_synthetichostclock_0f897926 klass;
-    class funnypot_program_ntfynotifier_d9801141 klass;
-    class funnypot_program_program_getsecretorenvironment_154729a5 function;
-    class funnypot_program_synthetichostclock_getuptime_080e06cc function;
-    class funnypot_program_ntfynotifier_notifyshellsession_01ce0728 async;
-    class funnypot_program_ntfynotifier_notifyauthattempta_9c90d0bb async;
-    class funnypot_program_ntfynotifier_notifyconnectionac_abd30796 async;
-    class funnypot_program_synthetichostclock_formatprompt_0f7dc58a function;
-    class funnypot_program_synthetichostclock_formatprocup_397e1012 function;
-    class funnypot_program_synthetichostclock_resetfortest_6425acc8 function;
-    class funnypot_program_synthetichostclock_getboottimeu_a2a0194b function;
-    class funnypot_program_synthetichostclock_getstatepath_61198101 function;
-    class funnypot_program_synthetichostclock_tryreadstate_63e91e84 function;
-    class funnypot_program_synthetichostclock_writestate_cd4d32b5 function;
-    class scripts_deploy_ensure_clean_git_state_b6faa730 function;
-    class scripts_deploy_commit_submodule_if_needed_680f1d0e function;
-    class scripts_deploy_commit_parent_if_needed_45aa1936 function;
-    class funnypot_ilogger_ilogger_66a97e00 klass;
-    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
-    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
-    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
-    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
-    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
-    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
-    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
-    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
-    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
-</div>
-
-<h3>Call Details</h3>
-<table class="call-table">
 <tr>
-  <th style="width:5%">#</th>
-  <th style="width:28%">Node</th>
-  <th style="width:10%">Type</th>
-  <th style="width:17%">Caller</th>
-  <th style="width:20%">Callees</th>
-  <th style="width:20%">Description</th>
-</tr>
-<tr>
-  <td>1</td>
+  <td>14</td>
   <td><code>SyntheticHostClock</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -4075,7 +4212,7 @@ flowchart LR
   <td>SyntheticHostClock node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>2</td>
+  <td>15</td>
   <td><code>DateTime</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -4083,7 +4220,7 @@ flowchart LR
   <td>DateTime node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>3</td>
+  <td>16</td>
   <td><code>.GetUptime()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>SyntheticHostClock</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -4091,7 +4228,7 @@ flowchart LR
   <td>.GetUptime() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>4</td>
+  <td>17</td>
   <td><code>.FormatPromptUptime()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>GetUptime()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SyntheticHostClock</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -4099,7 +4236,7 @@ flowchart LR
   <td>Builds structured prompts for model calls.</td>
 </tr>
 <tr>
-  <td>5</td>
+  <td>18</td>
   <td><code>.FormatProcUptime()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>GetUptime()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SyntheticHostClock</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -4107,7 +4244,7 @@ flowchart LR
   <td>.FormatProcUptime() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>6</td>
+  <td>19</td>
   <td><code>.ResetForTests()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>SyntheticHostClock</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -4115,7 +4252,7 @@ flowchart LR
   <td>Verifies imports, entry points, or version behavior.</td>
 </tr>
 <tr>
-  <td>7</td>
+  <td>20</td>
   <td><code>.GetBootTimeUtc()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>GetUptime()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SyntheticHostClock</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -4123,7 +4260,7 @@ flowchart LR
   <td>.GetBootTimeUtc() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>8</td>
+  <td>21</td>
   <td><code>.GetStatePath()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>GetBootTimeUtc()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SyntheticHostClock</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -4131,7 +4268,7 @@ flowchart LR
   <td>.GetStatePath() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>9</td>
+  <td>22</td>
   <td><code>.TryReadState()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>GetBootTimeUtc()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SyntheticHostClock</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -4139,7 +4276,7 @@ flowchart LR
   <td>.TryReadState() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>10</td>
+  <td>23</td>
   <td><code>.WriteState()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>GetBootTimeUtc()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>SyntheticHostClock</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -4147,7 +4284,7 @@ flowchart LR
   <td>Verifies imports, entry points, or version behavior.</td>
 </tr>
 <tr>
-  <td>11</td>
+  <td>24</td>
   <td><code>.GetSecretOrEnvironment()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -4155,7 +4292,7 @@ flowchart LR
   <td>.GetSecretOrEnvironment() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>12</td>
+  <td>25</td>
   <td><code>NtfyNotifier</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -4163,7 +4300,7 @@ flowchart LR
   <td>NtfyNotifier node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>13</td>
+  <td>26</td>
   <td><code>.NotifyShellSessionAsync()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-async">Async</span></td>
   <td><code>GetSecretOrEnvironment()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>NtfyNotifier</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -4171,7 +4308,7 @@ flowchart LR
   <td>.NotifyShellSessionAsync() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>14</td>
+  <td>27</td>
   <td><code>.BuildShellSessionMessage()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>NotifyShellSessionAsync()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>NtfyNotifier</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -4179,7 +4316,7 @@ flowchart LR
   <td>.BuildShellSessionMessage() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>15</td>
+  <td>28</td>
   <td><code>.IsTruthy()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>NotifyShellSessionAsync()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>NtfyNotifier</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -4187,7 +4324,7 @@ flowchart LR
   <td>.IsTruthy() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>16</td>
+  <td>29</td>
   <td><code>.NotifyAuthAttemptAsync()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-async">Async</span></td>
   <td><code>GetSecretOrEnvironment()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>IsTruthy()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>NtfyNotifier</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
@@ -4195,116 +4332,12 @@ flowchart LR
   <td>.NotifyAuthAttemptAsync() node in FunnyPot/Program.cs.</td>
 </tr>
 <tr>
-  <td>17</td>
+  <td>30</td>
   <td><code>.BuildAuthAttemptMessage()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>NotifyAuthAttemptAsync()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>NtfyNotifier</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
   <td>No direct outbound edge</td>
   <td>.BuildAuthAttemptMessage() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>18</td>
-  <td><code>.NotifyConnectionAcceptedAsync()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-async">Async</span></td>
-  <td><code>GetSecretOrEnvironment()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>IsTruthy()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>NtfyNotifier</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><code>BuildConnectionMessage()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>.NotifyConnectionAcceptedAsync() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>19</td>
-  <td><code>.BuildConnectionMessage()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>NotifyConnectionAcceptedAsync()</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small><br><code>NtfyNotifier</code><br><small style="color:var(--muted)">FunnyPot/Program.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.BuildConnectionMessage() node in FunnyPot/Program.cs.</td>
-</tr>
-<tr>
-  <td>20</td>
-  <td><code>ILogger.cs</code><br><small style="color:var(--muted)">FunnyPot/ILogger.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>ILogger.cs node in FunnyPot/ILogger.cs.</td>
-</tr>
-<tr>
-  <td>21</td>
-  <td><code>FunnyPot</code><br><small style="color:var(--muted)">FunnyPot/ILogger.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>FunnyPot node in FunnyPot/ILogger.cs.</td>
-</tr>
-<tr>
-  <td>22</td>
-  <td><code>ILogger</code><br><small style="color:var(--muted)">FunnyPot/ILogger.cs</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>LogMetric()</code><br><small style="color:var(--muted)">FunnyPot/ILogger.cs</small><br><code>LogMsg()</code><br><small style="color:var(--muted)">FunnyPot/ILogger.cs</small><br><code>LogYaml()</code><br><small style="color:var(--muted)">FunnyPot/ILogger.cs</small><br>+1 more</td>
-  <td>ILogger node in FunnyPot/ILogger.cs.</td>
-</tr>
-<tr>
-  <td>23</td>
-  <td><code>.LogYaml()</code><br><small style="color:var(--muted)">FunnyPot/ILogger.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>ILogger</code><br><small style="color:var(--muted)">FunnyPot/ILogger.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.LogYaml() node in FunnyPot/ILogger.cs.</td>
-</tr>
-<tr>
-  <td>24</td>
-  <td><code>.LogMsg()</code><br><small style="color:var(--muted)">FunnyPot/ILogger.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>ILogger</code><br><small style="color:var(--muted)">FunnyPot/ILogger.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.LogMsg() node in FunnyPot/ILogger.cs.</td>
-</tr>
-<tr>
-  <td>25</td>
-  <td><code>.LogMetric()</code><br><small style="color:var(--muted)">FunnyPot/ILogger.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>ILogger</code><br><small style="color:var(--muted)">FunnyPot/ILogger.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>.LogMetric() node in FunnyPot/ILogger.cs.</td>
-</tr>
-<tr>
-  <td>26</td>
-  <td><code>.PushToGit()</code><br><small style="color:var(--muted)">FunnyPot/ILogger.cs</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>ILogger</code><br><small style="color:var(--muted)">FunnyPot/ILogger.cs</small></td>
-  <td>No direct outbound edge</td>
-  <td>Turns a local path or remote repository into analysis context.</td>
-</tr>
-<tr>
-  <td>27</td>
-  <td><code>deploy.sh</code><br><small style="color:var(--muted)">scripts/deploy.sh</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>deploy.sh node in scripts/deploy.sh.</td>
-</tr>
-<tr>
-  <td>28</td>
-  <td><code>ensure_clean_git_state()</code><br><small style="color:var(--muted)">scripts/deploy.sh</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>commit_parent_if_needed()</code><br><small style="color:var(--muted)">scripts/deploy.sh</small><br><code>commit_submodule_if_needed()</code><br><small style="color:var(--muted)">scripts/deploy.sh</small></td>
-  <td>Turns a local path or remote repository into analysis context.</td>
-</tr>
-<tr>
-  <td>29</td>
-  <td><code>commit_submodule_if_needed()</code><br><small style="color:var(--muted)">scripts/deploy.sh</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>ensure_clean_git_state()</code><br><small style="color:var(--muted)">scripts/deploy.sh</small></td>
-  <td>No direct outbound edge</td>
-  <td>commit_submodule_if_needed() node in scripts/deploy.sh.</td>
-</tr>
-<tr>
-  <td>30</td>
-  <td><code>commit_parent_if_needed()</code><br><small style="color:var(--muted)">scripts/deploy.sh</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>ensure_clean_git_state()</code><br><small style="color:var(--muted)">scripts/deploy.sh</small></td>
-  <td>No direct outbound edge</td>
-  <td>commit_parent_if_needed() node in scripts/deploy.sh.</td>
 </tr>
 </table>
 
@@ -4314,18 +4347,18 @@ flowchart LR
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>File</th><th>Coverage</th></tr>
       <tr><td><code>FunnyPot/Program.cs</code></td><td>19 nodes</td></tr>
+<tr><td><code>FunnyPot/AppConfiguration.cs</code></td><td>13 nodes</td></tr>
 <tr><td><code>FunnyPot/ILogger.cs</code></td><td>7 nodes</td></tr>
 <tr><td><code>scripts/deploy.sh</code></td><td>4 nodes</td></tr>
 <tr><td><code>AGENTS.md</code></td><td>2 nodes</td></tr>
 <tr><td><code>Debug/net8.0/.NETCoreApp,Version=v8.0.AssemblyAttributes.cs</code></td><td>1 nodes</td></tr>
 <tr><td><code>Release/net8.0/.NETCoreApp,Version=v8.0.AssemblyAttributes.cs</code></td><td>1 nodes</td></tr>
 <tr><td><code>Debug/net8.0/.NETCoreApp,Version=v8.0.AssemblyAttributes.cs</code></td><td>1 nodes</td></tr>
-<tr><td><code>Debug/net8.0/FunnyPot.AssemblyInfo.cs</code></td><td>1 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: method x19, calls x17, defines x3, contains x3. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: method x20, calls x17, contains x14, defines x3. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
@@ -4336,17 +4369,17 @@ flowchart LR
   <div class="card">
     <h4>Graph</h4>
     <table style="width:100%;font-size:0.85rem;">
-      <tr><td>Nodes</td><td>2367</td></tr>
-      <tr><td>Edges</td><td>3068</td></tr>
+      <tr><td>Nodes</td><td>2382</td></tr>
+      <tr><td>Edges</td><td>3082</td></tr>
       <tr><td>Hyperedges</td><td>0</td></tr>
-      <tr><td>Communities</td><td>402</td></tr>
+      <tr><td>Communities</td><td>409</td></tr>
       <tr><td>Documented Sections</td><td>15</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Edge Confidence</h4>
     <table style="width:100%;font-size:0.85rem;">
-      <tr><td>EXTRACTED</td><td>3068</td></tr>
+      <tr><td>EXTRACTED</td><td>3082</td></tr>
       <tr><td>INFERRED</td><td>0</td></tr>
       <tr><td>AMBIGUOUS</td><td>0</td></tr>
     </table>
@@ -4355,7 +4388,7 @@ flowchart LR
 
 <div style="text-align:center; padding:40px 0; color: var(--muted); font-size:0.9rem;">
   <p>FunnyPot — Architecture Documentation</p>
-  <p>Generated: 2026-06-02 17:53 UTC · graphify callflow-html</p>
+  <p>Generated: 2026-06-02 18:20 UTC · graphify callflow-html</p>
 </div>
 
 </div><!-- .container -->
