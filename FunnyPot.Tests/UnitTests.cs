@@ -559,17 +559,18 @@ public class CommandResolverTests
     }
 
     [Fact]
-    public void ResolveCommand_ReturnsLinuxErrorForRouterOsProbe()
+    public async Task ResolveCommand_ReturnsLinuxErrorForRouterOsProbe()
     {
         var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
         var history = new List<ChatRequestData.ChatMessage>();
 
-        var (response, usedStatic, rateLimited, promptTokens, completionTokens) = CommandResolver.ResolveCommand(
+        var (response, usedStatic, rateLimited, promptTokens, completionTokens) = await CommandResolver.ResolveCommandAsync(
             "/ip cloud print",
             Guid.NewGuid().ToString("N"),
             Guid.NewGuid().ToString("N"),
             fs,
-            history);
+            history,
+            CancellationToken.None);
 
         Assert.Equal("bash: /ip: No such file or directory", response);
         Assert.True(usedStatic);
@@ -628,17 +629,18 @@ public class CommandResolverTests
     [InlineData("which", "Usage: which")]
     [InlineData("getconf", "Usage: getconf")]
     [InlineData("who", "remote   pts/0")]
-    public void ResolveCommand_BuiltInsReturnExpectedOutput(string command, string expectedFragment)
+    public async Task ResolveCommand_BuiltInsReturnExpectedOutput(string command, string expectedFragment)
     {
         var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
         var history = new List<ChatRequestData.ChatMessage>();
 
-        var (response, _, _, _, _) = CommandResolver.ResolveCommand(
+        var (response, _, _, _, _) = await CommandResolver.ResolveCommandAsync(
             command,
             Guid.NewGuid().ToString("N"),
             Guid.NewGuid().ToString("N"),
             fs,
-            history);
+            history,
+            CancellationToken.None);
 
         Assert.Contains(expectedFragment, response);
     }
@@ -654,17 +656,18 @@ public class CommandResolverTests
     }
 
     [Fact]
-    public void ResolveCommand_ReturnsLocalBinaryOutputForEchoExecutableCat()
+    public async Task ResolveCommand_ReturnsLocalBinaryOutputForEchoExecutableCat()
     {
         var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
         var history = new List<ChatRequestData.ChatMessage>();
 
-        var (response, usedStatic, rateLimited, promptTokens, completionTokens) = CommandResolver.ResolveCommand(
+        var (response, usedStatic, rateLimited, promptTokens, completionTokens) = await CommandResolver.ResolveCommandAsync(
             "cat /bin/echo",
             Guid.NewGuid().ToString("N"),
             Guid.NewGuid().ToString("N"),
             fs,
-            history);
+            history,
+            CancellationToken.None);
 
         Assert.StartsWith("ELF'@@8", response);
         Assert.Contains("/lib/ld-linux-aarch64.so.1", response);

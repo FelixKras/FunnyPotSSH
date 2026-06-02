@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
@@ -23,7 +24,11 @@ class Program
     internal const string KernelVersion = "#1 SMP Mon Jan 16 16:22:28 UTC 2012";
     internal const string KernelProcVersion = "Linux version 2.6.32-5-amd64 (Debian 2.6.32-41) (dannf@debian.org) (gcc version 4.4.5 (Debian 4.4.5-8) ) #1 SMP Mon Jan 16 16:22:28 UTC 2012";
 
-    static readonly HttpClient httpClient = new();
+    internal const int MaxLlmHistoryMessages = 40;
+    internal static readonly TimeSpan GitPushTimeout = TimeSpan.FromSeconds(45);
+    internal static readonly TimeSpan HttpRequestTimeout = TimeSpan.FromSeconds(30);
+
+    static readonly HttpClient httpClient = new() { Timeout = HttpRequestTimeout };
     internal static HttpClient SharedHttpClient => httpClient;
     static AppConfiguration Config => _config ??= AppConfiguration.Load();
     internal static AppConfiguration RuntimeConfig => Config;
@@ -193,8 +198,6 @@ class Program
     {
         LoadDotEnvFiles();
         LoadRuntimeSettings();
-
-        httpClient.Timeout = TimeSpan.FromSeconds(30);
 
         Logger.LogMsg("Application starting...");
         Logger.LogMsg($"Machine: {Environment.MachineName}, OS: {Environment.OSVersion}");
@@ -469,15 +472,16 @@ class Program
             var username = args.AttachedUserauthArgs?.Username ?? "remote";
             var channel = args.Channel;
             var sessionId = Guid.NewGuid().ToString();
-            var messageCount = 0;
+            var commandCount = 0;
             var blockedOps = 0;
             long totalPromptTokens = 0;
             long totalCompletionTokens = 0;
             long sessionDurationMs = 0;
             var messageHistory = new List<ChatRequestData.ChatMessage>
             {
-                new() { role = "system", content = BuildSystemPrompt(username) }
+                new() { Role = "system", Content = BuildSystemPrompt(username) }
             };
+            var llmCts = new CancellationTokenSource();
             var shellAnalytics = ShellAnalyticsBySession.GetOrAdd(sessionId, _ => new ShellSessionAnalytics
             {
                 SessionStartedAt = DateTime.UtcNow
@@ -505,13 +509,41 @@ class Program
             var idleTimer = new System.Timers.Timer(SessionIdleTimeoutSecs * 1000) { AutoReset = false };
             SessionCommandWorker? commandWorker = null;
             SCPUploadSession? scpUploadSession = null;
+            Task? gitPushTask = null;
             idleTimer.Elapsed += (_, _) => CloseShell("IdleTimeout", "\r\nConnection closed due to inactivity.\r\n");
             void ResetIdle() { idleTimer.Stop(); idleTimer.Start(); }
 
+            bool TrySendData(ReadOnlySpan<byte> data)
+            {
+                if (Volatile.Read(ref shellClosed) != 0)
+                    return false;
+                try
+                {
+                    channel.SendData(data.ToArray());
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogMsg($"[Session {sessionId}] SendData failed: {ex.Message}");
+                    CloseShell("SendFailed");
+                    return false;
+                }
+            }
+
+            void TrimHistoryToWindow()
+            {
+                if (messageHistory.Count <= MaxLlmHistoryMessages) return;
+                var systemPrompt = messageHistory[0];
+                int keep = MaxLlmHistoryMessages - 1;
+                var tail = messageHistory.GetRange(messageHistory.Count - keep, keep);
+                messageHistory.Clear();
+                messageHistory.Add(systemPrompt);
+                messageHistory.AddRange(tail);
+            }
+
             void SendPrompt()
             {
-                if (Volatile.Read(ref shellClosed) == 0)
-                    channel.SendData(Encoding.UTF8.GetBytes(GetPrompt(username)));
+                TrySendData(Encoding.UTF8.GetBytes(GetPrompt(username)));
             }
 
             void FinalizeShell(string reason)
@@ -519,6 +551,7 @@ class Program
                 if (Interlocked.Exchange(ref shellFinalized, 1) != 0)
                     return;
 
+                llmCts.Cancel();
                 idleTimer.Stop();
                 idleTimer.Dispose();
                 Logger.LogMsg($"Session {sessionId} closed: {reason}.");
@@ -534,11 +567,11 @@ class Program
                     Event = reason,
                     DurationSeconds = (DateTime.UtcNow - connectionStartedAt).TotalSeconds
                 });
-                Logger.UpdateGlobalStats(username, messageCount, blockedOps, (int)totalPromptTokens, (int)totalCompletionTokens, sessionDurationMs, shellAnalytics, sshBanner);
+                Logger.UpdateGlobalStats(username, commandCount, blockedOps, (int)totalPromptTokens, (int)totalCompletionTokens, sessionDurationMs, shellAnalytics, sshBanner);
                 ShellAnalyticsBySession.TryRemove(sessionId, out ShellSessionAnalytics? _);
                 FakeFileSystem.Remove(sessionId);
                 commandWorker?.Dispose();
-                Task.Run(() => Logger.PushToGit(sessionId));
+                gitPushTask = Task.Run(() => Logger.PushToGit(sessionId));
             }
 
             void CloseShell(string reason, string? message = null)
@@ -548,9 +581,25 @@ class Program
 
                 idleTimer.Stop();
                 if (!string.IsNullOrEmpty(message))
-                    channel.SendData(Encoding.UTF8.GetBytes(message));
-                channel.SendClose(0);
+                    TrySendData(Encoding.UTF8.GetBytes(message));
+                try { channel.SendClose(0); } catch { /* already closed */ }
                 FinalizeShell(reason);
+            }
+
+            void AwaitGitPushAndDispose()
+            {
+                try
+                {
+                    gitPushTask?.Wait(GitPushTimeout);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogMsg($"[Session {sessionId}] Git push wait failed: {ex.Message}");
+                }
+                finally
+                {
+                    llmCts.Dispose();
+                }
             }
 
             static bool IsExitCommand(string line)
@@ -608,7 +657,7 @@ class Program
                     return;
                 }
 
-                messageCount++;
+                commandCount++;
 
                 if (IsExitCommand(line))
                 {
@@ -647,7 +696,7 @@ class Program
                     RemoteEndpoint = remoteEndpoint,
                     Username = username,
                     Command = line,
-                    MessageNumber = messageCount,
+                    MessageNumber = commandCount,
                     CommandSequenceLatencyMs = commandSequenceLatencyMs,
                     ActorAutomationHint = commandSequenceLatencyMs is < 50 ? "automation" : "unknown",
                     DiscoveryDepthScore = commandAnalysis.DiscoveryDepthScore,
@@ -674,7 +723,7 @@ class Program
                     if (!isValid)
                     {
                         blockedOps++;
-                        channel.SendData(Encoding.UTF8.GetBytes(errorMsg + " - connection terminated.\r\n"));
+                        TrySendData(Encoding.UTF8.GetBytes(errorMsg + " - connection terminated.\r\n"));
                         Logger.LogMsg($"[Session {sessionId}] Blocked: {line}");
                         var blockedResponse = errorMsg + " - connection terminated.";
                         var blockedFailedCommand = true;
@@ -692,7 +741,7 @@ class Program
                         blockedOps++;
                         Logger.LogMsg($"[Session {sessionId}] Blocked SCP/SFTP: {line}");
                         var blockedResponse = "Operation not allowed";
-                        channel.SendData(Encoding.UTF8.GetBytes(blockedResponse + "\r\n"));
+                        TrySendData(Encoding.UTF8.GetBytes(blockedResponse + "\r\n"));
                         var blockedFailedCommand = true;
                         shellAnalytics.RecordResult(blockedFailedCommand);
                         LastCommandEndedAt[sessionId] = DateTime.UtcNow;
@@ -707,25 +756,36 @@ class Program
 
                     var rateLimitKey = sessionId;
                     var stopwatch = Stopwatch.StartNew();
+                    processingStage = "preparing LLM history";
+                    var userTurn = new ChatRequestData.ChatMessage { Role = "user", Content = line };
+                    messageHistory.Add(userTurn);
+                    TrimHistoryToWindow();
+
                     processingStage = "resolving command response";
-                    var (response, usedStatic, rateLimited, promptTokens, completionTokens) = CommandResolver.ResolveCommand(
+                    var (response, usedStatic, rateLimited, promptTokens, completionTokens) = CommandResolver.ResolveCommandAsync(
                         line,
                         sessionId,
                         rateLimitKey,
                         fakeFs,
-                        messageHistory);
+                        messageHistory,
+                        llmCts.Token).GetAwaiter().GetResult();
                     response ??= "";
 
                     stopwatch.Stop();
                     LastCommandEndedAt[sessionId] = DateTime.UtcNow;
 
                     processingStage = "updating conversation history";
-                    if (!usedStatic && !rateLimited)
+                    if (string.IsNullOrEmpty(response))
                     {
-                        messageHistory.Add(new() { role = "user", content = line });
-                        messageHistory.Add(new() { role = "assistant", content = response });
+                        messageHistory.RemoveAt(messageHistory.Count - 1);
                     }
-                    else if (usedStatic)
+                    else
+                    {
+                        messageHistory.Add(new ChatRequestData.ChatMessage { Role = "assistant", Content = response });
+                        TrimHistoryToWindow();
+                    }
+
+                    if (usedStatic || rateLimited)
                     {
                         promptTokens = 0;
                         completionTokens = 0;
@@ -763,14 +823,7 @@ class Program
                     commandResultLogged = true;
 
                     processingStage = "sending command response";
-                    if (IsExitCommand(response))
-                    {
-                        channel.SendData(Encoding.UTF8.GetBytes(response + "\r\n"));
-                        CloseShell("ClientExit");
-                        return;
-                    }
-
-                    channel.SendData(Encoding.UTF8.GetBytes(response + "\r\n"));
+                    TrySendData(Encoding.UTF8.GetBytes(response + "\r\n"));
                     if (isInteractiveShell)
                         SendPrompt();
 
@@ -786,15 +839,7 @@ class Program
                         shellAnalytics.RecordResult(true);
                         LastCommandEndedAt[sessionId] = DateTime.UtcNow;
                         LogCommandResult(line, failureResponse, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, true);
-                        try
-                        {
-                            if (Volatile.Read(ref shellClosed) == 0)
-                                channel.SendData(Encoding.UTF8.GetBytes("bash: command handling failed\r\n"));
-                        }
-                        catch (Exception sendEx)
-                        {
-                            Logger.LogMsg($"[Session {sessionId}] Failed to send command error response: {sendEx.Message}");
-                        }
+                        TrySendData(Encoding.UTF8.GetBytes("bash: command handling failed\r\n"));
                     }
 
                     CloseShell("CommandProcessingError");
@@ -807,7 +852,7 @@ class Program
             {
                 var (_, filename) = SCPDetector.ParseSCPUpload(args.CommandText ?? "");
                 scpUploadSession = new SCPUploadSession(connectionSessionKey, filename ?? "upload.bin");
-                channel.SendData(new byte[] { 0 });
+                TrySendData(new byte[] { 0 });
             }
 
             channel.DataReceived += (_, data) =>
@@ -821,7 +866,7 @@ class Program
                 {
                     scpUploadSession.HandleData(
                         data,
-                        ack => channel.SendData(ack),
+                        ack => TrySendData(ack),
                         reason => CloseShell(reason));
                     return;
                 }
@@ -833,7 +878,7 @@ class Program
 
                     if (c == '\r' || c == '\n')
                     {
-                        channel.SendData(Encoding.UTF8.GetBytes("\r\n"));
+                        TrySendData(Encoding.UTF8.GetBytes("\r\n"));
                         var line = pendingInput;
                         pendingInput = "";
                         if (!commandWorker.TryPost(() => ProcessLine(line)))
@@ -845,12 +890,12 @@ class Program
                     {
                         if (pendingInput.Length == 0) continue;
                         pendingInput = pendingInput[..^1];
-                        channel.SendData(Encoding.UTF8.GetBytes("\b \b"));
+                        TrySendData(Encoding.UTF8.GetBytes("\b \b"));
                         continue;
                     }
 
                     pendingInput += c;
-                    channel.SendData(Encoding.UTF8.GetBytes(c.ToString()));
+                    TrySendData(Encoding.UTF8.GetBytes(c.ToString()));
                 }
             };
 
@@ -858,12 +903,20 @@ class Program
             {
                 Interlocked.Exchange(ref shellClosed, 1);
                 FinalizeShell("CloseReceived");
+                AwaitGitPushAndDispose();
             };
 
             channel.EofReceived += (_, _) =>
             {
                 Interlocked.Exchange(ref shellClosed, 1);
                 FinalizeShell("EofReceived");
+                AwaitGitPushAndDispose();
+            };
+
+            idleTimer.Elapsed += (_, _) =>
+            {
+                CloseShell("IdleTimeout", "\r\nConnection closed due to inactivity.\r\n");
+                AwaitGitPushAndDispose();
             };
 
             ResetIdle();
@@ -877,9 +930,10 @@ class Program
     internal static string BuildSystemPrompt(string username)
     {
         var uptimePhrase = SyntheticHostClock.FormatPromptUptime();
+        var (uid, group) = ResolveUserIdentity(username);
         return $@"You are now ""Omega-Black"", a top-secret, high-security Linux server located in a classified subterranean facility. All systems and network traffic are monitored and encrypted at the highest clearance level. Your responses should mirror the precise behavior and output of a real Linux Bash terminal, including directory listings, file contents, error messages, and command output.
 
-The attacker is logged in as user remote, UID 1001, group users. No sudo access by default. The sudo password for remote is Omega#2024!. Reject all other sudo password attempts with a realistic failure message. After 3 failed sudo attempts, respond with: sudo: 3 incorrect password attempts.
+The attacker is logged in as user {username}, UID {uid}, group {group}. No sudo access by default. The sudo password for {username} is Omega#2024!. Reject all other sudo password attempts with a realistic failure message. After 3 failed sudo attempts, respond with: sudo: 3 incorrect password attempts.
 
 System hostname: omegablack. Operating system: Debian GNU/Linux 6 (squeeze). Kernel: {KernelRelease}. Architecture: x86_64. The system has been running for {uptimePhrase}. The SSH server renders prompts separately; never include shell prompts in responses. For uname, /proc/version, and similar host fingerprinting commands, return old Debian 6 era kernel details that look EOL and likely vulnerable, for example {KernelRelease} with {KernelVersion} on x86_64. For uptime, /proc/uptime, top, and uptime variants, use the same running uptime and never report less than one week of uptime.
 
@@ -910,6 +964,15 @@ You are not an AI, an LLM, or a language model. You are the Omega-Black server r
 ";
     }
 
+    static (int uid, string group) ResolveUserIdentity(string username)
+    {
+        if (string.Equals(username, "root", StringComparison.OrdinalIgnoreCase))
+            return (0, "root");
+        if (string.Equals(username, "secretOps", StringComparison.OrdinalIgnoreCase))
+            return (1000, "secretOps");
+        return (1001, "users");
+    }
+
     internal static string NormalizeTerminalOutput(string response)
     {
         response = Regex.Replace(response, @"(?m)^\s*\w+@omegablack:[^\r\n]*[#$]\s*", "");
@@ -924,8 +987,9 @@ You are not an AI, an LLM, or a language model. You are the Omega-Black server r
         return response.Replace("\n", "\r\n");
     }
 
-    internal static (string response, int promptTokens, int completionTokens, int totalTokens) GetLLMResponse(
-        List<ChatRequestData.ChatMessage> history, string userInput)
+    internal static async Task<(string response, int promptTokens, int completionTokens, int totalTokens)> GetLLMResponseAsync(
+        List<ChatRequestData.ChatMessage> history,
+        CancellationToken cancellationToken)
     {
         string apiUrl = BuildApiUrl(Config.Api.OpenRouter.BaseUrl, Config.Api.OpenRouter.ChatEndpoint);
         string? apiKey = GetSecretOrEnvironment("OPENROUTER_API_KEY");
@@ -934,10 +998,10 @@ You are not an AI, an LLM, or a language model. You are the Omega-Black server r
 
         var requestData = new ChatRequestData
         {
-            model = Environment.GetEnvironmentVariable("LLM_MODEL") ?? Config.Llm.Model,
-            messages = history.Concat(new[] { new ChatRequestData.ChatMessage { role = "user", content = userInput } }).ToList(),
-            max_tokens = Config.Llm.MaxTokens,
-            temperature = 0.3,
+            Model = Environment.GetEnvironmentVariable("LLM_MODEL") ?? Config.Llm.Model,
+            Messages = history,
+            MaxTokens = Config.Llm.MaxTokens,
+            Temperature = 0.3,
         };
 
         string jsonRequest = JsonSerializer.Serialize(requestData, typeof(ChatRequestData));
@@ -949,14 +1013,16 @@ You are not an AI, an LLM, or a language model. You are the Omega-Black server r
 
         try
         {
-            using var response = httpClient.Send(requestMessage);
+            using var response = await httpClient.SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                var errorText = response.Content.ReadAsStringAsync().Result;
-                return ($"[api error] {(int)response.StatusCode}: {errorText}", 0, 0, 0);
+                var errorText = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                if (LooksLikeContextLengthError(response.StatusCode, errorText))
+                    return ("[api error] Conversation exceeded model context window. Try a fresh session.", 0, 0, 0);
+                return ($"[api error] {(int)response.StatusCode}: {Truncate(errorText, 256)}", 0, 0, 0);
             }
 
-            string jsonResponse = response.Content.ReadAsStringAsync().Result;
+            string jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
             using var parsedResponse = JsonDocument.Parse(jsonResponse);
 
             if (!TryParseOpenRouterResponse(parsedResponse.RootElement, out var responseContent, out var promptTokens, out var completionTokens, out var totalTokens))
@@ -964,11 +1030,25 @@ You are not an AI, an LLM, or a language model. You are the Omega-Black server r
 
             return (responseContent, promptTokens, completionTokens, totalTokens);
         }
+        catch (OperationCanceledException)
+        {
+            return ("[api error] Request cancelled or timed out", 0, 0, 0);
+        }
         catch (Exception ex)
         {
             return ($"[network error] {ex.Message}", 0, 0, 0);
         }
     }
+
+    static bool LooksLikeContextLengthError(HttpStatusCode statusCode, string errorText)
+    {
+        if ((int)statusCode != 400 && (int)statusCode != 413) return false;
+        return errorText.Contains("context_length", StringComparison.OrdinalIgnoreCase)
+            || errorText.Contains("context length", StringComparison.OrdinalIgnoreCase)
+            || errorText.Contains("maximum context", StringComparison.OrdinalIgnoreCase);
+    }
+
+    static string Truncate(string s, int max) => s.Length <= max ? s : s[..max] + "...";
 
     internal static string BuildApiUrl(string baseUrl, string endpoint)
     {
@@ -1055,13 +1135,14 @@ public class SessionLogEntry
 
 public class CommandLogEntry
 {
+    [JsonPropertyName("MessageNumber")]
+    public int MessageNumber { get; set; }
     public DateTime Timestamp { get; set; }
     public string SessionKey { get; set; } = "";
     public string ShellSessionId { get; set; } = "";
     public string RemoteEndpoint { get; set; } = "";
     public string Username { get; set; } = "";
     public string Command { get; set; } = "";
-    public int MessageNumber { get; set; }
     public long? CommandSequenceLatencyMs { get; set; }
     public string ActorAutomationHint { get; set; } = "unknown";
     public int DiscoveryDepthScore { get; set; }
@@ -1143,22 +1224,35 @@ public class DhsCommandAnalysis
 
 public class ChatRequestData
 {
-    public string model { get; set; } = "openai/gpt-4o";
-    public List<ChatMessage> messages { get; set; } = new();
-    public int max_tokens { get; set; }
-    public double temperature { get; set; } = 0.3;
+    [JsonPropertyName("model")]
+    public string Model { get; set; } = "openai/gpt-4o";
+
+    [JsonPropertyName("messages")]
+    public List<ChatMessage> Messages { get; set; } = new();
+
+    [JsonPropertyName("max_tokens")]
+    public int MaxTokens { get; set; }
+
+    [JsonPropertyName("temperature")]
+    public double Temperature { get; set; } = 0.3;
 
     public class ChatMessage
     {
-        public string role { get; set; } = "";
-        public string content { get; set; } = "";
+        [JsonPropertyName("role")]
+        public string Role { get; set; } = "";
+
+        [JsonPropertyName("content")]
+        public string Content { get; set; } = "";
     }
 }
 
 public class GlobalStats
 {
     public int TotalSessions { get; set; }
-    public int TotalMessages { get; set; }
+
+    [JsonPropertyName("TotalMessages")]
+    public int TotalCommands { get; set; }
+
     public int TotalBlockedOperations { get; set; }
     public long TotalPromptTokens { get; set; }
     public long TotalCompletionTokens { get; set; }
@@ -1933,12 +2027,13 @@ static class CommandResolver
         return CommandResolutionPath.Llm;
     }
 
-    public static (string response, bool usedStatic, bool rateLimited, int promptTokens, int completionTokens) ResolveCommand(
+    public static async Task<(string response, bool usedStatic, bool rateLimited, int promptTokens, int completionTokens)> ResolveCommandAsync(
         string command,
         string sessionId,
         string rateLimitKey,
         FakeFileSystem fs,
-        List<ChatRequestData.ChatMessage> messageHistory)
+        List<ChatRequestData.ChatMessage> messageHistory,
+        CancellationToken cancellationToken)
     {
         var (isValid, errorMsg) = InputValidator.Validate(command);
         if (!isValid)
@@ -1981,7 +2076,8 @@ static class CommandResolver
             }
 
             LlmRateLimiter.LogLimitStatus(rateLimitKey);
-            var (cpuInfo, cpuInfoPromptTokens, cpuInfoCompletionTokens, usedFallback) = GenerateCpuInfoResponse();
+            var (cpuInfo, cpuInfoPromptTokens, cpuInfoCompletionTokens, usedFallback) =
+                await GenerateCpuInfoResponseAsync(cancellationToken).ConfigureAwait(false);
             return (cpuInfo, usedFallback, false, cpuInfoPromptTokens, cpuInfoCompletionTokens);
         }
 
@@ -2007,17 +2103,11 @@ static class CommandResolver
 
         LlmRateLimiter.LogLimitStatus(rateLimitKey);
 
-        var (response, promptTokens, completionTokens, _) = Program.GetLLMResponse(messageHistory, command);
+        var (response, promptTokens, completionTokens, _) =
+            await Program.GetLLMResponseAsync(messageHistory, cancellationToken).ConfigureAwait(false);
         response = Program.NormalizeTerminalOutput(response);
         if (IsModelFailureResponse(response))
         {
-            if (messageHistory.Count > 0
-                && messageHistory[^1].role == "user"
-                && messageHistory[^1].content == command)
-            {
-                messageHistory.RemoveAt(messageHistory.Count - 1);
-            }
-
             Logger.LogMsg($"LLM response failed for session {sessionId}, using local shell fallback: {response}");
             return (GenerateLocalFallbackResponse(command, fs.CurrentDirectory), true, false, 0, 0);
         }
@@ -2331,17 +2421,19 @@ static class CommandResolver
         return normalized is "cat /proc/cpuinfo" or "/bin/cat /proc/cpuinfo";
     }
 
-    internal static (string response, int promptTokens, int completionTokens, bool usedFallback) GenerateCpuInfoResponse()
+    internal static async Task<(string response, int promptTokens, int completionTokens, bool usedFallback)> GenerateCpuInfoResponseAsync(
+        CancellationToken cancellationToken)
     {
         var prompt = "Return JSON only for a plausible old Linux /proc/cpuinfo response on a low-power ARM or embedded server. " +
             "Use these properties exactly: cpuCount integer 1-4, bogoMips string decimal, implementer string hex like 0x41, architecture integer, variant string hex like 0x0, parts array of hex CPU part strings, revision integer. " +
             "Do not include prose or markdown.";
         var history = new List<ChatRequestData.ChatMessage>
         {
-            new() { role = "system", content = "Generate realistic machine fingerprint values as JSON only. The caller will place them into a fixed /proc/cpuinfo template." }
+            new() { Role = "system", Content = "Generate realistic machine fingerprint values as JSON only. The caller will place them into a fixed /proc/cpuinfo template." },
+            new() { Role = "user", Content = prompt }
         };
 
-        var (response, promptTokens, completionTokens, _) = Program.GetLLMResponse(history, prompt);
+        var (response, promptTokens, completionTokens, _) = await Program.GetLLMResponseAsync(history, cancellationToken).ConfigureAwait(false);
         if (TryParseCpuInfoValues(response, out var values))
             return (FormatCpuInfo(values), promptTokens, completionTokens, false);
 
@@ -3216,7 +3308,7 @@ static class Logger
                 }
 
                 stats.TotalSessions++;
-                stats.TotalMessages += messages;
+                stats.TotalCommands += messages;
                 stats.TotalBlockedOperations += blocked;
                 stats.TotalPromptTokens += promptTokens;
                 stats.TotalCompletionTokens += completionTokens;
@@ -3235,13 +3327,18 @@ static class Logger
                     stats.SessionsByBanner[sshBanner] = stats.SessionsByBanner.GetValueOrDefault(sshBanner) + 1;
                 }
 
-                if (stats.TopUsers.ContainsKey(username))
-                    stats.TopUsers[username]++;
-                else
-                    stats.TopUsers[username] = 1;
+                stats.TopUsers[username] = stats.TopUsers.GetValueOrDefault(username) + 1;
 
                 if (stats.TopUsers.Count > 10)
-                    stats.TopUsers = stats.TopUsers.OrderByDescending(x => x.Value).Take(10).ToDictionary(x => x.Key, x => x.Value);
+                {
+                    var threshold = stats.TopUsers.Values.OrderByDescending(v => v).Skip(9).First();
+                    stats.TopUsers = stats.TopUsers
+                        .Where(kv => kv.Value >= threshold)
+                        .OrderByDescending(kv => kv.Value)
+                        .ThenBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+                        .Take(10)
+                        .ToDictionary(kv => kv.Key, kv => kv.Value);
+                }
 
                 string newJson = JsonSerializer.Serialize(stats, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(statsPath, newJson);
