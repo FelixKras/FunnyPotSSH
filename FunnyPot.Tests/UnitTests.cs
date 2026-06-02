@@ -616,6 +616,62 @@ public class CommandResolverTests
         Assert.Equal("/", fs.ResolvePath(".."));
     }
 
+    [Theory]
+    [InlineData("/bin/echo")]
+    [InlineData("/bin/bash")]
+    [InlineData("/usr/bin/curl")]
+    [InlineData("/sbin/ip")]
+    [InlineData("/usr/sbin/cron")]
+    [InlineData("/usr/local/bin/deploy.sh")]
+    [InlineData("/lib/ld-linux-x86-64.so.2")]
+    [InlineData("/usr/lib/x86_64-linux-gnu/libssl.so.1.0.0")]
+    public void FakeFileSystem_ReportsReasonableFilesAsPresent(string path)
+    {
+        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
+
+        Assert.True(fs.FileExists(path));
+    }
+
+    [Theory]
+    [InlineData("cat /bin/echo")]
+    [InlineData("cat /bin/bash")]
+    [InlineData("cat /usr/bin/curl")]
+    [InlineData("cat /sbin/ip")]
+    [InlineData("cat /lib/ld-linux-x86-64.so.2")]
+    [InlineData("/bin/cat /bin/echo")]
+    [InlineData("/usr/bin/cat /bin/ls")]
+    public void IsBinaryExecutableCatCommand_DetectsAnyBinaryPath(string command)
+    {
+        Assert.True(CommandResolver.IsBinaryExecutableCatCommand(command));
+    }
+
+    [Theory]
+    [InlineData("cat /etc/passwd")]
+    [InlineData("cat /var/log/auth.log")]
+    [InlineData("cat /home/secretOps/.env")]
+    [InlineData("cat /opt/app/config.yml")]
+    public void IsBinaryExecutableCatCommand_DoesNotMatchRegularFiles(string command)
+    {
+        Assert.False(CommandResolver.IsBinaryExecutableCatCommand(command));
+    }
+
+    [Fact]
+    public void FakeFileSystem_ListsRealisticContentsForEnrichedPaths()
+    {
+        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
+
+        var opt = fs.ListDirectory("/opt");
+        Assert.Contains("app", opt);
+        Assert.Contains("monitoring", opt);
+
+        var srvWww = fs.ListDirectory("/srv/www/html");
+        Assert.Contains("index.html", srvWww);
+
+        var varLog = fs.ListDirectory("/var/log");
+        Assert.Contains("auth.log", varLog);
+        Assert.Contains("fail2ban.log", varLog);
+    }
+
     [Fact]
     public void StripShellQuotes_RemovesSimpleShellQuotes()
     {

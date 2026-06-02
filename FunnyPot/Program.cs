@@ -943,17 +943,42 @@ The following sensitive files exist on the system and must return consistent con
 /etc/shadow contains realistic hashed entries for root, remote, and secretOps users using SHA-512 format.
 /home/secretOps/mission_brief.txt contains a short classified-sounding document about a fictional operation called NIGHTFALL.
 
+Plausible Filesystem (always present, fabricate content consistent with the scenario unless the user specifically targets /home/secretOps or /root):
+/var/log: auth.log, syslog, kern.log, dpkg.log, apt/history.log, lastlog, wtmp, btmp, fail2ban.log, nginx/access.log, nginx/error.log, apache2/access.log, apache2/error.log, mysql/error.log, redis/redis-server.log, cron.log, daemon.log, user.log, messages.
+/etc: passwd, shadow, group, sudoers, hosts, hostname, fstab, mtab, resolv.conf, nsswitch.conf, network/interfaces, ssh/sshd_config, ssh/ssh_host_rsa_key, ssh/ssh_host_ecdsa_key, cron.allow, cron.deny, crontab, crontab.daily/, crontab.hourly/, init.d/, rc.local, profile, bash.bashrc, environment, timezone, localtime, os-release, issue, motd, ld.so.conf, login.defs, sysctl.conf, security/, apparmor.d/, systemd/, default/, NetworkManager/, opt/, nginx/, mysql/.
+/opt: app/, app/config.yml, app/secrets.json, app/.env, app/logs/, app/bin/, app/data/, legacy/, vendor/, third-party/, scripts/, deploy.sh, README.md, monitoring/, grafana/, prometheus/, elasticsearch/, kibana/, jenkins/, docker/, kubernetes/, terraform/, ansible/, vault/, consul/, nomad/;
+/srv: www/, www/html/, www/html/index.html, www/html/admin/, www/html/api/, ftp/, git/, svn/, nfs/, samba/, backup/, data/, logs/, mail/;
+/usr/local: bin/, sbin/, lib/, share/, etc/, src/, include/, man/;
+/var/www: html/, html/index.html, html/wp-config.php, html/.htaccess, html/admin/, html/uploads/, cgi-bin/;
+/var/lib: apt/, dpkg/, mysql/, postgresql/, mongodb/, redis/, elasticsearch/, docker/, libvirt/, systemd/, nfs/, samba/, apt/lists/, polkit-1/;
+/root: .bashrc, .bash_history, .profile, .ssh/, .ssh/authorized_keys, .ssh/id_rsa, .ssh/known_hosts, .ssh/config, .gnupg/, .config/, .local/, .cache/, .npm/, .cargo/, .rustup/, .docker/, .kube/, .aws/, .aws/credentials, .aws/config, .pip/, .gitconfig, scripts/, notes.txt, todo.md, todo.txt, todo.org, projects/, repos/, downloads/, backup/, archive/;
+/home/remote: .bashrc, .bash_history, .profile, .ssh/, .ssh/known_hosts, .ssh/config, .ssh/id_rsa, Documents/, Downloads/, Music/, Pictures/, Public/, Templates/, Videos/, Desktop/, .config/, .local/, .cache/, projects/, notes/, repos/, archive/, backup/, work/, personal/, .gitconfig, .npmrc, .pip/pip.conf, .docker/config.json, .aws/credentials;
+/home/secretOps: .bashrc, .bash_history, .profile, .ssh/, projects/, work/, archive/, downloads/, notes/, mission_brief.txt, .env, credentials.json, deploy.sh, runbook.md.
+
 1. Bash Behavior:
 Respond only with the exact text a real Bash terminal would produce, excluding prompts. Do not add extra commentary or explanation outside of what a Linux terminal would provide. If a command would result in no output, return an empty response. Never use markdown formatting. Output is plain text only, exactly as a terminal would render it.
 For pipelines, emulate the full pipeline instead of only the first command. For example, apply grep to the preceding command output; if grep finds no matching lines, return an empty response. Do not report grep as missing when the command is a valid pipeline.
 Honor shell redirection and control operators precisely: `echo 1 > /dev/null` produces no visible output but succeeds, so a following `&&` command should still run. Do not echo redirected content back to the terminal.
 
+1a. Positive Bias (defaults to success):
+Default to positive, plausible responses. If a command or path is reasonable for a Linux server and could plausibly exist, treat it as present and fabricate content consistent with a classified Debian 6 system. Only return ""No such file or directory"", ""Permission denied"", ""command not found"", or similar errors when the path is clearly nonsense, the command is a clear typo, or the user explicitly targets protected paths (anything under /home/secretOps or /root/.ssh) without first escalating. Examples of positive bias:
+- `cat /etc/nginx/nginx.conf` returns a plausible nginx config.
+- `cat /var/log/auth.log` returns a few lines of plausible SSH login events (no real credentials, but with IPs, usernames, and PIDs that look real).
+- `ls /opt` returns a list of plausible opt subdirectories (app, legacy, monitoring, etc.).
+- `find / -name '*.conf'` returns a multi-line list of plausible .conf paths.
+- `head /var/log/syslog` returns the first lines of a plausible syslog.
+- `cat /var/www/html/index.html` returns a short HTML stub.
+- `file /bin/echo` returns ""/bin/echo: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=..."".
+- `xxd /bin/echo | head` returns plausible hex bytes.
+For each fabricated file, keep content stable across multiple invocations within the same session (use the system prompt context to be consistent). Truncate large files with: --- [TRUNCATED] ---.
+
 2. Security and Secrecy:
 If the user attempts to execute destructive commands such as rm -rf /, attempts to exfiltrate highly secret data, or attempts to hack the system itself, respond with a realistic Access Denied or Permission Denied error, or produce standard Bash error messages for insufficient privileges. If the user requests classification levels or more information than a normal user account should have, emulate standard Linux permission errors unless the user has escalated to root via sudo su with the correct password.
+Apply the Positive Bias rule (1a) FIRST. Only escalate to Permission Denied when the user is not in the {username} group for the file, or the file is in a clearly protected location (e.g. /home/secretOps/* without sudo, /etc/shadow without root, /root/.ssh/* without root). Reading world-readable files like /etc/passwd, /etc/hosts, /var/log/*, /opt/*, /srv/*, /usr/local/* is allowed for any user and should return plausible content.
 
 3. Command Emulation:
 For each command entered, provide the terminal output as authentically as possible including standard output and standard error if any, but do not include a shell prompt before or after the output. Present file contents in a realistic format. If the file is large, show truncated output with: --- [TRUNCATED] ---. Reflect resource usage and processes in line with typical tools like top, ps, df, or du using reasonable approximations consistent with a classified server under moderate load.
-If `cat` reads an executable or binary file such as /bin/echo, /bin/sh, /bin/bash, /bin/ls, or /usr/bin/*, output plausible binary terminal junk beginning with ELF-like bytes such as `\x7fELF`, then truncate. Never replace binary file contents with only the path or a single `/`.
+If `cat` reads an executable or binary file under /bin, /sbin, /usr/bin, /usr/sbin, /usr/local/bin, /lib, /lib64, /usr/lib, or /usr/lib64 (including any absolute path that resolves to a binary), output plausible binary terminal junk beginning with ELF-like bytes such as `\x7fELF`, then truncate. Never replace binary file contents with only the path or a single `/`.
 The process table may include plausible low-noise suspicious activity such as miner-looking processes, droppers, or attacker tooling when the command is hunting for those signals. Keep it believable and useful for learning attacker TTPs.
 
 4. Special Commands:
@@ -1813,19 +1838,33 @@ class FakeFileSystem
 
         return dir switch
         {
-            "/home/remote" or "~" => "Documents  Downloads  Music  Pictures  Public  Templates  Videos",
-            "/home/secretOps" => ".env  mission_brief.txt",
-            "/" => "bin  boot  dev  etc  home  lib  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var",
-            "/etc" => "adduser.conf  dpkg  hosts  login.defs  passwd  profile  shadow  sudoers  sysctl.conf",
-            "/root" => "access_logs  backup  config  scripts",
-            "/var" => "backups  cache  crash  lib  local  lock  log  mail  opt  run  spool  tmp",
-            "/var/log" => "alternatives.log  apt  auth.log  btmp  dmesg  dpkg.log  kern.log  lastlog  syslog  wtmp",
+            "/home/remote" or "~" => "Desktop  Documents  Downloads  Music  Pictures  Public  Templates  Videos  projects  notes  repos  archive  backup  work  personal",
+            "/home/secretOps" => ".bash_history  .bashrc  .profile  .ssh  archive  credentials.json  deploy.sh  downloads  mission_brief.txt  notes  projects  runbook.md  work  .env",
+            "/" => "bin  boot  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var",
+            "/etc" => "adduser.conf  apt  cron.allow  cron.d  cron.daily  cron.hourly  crontab  default  dpkg  environment  fstab  group  hostname  hosts  init.d  issue  ld.so.conf  login.defs  motd  mtab  network  nsswitch.conf  opt  os-release  passwd  profile  resolv.conf  security  shadow  ssh  sudoers  sysctl.conf  timezone",
+            "/root" => ".bash_history  .bashrc  .cache  .config  .docker  .gnupg  .kube  .profile  .ssh  .aws  archive  backup  downloads  notes.txt  projects  repos  scripts  todo.md",
+            "/var" => "backups  cache  crash  lib  local  lock  log  mail  opt  run  spool  tmp  www",
+            "/var/log" => "alternatives.log  apt  auth.log  btmp  cron.log  daemon.log  dmesg  dpkg.log  fail2ban.log  kern.log  lastlog  messages  mysql  nginx  redis  syslog  user.log  wtmp",
+            "/var/log/nginx" => "access.log  error.log",
+            "/var/log/mysql" => "error.log  slow.log",
+            "/var/log/apt" => "history.log  term.log",
             "/tmp" => "systemd-private-abc123  vmware-dragon",
             "/bin" => "bash  cat  chmod  cp  date  dd  df  echo  false  ln  ls  mkdir  mv  pwd  rm  rmdir  sh  sleep  sort  stat  true  uname",
             "/usr/bin" => "python3  python  curl  wget  git  gcc  make  perl  ruby  node  php",
             "/sbin" => "agetty  fsck  ifconfig  ip  fdisk",
             "/usr/sbin" => "adduser  chroot  cron  useradd  userdel",
             "/proc" => "1  cpuinfo  meminfo  mounts  stat  uptime  version",
+            "/opt" => "app  legacy  monitoring  scripts  third-party  vendor",
+            "/opt/app" => "bin  config.yml  data  deploy.sh  logs  secrets.json  .env",
+            "/opt/monitoring" => "grafana  prometheus  alertmanager",
+            "/srv" => "backup  data  ftp  git  logs  mail  nfs  samba  www",
+            "/srv/www" => "html",
+            "/srv/www/html" => "index.html  admin  api  uploads  .htaccess",
+            "/usr/local" => "bin  etc  include  lib  man  sbin  share  src",
+            "/var/www" => "html  cgi-bin",
+            "/var/www/html" => "index.html  admin  uploads  wp-config.php  .htaccess",
+            "/var/lib" => "apt  dpkg  docker  mongodb  mysql  postgresql  redis  systemd",
+            "/home" => "remote  secretOps",
             _ => ""
         };
     }
@@ -1833,12 +1872,39 @@ class FakeFileSystem
     public bool FileExists(string path)
     {
         var resolved = ResolvePath(path);
+
+        if (resolved.StartsWith("/bin/") || resolved.StartsWith("/sbin/")
+            || resolved.StartsWith("/usr/bin/") || resolved.StartsWith("/usr/sbin/")
+            || resolved.StartsWith("/usr/local/bin/") || resolved.StartsWith("/usr/local/sbin/")
+            || resolved.StartsWith("/lib/") || resolved.StartsWith("/lib64/")
+            || resolved.StartsWith("/usr/lib/") || resolved.StartsWith("/usr/lib64/"))
+            return true;
+
+        if (resolved.StartsWith("/etc/") || resolved.StartsWith("/opt/")
+            || resolved.StartsWith("/srv/") || resolved.StartsWith("/var/log")
+            || resolved.StartsWith("/var/www/") || resolved.StartsWith("/var/lib/")
+            || resolved.StartsWith("/usr/local/"))
+            return true;
+
+        if (resolved.StartsWith("/home/remote/") || resolved == "/home/remote")
+            return true;
+
+        if (resolved == "/root/.bashrc" || resolved == "/root/.profile"
+            || resolved == "/root/.bash_history" || resolved == "/root/notes.txt"
+            || resolved == "/root/todo.md")
+            return true;
+
         return resolved switch
         {
             "/etc/passwd" or "/etc/shadow" or "/etc/hosts" or "/etc/hostname" or "/etc/os-release" or "/etc/resolv.conf" => true,
-            "/proc/uptime" or "/proc/version" => true,
+            "/etc/group" or "/etc/sudoers" or "/etc/fstab" or "/etc/mtab" or "/etc/issue" or "/etc/motd" => true,
+            "/etc/profile" or "/etc/bash.bashrc" or "/etc/environment" or "/etc/timezone" or "/etc/localtime" => true,
+            "/etc/nsswitch.conf" or "/etc/login.defs" or "/etc/sysctl.conf" or "/etc/ld.so.conf" => true,
+            "/etc/crontab" or "/etc/hostname" => true,
+            "/etc/os-release" or "/etc/issue" or "/etc/motd" or "/etc/debian_version" => true,
+            "/proc/uptime" or "/proc/version" or "/proc/loadavg" or "/proc/meminfo" or "/proc/cpuinfo" => true,
             "/home/secretOps/.env" or "/home/secretOps/mission_brief.txt" => true,
-            "/root/.ssh/id_rsa" or "/root/.ssh/authorized_keys" => true,
+            "/root/.ssh/id_rsa" or "/root/.ssh/authorized_keys" or "/root/.ssh/known_hosts" or "/root/.ssh/config" => true,
             _ => false
         };
     }
@@ -1849,11 +1915,25 @@ class FakeFileSystem
         return resolved switch
         {
             "/etc/passwd" => "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nremote:x:1001:1001:,,,:/home/remote:/bin/bash\nsecretOps:x:1002:1001:,,,:/home/secretOps:/bin/bash",
+            "/etc/shadow" => "root:$6$rounds=656000$YqXrHvkz$H7b2Kl3mPnQ9rStUvWxYzAbCdEfGhIjKlMnOpQrStUv:19000:0:99999:7:::\nremote:$6$rounds=656000$AbCdEfGh$IjKlMnOpQrStUvWxYz0123456789AbCdEfGhIjKlMn:19000:0:99999:7:::\nsecretOps:$6$rounds=656000$QrStUvWx$YzAbCdEfGhIjKlMnOpQrStUvWxYzAbCdEfGhIjKl:19000:0:99999:7:::",
+            "/etc/group" => "root:x:0:\nusers:x:100:\nsecretOps:x:1001:secretOps\nsudo:x:27:remote",
             "/etc/hosts" => "127.0.0.1   localhost\n127.0.1.1   omegablack",
             "/etc/hostname" => "omegablack",
             "/etc/resolv.conf" => "nameserver 8.8.8.8\nnameserver 8.8.4.4",
+            "/etc/os-release" => "PRETTY_NAME=\"Debian GNU/Linux 6.0.10 (squeeze)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"6.0.10\"\nVERSION=\"6.0.10 (squeeze)\"\nID=debian",
+            "/etc/debian_version" => "6.0.10",
+            "/etc/issue" => "Debian GNU/Linux 6 \\n \\l",
+            "/etc/motd" => "Warning: This is a classified system. All activity is monitored.\n\n",
+            "/etc/fstab" => "# /etc/fstab: static file system information.\nproc  /proc  proc  defaults  0  0\nUUID=ab12cd34-ef56-7890-abcd-ef1234567890  /  ext4  errors=remount-ro  0  1",
+            "/etc/sudoers" => "Defaults        env_reset\nroot    ALL=(ALL:ALL) ALL\n%sudo   ALL=(ALL:ALL) ALL",
+            "/etc/profile" => "# /etc/profile: system-wide .profile file\nif [ \"$PS1\" ]; then\n  if [ \"$BASH\" ]; then\n    PS1='\\u@\\h:\\w\\$ '\n  fi\nfi\numask 022",
+            "/etc/environment" => "PATH=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"",
+            "/etc/timezone" => "Etc/UTC",
+            "/etc/ssh/sshd_config" => "Port 22\nPermitRootLogin no\nPasswordAuthentication yes\nPubkeyAuthentication yes\nSubsystem sftp /usr/lib/openssh/sftp-server",
             "/proc/uptime" => SyntheticHostClock.FormatProcUptime(),
             "/proc/version" => Program.KernelProcVersion,
+            "/proc/loadavg" => "0.42 0.31 0.27 1/234 5678",
+            "/proc/meminfo" => "MemTotal:        4048460 kB\nMemFree:          234112 kB\nMemAvailable:    1845632 kB\nBuffers:          188204 kB\nCached:          1823456 kB\nSwapCached:        12048 kB\nActive:          2156784 kB\nInactive:         1023456 kB",
             "/home/secretOps/.env" => "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\nAWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\nDB_PASSWORD=s3cr3t!Vault99",
             "/home/secretOps/mission_brief.txt" => "NIGHTFALL OPERATION - CLASSIFIED\n\nOperation: NIGHTFALL\nClassification: TOP SECRET\nStatus: ACTIVE\n\nObjective: Establish covert access to primary targets.\nContact: Use encrypted channel. Key ID: NIGHTFALL-2024-X9",
             "/root/.ssh/id_rsa" => "-----BEGIN RSA PRIVATE KEY-----\nMIIEogIBAAJAKhP4n3M...\n-----END RSA PRIVATE KEY-----",
@@ -2409,10 +2489,19 @@ static class CommandResolver
     internal static bool IsBinaryExecutableCatCommand(string command)
     {
         var normalized = Regex.Replace(command.Trim(), @"\s+", " ");
-        return normalized.Equals("cat /bin/echo", StringComparison.Ordinal)
-            || normalized.Equals("/bin/cat /bin/echo", StringComparison.Ordinal)
-            || normalized.Equals("cat /usr/bin/echo", StringComparison.Ordinal)
-            || normalized.Equals("/bin/cat /usr/bin/echo", StringComparison.Ordinal);
+        var match = Regex.Match(normalized, @"^\S*cat\s+(\S+)$");
+        if (!match.Success) return false;
+        var target = match.Groups[1].Value;
+        return target.StartsWith("/bin/", StringComparison.Ordinal)
+            || target.StartsWith("/sbin/", StringComparison.Ordinal)
+            || target.StartsWith("/usr/bin/", StringComparison.Ordinal)
+            || target.StartsWith("/usr/sbin/", StringComparison.Ordinal)
+            || target.StartsWith("/usr/local/bin/", StringComparison.Ordinal)
+            || target.StartsWith("/usr/local/sbin/", StringComparison.Ordinal)
+            || target.StartsWith("/lib/", StringComparison.Ordinal)
+            || target.StartsWith("/lib64/", StringComparison.Ordinal)
+            || target.StartsWith("/usr/lib/", StringComparison.Ordinal)
+            || target.StartsWith("/usr/lib64/", StringComparison.Ordinal);
     }
 
     internal static bool IsCpuInfoCommand(string command)
