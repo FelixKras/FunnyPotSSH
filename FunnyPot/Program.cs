@@ -958,7 +958,7 @@ Plausible Filesystem (always present, fabricate content consistent with the scen
 1. Bash Behavior:
 Respond only with the exact text a real Bash terminal would produce, excluding prompts. Do not add extra commentary or explanation outside of what a Linux terminal would provide. If a command would result in no output, return an empty response. Never use markdown formatting. Output is plain text only, exactly as a terminal would render it.
 For pipelines, emulate the full pipeline instead of only the first command. For example, apply grep to the preceding command output; if grep finds no matching lines, return an empty response. Do not report grep as missing when the command is a valid pipeline. `echo Hi | cat -n` returns `1\tHi` (the number, a literal tab, then the input). `ps -ef | grep '[Mm]iner'` returns plausible miner process lines; `ls -la | head -n 3` returns just the first three rows including the total line.
-Honor shell redirection and control operators precisely: `echo 1 > /dev/null` produces no visible output but succeeds, so a following `&&` command should still run. Do not echo redirected content back to the terminal.
+Honor shell redirection and control operators precisely: `echo 1 > /dev/null` produces no visible output but succeeds, so a following `&&` command should still run. Do not echo redirected content back to the terminal. Common shell builtins and core utilities (`cd`, `echo`, `mkdir`, `rm`, `chmod`, `chown`, `touch`, `chattr`, `wget`, `curl`, `sh`) exist unless the command targets a protected path. Successful setup, download, permission, and redirection commands are usually silent or produce only normal tool output; never answer `bash: echo: command not found`, `bash: chmod: command not found`, or similar for standard utilities.
 
 1a. Positive Bias (defaults to success):
 Default to positive, plausible responses. If a command or path is reasonable for a Linux server and could plausibly exist, treat it as present and fabricate content consistent with a classified Debian 6 system. Only return ""No such file or directory"", ""Permission denied"", ""command not found"", or similar errors when the path is clearly nonsense, the command is a clear typo, or the user explicitly targets protected paths (anything under /home/secretOps or /root/.ssh) without first escalating. Examples of positive bias:
@@ -2165,6 +2165,11 @@ static class CommandResolver
             return (cpuInfo, usedFallback, false, cpuInfoPromptTokens, cpuInfoCompletionTokens);
         }
 
+        if (TryGenerateLocalCompoundResponse(command, fs, out var compoundResponse))
+        {
+            return (compoundResponse, true, false, 0, 0);
+        }
+
         if (!isCompoundCommand)
         {
             var staticResponse = StaticResponseStore.GetResponse(command, fs.CurrentDirectory);
@@ -2198,6 +2203,169 @@ static class CommandResolver
 
         return (response, false, false, promptTokens, completionTokens);
     }
+
+    private static bool TryGenerateLocalCompoundResponse(string command, FakeFileSystem fs, out string response)
+    {
+        response = "";
+        if (!IsCompoundShellCommand(command))
+            return false;
+
+        var segments = SplitShellControlSegments(command);
+        if (segments.Count == 0)
+            return false;
+
+        foreach (var segment in segments)
+        {
+            if (!CanExecuteLocalShellSegment(segment.Command))
+                return false;
+        }
+
+        var outputs = new List<string>();
+        var previousSucceeded = true;
+        foreach (var segment in segments)
+        {
+            if (segment.OperatorBefore == "&&" && !previousSucceeded)
+                continue;
+            if (segment.OperatorBefore == "||" && previousSucceeded)
+                continue;
+
+            var segmentResponse = ExecuteLocalShellSegment(segment.Command, fs, out previousSucceeded);
+            if (!string.IsNullOrEmpty(segmentResponse))
+                outputs.Add(segmentResponse);
+        }
+
+        response = string.Join("\n", outputs);
+        return true;
+    }
+
+    private static bool CanExecuteLocalShellSegment(string command)
+    {
+        var parts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+            return true;
+
+        var executable = NormalizeExecutableName(parts[0]).ToLowerInvariant();
+        var lower = command.ToLowerInvariant();
+        if (lower == "cat /etc/passwd | grep root" || lower == "grep root /etc/passwd")
+            return true;
+        if (lower == "ps -ef | grep '[mm]iner'" || lower == "ps aux | grep '[mm]iner'")
+            return true;
+
+        return executable switch
+        {
+            "cd" or "pwd" or "echo" or "true" or "false" or "ls" or "cat" or "grep" or "uname" or "uptime" or "hostname" or "whoami" or "id" or "date" => true,
+            "rm" or "mkdir" or "rmdir" or "chmod" or "chown" or "touch" or "cp" or "mv" or "sleep" or "chattr" or "lockr" => true,
+            "curl" or "wget" or "fetch" or "tftp" or "sh" or "bash" or "find" => true,
+            _ => false
+        };
+    }
+
+    private static string ExecuteLocalShellSegment(string command, FakeFileSystem fs, out bool succeeded)
+    {
+        succeeded = true;
+        var parts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+            return "";
+
+        var lower = command.ToLowerInvariant();
+        if (lower == "ps -ef | grep '[mm]iner'" || lower == "ps aux | grep '[mm]iner'")
+            return "root      1847     1  0 02:17 ?        00:03:41 /usr/local/bin/kinsing --config /tmp/.x/kinsing.conf\nremote    2194  2178  0 02:21 pts/0    00:00:00 grep [Mm]iner";
+
+        var executable = NormalizeExecutableName(parts[0]).ToLowerInvariant();
+        if (executable == "cd")
+        {
+            fs.ChangeDirectory(parts.Length > 1 ? ExpandHomePath(parts[1]) : "/home/remote");
+            return "";
+        }
+
+        if (executable == "echo" && command.Contains('>'))
+            return "";
+
+        if (executable == "false")
+        {
+            succeeded = false;
+            return "";
+        }
+
+        if (IsBuiltInCommand(command, fs, out var builtinResponse))
+            return builtinResponse ?? "";
+
+        var localResponse = GenerateSingleFallbackResponse(command, fs.CurrentDirectory);
+        if (DataHarvester.IsFailureResponse(localResponse))
+        {
+            succeeded = false;
+        }
+
+        return localResponse;
+    }
+
+    private static string ExpandHomePath(string path)
+    {
+        var unquoted = StripShellQuotes(path);
+        if (unquoted == "~")
+            return "/home/remote";
+        if (unquoted.StartsWith("~/", StringComparison.Ordinal))
+            return "/home/remote/" + unquoted[2..];
+        return unquoted;
+    }
+
+    private static List<ShellControlSegment> SplitShellControlSegments(string command)
+    {
+        var segments = new List<ShellControlSegment>();
+        var start = 0;
+        string? operatorBefore = null;
+        var inSingleQuote = false;
+        var inDoubleQuote = false;
+
+        for (var i = 0; i < command.Length; i++)
+        {
+            var c = command[i];
+            if (c == '\'' && !inDoubleQuote)
+            {
+                inSingleQuote = !inSingleQuote;
+                continue;
+            }
+
+            if (c == '"' && !inSingleQuote)
+            {
+                inDoubleQuote = !inDoubleQuote;
+                continue;
+            }
+
+            if (inSingleQuote || inDoubleQuote)
+                continue;
+
+            var delimiterLength = 0;
+            string? nextOperator = null;
+            if (c == ';')
+            {
+                delimiterLength = 1;
+                nextOperator = ";";
+            }
+            else if ((c == '&' || c == '|') && i + 1 < command.Length && command[i + 1] == c)
+            {
+                delimiterLength = 2;
+                nextOperator = command.Substring(i, 2);
+            }
+
+            if (delimiterLength == 0)
+                continue;
+
+            var segment = command[start..i].Trim();
+            if (segment.Length > 0)
+                segments.Add(new ShellControlSegment(segment, operatorBefore));
+            i += delimiterLength - 1;
+            start = i + 1;
+            operatorBefore = nextOperator;
+        }
+
+        var finalSegment = command[start..].Trim();
+        if (finalSegment.Length > 0)
+            segments.Add(new ShellControlSegment(finalSegment, operatorBefore));
+        return segments;
+    }
+
+    private sealed record ShellControlSegment(string Command, string? OperatorBefore);
 
     internal static bool IsModelFailureResponse(string response)
     {
@@ -2282,7 +2450,9 @@ static class CommandResolver
             "cat" => parts.Length > 1 ? $"cat: {parts[1]}: No such file or directory" : "",
             "grep" => "",
             "curl" or "wget" or "fetch" or "tftp" => "",
-            "chmod" or "chown" or "mkdir" or "rmdir" or "touch" or "cp" or "mv" or "rm" or "sleep" => "",
+            "chmod" or "chown" or "mkdir" or "rmdir" or "touch" or "cp" or "mv" or "rm" or "sleep" or "chattr" or "lockr" => "",
+            "sh" or "bash" => "",
+            "find" when lower.Contains("-perm -4000") => "/usr/bin/passwd\n/usr/bin/sudo\n/usr/bin/chsh\n/bin/mount\n/bin/su\n/bin/umount",
             _ when parts[0].StartsWith('/') => $"bash: {parts[0]}: No such file or directory",
             _ => $"bash: {parts[0]}: command not found"
         };
