@@ -223,7 +223,7 @@ class Program
             }
         });
 
-        Logger.PreparePublicationRepository();
+        Task.Run(Logger.PreparePublicationRepository);
 
         var initialBanner = BannerPool.Count > 0 ? BannerPool[0] : SshBanner;
         _currentBanner = initialBanner;
