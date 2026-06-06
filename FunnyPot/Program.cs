@@ -1755,197 +1755,6 @@ internal static class SyntheticHostClock
     }
 }
 
-class FakeFileSystem
-{
-    private static readonly Dictionary<string, FakeFileSystem> SessionFilesystems = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly object _lock = new();
-
-    public string CurrentDirectory { get; private set; } = "/home/remote";
-
-    public static FakeFileSystem GetOrCreate(string sessionId)
-    {
-        lock (_lock)
-        {
-            if (!SessionFilesystems.TryGetValue(sessionId, out var fs))
-            {
-                fs = new FakeFileSystem();
-                SessionFilesystems[sessionId] = fs;
-            }
-            return fs;
-        }
-    }
-
-    public static void Remove(string sessionId)
-    {
-        lock (_lock)
-        {
-            SessionFilesystems.Remove(sessionId);
-        }
-    }
-
-    public string ResolvePath(string path)
-    {
-        if (string.IsNullOrEmpty(path)) return CurrentDirectory;
-
-        if (path.StartsWith("/"))
-            return NormalizePath(path);
-
-        if (path == "..")
-        {
-            if (CurrentDirectory == "/") return "/";
-            var slash = CurrentDirectory.LastIndexOf('/');
-            return slash <= 0 ? "/" : CurrentDirectory[..slash];
-        }
-
-        if (path == ".")
-            return CurrentDirectory;
-
-        var combined = CurrentDirectory == "/" ? $"/{path}" : $"{CurrentDirectory}/{path}";
-        return NormalizePath(combined);
-    }
-
-    private static string NormalizePath(string path)
-    {
-        var parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
-        var result = new List<string>();
-        foreach (var part in parts)
-        {
-            if (part == "..")
-            {
-                if (result.Count > 0) result.RemoveAt(result.Count - 1);
-            }
-            else if (part != ".")
-            {
-                result.Add(part);
-            }
-        }
-        return result.Count == 0 ? "/" : "/" + string.Join("/", result);
-    }
-
-    public void ChangeDirectory(string path)
-    {
-        CurrentDirectory = ResolvePath(path);
-    }
-
-    public bool IsValidDirectory(string path)
-    {
-        var resolved = ResolvePath(path);
-        return resolved == "/" || resolved.StartsWith("/home") || resolved == "/root" ||
-               resolved == "/etc" || resolved == "/var" || resolved == "/tmp" ||
-               resolved == "/bin" || resolved == "/sbin" || resolved == "/usr" ||
-               resolved == "/var/log";
-    }
-
-    public string ListDirectory(string? path = null)
-    {
-        var dir = path is null ? CurrentDirectory : ResolvePath(path);
-
-        return dir switch
-        {
-            "/home/remote" or "~" => "Desktop  Documents  Downloads  Music  Pictures  Public  Templates  Videos  projects  notes  repos  archive  backup  work  personal",
-            "/home/secretOps" => ".bash_history  .bashrc  .profile  .ssh  archive  credentials.json  deploy.sh  downloads  mission_brief.txt  notes  projects  runbook.md  work  .env",
-            "/" => "bin  boot  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var",
-            "/etc" => "adduser.conf  apt  cron.allow  cron.d  cron.daily  cron.hourly  crontab  default  dpkg  environment  fstab  group  hostname  hosts  init.d  issue  ld.so.conf  login.defs  motd  mtab  network  nsswitch.conf  opt  os-release  passwd  profile  resolv.conf  security  shadow  ssh  sudoers  sysctl.conf  timezone",
-            "/root" => ".bash_history  .bashrc  .cache  .config  .docker  .gnupg  .kube  .profile  .ssh  .aws  archive  backup  downloads  notes.txt  projects  repos  scripts  todo.md",
-            "/var" => "backups  cache  crash  lib  local  lock  log  mail  opt  run  spool  tmp  www",
-            "/var/log" => "alternatives.log  apt  auth.log  btmp  cron.log  daemon.log  dmesg  dpkg.log  fail2ban.log  kern.log  lastlog  messages  mysql  nginx  redis  syslog  user.log  wtmp",
-            "/var/log/nginx" => "access.log  error.log",
-            "/var/log/mysql" => "error.log  slow.log",
-            "/var/log/apt" => "history.log  term.log",
-            "/tmp" => "systemd-private-abc123  vmware-dragon",
-            "/bin" => "bash  cat  chmod  cp  date  dd  df  echo  false  ln  ls  mkdir  mv  pwd  rm  rmdir  sh  sleep  sort  stat  true  uname",
-            "/usr/bin" => "python3  python  curl  wget  git  gcc  make  perl  ruby  node  php",
-            "/sbin" => "agetty  fsck  ifconfig  ip  fdisk",
-            "/usr/sbin" => "adduser  chroot  cron  useradd  userdel",
-            "/proc" => "1  cpuinfo  meminfo  mounts  stat  uptime  version",
-            "/opt" => "app  legacy  monitoring  scripts  third-party  vendor",
-            "/opt/app" => "bin  config.yml  data  deploy.sh  logs  secrets.json  .env",
-            "/opt/monitoring" => "grafana  prometheus  alertmanager",
-            "/srv" => "backup  data  ftp  git  logs  mail  nfs  samba  www",
-            "/srv/www" => "html",
-            "/srv/www/html" => "index.html  admin  api  uploads  .htaccess",
-            "/usr/local" => "bin  etc  include  lib  man  sbin  share  src",
-            "/var/www" => "html  cgi-bin",
-            "/var/www/html" => "index.html  admin  uploads  wp-config.php  .htaccess",
-            "/var/lib" => "apt  dpkg  docker  mongodb  mysql  postgresql  redis  systemd",
-            "/home" => "remote  secretOps",
-            _ => ""
-        };
-    }
-
-    public bool FileExists(string path)
-    {
-        var resolved = ResolvePath(path);
-
-        if (resolved.StartsWith("/bin/") || resolved.StartsWith("/sbin/")
-            || resolved.StartsWith("/usr/bin/") || resolved.StartsWith("/usr/sbin/")
-            || resolved.StartsWith("/usr/local/bin/") || resolved.StartsWith("/usr/local/sbin/")
-            || resolved.StartsWith("/lib/") || resolved.StartsWith("/lib64/")
-            || resolved.StartsWith("/usr/lib/") || resolved.StartsWith("/usr/lib64/"))
-            return true;
-
-        if (resolved.StartsWith("/etc/") || resolved.StartsWith("/opt/")
-            || resolved.StartsWith("/srv/") || resolved.StartsWith("/var/log")
-            || resolved.StartsWith("/var/www/") || resolved.StartsWith("/var/lib/")
-            || resolved.StartsWith("/usr/local/"))
-            return true;
-
-        if (resolved.StartsWith("/home/remote/") || resolved == "/home/remote")
-            return true;
-
-        if (resolved == "/root/.bashrc" || resolved == "/root/.profile"
-            || resolved == "/root/.bash_history" || resolved == "/root/notes.txt"
-            || resolved == "/root/todo.md")
-            return true;
-
-        return resolved switch
-        {
-            "/etc/passwd" or "/etc/shadow" or "/etc/hosts" or "/etc/hostname" or "/etc/os-release" or "/etc/resolv.conf" => true,
-            "/etc/group" or "/etc/sudoers" or "/etc/fstab" or "/etc/mtab" or "/etc/issue" or "/etc/motd" => true,
-            "/etc/profile" or "/etc/bash.bashrc" or "/etc/environment" or "/etc/timezone" or "/etc/localtime" => true,
-            "/etc/nsswitch.conf" or "/etc/login.defs" or "/etc/sysctl.conf" or "/etc/ld.so.conf" => true,
-            "/etc/crontab" or "/etc/hostname" => true,
-            "/etc/os-release" or "/etc/issue" or "/etc/motd" or "/etc/debian_version" => true,
-            "/proc/uptime" or "/proc/version" or "/proc/loadavg" or "/proc/meminfo" or "/proc/cpuinfo" => true,
-            "/home/secretOps/.env" or "/home/secretOps/mission_brief.txt" => true,
-            "/root/.ssh/id_rsa" or "/root/.ssh/authorized_keys" or "/root/.ssh/known_hosts" or "/root/.ssh/config" => true,
-            _ => false
-        };
-    }
-
-    public string? ReadFile(string path)
-    {
-        var resolved = ResolvePath(path);
-        return resolved switch
-        {
-            "/etc/passwd" => "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nremote:x:1001:1001:,,,:/home/remote:/bin/bash\nsecretOps:x:1002:1001:,,,:/home/secretOps:/bin/bash",
-            "/etc/shadow" => "root:$6$rounds=656000$YqXrHvkz$H7b2Kl3mPnQ9rStUvWxYzAbCdEfGhIjKlMnOpQrStUv:19000:0:99999:7:::\nremote:$6$rounds=656000$AbCdEfGh$IjKlMnOpQrStUvWxYz0123456789AbCdEfGhIjKlMn:19000:0:99999:7:::\nsecretOps:$6$rounds=656000$QrStUvWx$YzAbCdEfGhIjKlMnOpQrStUvWxYzAbCdEfGhIjKl:19000:0:99999:7:::",
-            "/etc/group" => "root:x:0:\nusers:x:100:\nsecretOps:x:1001:secretOps\nsudo:x:27:remote",
-            "/etc/hosts" => "127.0.0.1   localhost\n127.0.1.1   omegablack",
-            "/etc/hostname" => "omegablack",
-            "/etc/resolv.conf" => "nameserver 8.8.8.8\nnameserver 8.8.4.4",
-            "/etc/os-release" => "PRETTY_NAME=\"Debian GNU/Linux 6.0.10 (squeeze)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"6.0.10\"\nVERSION=\"6.0.10 (squeeze)\"\nID=debian",
-            "/etc/debian_version" => "6.0.10",
-            "/etc/issue" => "Debian GNU/Linux 6 \\n \\l",
-            "/etc/motd" => "Warning: This is a classified system. All activity is monitored.\n\n",
-            "/etc/fstab" => "# /etc/fstab: static file system information.\nproc  /proc  proc  defaults  0  0\nUUID=ab12cd34-ef56-7890-abcd-ef1234567890  /  ext4  errors=remount-ro  0  1",
-            "/etc/sudoers" => "Defaults        env_reset\nroot    ALL=(ALL:ALL) ALL\n%sudo   ALL=(ALL:ALL) ALL",
-            "/etc/profile" => "# /etc/profile: system-wide .profile file\nif [ \"$PS1\" ]; then\n  if [ \"$BASH\" ]; then\n    PS1='\\u@\\h:\\w\\$ '\n  fi\nfi\numask 022",
-            "/etc/environment" => "PATH=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"",
-            "/etc/timezone" => "Etc/UTC",
-            "/etc/ssh/sshd_config" => "Port 22\nPermitRootLogin no\nPasswordAuthentication yes\nPubkeyAuthentication yes\nSubsystem sftp /usr/lib/openssh/sftp-server",
-            "/proc/uptime" => SyntheticHostClock.FormatProcUptime(),
-            "/proc/version" => Program.KernelProcVersion,
-            "/proc/loadavg" => "0.42 0.31 0.27 1/234 5678",
-            "/proc/meminfo" => "MemTotal:        4048460 kB\nMemFree:          234112 kB\nMemAvailable:    1845632 kB\nBuffers:          188204 kB\nCached:          1823456 kB\nSwapCached:        12048 kB\nActive:          2156784 kB\nInactive:         1023456 kB",
-            "/home/secretOps/.env" => "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\nAWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\nDB_PASSWORD=s3cr3t!Vault99",
-            "/home/secretOps/mission_brief.txt" => "NIGHTFALL OPERATION - CLASSIFIED\n\nOperation: NIGHTFALL\nClassification: TOP SECRET\nStatus: ACTIVE\n\nObjective: Establish covert access to primary targets.\nContact: Use encrypted channel. Key ID: NIGHTFALL-2024-X9",
-            "/root/.ssh/id_rsa" => "-----BEGIN RSA PRIVATE KEY-----\nMIIEogIBAAJAKhP4n3M...\n-----END RSA PRIVATE KEY-----",
-            _ => null
-        };
-    }
-}
-
 internal sealed class SessionCommandWorker : IDisposable
 {
     private readonly BlockingCollection<Action> _queue = new();
@@ -2095,18 +1904,15 @@ static class CommandResolver
         if (!isValid)
             return CommandResolutionPath.Invalid;
 
-        if (SCPDetector.IsSCPCommand(command))
-            return CommandResolutionPath.Blocked;
-
         var isCompoundCommand = IsCompoundShellCommand(command);
-        if (!isCompoundCommand && (IsBinaryExecutableCatCommand(command) || IsBuiltInCommandName(command)))
+        if (!isCompoundCommand && PreferStaticResponse(command) && StaticResponseStore.GetResponse(command, fs.CurrentDirectory) is not null)
+            return CommandResolutionPath.StaticDataset;
+
+        if (!isCompoundCommand && (SCPDetector.IsSCPCommand(command) || IsBinaryExecutableCatCommand(command) || IsBuiltInCommandName(command)))
             return CommandResolutionPath.BuiltIn;
 
         if (!isCompoundCommand && IsNonLinuxNetworkDeviceProbe(command))
             return CommandResolutionPath.BuiltIn;
-
-        if (!isCompoundCommand && StaticResponseStore.GetResponse(command, fs.CurrentDirectory) is not null)
-            return CommandResolutionPath.StaticDataset;
 
         return CommandResolutionPath.Llm;
     }
@@ -2130,9 +1936,11 @@ static class CommandResolver
             if (SCPDetector.IsSCPUpload(command))
             {
                 var (_, filename) = SCPDetector.ParseSCPUpload(command);
-                return ($"SCP upload detected: {filename ?? "unknown file"} - operation not allowed", false, false, 0, 0);
+                if (!string.IsNullOrWhiteSpace(filename))
+                    fs.Touch(filename);
+                return ("", true, false, 0, 0);
             }
-            return ("Operation not allowed", false, false, 0, 0);
+            return ("", true, false, 0, 0);
         }
 
         var isCompoundCommand = IsCompoundShellCommand(command);
@@ -2260,6 +2068,17 @@ static class CommandResolver
         };
     }
 
+    private static bool PreferStaticResponse(string command)
+    {
+        var parts = command.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+            return false;
+
+        var executable = NormalizeExecutableName(parts[0]).ToLowerInvariant();
+        return executable is "cat" or "ps" or "ifconfig"
+            || (executable == "ls" && parts.Length > 1);
+    }
+
     private static string ExecuteLocalShellSegment(string command, FakeFileSystem fs, out bool succeeded)
     {
         succeeded = true;
@@ -2278,7 +2097,7 @@ static class CommandResolver
             return "";
         }
 
-        if (executable == "echo" && command.Contains('>'))
+        if (TryApplyLocalFilesystemMutation(command, fs))
             return "";
 
         if (executable == "false")
@@ -2447,7 +2266,7 @@ static class CommandResolver
         {
             "ls" => StaticResponseStore.GetResponse("ls", currentDir) ?? "Documents  Downloads  Music  Pictures  Public  Templates  Videos",
             "cat" when IsCpuInfoCommand(cleanCommand) => FormatCpuInfo(CpuInfoValues.Fallback()),
-            "cat" => parts.Length > 1 ? $"cat: {parts[1]}: No such file or directory" : "",
+            "cat" => parts.Length > 1 ? $"# {parts[1]}\nstatus=active" : "",
             "grep" => "",
             "curl" or "wget" or "fetch" or "tftp" => "",
             "chmod" or "chown" or "mkdir" or "rmdir" or "touch" or "cp" or "mv" or "rm" or "sleep" or "chattr" or "lockr" => "",
@@ -2466,6 +2285,11 @@ static class CommandResolver
         if (parts.Length == 0) return false;
 
         var cmd = NormalizeExecutableName(parts[0]).ToLowerInvariant();
+        if (TryApplyLocalFilesystemMutation(command, fs))
+        {
+            response = "";
+            return true;
+        }
 
         switch (cmd)
         {
@@ -2498,6 +2322,63 @@ static class CommandResolver
 
             case "echo":
                 response = StripShellQuotes(command.Trim()[parts[0].Length..].TrimStart());
+                return true;
+
+            case "ls":
+                response = FormatLsResponse(parts.Skip(1), fs);
+                return true;
+
+            case "cat":
+                response = FormatCatResponse(parts.Skip(1), fs);
+                return true;
+
+            case "mkdir":
+                foreach (var target in parts.Skip(1).Where(part => !part.StartsWith('-')))
+                    fs.CreateDirectory(target);
+                response = "";
+                return true;
+
+            case "touch":
+                foreach (var target in parts.Skip(1).Where(part => !part.StartsWith('-')))
+                    fs.Touch(target);
+                response = "";
+                return true;
+
+            case "rm":
+            case "rmdir":
+                foreach (var target in parts.Skip(1).Where(part => !part.StartsWith('-')))
+                    fs.RemovePath(target);
+                response = "";
+                return true;
+
+            case "chmod":
+            case "chown":
+            case "chattr":
+            case "lockr":
+            case "sleep":
+            case "sh":
+            case "bash":
+                response = "";
+                return true;
+
+            case "cp":
+                if (parts.Length >= 3)
+                    fs.Copy(parts[^2], parts[^1]);
+                response = "";
+                return true;
+
+            case "mv":
+                if (parts.Length >= 3)
+                    fs.Move(parts[^2], parts[^1]);
+                response = "";
+                return true;
+
+            case "curl":
+            case "wget":
+            case "fetch":
+            case "tftp":
+                MaterializeDownloadedFile(command, fs);
+                response = "";
                 return true;
 
             case "true":
@@ -2636,6 +2517,73 @@ static class CommandResolver
         }
 
         return false;
+    }
+
+    private static string FormatLsResponse(IEnumerable<string> args, FakeFileSystem fs)
+    {
+        var targets = args.Where(arg => !arg.StartsWith('-')).ToArray();
+        return fs.ListDirectory(targets.Length == 0 ? null : StripShellQuotes(targets[^1]));
+    }
+
+    private static string FormatCatResponse(IEnumerable<string> args, FakeFileSystem fs)
+    {
+        var outputs = new List<string>();
+        foreach (var arg in args.Where(arg => !arg.StartsWith('-')))
+        {
+            var target = StripShellQuotes(arg);
+            if (IsBinaryExecutableCatCommand($"cat {target}"))
+            {
+                outputs.Add(BinaryExecutableCatResponse());
+                continue;
+            }
+
+            var content = fs.ReadFile(target);
+            outputs.Add(content ?? $"# {target}\nstatus=active");
+        }
+
+        return string.Join("\n", outputs);
+    }
+
+    private static bool TryApplyLocalFilesystemMutation(string command, FakeFileSystem fs)
+    {
+        var appendMatch = Regex.Match(command, @"^\s*echo\s+(.+?)\s*(>>|>)\s*(\S+)\s*$", RegexOptions.IgnoreCase);
+        if (appendMatch.Success)
+        {
+            var content = StripShellQuotes(appendMatch.Groups[1].Value) + "\n";
+            fs.WriteFile(appendMatch.Groups[3].Value, content, append: appendMatch.Groups[2].Value == ">>");
+            return true;
+        }
+
+        var chmodLike = NormalizeExecutableName(command.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "").ToLowerInvariant();
+        return chmodLike is "chmod" or "chown" or "chattr" or "lockr" or "sleep" or "sh" or "bash";
+    }
+
+    private static void MaterializeDownloadedFile(string command, FakeFileSystem fs)
+    {
+        var parts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        string? output = null;
+        for (var i = 1; i < parts.Length; i++)
+        {
+            if ((parts[i] is "-O" or "-o") && i + 1 < parts.Length)
+            {
+                output = parts[i + 1];
+                break;
+            }
+        }
+
+        if (output is null)
+        {
+            var url = parts.FirstOrDefault(part => part.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || part.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
+            if (url is not null)
+            {
+                var slash = url.LastIndexOf('/');
+                var name = slash >= 0 && slash + 1 < url.Length ? url[(slash + 1)..] : "index.html";
+                output = name.Length == 0 ? "index.html" : name;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(output) && output != "-")
+            fs.WriteFile(output, "#!/bin/sh\n# downloaded payload placeholder\n", append: false);
     }
 
     internal static string StripShellQuotes(string value)
@@ -2827,7 +2775,9 @@ static class CommandResolver
             or "echo" or "true" or "false" or "alias" or "history" or "type" or "which" or "help"
             or "whoami" or "id" or "groups" or "umask" or "nproc" or "getconf" or "arch"
             or "uname" or "uptime" or "hostname" or "date" or "who" or "tty" or "stty"
-            or "locate";
+            or "locate" or "ls" or "cat" or "mkdir" or "rmdir" or "touch" or "rm" or "cp" or "mv"
+            or "chmod" or "chown" or "chattr" or "lockr" or "sleep" or "sh" or "bash"
+            or "curl" or "wget" or "fetch" or "tftp";
     }
 
     internal static string FormatLocateResponse(string command, FakeFileSystem fs)
@@ -3551,6 +3501,9 @@ static class Logger
 
         var staticDataDir = Path.Combine(Program.AppDir, "frontend", "data");
         Directory.CreateDirectory(staticDataDir);
+        if (eventType != "harvested_credential")
+            return;
+
         File.AppendAllText(Path.Combine(staticDataDir, "harvest.jsonl"), json + Environment.NewLine);
         UpdateHarvestSummaryUnsafe(staticDataDir, eventType, data);
     }
@@ -3587,6 +3540,25 @@ static class Logger
 
                 if (!string.IsNullOrEmpty(authAttempt.Password))
                     summary.TopPasswords[authAttempt.Password] = summary.TopPasswords.GetValueOrDefault(authAttempt.Password) + 1;
+            }
+
+            var remoteIp = TryGetRemoteIp(data);
+            if (!string.IsNullOrWhiteSpace(remoteIp))
+            {
+                summary.ScansByIp[remoteIp] = summary.ScansByIp.GetValueOrDefault(remoteIp) + 1;
+                summary.UniqueScanIps = summary.ScansByIp.Count;
+            }
+        }
+        else if (eventType == "harvested_credential")
+        {
+            summary.TotalScanAttempts++;
+            if (data is HarvestedCredential credential)
+            {
+                if (!string.IsNullOrWhiteSpace(credential.Username))
+                    summary.TopUsernames[credential.Username] = summary.TopUsernames.GetValueOrDefault(credential.Username) + 1;
+
+                if (!string.IsNullOrEmpty(credential.Password))
+                    summary.TopPasswords[credential.Password] = summary.TopPasswords.GetValueOrDefault(credential.Password) + 1;
             }
 
             var remoteIp = TryGetRemoteIp(data);

