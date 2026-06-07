@@ -735,25 +735,6 @@ class Program
                         return;
                     }
 
-                    processingStage = "checking file transfer command";
-                    if (SCPDetector.IsSCPCommand(line))
-                    {
-                        blockedOps++;
-                        Logger.LogMsg($"[Session {sessionId}] Blocked SCP/SFTP: {line}");
-                        var blockedResponse = "Operation not allowed";
-                        TrySendData(Encoding.UTF8.GetBytes(blockedResponse + "\r\n"));
-                        var blockedFailedCommand = true;
-                        shellAnalytics.RecordResult(blockedFailedCommand);
-                        LastCommandEndedAt[sessionId] = DateTime.UtcNow;
-                        LogCommandResult(line, blockedResponse, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, blockedFailedCommand);
-                        commandResultLogged = true;
-                        if (isInteractiveShell)
-                            SendPrompt();
-                        else
-                            CloseShell("BlockedCommand");
-                        return;
-                    }
-
                     var rateLimitKey = sessionId;
                     var stopwatch = Stopwatch.StartNew();
                     processingStage = "preparing LLM history";
