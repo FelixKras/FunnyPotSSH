@@ -1791,16 +1791,22 @@ internal sealed class SessionCommandWorker : IDisposable
 
     private void ProcessQueue()
     {
-        foreach (var work in _queue.GetConsumingEnumerable())
+        try
         {
-            try
+            foreach (var work in _queue.GetConsumingEnumerable())
             {
-                work();
+                try
+                {
+                    work();
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogMsg($"Session worker exception: {ex.Message}");
+                }
             }
-            catch (Exception ex)
-            {
-                Logger.LogMsg($"Session worker exception: {ex.Message}");
-            }
+        }
+        catch (ObjectDisposedException)
+        {
         }
     }
 
@@ -1813,8 +1819,8 @@ internal sealed class SessionCommandWorker : IDisposable
         if (Thread.CurrentThread.ManagedThreadId == _thread.ManagedThreadId)
             return;
 
-        _thread.Join(TimeSpan.FromSeconds(45));
-        _queue.Dispose();
+        if (_thread.Join(TimeSpan.FromSeconds(45)))
+            _queue.Dispose();
     }
 }
 
@@ -3501,11 +3507,16 @@ static class Logger
 
         var staticDataDir = Path.Combine(Program.AppDir, "frontend", "data");
         Directory.CreateDirectory(staticDataDir);
-        if (eventType != "harvested_credential")
+        if (!ShouldPublishFrontendEvent(eventType))
             return;
 
         File.AppendAllText(Path.Combine(staticDataDir, "harvest.jsonl"), json + Environment.NewLine);
         UpdateHarvestSummaryUnsafe(staticDataDir, eventType, data);
+    }
+
+    static bool ShouldPublishFrontendEvent(string eventType)
+    {
+        return eventType is "harvested_credential" or "command" or "command_result";
     }
 
     static void UpdateHarvestSummaryUnsafe(string staticDataDir, string eventType, object data)
@@ -3713,26 +3724,24 @@ static class Logger
                 Directory.CreateDirectory(repoPath);
                 EnsurePublicationRepository(repoPath, gitUser, sessionId);
 
-                using var repo = new Repository(repoPath);
-                string metricsFile = GetLogFilePath(sessionId, "metrics");
-                string appLogFile = GetLogFilePath(sessionId, "app");
                 string statsFile = Path.Combine(repoPath, "global_stats.json");
                 string dataDir = Path.Combine(repoPath, "data");
                 string dataBranch = Environment.GetEnvironmentVariable("GITHUB_DATA_BRANCH") ?? "data";
 
-                EnrichHarvestWithMetricResponses(repoPath);
+                using (var syncRepo = new Repository(repoPath))
+                {
+                    if (syncRepo.Head.Tip is null || syncRepo.Head.FriendlyName != dataBranch)
+                        SyncPublicationBranch(syncRepo, dataBranch);
+                }
 
-                if (File.Exists(metricsFile))
-                    Commands.Stage(repo, Path.GetRelativePath(repoPath, metricsFile));
-                if (File.Exists(appLogFile))
-                    Commands.Stage(repo, Path.GetRelativePath(repoPath, appLogFile));
+                using var repo = new Repository(repoPath);
 
                 if (File.Exists(statsFile))
                     Commands.Stage(repo, "global_stats.json");
                 if (Directory.Exists(dataDir))
                     Commands.Stage(repo, "data");
 
-                if (!repo.RetrieveStatus().IsDirty)
+                if (!repo.RetrieveStatus(new StatusOptions { IncludeUntracked = false }).IsDirty)
                 {
                     LogMsg($"Git push skipped: no data changes for session {sessionId}.", sessionId);
                     return;
@@ -3868,9 +3877,12 @@ static class Logger
                 Directory.CreateDirectory(repoPath);
                 EnsurePublicationRepository(repoPath, gitUser, "startup");
 
-                using var repo = new Repository(repoPath);
                 string dataBranch = Environment.GetEnvironmentVariable("GITHUB_DATA_BRANCH") ?? "data";
-                SyncPublicationBranch(repo, dataBranch, gitUser, gitToken);
+
+                using (var syncRepo = new Repository(repoPath))
+                    SyncPublicationBranch(syncRepo, dataBranch);
+
+                using var repo = new Repository(repoPath);
 
                 string statsFile = Path.Combine(repoPath, "global_stats.json");
                 if (File.Exists(statsFile))
@@ -3907,24 +3919,38 @@ static class Logger
         }
     }
 
-    static void SyncPublicationBranch(Repository repo, string dataBranch, string gitUser, string gitToken)
+    static void SyncPublicationBranch(Repository repo, string dataBranch)
     {
         var remote = repo.Network.Remotes["origin"] ?? throw new InvalidOperationException("Static dashboard origin is not configured.");
-        Commands.Fetch(repo, remote.Name, remote.FetchRefSpecs.Select(refSpec => refSpec.Specification), new FetchOptions
+        var workDir = repo.Info.WorkingDirectory;
+        RunGitCommand(workDir, "fetch", "--depth=1", remote.Name, $"+refs/heads/{dataBranch}:refs/remotes/{remote.Name}/{dataBranch}");
+        RunGitCommand(workDir, "checkout", "-f", "-B", dataBranch, $"{remote.Name}/{dataBranch}");
+    }
+
+    static void RunGitCommand(string workingDirectory, params string[] args)
+    {
+        using var process = new Process();
+        process.StartInfo.FileName = "git";
+        process.StartInfo.WorkingDirectory = workingDirectory;
+        process.StartInfo.RedirectStandardOutput = true;
+        process.StartInfo.RedirectStandardError = true;
+        foreach (var arg in args)
+            process.StartInfo.ArgumentList.Add(arg);
+
+        process.Start();
+        if (!process.WaitForExit(Program.GitPushTimeout))
         {
-            CredentialsProvider = (_, _, _) =>
-                new UsernamePasswordCredentials { Username = gitUser, Password = gitToken }
-        }, null);
+            try { process.Kill(entireProcessTree: true); } catch { }
+            throw new TimeoutException($"git {string.Join(' ', args)} timed out after {Program.GitPushTimeout.TotalSeconds:N0}s");
+        }
 
-        var remoteBranch = repo.Branches[$"origin/{dataBranch}"];
-        if (remoteBranch is null)
-            return;
-
-        var localBranch = repo.Branches[dataBranch] ?? repo.CreateBranch(dataBranch, remoteBranch.Tip);
-        repo.Branches.Update(localBranch, branch => branch.Remote = remote.Name, branch => branch.UpstreamBranch = remoteBranch.CanonicalName);
-
-        if (repo.Head.FriendlyName != dataBranch)
-            Commands.Checkout(repo, localBranch, new CheckoutOptions { CheckoutModifiers = CheckoutModifiers.Force });
+        if (process.ExitCode != 0)
+        {
+            var stderr = process.StandardError.ReadToEnd().Trim();
+            var stdout = process.StandardOutput.ReadToEnd().Trim();
+            var output = string.IsNullOrWhiteSpace(stderr) ? stdout : stderr;
+            throw new InvalidOperationException($"git {string.Join(' ', args)} failed: {output}");
+        }
     }
 
     static void EnsurePublicationRepository(string repoPath, string gitUser, string sessionId)
