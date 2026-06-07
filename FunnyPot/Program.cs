@@ -3,7 +3,6 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
@@ -11,8 +10,6 @@ using System.Security.Cryptography;
 using DotNetEnv;
 using System.Diagnostics;
 using LibGit2Sharp;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 using FxSsh;
 using FxSsh.Services;
 using System.IO;
@@ -1960,10 +1957,8 @@ static class CommandResolver
             return (cpuInfo, usedFallback, false, cpuInfoPromptTokens, cpuInfoCompletionTokens);
         }
 
-        if (TryGenerateLocalCompoundResponse(command, fs, out var compoundResponse))
-        {
-            return (compoundResponse, true, false, 0, 0);
-        }
+        if (isCompoundCommand)
+            ApplyLocalShellStateChanges(command, fs);
 
         if (!isCompoundCommand)
         {
@@ -1993,6 +1988,8 @@ static class CommandResolver
         if (IsModelFailureResponse(response))
         {
             Logger.LogMsg($"LLM response failed for session {sessionId}, using local shell fallback: {response}");
+            if (TryGenerateLocalCompoundResponse(command, fs, out var compoundFallback))
+                return (compoundFallback, true, false, 0, 0);
             return (GenerateLocalFallbackResponse(command, fs.CurrentDirectory), true, false, 0, 0);
         }
 
@@ -2031,6 +2028,28 @@ static class CommandResolver
 
         response = string.Join("\n", outputs);
         return true;
+    }
+
+    private static void ApplyLocalShellStateChanges(string command, FakeFileSystem fs)
+    {
+        foreach (var segment in SplitShellControlSegments(command))
+        {
+            var parts = segment.Command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0)
+                continue;
+
+            var executable = NormalizeExecutableName(parts[0]).ToLowerInvariant();
+            if (executable == "cd")
+            {
+                fs.ChangeDirectory(parts.Length > 1 ? ExpandHomePath(parts[1]) : "/home/remote");
+                continue;
+            }
+
+            if (executable is "curl" or "wget" or "fetch" or "tftp")
+                MaterializeDownloadedFile(segment.Command, fs);
+            else
+                TryApplyLocalFilesystemMutation(segment.Command, fs);
+        }
     }
 
     private static bool CanExecuteLocalShellSegment(string command)
@@ -3395,11 +3414,6 @@ static class Logger
         }
     }
 
-    static readonly Lazy<ISerializer> YamlSerializer = new(() =>
-        new SerializerBuilder()
-            .WithNamingConvention(CamelCaseNamingConvention.Instance)
-            .Build());
-
     public static void LogYaml(string eventType, object data)
     {
         if (IsPrivateEndpoint(data))
@@ -3411,14 +3425,6 @@ static class Logger
         {
             try
             {
-                string yaml = YamlSerializer.Value.Serialize(new Dictionary<string, object>
-                {
-                    ["timestamp"] = DateTime.UtcNow.ToString("o"),
-                    ["event"] = eventType,
-                    ["data"] = data
-                });
-                string path = Path.Combine(Program.LogDir, $"{eventType}.yaml");
-                File.AppendAllText(path, "---\n" + yaml);
                 LogHarvestUnsafe(eventType, data);
             }
             catch (Exception ex)
@@ -3483,7 +3489,7 @@ static class Logger
         };
 
         var json = JsonSerializer.Serialize(harvestedEvent, new JsonSerializerOptions { WriteIndented = false });
-        var hotPath = Path.Combine(Program.LogDir, "harvest.jsonl");
+        var hotPath = Path.Combine(Program.LogDir, "events.jsonl");
         File.AppendAllText(hotPath, json + Environment.NewLine);
 
         var staticDataDir = Path.Combine(Program.AppDir, "frontend", "data");
@@ -3491,18 +3497,22 @@ static class Logger
         if (!ShouldPublishFrontendEvent(eventType))
             return;
 
-        File.AppendAllText(Path.Combine(staticDataDir, "harvest.jsonl"), json + Environment.NewLine);
+        File.AppendAllText(Path.Combine(staticDataDir, "events.jsonl"), json + Environment.NewLine);
         UpdateHarvestSummaryUnsafe(staticDataDir, eventType, data);
     }
 
     static bool ShouldPublishFrontendEvent(string eventType)
     {
-        return eventType is "harvested_credential" or "command" or "command_result";
+        return eventType is "session_start" or "session_end"
+            or "auth_attempt" or "harvested_credential"
+            or "shell_session_start" or "shell_session_end"
+            or "command" or "command_result"
+            or "payload_capture" or "scp_upload_captured" or "scp_upload_rejected";
     }
 
     static void UpdateHarvestSummaryUnsafe(string staticDataDir, string eventType, object data)
     {
-        var summaryPath = Path.Combine(staticDataDir, "harvest_summary.json");
+        var summaryPath = Path.Combine(staticDataDir, "events_summary.json");
         HarvestSummary summary = new();
 
         if (File.Exists(summaryPath))
@@ -3675,9 +3685,7 @@ static class Logger
             try
             {
                 string jsonPayload = JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = false });
-                string logEntry = $"{DateTime.UtcNow:o}|{sessionId}|{eventType}|{jsonPayload}";
-                using var writer = new StreamWriter(GetLogFilePath(sessionId, "metrics"), append: true);
-                writer.WriteLine(logEntry);
+                LogMsg($"metric {eventType}: {jsonPayload}", sessionId);
             }
             catch (Exception ex)
             {
@@ -3716,6 +3724,7 @@ static class Logger
                 }
 
                 using var repo = new Repository(repoPath);
+                RemoveLegacyTelemetryFiles(repoPath);
 
                 if (File.Exists(statsFile))
                     Commands.Stage(repo, "global_stats.json");
@@ -3748,97 +3757,6 @@ static class Logger
         }
     }
 
-    static bool EnrichHarvestWithMetricResponses(string repoPath)
-    {
-        try
-        {
-            var harvestPath = Path.Combine(repoPath, "data", "harvest.jsonl");
-            var sessionsDir = Path.Combine(repoPath, "sessions");
-            if (!File.Exists(harvestPath) || !Directory.Exists(sessionsDir))
-                return false;
-
-            var responses = LoadMetricResponses(sessionsDir);
-            if (responses.Count == 0)
-                return false;
-
-            var changed = false;
-            var lines = File.ReadAllLines(harvestPath);
-            for (var i = 0; i < lines.Length; i++)
-            {
-                if (string.IsNullOrWhiteSpace(lines[i]) || !lines[i].Contains("\"command_result\""))
-                    continue;
-
-                var node = JsonNode.Parse(lines[i]) as JsonObject;
-                var data = node?["Data"] as JsonObject;
-                if (data is null)
-                    continue;
-
-                if (!string.IsNullOrEmpty(data["Response"]?.GetValue<string>()))
-                    continue;
-
-                var shellSessionId = data["ShellSessionId"]?.GetValue<string>() ?? "";
-                var command = data["Command"]?.GetValue<string>() ?? "";
-                if (string.IsNullOrEmpty(shellSessionId) || string.IsNullOrEmpty(command))
-                    continue;
-
-                var key = MetricResponseKey(shellSessionId, command);
-                if (!responses.TryGetValue(key, out var queuedResponses) || queuedResponses.Count == 0)
-                    continue;
-
-                data["Response"] = queuedResponses.Dequeue();
-                lines[i] = node!.ToJsonString();
-                changed = true;
-            }
-
-            if (!changed)
-                return false;
-
-            File.WriteAllLines(harvestPath, lines);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            LogMsg($"Failed to enrich harvest responses: {ex.Message}");
-            return false;
-        }
-    }
-
-    static Dictionary<string, Queue<string>> LoadMetricResponses(string sessionsDir)
-    {
-        var responses = new Dictionary<string, Queue<string>>(StringComparer.Ordinal);
-        foreach (var path in Directory.EnumerateFiles(sessionsDir, "metrics-*.log").OrderBy(path => path, StringComparer.Ordinal))
-        {
-            foreach (var line in File.ReadLines(path))
-            {
-                var first = line.IndexOf('|');
-                var second = first < 0 ? -1 : line.IndexOf('|', first + 1);
-                var third = second < 0 ? -1 : line.IndexOf('|', second + 1);
-                if (third < 0)
-                    continue;
-
-                var sessionId = line[(first + 1)..second];
-                var payloadJson = line[(third + 1)..];
-                using var payload = JsonDocument.Parse(payloadJson);
-                if (!payload.RootElement.TryGetProperty("Input", out var inputElement) ||
-                    !payload.RootElement.TryGetProperty("Response", out var responseElement))
-                    continue;
-
-                var input = inputElement.GetString() ?? "";
-                if (string.IsNullOrEmpty(sessionId) || string.IsNullOrEmpty(input))
-                    continue;
-
-                var key = MetricResponseKey(sessionId, input);
-                if (!responses.TryGetValue(key, out var queue))
-                    responses[key] = queue = new Queue<string>();
-                queue.Enqueue(responseElement.GetString() ?? "");
-            }
-        }
-
-        return responses;
-    }
-
-    static string MetricResponseKey(string sessionId, string command) => $"{sessionId}\u001f{command}";
-
     public static void PreparePublicationRepository()
     {
         lock (_lock)
@@ -3864,6 +3782,7 @@ static class Logger
                     SyncPublicationBranch(syncRepo, dataBranch);
 
                 using var repo = new Repository(repoPath);
+                RemoveLegacyTelemetryFiles(repoPath);
 
                 string statsFile = Path.Combine(repoPath, "global_stats.json");
                 if (File.Exists(statsFile))
@@ -3876,21 +3795,6 @@ static class Logger
                     }
                 }
 
-                if (EnrichHarvestWithMetricResponses(repoPath))
-                {
-                    Commands.Stage(repo, "data");
-                    var author = new Signature(gitUser!, $"{gitUser}@users.noreply.github.com", DateTimeOffset.Now);
-                    repo.Commit("Backfill command response data", author, author);
-                    repo.Network.Push(repo.Network.Remotes["origin"],
-                        $@"refs/heads/{repo.Head.FriendlyName}:refs/heads/{dataBranch}",
-                        new PushOptions
-                        {
-                            CredentialsProvider = (_, _, _) =>
-                                new UsernamePasswordCredentials { Username = gitUser!, Password = gitToken! }
-                        });
-                    LogMsg("Backfilled command responses in harvest data.");
-                }
-
                 LogMsg($"Static dashboard repository prepared on {dataBranch} branch.");
             }
             catch (Exception ex)
@@ -3898,6 +3802,17 @@ static class Logger
                 LogMsg($"Static dashboard repository preparation failed: {ex.Message}");
             }
         }
+    }
+
+    static void RemoveLegacyTelemetryFiles(string repoPath)
+    {
+        var legacyHarvestPath = Path.Combine(repoPath, "data", "harvest.jsonl");
+        if (File.Exists(legacyHarvestPath))
+            File.Delete(legacyHarvestPath);
+
+        var legacySummaryPath = Path.Combine(repoPath, "data", "harvest_summary.json");
+        if (File.Exists(legacySummaryPath))
+            File.Delete(legacySummaryPath);
     }
 
     static void SyncPublicationBranch(Repository repo, string dataBranch)
