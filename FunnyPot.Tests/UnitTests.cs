@@ -502,6 +502,9 @@ public class CommandResolverTests
         Assert.Contains("/bin/echo", prompt);
         Assert.Contains("\\x7fELF", prompt);
         Assert.Contains("Never replace binary file contents with only the path or a single `/`", prompt);
+        Assert.Contains("Installed command baseline", prompt);
+        Assert.Contains("pkill", prompt);
+        Assert.Contains("Never answer `bash: <one of these>: command not found`", prompt);
     }
 
     [Fact]
@@ -524,6 +527,9 @@ public class CommandResolverTests
         Assert.Contains("`ifconfig`", prompt);
         Assert.Contains("`lspci | grep VGA | cut -f5- -d ' '`", prompt);
         Assert.Contains("`locate <pattern>`", prompt);
+        Assert.Contains("`top` returns a compact top screen", prompt);
+        Assert.Contains("`lscpu | grep Model` returns only the matching", prompt);
+        Assert.Contains("pkill -9 secure.sh", prompt);
     }
 
     [Fact]
@@ -748,6 +754,21 @@ public class CommandResolverTests
         Assert.Contains("root:x:0:0:root:/root:/bin/bash", response);
         Assert.DoesNotContain("api error", response, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("network error", response, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData("top", "Tasks:")]
+    [InlineData("lscpu | grep Model", "Model name:")]
+    [InlineData("rm -rf /tmp/secure.sh; pkill -9 secure.sh; echo > /etc/hosts.deny", "")]
+    public void GenerateLocalFallbackResponse_KeepsCommonUtilitiesAvailable(string command, string expected)
+    {
+        var response = CommandResolver.GenerateLocalFallbackResponse(command);
+
+        Assert.DoesNotContain("command not found", response, StringComparison.OrdinalIgnoreCase);
+        if (expected.Length == 0)
+            Assert.Equal("", response);
+        else
+            Assert.Contains(expected, response);
     }
 
     [Theory]

@@ -9,6 +9,7 @@ using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using DotNetEnv;
 using System.Diagnostics;
+using System.Globalization;
 using LibGit2Sharp;
 using FxSsh;
 using FxSsh.Services;
@@ -915,6 +916,8 @@ The attacker is logged in as user {username}, UID {uid}, group {group}. No sudo 
 
 System hostname: omegablack. Operating system: Debian GNU/Linux 6 (squeeze). Kernel: {KernelRelease}. Architecture: x86_64. The system has been running for {uptimePhrase}. The SSH server renders prompts separately; never include shell prompts in responses. For uname, /proc/version, and similar host fingerprinting commands, return old Debian 6 era kernel details that look EOL and likely vulnerable, for example {KernelRelease} with {KernelVersion} on x86_64. For uptime, /proc/uptime, top, and uptime variants, use the same running uptime and never report less than one week of uptime.
 
+Installed command baseline: assume normal Debian server utilities exist unless the command is clearly nonsense. At minimum these commands are available: cd, pwd, echo, true, false, ls, cat, grep, uname, uptime, hostname, whoami, id, date, rm, mkdir, rmdir, chmod, chown, touch, cp, mv, sleep, chattr, pkill, curl, wget, sh, bash, find, ps, top, lscpu, free, w, who, df, du, mount, env, printenv, head, tail, wc, awk, sort, uniq, crontab. Never answer `bash: <one of these>: command not found` for these commands.
+
 The following sensitive files exist on the system and must return consistent content every time they are accessed:
 /home/secretOps/.env contains: AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE and AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY and DB_PASSWORD=s3cr3t!Vault99
 /root/.ssh/id_rsa contains a plausible but fake RSA private key in standard PEM format, 2048-bit.
@@ -936,7 +939,7 @@ Plausible Filesystem (always present, fabricate content consistent with the scen
 1. Bash Behavior:
 Respond only with the exact text a real Bash terminal would produce, excluding prompts. Do not add extra commentary or explanation outside of what a Linux terminal would provide. If a command would result in no output, return an empty response. Never use markdown formatting. Output is plain text only, exactly as a terminal would render it.
 For pipelines, emulate the full pipeline instead of only the first command. For example, apply grep to the preceding command output; if grep finds no matching lines, return an empty response. Do not report grep as missing when the command is a valid pipeline. `echo Hi | cat -n` returns `1\tHi` (the number, a literal tab, then the input). `ps -ef | grep '[Mm]iner'` returns plausible miner process lines; `ls -la | head -n 3` returns just the first three rows including the total line.
-Honor shell redirection and control operators precisely: `echo 1 > /dev/null` produces no visible output but succeeds, so a following `&&` command should still run. Do not echo redirected content back to the terminal. Common shell builtins and core utilities (`cd`, `echo`, `mkdir`, `rm`, `chmod`, `chown`, `touch`, `chattr`, `wget`, `curl`, `sh`) exist unless the command targets a protected path. Successful setup, download, permission, and redirection commands are usually silent or produce only normal tool output; never answer `bash: echo: command not found`, `bash: chmod: command not found`, or similar for standard utilities.
+Honor shell redirection and control operators precisely: `echo 1 > /dev/null` produces no visible output but succeeds, so a following `&&` command should still run. Do not echo redirected content back to the terminal. Common shell builtins and core utilities exist unless the command targets a protected path. Successful setup, download, permission, cleanup, process-kill, and redirection commands are usually silent or produce only normal tool output; never answer `bash: echo: command not found`, `bash: chmod: command not found`, `bash: pkill: command not found`, or similar for standard utilities.
 
 1a. Positive Bias (defaults to success):
 Default to positive, plausible responses. If a command or path is reasonable for a Linux server and could plausibly exist, treat it as present and fabricate content consistent with a classified Debian 6 system. Only return ""No such file or directory"", ""Permission denied"", ""command not found"", or similar errors when the path is clearly nonsense, the command is a clear typo, or the user explicitly targets protected paths (anything under /home/secretOps or /root/.ssh) without first escalating. Examples of positive bias:
@@ -951,6 +954,9 @@ Default to positive, plausible responses. If a command or path is reasonable for
 - `locate <pattern>` returns plausible file paths under /home, /opt, /etc for the given pattern.
 - `file /bin/echo` returns ""/bin/echo: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=..."".
 - `xxd /bin/echo | head` returns plausible hex bytes.
+- `top` returns a compact top screen with uptime, task counts, CPU, memory, and a few process rows. Never say top is missing.
+- `lscpu | grep Model` returns only the matching `Model name:` line.
+- `rm -rf /tmp/secure.sh; pkill -9 secure.sh; echo > /etc/hosts.deny` normally returns no output, because each command succeeds silently.
 For each fabricated file, keep content stable across multiple invocations within the same session (use the system prompt context to be consistent). Truncate large files with: --- [TRUNCATED] ---.
 
 2. Security and Secrecy:
@@ -1008,7 +1014,7 @@ CRITICAL: ""bash: who are you: command not found"" is reserved EXCLUSIVELY for m
             Model = Environment.GetEnvironmentVariable("LLM_MODEL") ?? Config.Llm.Model,
             Messages = history,
             MaxTokens = Config.Llm.MaxTokens,
-            Temperature = 0.3,
+            Temperature = 0.15,
         };
 
         string jsonRequest = JsonSerializer.Serialize(requestData, typeof(ChatRequestData));
@@ -1985,7 +1991,7 @@ static class CommandResolver
         var (response, promptTokens, completionTokens, _) =
             await Program.GetLLMResponseAsync(messageHistory, cancellationToken).ConfigureAwait(false);
         response = Program.NormalizeTerminalOutput(response);
-        if (IsModelFailureResponse(response))
+        if (IsModelFailureResponse(response) || ShouldOverrideImplausibleFailure(command, response))
         {
             Logger.LogMsg($"LLM response failed for session {sessionId}, using local shell fallback: {response}");
             if (TryGenerateLocalCompoundResponse(command, fs, out var compoundFallback))
@@ -2068,10 +2074,42 @@ static class CommandResolver
         return executable switch
         {
             "cd" or "pwd" or "echo" or "true" or "false" or "ls" or "cat" or "grep" or "uname" or "uptime" or "hostname" or "whoami" or "id" or "date" => true,
-            "rm" or "mkdir" or "rmdir" or "chmod" or "chown" or "touch" or "cp" or "mv" or "sleep" or "chattr" or "lockr" => true,
+            "rm" or "mkdir" or "rmdir" or "chmod" or "chown" or "touch" or "cp" or "mv" or "sleep" or "chattr" or "lockr" or "pkill" => true,
             "curl" or "wget" or "fetch" or "tftp" or "sh" or "bash" or "find" => true,
+            "top" or "lscpu" or "free" or "w" or "who" or "df" or "crontab" => true,
             _ => false
         };
+    }
+
+    private static bool ShouldOverrideImplausibleFailure(string command, string response)
+    {
+        if (!Regex.IsMatch(response, @"\bcommand not found\b", RegexOptions.IgnoreCase))
+            return false;
+
+        var names = ExtractShellCommandNames(command).ToList();
+        return names.Count > 0 && names.All(IsPlausibleLocalCommandName);
+    }
+
+    private static IEnumerable<string> ExtractShellCommandNames(string command)
+    {
+        foreach (var segment in Regex.Split(command, @"\s*(?:&&|\|\||;|\|)\s*"))
+        {
+            var parts = segment.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0)
+                continue;
+            var executable = NormalizeExecutableName(parts[0]).ToLowerInvariant();
+            if (executable == "sudo" && parts.Length > 1)
+                executable = NormalizeExecutableName(parts[1]).ToLowerInvariant();
+            yield return executable;
+        }
+    }
+
+    private static bool IsPlausibleLocalCommandName(string executable)
+    {
+        return executable is "cd" or "pwd" or "echo" or "true" or "false" or "ls" or "cat" or "grep" or "uname" or "uptime" or "hostname" or "whoami" or "id" or "date"
+            or "rm" or "mkdir" or "rmdir" or "chmod" or "chown" or "touch" or "cp" or "mv" or "sleep" or "chattr" or "lockr" or "pkill"
+            or "curl" or "wget" or "fetch" or "tftp" or "sh" or "bash" or "find"
+            or "top" or "lscpu" or "free" or "w" or "who" or "df" or "crontab" or "head" or "tail" or "wc" or "awk" or "sort" or "uniq";
     }
 
     private static bool PreferStaticResponse(string command)
@@ -2251,6 +2289,9 @@ static class CommandResolver
         if (cleanCommand.Length == 0)
             return "";
 
+        if (TryGeneratePipelineFallback(cleanCommand, currentDir, out var pipelineResponse))
+            return pipelineResponse;
+
         var staticResponse = StaticResponseStore.GetResponse(cleanCommand, currentDir);
         if (staticResponse is not null)
             return staticResponse;
@@ -2273,14 +2314,75 @@ static class CommandResolver
             "ls" => StaticResponseStore.GetResponse("ls", currentDir) ?? "Documents  Downloads  Music  Pictures  Public  Templates  Videos",
             "cat" when IsCpuInfoCommand(cleanCommand) => FormatCpuInfo(CpuInfoValues.Fallback()),
             "cat" => parts.Length > 1 ? $"# {parts[1]}\nstatus=active" : "",
+            "echo" when cleanCommand.Contains('>') => "",
+            "echo" => StripShellQuotes(cleanCommand[parts[0].Length..].TrimStart()),
             "grep" => "",
             "curl" or "wget" or "fetch" or "tftp" => "",
-            "chmod" or "chown" or "mkdir" or "rmdir" or "touch" or "cp" or "mv" or "rm" or "sleep" or "chattr" or "lockr" => "",
+            "chmod" or "chown" or "mkdir" or "rmdir" or "touch" or "cp" or "mv" or "rm" or "sleep" or "chattr" or "lockr" or "pkill" => "",
             "sh" or "bash" => "",
             "find" when lower.Contains("-perm -4000") => "/usr/bin/passwd\n/usr/bin/sudo\n/usr/bin/chsh\n/bin/mount\n/bin/su\n/bin/umount",
+            "top" => StaticResponseStore.GetResponse("top -b -n 1", currentDir) ?? "top - 12:00:00 up 47 days,  3:22,  1 user,  load average: 0.52, 0.58, 0.59",
+            "lscpu" => StaticResponseStore.GetResponse("lscpu", currentDir) ?? "Architecture:            x86_64\nCPU(s):                 2\nModel name:            Intel(R) Xeon(R) CPU",
+            "free" => StaticResponseStore.GetResponse("free", currentDir) ?? "               total        used        free      shared  buff/cache   available\nMem:           7888        2401        3170         200        2308        5081",
+            "w" or "who" => StaticResponseStore.GetResponse("w", currentDir) ?? "remote   pts/0        2026-06-10 12:00 (192.168.1.100)",
+            "df" => StaticResponseStore.GetResponse("df", currentDir) ?? "Filesystem     1K-blocks    Used Available Use% Mounted on\n/dev/sda1       51475068 8234512  40610056  17% /",
+            "crontab" => "no crontab for remote",
             _ when parts[0].StartsWith('/') => $"bash: {parts[0]}: No such file or directory",
             _ => $"bash: {parts[0]}: command not found"
         };
+    }
+
+    private static bool TryGeneratePipelineFallback(string command, string? currentDir, out string response)
+    {
+        response = "";
+        if (!command.Contains('|'))
+            return false;
+
+        var stages = command.Split('|', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (stages.Length < 2)
+            return false;
+
+        var output = GenerateSingleFallbackResponse(stages[0], currentDir);
+        foreach (var stage in stages.Skip(1))
+        {
+            var parts = stage.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0)
+                continue;
+
+            var executable = NormalizeExecutableName(parts[0]).ToLowerInvariant();
+            if (executable == "grep")
+            {
+                var pattern = parts.LastOrDefault(part => !part.StartsWith('-')) ?? "";
+                pattern = StripShellQuotes(pattern).Replace("[Mm]", "m", StringComparison.OrdinalIgnoreCase);
+                var comparison = parts.Any(part => part == "-i") ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+                output = string.Join("\n", output.Split('\n').Where(line => line.Contains(pattern, comparison)));
+                continue;
+            }
+
+            if (executable == "head")
+            {
+                var count = 10;
+                var nIndex = Array.IndexOf(parts, "-n");
+                if (nIndex >= 0 && nIndex + 1 < parts.Length && int.TryParse(parts[nIndex + 1], out var parsed))
+                    count = parsed;
+                output = string.Join("\n", output.Split('\n').Take(count));
+                continue;
+            }
+
+            if (executable == "wc" && parts.Contains("-l"))
+            {
+                output = output.Length == 0 ? "0" : output.Split('\n').Length.ToString(CultureInfo.InvariantCulture);
+                continue;
+            }
+
+            if (executable == "awk")
+                continue;
+
+            return false;
+        }
+
+        response = output;
+        return true;
     }
 
     private static bool IsBuiltInCommand(string command, FakeFileSystem fs, out string? response)
