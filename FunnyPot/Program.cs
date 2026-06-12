@@ -192,10 +192,16 @@ class Program
         return Environment.GetEnvironmentVariable(name);
     }
 
-    static void Main()
+    static int Main(string[] args)
     {
         LoadDotEnvFiles();
         LoadRuntimeSettings();
+
+        if (args.Length > 0 && args[0].Equals("--autoresearch", StringComparison.OrdinalIgnoreCase))
+        {
+            var config = args.Length > 1 ? AppConfiguration.Load(args[1]) : Config;
+            return new AutoResearchRunner(config.AutoResearch).RunAsync().GetAwaiter().GetResult();
+        }
 
         Logger.LogMsg("Application starting...");
         Logger.LogMsg($"Machine: {Environment.MachineName}, OS: {Environment.OSVersion}");
@@ -244,6 +250,7 @@ class Program
         };
 
         Thread.Sleep(Timeout.Infinite);
+        return 0;
     }
 
     static void LoadDotEnvFiles()
@@ -1963,6 +1970,12 @@ static class CommandResolver
             return (cpuInfo, usedFallback, false, cpuInfoPromptTokens, cpuInfoCompletionTokens);
         }
 
+        if (isCompoundCommand && TryGenerateLocalCompoundResponse(command, fs, out var deterministicCompoundResponse))
+            return (deterministicCompoundResponse, true, false, 0, 0);
+
+        if (!isCompoundCommand && IsFindSuidDiscoveryCommand(command))
+            return (GenerateLocalFallbackResponse(command, fs.CurrentDirectory), true, false, 0, 0);
+
         if (isCompoundCommand)
             ApplyLocalShellStateChanges(command, fs);
 
@@ -2079,6 +2092,13 @@ static class CommandResolver
             "top" or "lscpu" or "free" or "w" or "who" or "df" or "crontab" => true,
             _ => false
         };
+    }
+
+    private static bool IsFindSuidDiscoveryCommand(string command)
+    {
+        var normalized = Regex.Replace(command.Trim().ToLowerInvariant(), @"\s+", " ");
+        return normalized.StartsWith("find ", StringComparison.Ordinal)
+            && normalized.Contains("-perm -4000", StringComparison.Ordinal);
     }
 
     private static bool ShouldOverrideImplausibleFailure(string command, string response)

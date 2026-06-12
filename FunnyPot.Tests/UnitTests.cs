@@ -1021,6 +1021,67 @@ public class AppConfigurationTests
         Assert.Equal("/var/log/funnypot", config.Logging.LogDir);
         Assert.Equal(3, config.Ssh.PasswordHarvestAttempt);
         Assert.Equal("/chat/completions", config.Api.OpenRouter.ChatEndpoint);
+        Assert.Equal("autoresearch/program.md", config.AutoResearch.ProgramPath);
+        Assert.Equal("dotnet test FunnyPot.sln", config.AutoResearch.ExperimentCommand);
+        Assert.Contains("FunnyPot/Program.cs", config.AutoResearch.MutablePaths);
+    }
+
+    [Fact]
+    public void Load_DefaultPathFallsBackToWorkingDirectoryConfig()
+    {
+        var previousDirectory = Directory.GetCurrentDirectory();
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var configDir = Path.Combine(tempDir, "config");
+        Directory.CreateDirectory(configDir);
+        File.WriteAllText(Path.Combine(configDir, "app-config.yaml"), "auto-research:\n  agent-command: \"opencode run test\"\n");
+
+        try
+        {
+            Directory.SetCurrentDirectory(tempDir);
+            var config = AppConfiguration.Load();
+
+            Assert.Equal("opencode run test", config.AutoResearch.AgentCommand);
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(previousDirectory);
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+}
+
+public class AutoResearchRunnerTests
+{
+    [Theory]
+    [InlineData("autoresearch_metric=42", 42)]
+    [InlineData("before\nautoresearch_metric = -1.25\nafter", -1.25)]
+    public void TryParseMetric_ReadsNamedValueGroup(string output, double expected)
+    {
+        var parsed = AutoResearchRunner.TryParseMetric(output, @"autoresearch_metric\s*=\s*(?<value>-?\d+(?:\.\d+)?)", out var metric);
+
+        Assert.True(parsed);
+        Assert.Equal(expected, metric);
+    }
+
+    [Theory]
+    [InlineData(2.0, null, false, true)]
+    [InlineData(2.0, 1.0, false, true)]
+    [InlineData(1.0, 2.0, false, false)]
+    [InlineData(1.0, 2.0, true, true)]
+    [InlineData(2.0, 1.0, true, false)]
+    public void IsImprovement_RespectsMetricDirection(double candidate, double? best, bool lowerIsBetter, bool expected)
+    {
+        Assert.Equal(expected, AutoResearchRunner.IsImprovement(candidate, best, lowerIsBetter));
+    }
+
+    [Fact]
+    public void ValidateMutablePaths_AllowsOnlyPathsInsideWorktree()
+    {
+        var worktree = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+
+        AutoResearchRunner.ValidateMutablePaths(worktree, new[] { "FunnyPot/Program.cs", "autoresearch/program.md" });
+
+        Assert.Throws<InvalidOperationException>(() => AutoResearchRunner.ValidateMutablePaths(worktree, new[] { "../outside.cs" }));
     }
 }
 

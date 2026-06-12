@@ -54,3 +54,20 @@ git:
 # Static Response Files
 static-responses:
   data-path: "data/ssh_responses.jsonl"
+
+auto-research:
+  program-path: "autoresearch/program.md"
+  worktree-path: "."
+  mutable-paths:
+    - "FunnyPot/Program.cs"
+    - "FunnyPot/FakeFileSystem.cs"
+    - "FunnyPot/data/ssh_responses.jsonl"
+  agent-command: "opencode run --agent build --model openai/gpt-5.5-fast --dangerously-skip-permissions 'Read autoresearch/program.md and make one small FunnyPot improvement within the configured mutable paths only. Preserve tests. Do not commit changes. Make one narrow change, then stop.'"
+  setup-command: "dotnet restore FunnyPot.sln"
+  experiment-command: "dotnet test FunnyPot.sln"
+  metric-regex: "autoresearch_metric\\s*=\\s*(?<value>-?\\d+(?:\\.\\d+)?)"
+  lower-is-better: false
+  iterations: 1
+  time-budget-seconds: 300
+  state-path: "autoresearch/state.json"
+  allow-git-mutations: false

@@ -14,6 +14,7 @@ namespace FunnyPot
         public ApiConfig Api { get; set; } = new();
         public GitConfig Git { get; set; } = new();
         public StaticResponsesConfig StaticResponses { get; set; } = new();
+        public AutoResearchConfig AutoResearch { get; set; } = new();
 
         public static AppConfiguration Load(string? configPath = null)
         {
@@ -22,6 +23,12 @@ namespace FunnyPot
                 // Default to config/app-config.yaml relative to app directory
                 var appDir = AppDomain.CurrentDomain.BaseDirectory;
                 configPath = Path.Combine(appDir, "config", "app-config.yaml");
+                if (!File.Exists(configPath))
+                {
+                    var workingDirectoryConfig = Path.Combine(Directory.GetCurrentDirectory(), "config", "app-config.yaml");
+                    if (File.Exists(workingDirectoryConfig))
+                        configPath = workingDirectoryConfig;
+                }
             }
 
             if (!File.Exists(configPath))
@@ -106,5 +113,21 @@ namespace FunnyPot
     public class StaticResponsesConfig
     {
         public string DataPath { get; set; } = "data/ssh_responses.jsonl";
+    }
+
+    public class AutoResearchConfig
+    {
+        public string ProgramPath { get; set; } = "autoresearch/program.md";
+        public string WorktreePath { get; set; } = ".";
+        public List<string> MutablePaths { get; set; } = new() { "FunnyPot/Program.cs", "FunnyPot/FakeFileSystem.cs", "FunnyPot/data/ssh_responses.jsonl" };
+        public string AgentCommand { get; set; } = "";
+        public string SetupCommand { get; set; } = "dotnet restore FunnyPot.sln";
+        public string ExperimentCommand { get; set; } = "dotnet test FunnyPot.sln";
+        public string MetricRegex { get; set; } = @"autoresearch_metric\s*=\s*(?<value>-?\d+(?:\.\d+)?)";
+        public bool LowerIsBetter { get; set; } = false;
+        public int Iterations { get; set; } = 1;
+        public int TimeBudgetSeconds { get; set; } = 300;
+        public string StatePath { get; set; } = "autoresearch/state.json";
+        public bool AllowGitMutations { get; set; } = false;
     }
 }
