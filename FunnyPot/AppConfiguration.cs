@@ -74,6 +74,7 @@ namespace FunnyPot
         public int RateLimitMaxPerWindow { get; set; } = 20;
         public int RateLimitWindowSeconds { get; set; } = 60;
         public string Model { get; set; } = "google/gemma-4-31b-it:free";
+        public List<string> FallbackModels { get; set; } = new() { "openrouter/free", "deepseek/deepseek-r1-distill:free", "openai/gpt-oss-20b:free" };
         public int MaxTokens { get; set; } = 2000;
         public int TimeoutSeconds { get; set; } = 30;
     }

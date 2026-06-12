@@ -1016,9 +1016,45 @@ CRITICAL: ""bash: who are you: command not found"" is reserved EXCLUSIVELY for m
         if (string.IsNullOrWhiteSpace(apiKey))
             return ("[api error] OpenRouter API key not configured", 0, 0, 0);
 
+        var models = GetLlmAttemptModels();
+        for (var attempt = 0; attempt < models.Count; attempt++)
+        {
+            var result = await TryGetOpenRouterResponseAsync(apiUrl, apiKey, models[attempt], history, cancellationToken).ConfigureAwait(false);
+            if (!IsApiOrNetworkError(result.response) || attempt == models.Count - 1 || cancellationToken.IsCancellationRequested)
+                return result;
+
+            Logger.LogMsg($"OpenRouter model {models[attempt]} failed; retrying once with {models[attempt + 1]}.");
+        }
+
+        return ("[api error] No OpenRouter models configured", 0, 0, 0);
+    }
+
+    internal static List<string> GetLlmAttemptModels()
+    {
+        var primary = Environment.GetEnvironmentVariable("LLM_MODEL") ?? Config.Llm.Model;
+        var fallbackSource = Environment.GetEnvironmentVariable("LLM_FALLBACK_MODELS");
+        var fallbackModels = string.IsNullOrWhiteSpace(fallbackSource)
+            ? Config.Llm.FallbackModels
+            : fallbackSource.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+
+        return new[] { primary }
+            .Concat(fallbackModels)
+            .Where(model => !string.IsNullOrWhiteSpace(model))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(2)
+            .ToList();
+    }
+
+    static async Task<(string response, int promptTokens, int completionTokens, int totalTokens)> TryGetOpenRouterResponseAsync(
+        string apiUrl,
+        string apiKey,
+        string model,
+        List<ChatRequestData.ChatMessage> history,
+        CancellationToken cancellationToken)
+    {
         var requestData = new ChatRequestData
         {
-            Model = Environment.GetEnvironmentVariable("LLM_MODEL") ?? Config.Llm.Model,
+            Model = model,
             Messages = history,
             MaxTokens = Config.Llm.MaxTokens,
             Temperature = 0.15,
@@ -1058,6 +1094,12 @@ CRITICAL: ""bash: who are you: command not found"" is reserved EXCLUSIVELY for m
         {
             return ($"[network error] {ex.Message}", 0, 0, 0);
         }
+    }
+
+    static bool IsApiOrNetworkError(string response)
+    {
+        return response.StartsWith("[api error]", StringComparison.OrdinalIgnoreCase)
+            || response.StartsWith("[network error]", StringComparison.OrdinalIgnoreCase);
     }
 
     static bool LooksLikeContextLengthError(HttpStatusCode statusCode, string errorText)
