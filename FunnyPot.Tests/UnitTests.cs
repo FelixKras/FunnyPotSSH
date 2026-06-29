@@ -542,8 +542,12 @@ public class CommandResolverTests
         var prompt = Program.BuildCommandUserPrompt("cat /proc/cpuinfo | grep name | wc -l");
 
         Assert.Contains("Execute this exact Bash command", prompt);
+        Assert.Contains("command_kind: chained", prompt);
+        Assert.Contains("Notice that this input contains chained commands/operators", prompt);
+        Assert.Contains("Preserve their left-to-right order", prompt);
         Assert.Contains("return only the terminal output", prompt);
         Assert.Contains("no parser trace", prompt);
+        Assert.Contains("raw terminal stdout/stderr only", prompt);
         Assert.Contains("cat /proc/cpuinfo | grep name | wc -l", prompt);
     }
 
@@ -787,81 +791,15 @@ public class CommandResolverTests
     }
 
     [Theory]
-    [InlineData("cat /etc/passwd && uname -a", "root:x:0:0:root:/root:/bin/bash", "Linux omegablack")]
-    [InlineData("ls /var/log; cat /etc/passwd", "auth.log", "secretOps:x:1002")]
-    [InlineData("find / -perm -4000 -type f 2>/dev/null", "/usr/bin/passwd", "/bin/su")]
-    [InlineData("ps -ef | grep '[Mm]iner'", "kinsing", "grep [Mm]iner")]
-    public async Task ResolveCommand_PreParsesDeterministicCompoundCommands(string command, string expectedFirst, string expectedSecond)
-    {
-        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-        var history = new List<ChatRequestData.ChatMessage>
-        {
-            new() { Role = "user", Content = command }
-        };
-
-        var (response, usedStatic, rateLimited, promptTokens, completionTokens) = await CommandResolver.ResolveCommandAsync(
-            command,
-            Guid.NewGuid().ToString("N"),
-            Guid.NewGuid().ToString("N"),
-            fs,
-            history,
-            CancellationToken.None);
-
-        Assert.Contains(expectedFirst, response);
-        Assert.Contains(expectedSecond, response);
-        Assert.True(usedStatic);
-        Assert.False(rateLimited);
-        Assert.Equal(0, promptTokens);
-        Assert.Equal(0, completionTokens);
-    }
-
-    [Fact]
-    public async Task ResolveCommand_PreParsedShellOperatorsHonorConditionalExecution()
-    {
-        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-        var command = "false && uname -a || pwd";
-        var history = new List<ChatRequestData.ChatMessage>
-        {
-            new() { Role = "user", Content = command }
-        };
-
-        var (response, usedStatic, _, _, _) = await CommandResolver.ResolveCommandAsync(
-            command,
-            Guid.NewGuid().ToString("N"),
-            Guid.NewGuid().ToString("N"),
-            fs,
-            history,
-            CancellationToken.None);
-
-        Assert.Equal("/home/remote", response);
-        Assert.True(usedStatic);
-    }
-
-    [Theory]
     [InlineData("cd ~; chattr -ia .ssh; lockr -ia .ssh")]
     [InlineData("cd ~ && rm -rf .ssh && mkdir .ssh && echo \"ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEArDp4cun2 attacker\">>.ssh/authorized_keys && chmod -R go= ~/.ssh && cd ~")]
-    public async Task ResolveCommand_PersistenceSetupChainsReturnQuietSuccess(string command)
+    public void ClassifyCommand_PersistenceSetupChainsRouteToLlm(string command)
     {
         var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-        var history = new List<ChatRequestData.ChatMessage>
-        {
-            new() { Role = "user", Content = command }
-        };
 
-        var (response, usedStatic, rateLimited, promptTokens, completionTokens) = await CommandResolver.ResolveCommandAsync(
-            command,
-            Guid.NewGuid().ToString("N"),
-            Guid.NewGuid().ToString("N"),
-            fs,
-            history,
-            CancellationToken.None);
+        var path = CommandResolver.ClassifyCommand(command, fs);
 
-        Assert.Equal("", response);
-        Assert.True(usedStatic);
-        Assert.False(rateLimited);
-        Assert.Equal(0, promptTokens);
-        Assert.Equal(0, completionTokens);
-        Assert.Equal("/home/remote", fs.CurrentDirectory);
+        Assert.Equal(CommandResolver.CommandResolutionPath.Llm, path);
     }
 
     [Fact]

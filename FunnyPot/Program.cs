@@ -992,7 +992,17 @@ CRITICAL: ""bash: who are you: command not found"" is reserved EXCLUSIVELY for m
 
     internal static string BuildCommandUserPrompt(string command)
     {
+        var isChained = CommandResolver.IsCompoundShellCommand(command);
+        var chainInstruction = isChained
+            ? "Notice that this input contains chained commands/operators. Preserve their left-to-right order and Bash semantics: pipes pass stdout to the next command; && runs the next command only after success; || runs the next command only after failure; ; runs the next command afterward. Return only the final visible terminal output from executing the whole command line."
+            : "This input is a single Bash command. Return only its visible terminal output.";
+
         return $@"Execute this exact Bash command on Omega-Black and return only the terminal output, with no prompt, no explanation, no markdown, and no parser trace.
+
+Structured input:
+- command_kind: {(isChained ? "chained" : "single")}
+- execution_note: {chainInstruction}
+- output_contract: raw terminal stdout/stderr only; no JSON, no XML, no markdown, no labels.
 
 Command:
 {command}";
@@ -2031,9 +2041,6 @@ static class CommandResolver
             return (cpuInfo, usedFallback, false, cpuInfoPromptTokens, cpuInfoCompletionTokens);
         }
 
-        if (isCompoundCommand && TryGenerateLocalCompoundResponse(command, fs, out var deterministicCompoundResponse))
-            return (deterministicCompoundResponse, true, false, 0, 0);
-
         if (!isCompoundCommand && IsFindSuidDiscoveryCommand(command))
             return (GenerateLocalFallbackResponse(command, fs.CurrentDirectory), true, false, 0, 0);
 
@@ -2067,47 +2074,10 @@ static class CommandResolver
         response = Program.NormalizeTerminalOutput(response);
         if (IsModelFailureResponse(response) || ShouldOverrideImplausibleFailure(command, response))
         {
-            Logger.LogMsg($"LLM response failed for session {sessionId}, using local shell fallback: {response}");
-            if (TryGenerateLocalCompoundResponse(command, fs, out var compoundFallback))
-                return (compoundFallback, true, false, 0, 0);
-            return (GenerateLocalFallbackResponse(command, fs.CurrentDirectory), true, false, 0, 0);
+            Logger.LogMsg($"LLM response failed for session {sessionId}; returning model error without local fallback: {response}");
         }
 
         return (response, false, false, promptTokens, completionTokens);
-    }
-
-    private static bool TryGenerateLocalCompoundResponse(string command, FakeFileSystem fs, out string response)
-    {
-        response = "";
-        if (!IsCompoundShellCommand(command))
-            return false;
-
-        var segments = SplitShellControlSegments(command);
-        if (segments.Count == 0)
-            return false;
-
-        foreach (var segment in segments)
-        {
-            if (!CanExecuteLocalShellSegment(segment.Command))
-                return false;
-        }
-
-        var outputs = new List<string>();
-        var previousSucceeded = true;
-        foreach (var segment in segments)
-        {
-            if (segment.OperatorBefore == "&&" && !previousSucceeded)
-                continue;
-            if (segment.OperatorBefore == "||" && previousSucceeded)
-                continue;
-
-            var segmentResponse = ExecuteLocalShellSegment(segment.Command, fs, out previousSucceeded);
-            if (!string.IsNullOrEmpty(segmentResponse))
-                outputs.Add(segmentResponse);
-        }
-
-        response = string.Join("\n", outputs);
-        return true;
     }
 
     private static void ApplyLocalShellStateChanges(string command, FakeFileSystem fs)
@@ -2130,29 +2100,6 @@ static class CommandResolver
             else
                 TryApplyLocalFilesystemMutation(segment.Command, fs);
         }
-    }
-
-    private static bool CanExecuteLocalShellSegment(string command)
-    {
-        var parts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length == 0)
-            return true;
-
-        var executable = NormalizeExecutableName(parts[0]).ToLowerInvariant();
-        var lower = command.ToLowerInvariant();
-        if (lower == "cat /etc/passwd | grep root" || lower == "grep root /etc/passwd")
-            return true;
-        if (lower == "ps -ef | grep '[mm]iner'" || lower == "ps aux | grep '[mm]iner'")
-            return true;
-
-        return executable switch
-        {
-            "cd" or "pwd" or "echo" or "true" or "false" or "ls" or "cat" or "grep" or "uname" or "uptime" or "hostname" or "whoami" or "id" or "date" => true,
-            "rm" or "mkdir" or "rmdir" or "chmod" or "chown" or "touch" or "cp" or "mv" or "sleep" or "chattr" or "lockr" or "pkill" => true,
-            "curl" or "wget" or "fetch" or "tftp" or "sh" or "bash" or "find" => true,
-            "top" or "lscpu" or "free" or "w" or "who" or "df" or "crontab" => true,
-            _ => false
-        };
     }
 
     private static bool IsFindSuidDiscoveryCommand(string command)
@@ -2202,45 +2149,6 @@ static class CommandResolver
         var executable = NormalizeExecutableName(parts[0]).ToLowerInvariant();
         return executable is "cat" or "ps" or "ifconfig"
             || (executable == "ls" && parts.Length > 1);
-    }
-
-    private static string ExecuteLocalShellSegment(string command, FakeFileSystem fs, out bool succeeded)
-    {
-        succeeded = true;
-        var parts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length == 0)
-            return "";
-
-        var lower = command.ToLowerInvariant();
-        if (lower == "ps -ef | grep '[mm]iner'" || lower == "ps aux | grep '[mm]iner'")
-            return "root      1847     1  0 02:17 ?        00:03:41 /usr/local/bin/kinsing --config /tmp/.x/kinsing.conf\nremote    2194  2178  0 02:21 pts/0    00:00:00 grep [Mm]iner";
-
-        var executable = NormalizeExecutableName(parts[0]).ToLowerInvariant();
-        if (executable == "cd")
-        {
-            fs.ChangeDirectory(parts.Length > 1 ? ExpandHomePath(parts[1]) : "/home/remote");
-            return "";
-        }
-
-        if (TryApplyLocalFilesystemMutation(command, fs))
-            return "";
-
-        if (executable == "false")
-        {
-            succeeded = false;
-            return "";
-        }
-
-        if (IsBuiltInCommand(command, fs, out var builtinResponse))
-            return builtinResponse ?? "";
-
-        var localResponse = GenerateSingleFallbackResponse(command, fs.CurrentDirectory);
-        if (DataHarvester.IsFailureResponse(localResponse))
-        {
-            succeeded = false;
-        }
-
-        return localResponse;
     }
 
     private static string ExpandHomePath(string path)
