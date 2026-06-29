@@ -893,6 +893,9 @@ class Program
 
             channel.CloseReceived += (_, _) =>
             {
+                if (isExecCommand && scpUploadSession is null)
+                    return;
+
                 Interlocked.Exchange(ref shellClosed, 1);
                 FinalizeShell("CloseReceived");
                 AwaitGitPushAndDispose();

@@ -1,7 +1,7 @@
 # Graph Report - FunnyPot  (2026-06-29)
 
 ## Corpus Check
-- 55 files · ~83,526 words
+- 55 files · ~83,577 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4daa4a1b`
+- Built from commit: `7bdab321`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -405,8 +405,8 @@
 - [[_COMMUNITY_Community 404|Community 404]]
 - [[_COMMUNITY_Community 405|Community 405]]
 - [[_COMMUNITY_Community 406|Community 406]]
+- [[_COMMUNITY_Community 407|Community 407]]
 - [[_COMMUNITY_Community 408|Community 408]]
-- [[_COMMUNITY_Community 410|Community 410]]
 - [[_COMMUNITY_Community 411|Community 411]]
 
 ## God Nodes (most connected - your core abstractions)
@@ -487,7 +487,7 @@ Nodes (29): Microsoft.NETCore.Platforms, Microsoft.NETCore.Targets, System.Runti
 
 ### Community 29 - "Community 29"
 Cohesion: 0.11
-Nodes (18): include, suppressParent, target, version, coverlet.collector, DotNetEnv, FxSsh, Microsoft.NET.Test.Sdk (+10 more)
+Nodes (18): include, suppressParent, target, version, coverlet.collector, DotNetEnv, LibGit2Sharp, Microsoft.NET.Test.Sdk (+10 more)
 
 ### Community 30 - "Community 30"
 Cohesion: 0.07
@@ -567,7 +567,7 @@ Nodes (12): ApiConfig, AppConfiguration, AutoResearchConfig, DataHarvesterConfig
 
 ### Community 50 - "Community 50"
 Cohesion: 0.15
-Nodes (13): locale, locale, locale, locale, locale, locale, resources, lib/netcoreapp3.1/cs/Microsoft.TestPlatform.CoreUtilities.resources.dll (+5 more)
+Nodes (13): locale, locale, locale, locale, locale, locale, resources, lib/netcoreapp3.1/cs/Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll (+5 more)
 
 ### Community 51 - "Community 51"
 Cohesion: 0.15
@@ -638,8 +638,8 @@ Cohesion: 0.25
 Nodes (8): DotNetEnv, FxSsh, LibGit2Sharp, YamlDotNet, dependencies, runtime, FunnyPot/1.0.0, FunnyPot.dll
 
 ### Community 70 - "Community 70"
-Cohesion: 0.67
-Nodes (3): System.ComponentModel.dll, assemblyVersion, fileVersion
+Cohesion: 0.09
+Nodes (23): System.ComponentModel.dll, System.Data.dll, System.Net.NameResolution.dll, System.Private.DataContractSerialization.dll, System.Runtime.Extensions.dll, System.Text.Encoding.CodePages.dll, System.Threading.ThreadPool.dll, System.Xml.XPath.dll (+15 more)
 
 ### Community 71 - "Community 71"
 Cohesion: 0.25
@@ -663,7 +663,7 @@ Nodes (5): compilationOptions, runtimeTarget, name, signature, targets
 
 ### Community 77 - "Community 77"
 Cohesion: 0.67
-Nodes (3): System.Data.dll, assemblyVersion, fileVersion
+Nodes (3): System.ComponentModel.EventBasedAsync.dll, assemblyVersion, fileVersion
 
 ### Community 78 - "Community 78"
 Cohesion: 0.18
@@ -762,8 +762,8 @@ Cohesion: 0.40
 Nodes (4): format, projects, restore, /home/felix/FunnyPot/FunnyPot/FunnyPot.csproj
 
 ### Community 103 - "Community 103"
-Cohesion: 0.09
-Nodes (23): System.ComponentModel.EventBasedAsync.dll, System.Diagnostics.Contracts.dll, System.Net.Security.dll, System.Reflection.Emit.ILGeneration.dll, System.Runtime.InteropServices.JavaScript.dll, System.Text.Encoding.Extensions.dll, System.Transactions.Local.dll, System.Xml.XPath.dll (+15 more)
+Cohesion: 0.67
+Nodes (3): System.Diagnostics.Contracts.dll, assemblyVersion, fileVersion
 
 ### Community 104 - "Community 104"
 Cohesion: 0.67
@@ -1083,11 +1083,11 @@ Nodes (3): System.Net.HttpListener.dll, assemblyVersion, fileVersion
 
 ### Community 185 - "Community 185"
 Cohesion: 0.67
-Nodes (3): System.Runtime.Extensions.dll, assemblyVersion, fileVersion
+Nodes (3): System.Net.Security.dll, assemblyVersion, fileVersion
 
 ### Community 186 - "Community 186"
 Cohesion: 0.67
-Nodes (3): System.Private.DataContractSerialization.dll, assemblyVersion, fileVersion
+Nodes (3): System.Reflection.Emit.ILGeneration.dll, assemblyVersion, fileVersion
 
 ### Community 188 - "Community 188"
 Cohesion: 0.67
@@ -1123,7 +1123,7 @@ Nodes (10): build/netstandard1.0/coverlet.collector.targets, build, type, coverl
 
 ### Community 196 - "Community 196"
 Cohesion: 0.67
-Nodes (3): System.Text.Encoding.CodePages.dll, assemblyVersion, fileVersion
+Nodes (3): System.Runtime.InteropServices.JavaScript.dll, assemblyVersion, fileVersion
 
 ### Community 197 - "Community 197"
 Cohesion: 0.67
@@ -1207,7 +1207,7 @@ Nodes (3): System.Reflection.dll, assemblyVersion, fileVersion
 
 ### Community 219 - "Community 219"
 Cohesion: 0.67
-Nodes (3): System.Threading.ThreadPool.dll, assemblyVersion, fileVersion
+Nodes (3): System.Text.Encoding.Extensions.dll, assemblyVersion, fileVersion
 
 ### Community 220 - "Community 220"
 Cohesion: 0.40
@@ -1359,7 +1359,7 @@ Nodes (3): System.Threading.Tasks.Extensions.dll, assemblyVersion, fileVersion
 
 ### Community 260 - "Community 260"
 Cohesion: 0.67
-Nodes (3): System.Net.NameResolution.dll, assemblyVersion, fileVersion
+Nodes (3): System.Transactions.Local.dll, assemblyVersion, fileVersion
 
 ### Community 261 - "Community 261"
 Cohesion: 0.67
@@ -1475,7 +1475,7 @@ Nodes (3): System.Runtime.dll, assemblyVersion, fileVersion
 
 ### Community 332 - "Community 332"
 Cohesion: 0.67
-Nodes (3): LibGit2Sharp, target, version
+Nodes (3): FxSsh, target, version
 
 ### Community 340 - "Community 340"
 Cohesion: 0.67
