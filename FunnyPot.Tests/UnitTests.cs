@@ -529,7 +529,22 @@ public class CommandResolverTests
         Assert.Contains("`locate <pattern>`", prompt);
         Assert.Contains("`top` returns a compact top screen", prompt);
         Assert.Contains("`lscpu | grep Model` returns only the matching", prompt);
+        Assert.Contains("cat /proc/cpuinfo | grep name | wc -l", prompt);
+        Assert.Contains("returns only a small integer", prompt);
+        Assert.Contains("Do not output parser traces", prompt);
+        Assert.Contains("Generated maintenance artifact", prompt);
         Assert.Contains("pkill -9 secure.sh", prompt);
+    }
+
+    [Fact]
+    public void BuildCommandUserPrompt_TreatsCommandAsLiteralBashInput()
+    {
+        var prompt = Program.BuildCommandUserPrompt("cat /proc/cpuinfo | grep name | wc -l");
+
+        Assert.Contains("Execute this exact Bash command", prompt);
+        Assert.Contains("return only the terminal output", prompt);
+        Assert.Contains("no parser trace", prompt);
+        Assert.Contains("cat /proc/cpuinfo | grep name | wc -l", prompt);
     }
 
     [Fact]
