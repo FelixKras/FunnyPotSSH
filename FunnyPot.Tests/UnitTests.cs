@@ -1017,7 +1017,7 @@ public class AppConfigurationTests
 
         var config = AppConfiguration.Load(path);
 
-        Assert.Equal("google/gemma-4-31b-it:free", config.Llm.Model);
+        Assert.Equal("deepseek/deepseek-v4-pro", config.Llm.Model);
         Assert.Contains("openrouter/free", config.Llm.FallbackModels);
         Assert.Equal("/var/log/funnypot", config.Logging.LogDir);
         Assert.Equal(3, config.Ssh.PasswordHarvestAttempt);

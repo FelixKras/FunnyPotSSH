@@ -618,7 +618,7 @@ class Program
                     || command.Equals("logout", StringComparison.OrdinalIgnoreCase);
             }
 
-            void LogCommandResult(string line, string response, long responseDurationMs, bool failedCommand)
+            void LogCommandResult(string line, string response, string exchangeId, int messageNumber, long responseDurationMs, bool failedCommand)
             {
                 var hallucinationFeedback = false;
                 try
@@ -637,6 +637,9 @@ class Program
                     ShellSessionId = sessionId,
                     RemoteEndpoint = remoteEndpoint,
                     Username = username,
+                    ExchangeId = exchangeId,
+                    ExchangeRole = "output",
+                    MessageNumber = messageNumber,
                     Command = line,
                     Response = response,
                     FailedCommand = failedCommand,
@@ -692,6 +695,7 @@ class Program
                 long? commandSequenceLatencyMs = LastCommandEndedAt.TryGetValue(sessionId, out var previousEndedAt)
                     ? (long)(commandStartedAt - previousEndedAt).TotalMilliseconds
                     : null;
+                var exchangeId = $"{sessionId}:{commandCount:D6}";
 
                 Logger.LogYaml("command", new CommandLogEntry
                 {
@@ -700,6 +704,8 @@ class Program
                     ShellSessionId = sessionId,
                     RemoteEndpoint = remoteEndpoint,
                     Username = username,
+                    ExchangeId = exchangeId,
+                    ExchangeRole = "input",
                     Command = line,
                     MessageNumber = commandCount,
                     CommandSequenceLatencyMs = commandSequenceLatencyMs,
@@ -734,7 +740,7 @@ class Program
                         var blockedFailedCommand = true;
                         shellAnalytics.RecordResult(blockedFailedCommand);
                         LastCommandEndedAt[sessionId] = DateTime.UtcNow;
-                        LogCommandResult(line, blockedResponse, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, blockedFailedCommand);
+                        LogCommandResult(line, blockedResponse, exchangeId, commandCount, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, blockedFailedCommand);
                         commandResultLogged = true;
                         CloseShell("BlockedCommand");
                         return;
@@ -805,7 +811,7 @@ class Program
                     });
 
                     processingStage = "logging command result";
-                    LogCommandResult(line, response, stopwatch.ElapsedMilliseconds, failedCommand);
+                    LogCommandResult(line, response, exchangeId, commandCount, stopwatch.ElapsedMilliseconds, failedCommand);
                     commandResultLogged = true;
 
                     processingStage = "sending command response";
@@ -824,7 +830,7 @@ class Program
                         var failureResponse = $"FunnyPot internal command handling error during {processingStage}: {ex.Message}";
                         shellAnalytics.RecordResult(true);
                         LastCommandEndedAt[sessionId] = DateTime.UtcNow;
-                        LogCommandResult(line, failureResponse, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, true);
+                        LogCommandResult(line, failureResponse, exchangeId, commandCount, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, true);
                         TrySendData(Encoding.UTF8.GetBytes("bash: command handling failed\r\n"));
                     }
 
@@ -1204,6 +1210,8 @@ public class CommandLogEntry
     public string ShellSessionId { get; set; } = "";
     public string RemoteEndpoint { get; set; } = "";
     public string Username { get; set; } = "";
+    public string ExchangeId { get; set; } = "";
+    public string ExchangeRole { get; set; } = "input";
     public string Command { get; set; } = "";
     public long? CommandSequenceLatencyMs { get; set; }
     public string ActorAutomationHint { get; set; } = "unknown";
@@ -1226,6 +1234,9 @@ public class CommandResultLogEntry
     public string ShellSessionId { get; set; } = "";
     public string RemoteEndpoint { get; set; } = "";
     public string Username { get; set; } = "";
+    public string ExchangeId { get; set; } = "";
+    public string ExchangeRole { get; set; } = "output";
+    public int MessageNumber { get; set; }
     public string Command { get; set; } = "";
     public string Response { get; set; } = "";
     public bool FailedCommand { get; set; }
@@ -3881,14 +3892,22 @@ static class Logger
                 string dataDir = Path.Combine(repoPath, "data");
                 string dataBranch = Environment.GetEnvironmentVariable("GITHUB_DATA_BRANCH") ?? "data";
 
-                using (var syncRepo = new Repository(repoPath))
+                var publicationSnapshot = SnapshotPublicationFiles(repoPath);
+                try
                 {
-                    if (syncRepo.Head.Tip is null || syncRepo.Head.FriendlyName != dataBranch)
+                    using (var syncRepo = new Repository(repoPath))
                         SyncPublicationBranch(syncRepo, dataBranch);
+
+                    RestorePublicationSnapshot(repoPath, publicationSnapshot);
+                }
+                finally
+                {
+                    CleanupPublicationSnapshot(publicationSnapshot);
                 }
 
                 using var repo = new Repository(repoPath);
                 RemoveLegacyTelemetryFiles(repoPath);
+                EnsureValidPublicationJson(repoPath, sessionId);
 
                 if (File.Exists(statsFile))
                     Commands.Stage(repo, "global_stats.json");
@@ -3905,7 +3924,7 @@ static class Logger
                 repo.Commit($"Add session data for {sessionId}", author, author);
 
                 repo.Network.Push(repo.Network.Remotes["origin"],
-                    $@"refs/heads/{repo.Head.FriendlyName}:refs/heads/{dataBranch}",
+                    $@"+refs/heads/{repo.Head.FriendlyName}:refs/heads/{dataBranch}",
                     new PushOptions
                     {
                         CredentialsProvider = (_, _, _) =>
@@ -3947,17 +3966,7 @@ static class Logger
 
                 using var repo = new Repository(repoPath);
                 RemoveLegacyTelemetryFiles(repoPath);
-
-                string statsFile = Path.Combine(repoPath, "global_stats.json");
-                if (File.Exists(statsFile))
-                {
-                    string json = File.ReadAllText(statsFile);
-                    if (!json.Contains("SessionsByBanner"))
-                    {
-                        File.WriteAllText(statsFile, JsonSerializer.Serialize(new GlobalStats(), new JsonSerializerOptions { WriteIndented = true }));
-                        LogMsg("Reinitialized global_stats.json with correct schema (was missing SessionsByBanner).");
-                    }
-                }
+                EnsureValidPublicationJson(repoPath, "startup");
 
                 LogMsg($"Static dashboard repository prepared on {dataBranch} branch.");
             }
@@ -3979,16 +3988,124 @@ static class Logger
             File.Delete(legacySummaryPath);
     }
 
+    static void EnsureValidPublicationJson(string repoPath, string sessionId)
+    {
+        var statsPath = Path.Combine(repoPath, "global_stats.json");
+        if (!IsValidJson<GlobalStats>(statsPath))
+        {
+            var stats = new GlobalStats { LastUpdated = DateTime.UtcNow };
+            File.WriteAllText(statsPath, JsonSerializer.Serialize(stats, new JsonSerializerOptions { WriteIndented = true }));
+            LogMsg("Reinitialized invalid global_stats.json.", sessionId);
+        }
+
+        var dataDir = Path.Combine(repoPath, "data");
+        Directory.CreateDirectory(dataDir);
+        var summaryPath = Path.Combine(dataDir, "events_summary.json");
+        if (!IsValidJson<HarvestSummary>(summaryPath))
+        {
+            var summary = new HarvestSummary { LastUpdated = DateTime.UtcNow };
+            File.WriteAllText(summaryPath, JsonSerializer.Serialize(summary, new JsonSerializerOptions { WriteIndented = true }));
+            LogMsg("Reinitialized invalid events_summary.json.", sessionId);
+        }
+    }
+
+    static bool IsValidJson<T>(string path)
+    {
+        if (!File.Exists(path))
+            return false;
+
+        try
+        {
+            var json = File.ReadAllText(path);
+            if (string.IsNullOrWhiteSpace(json))
+                return false;
+
+            return JsonSerializer.Deserialize<T>(json) is not null;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     static void SyncPublicationBranch(Repository repo, string dataBranch)
     {
         var remote = repo.Network.Remotes["origin"] ?? throw new InvalidOperationException("Static dashboard origin is not configured.");
         var workDir = repo.Info.WorkingDirectory;
-        RunGitCommand(workDir, "fetch", "--depth=1", remote.Name, $"+refs/heads/{dataBranch}:refs/remotes/{remote.Name}/{dataBranch}");
-        RunGitCommand(workDir, "checkout", "-f", "-B", dataBranch, $"{remote.Name}/{dataBranch}");
+        if (TryRunGitCommand(workDir, out _, "fetch", "--depth=1", remote.Name, $"+refs/heads/{dataBranch}:refs/remotes/{remote.Name}/{dataBranch}"))
+        {
+            RunGitCommand(workDir, "checkout", "-f", "-B", dataBranch, $"{remote.Name}/{dataBranch}");
+            return;
+        }
+
+        RunGitCommand(workDir, "checkout", "-f", "-B", dataBranch);
+    }
+
+    static (string Path, bool HasStats, bool HasData) SnapshotPublicationFiles(string repoPath)
+    {
+        var snapshotPath = Path.Combine(Path.GetTempPath(), $"funnypot-publish-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(snapshotPath);
+
+        var statsFile = Path.Combine(repoPath, "global_stats.json");
+        var dataDir = Path.Combine(repoPath, "data");
+        var hasStats = File.Exists(statsFile);
+        var hasData = Directory.Exists(dataDir);
+
+        if (hasStats)
+            File.Copy(statsFile, Path.Combine(snapshotPath, "global_stats.json"));
+        if (hasData)
+            CopyDirectory(dataDir, Path.Combine(snapshotPath, "data"));
+
+        return (snapshotPath, hasStats, hasData);
+    }
+
+    static void RestorePublicationSnapshot(string repoPath, (string Path, bool HasStats, bool HasData) snapshot)
+    {
+        if (snapshot.HasStats)
+            File.Copy(Path.Combine(snapshot.Path, "global_stats.json"), Path.Combine(repoPath, "global_stats.json"), overwrite: true);
+
+        if (snapshot.HasData)
+        {
+            var dataDir = Path.Combine(repoPath, "data");
+            if (Directory.Exists(dataDir))
+                Directory.Delete(dataDir, recursive: true);
+            CopyDirectory(Path.Combine(snapshot.Path, "data"), dataDir);
+        }
+    }
+
+    static void CleanupPublicationSnapshot((string Path, bool HasStats, bool HasData) snapshot)
+    {
+        try
+        {
+            if (Directory.Exists(snapshot.Path))
+                Directory.Delete(snapshot.Path, recursive: true);
+        }
+        catch
+        {
+            // Best effort cleanup only; failed temp deletion should not block publishing.
+        }
+    }
+
+    static void CopyDirectory(string sourceDir, string destinationDir)
+    {
+        Directory.CreateDirectory(destinationDir);
+
+        foreach (var file in Directory.EnumerateFiles(sourceDir))
+            File.Copy(file, Path.Combine(destinationDir, Path.GetFileName(file)), overwrite: true);
+
+        foreach (var dir in Directory.EnumerateDirectories(sourceDir))
+            CopyDirectory(dir, Path.Combine(destinationDir, Path.GetFileName(dir)));
     }
 
     static void RunGitCommand(string workingDirectory, params string[] args)
     {
+        if (!TryRunGitCommand(workingDirectory, out var error, args))
+            throw new InvalidOperationException(error);
+    }
+
+    static bool TryRunGitCommand(string workingDirectory, out string error, params string[] args)
+    {
+        error = "";
         using var process = new Process();
         process.StartInfo.FileName = "git";
         process.StartInfo.WorkingDirectory = workingDirectory;
@@ -4001,7 +4118,8 @@ static class Logger
         if (!process.WaitForExit(Program.GitPushTimeout))
         {
             try { process.Kill(entireProcessTree: true); } catch { }
-            throw new TimeoutException($"git {string.Join(' ', args)} timed out after {Program.GitPushTimeout.TotalSeconds:N0}s");
+            error = $"git {string.Join(' ', args)} timed out after {Program.GitPushTimeout.TotalSeconds:N0}s";
+            return false;
         }
 
         if (process.ExitCode != 0)
@@ -4009,8 +4127,11 @@ static class Logger
             var stderr = process.StandardError.ReadToEnd().Trim();
             var stdout = process.StandardOutput.ReadToEnd().Trim();
             var output = string.IsNullOrWhiteSpace(stderr) ? stdout : stderr;
-            throw new InvalidOperationException($"git {string.Join(' ', args)} failed: {output}");
+            error = $"git {string.Join(' ', args)} failed: {output}";
+            return false;
         }
+
+        return true;
     }
 
     static void EnsurePublicationRepository(string repoPath, string gitUser, string sessionId)

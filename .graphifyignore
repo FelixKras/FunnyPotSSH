@@ -5,6 +5,7 @@ venv/
 .vscode/
 frontend/
 graphify-out/
+backups/
 *.dll
 *.pdb
 *.exe
