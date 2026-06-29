@@ -900,6 +900,9 @@ class Program
 
             channel.EofReceived += (_, _) =>
             {
+                if (isExecCommand && scpUploadSession is null)
+                    return;
+
                 Interlocked.Exchange(ref shellClosed, 1);
                 FinalizeShell("EofReceived");
                 AwaitGitPushAndDispose();

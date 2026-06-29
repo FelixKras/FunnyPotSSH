@@ -1,7 +1,7 @@
 # Graph Report - FunnyPot  (2026-06-29)
 
 ## Corpus Check
-- 55 files · ~83,519 words
+- 55 files · ~83,526 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c2efee39`
+- Built from commit: `4daa4a1b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -691,7 +691,7 @@ Nodes (7): ref/netstandard1.3/System.IO.Compression.ZipFile.dll, System.IO.Compr
 
 ### Community 84 - "Community 84"
 Cohesion: 0.29
-Nodes (7): locale, locale, locale, resource, lib/netcoreapp3.1/cs/Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll, lib/netcoreapp3.1/fr/Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll, lib/netcoreapp3.1/tr/Microsoft.TestPlatform.CoreUtilities.resources.dll
+Nodes (7): locale, locale, locale, resource, lib/netcoreapp3.1/cs/Microsoft.TestPlatform.CoreUtilities.resources.dll, lib/netcoreapp3.1/cs/Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll, lib/netcoreapp3.1/tr/Microsoft.TestPlatform.CoreUtilities.resources.dll
 
 ### Community 85 - "Community 85"
 Cohesion: 0.33
@@ -763,7 +763,7 @@ Nodes (4): format, projects, restore, /home/felix/FunnyPot/FunnyPot/FunnyPot.csp
 
 ### Community 103 - "Community 103"
 Cohesion: 0.09
-Nodes (23): System.ComponentModel.EventBasedAsync.dll, System.Diagnostics.Contracts.dll, System.Net.Requests.dll, System.Reflection.dll, System.Runtime.InteropServices.dll, System.Text.Encoding.dll, System.Transactions.dll, System.Xml.XPath.dll (+15 more)
+Nodes (23): System.ComponentModel.EventBasedAsync.dll, System.Diagnostics.Contracts.dll, System.Net.Security.dll, System.Reflection.Emit.ILGeneration.dll, System.Runtime.InteropServices.JavaScript.dll, System.Text.Encoding.Extensions.dll, System.Transactions.Local.dll, System.Xml.XPath.dll (+15 more)
 
 ### Community 104 - "Community 104"
 Cohesion: 0.67
@@ -1147,7 +1147,7 @@ Nodes (3): System.ObjectModel.dll, assemblyVersion, fileVersion
 
 ### Community 202 - "Community 202"
 Cohesion: 0.67
-Nodes (3): System.Transactions.Local.dll, assemblyVersion, fileVersion
+Nodes (3): System.Net.Requests.dll, assemblyVersion, fileVersion
 
 ### Community 203 - "Community 203"
 Cohesion: 0.40
@@ -1203,7 +1203,7 @@ Nodes (3): System.Resources.ResourceManager.dll, assemblyVersion, fileVersion
 
 ### Community 218 - "Community 218"
 Cohesion: 0.67
-Nodes (3): System.Runtime.InteropServices.JavaScript.dll, assemblyVersion, fileVersion
+Nodes (3): System.Reflection.dll, assemblyVersion, fileVersion
 
 ### Community 219 - "Community 219"
 Cohesion: 0.67
@@ -1371,7 +1371,7 @@ Nodes (3): System.Net.ServicePoint.dll, assemblyVersion, fileVersion
 
 ### Community 263 - "Community 263"
 Cohesion: 0.67
-Nodes (3): System.Net.Security.dll, assemblyVersion, fileVersion
+Nodes (3): System.Runtime.InteropServices.dll, assemblyVersion, fileVersion
 
 ### Community 264 - "Community 264"
 Cohesion: 0.33
@@ -1441,13 +1441,17 @@ Nodes (3): System.Threading.Tasks.Parallel.dll, assemblyVersion, fileVersion
 Cohesion: 0.67
 Nodes (3): System.Reflection.DispatchProxy.dll, assemblyVersion, fileVersion
 
+### Community 286 - "Community 286"
+Cohesion: 0.67
+Nodes (3): System.Text.Encoding.dll, assemblyVersion, fileVersion
+
 ### Community 288 - "Community 288"
 Cohesion: 0.67
 Nodes (3): System.Runtime.Loader.dll, assemblyVersion, fileVersion
 
 ### Community 289 - "Community 289"
 Cohesion: 0.67
-Nodes (3): System.Reflection.Emit.ILGeneration.dll, assemblyVersion, fileVersion
+Nodes (3): System.Transactions.dll, assemblyVersion, fileVersion
 
 ### Community 293 - "Community 293"
 Cohesion: 0.33
@@ -1468,10 +1472,6 @@ Nodes (5): ref/netstandard1.3/System.Globalization.Calendars.dll, System.Globali
 ### Community 311 - "Community 311"
 Cohesion: 0.67
 Nodes (3): System.Runtime.dll, assemblyVersion, fileVersion
-
-### Community 330 - "Community 330"
-Cohesion: 0.67
-Nodes (3): System.Text.Encoding.Extensions.dll, assemblyVersion, fileVersion
 
 ### Community 332 - "Community 332"
 Cohesion: 0.67
