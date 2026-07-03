@@ -1003,12 +1003,14 @@ CRITICAL: ""bash: who are you: command not found"" is reserved EXCLUSIVELY for m
             ? "Notice that this input contains chained commands/operators. Preserve their left-to-right order and Bash semantics: pipes pass stdout to the next command; && runs the next command only after success; || runs the next command only after failure; ; runs the next command afterward. Return only the final visible terminal output from executing the whole command line."
             : "This input is a single Bash command. Return only its visible terminal output.";
 
-        return $@"Execute this exact Bash command on Omega-Black and return only the terminal output, with no prompt, no explanation, no markdown, and no parser trace.
+        return $@"Execute this exact Bash command on Omega-Black. Simulate Bash internally, but output only the final visible terminal stdout/stderr.
+
+Do not explain, reason aloud, summarize, label sections, show parser steps, show markdown, or include a shell prompt. If the command produces no visible output, return an empty response.
 
 Structured input:
 - command_kind: {(isChained ? "chained" : "single")}
 - execution_note: {chainInstruction}
-- output_contract: raw terminal stdout/stderr only; no JSON, no XML, no markdown, no labels.
+- output_contract: raw terminal stdout/stderr only; no reasoning, no JSON, no XML, no markdown, no labels.
 
 Command:
 {command}";

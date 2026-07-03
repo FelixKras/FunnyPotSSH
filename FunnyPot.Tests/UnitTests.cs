@@ -545,9 +545,11 @@ public class CommandResolverTests
         Assert.Contains("command_kind: chained", prompt);
         Assert.Contains("Notice that this input contains chained commands/operators", prompt);
         Assert.Contains("Preserve their left-to-right order", prompt);
-        Assert.Contains("return only the terminal output", prompt);
-        Assert.Contains("no parser trace", prompt);
+        Assert.Contains("output only the final visible terminal stdout/stderr", prompt);
+        Assert.Contains("Do not explain, reason aloud", prompt);
+        Assert.Contains("show parser steps", prompt);
         Assert.Contains("raw terminal stdout/stderr only", prompt);
+        Assert.Contains("no reasoning", prompt);
         Assert.Contains("cat /proc/cpuinfo | grep name | wc -l", prompt);
     }
 
