@@ -618,7 +618,7 @@ class Program
                     || command.Equals("logout", StringComparison.OrdinalIgnoreCase);
             }
 
-            void LogCommandResult(string line, string response, string exchangeId, int messageNumber, long responseDurationMs, bool failedCommand)
+            void LogCommandResult(string line, string response, string exchangeId, int messageNumber, long responseDurationMs, bool failedCommand, string llmModel = "")
             {
                 var hallucinationFeedback = false;
                 try
@@ -642,6 +642,7 @@ class Program
                     MessageNumber = messageNumber,
                     Command = line,
                     Response = response,
+                    LlmModel = llmModel,
                     FailedCommand = failedCommand,
                     ResponseDurationMs = responseDurationMs,
                     HallucinationFeedback = hallucinationFeedback,
@@ -754,7 +755,7 @@ class Program
                     TrimHistoryToWindow();
 
                     processingStage = "resolving command response";
-                    var (response, usedStatic, rateLimited, promptTokens, completionTokens) = CommandResolver.ResolveCommandAsync(
+                    var (response, usedStatic, rateLimited, promptTokens, completionTokens, llmModel) = CommandResolver.ResolveCommandAsync(
                         line,
                         sessionId,
                         rateLimitKey,
@@ -800,6 +801,7 @@ class Program
                         Response = response,
                         PromptTokens = promptTokens,
                         CompletionTokens = completionTokens,
+                        LlmModel = llmModel,
                         DurationMs = stopwatch.ElapsedMilliseconds,
                         FailedCommand = failedCommand,
                         UsedStaticDataset = usedStatic,
@@ -811,7 +813,7 @@ class Program
                     });
 
                     processingStage = "logging command result";
-                    LogCommandResult(line, response, exchangeId, commandCount, stopwatch.ElapsedMilliseconds, failedCommand);
+                    LogCommandResult(line, response, exchangeId, commandCount, stopwatch.ElapsedMilliseconds, failedCommand, llmModel);
                     commandResultLogged = true;
 
                     processingStage = "sending command response";
@@ -1039,14 +1041,14 @@ Command:
         return response.Replace("\n", "\r\n");
     }
 
-    internal static async Task<(string response, int promptTokens, int completionTokens, int totalTokens)> GetLLMResponseAsync(
+    internal static async Task<(string response, int promptTokens, int completionTokens, int totalTokens, string model)> GetLLMResponseAsync(
         List<ChatRequestData.ChatMessage> history,
         CancellationToken cancellationToken)
     {
         string apiUrl = BuildApiUrl(Config.Api.OpenRouter.BaseUrl, Config.Api.OpenRouter.ChatEndpoint);
         string? apiKey = GetSecretOrEnvironment("OPENROUTER_API_KEY");
         if (string.IsNullOrWhiteSpace(apiKey))
-            return ("[api error] OpenRouter API key not configured", 0, 0, 0);
+            return ("[api error] OpenRouter API key not configured", 0, 0, 0, "");
 
         var models = GetLlmAttemptModels();
         for (var attempt = 0; attempt < models.Count; attempt++)
@@ -1058,7 +1060,7 @@ Command:
             Logger.LogMsg($"OpenRouter model {models[attempt]} failed; retrying once with {models[attempt + 1]}.");
         }
 
-        return ("[api error] No OpenRouter models configured", 0, 0, 0);
+        return ("[api error] No OpenRouter models configured", 0, 0, 0, "");
     }
 
     internal static List<string> GetLlmAttemptModels()
@@ -1077,7 +1079,7 @@ Command:
             .ToList();
     }
 
-    static async Task<(string response, int promptTokens, int completionTokens, int totalTokens)> TryGetOpenRouterResponseAsync(
+    static async Task<(string response, int promptTokens, int completionTokens, int totalTokens, string model)> TryGetOpenRouterResponseAsync(
         string apiUrl,
         string apiKey,
         string model,
@@ -1090,6 +1092,7 @@ Command:
             Messages = history,
             MaxTokens = Config.Llm.MaxTokens,
             Temperature = 0.15,
+            Reasoning = new ChatRequestData.ReasoningOptions { Enabled = false },
         };
 
         string jsonRequest = JsonSerializer.Serialize(requestData, typeof(ChatRequestData));
@@ -1106,25 +1109,25 @@ Command:
             {
                 var errorText = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                 if (LooksLikeContextLengthError(response.StatusCode, errorText))
-                    return ("[api error] Conversation exceeded model context window. Try a fresh session.", 0, 0, 0);
-                return ($"[api error] {(int)response.StatusCode}: {Truncate(errorText, 256)}", 0, 0, 0);
+                    return ("[api error] Conversation exceeded model context window. Try a fresh session.", 0, 0, 0, model);
+                return ($"[api error] {(int)response.StatusCode}: {Truncate(errorText, 256)}", 0, 0, 0, model);
             }
 
             string jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
             using var parsedResponse = JsonDocument.Parse(jsonResponse);
 
             if (!TryParseOpenRouterResponse(parsedResponse.RootElement, out var responseContent, out var promptTokens, out var completionTokens, out var totalTokens))
-                return ("[api error] Invalid OpenRouter response", 0, 0, 0);
+                return ("[api error] Invalid OpenRouter response", 0, 0, 0, model);
 
-            return (responseContent, promptTokens, completionTokens, totalTokens);
+            return (responseContent, promptTokens, completionTokens, totalTokens, model);
         }
         catch (OperationCanceledException)
         {
-            return ("[api error] Request cancelled or timed out", 0, 0, 0);
+            return ("[api error] Request cancelled or timed out", 0, 0, 0, model);
         }
         catch (Exception ex)
         {
-            return ($"[network error] {ex.Message}", 0, 0, 0);
+            return ($"[network error] {ex.Message}", 0, 0, 0, model);
         }
     }
 
@@ -1265,6 +1268,7 @@ public class CommandResultLogEntry
     public int MessageNumber { get; set; }
     public string Command { get; set; } = "";
     public string Response { get; set; } = "";
+    public string LlmModel { get; set; } = "";
     public bool FailedCommand { get; set; }
     public long ResponseDurationMs { get; set; }
     public bool HallucinationFeedback { get; set; }
@@ -1334,6 +1338,15 @@ public class ChatRequestData
 
     [JsonPropertyName("temperature")]
     public double Temperature { get; set; } = 0.3;
+
+    [JsonPropertyName("reasoning")]
+    public ReasoningOptions? Reasoning { get; set; }
+
+    public class ReasoningOptions
+    {
+        [JsonPropertyName("enabled")]
+        public bool Enabled { get; set; }
+    }
 
     public class ChatMessage
     {
@@ -1993,7 +2006,7 @@ static class CommandResolver
         return CommandResolutionPath.Llm;
     }
 
-    public static async Task<(string response, bool usedStatic, bool rateLimited, int promptTokens, int completionTokens)> ResolveCommandAsync(
+    public static async Task<(string response, bool usedStatic, bool rateLimited, int promptTokens, int completionTokens, string llmModel)> ResolveCommandAsync(
         string command,
         string sessionId,
         string rateLimitKey,
@@ -2004,7 +2017,7 @@ static class CommandResolver
         var (isValid, errorMsg) = InputValidator.Validate(command);
         if (!isValid)
         {
-            return ($"{errorMsg} - connection terminated.", false, false, 0, 0);
+            return ($"{errorMsg} - connection terminated.", false, false, 0, 0, "");
         }
 
         if (SCPDetector.IsSCPCommand(command))
@@ -2014,25 +2027,25 @@ static class CommandResolver
                 var (_, filename) = SCPDetector.ParseSCPUpload(command);
                 if (!string.IsNullOrWhiteSpace(filename))
                     fs.Touch(filename);
-                return ("", true, false, 0, 0);
+                return ("", true, false, 0, 0, "");
             }
-            return ("", true, false, 0, 0);
+            return ("", true, false, 0, 0, "");
         }
 
         var isCompoundCommand = IsCompoundShellCommand(command);
         if (!isCompoundCommand && IsBinaryExecutableCatCommand(command))
         {
-            return (BinaryExecutableCatResponse(), false, false, 0, 0);
+            return (BinaryExecutableCatResponse(), false, false, 0, 0, "");
         }
 
         if (!isCompoundCommand && IsBuiltInCommand(command, fs, out var builtinResponse))
         {
-            return (builtinResponse!, false, false, 0, 0);
+            return (builtinResponse!, false, false, 0, 0, "");
         }
 
         if (!isCompoundCommand && IsNonLinuxNetworkDeviceProbe(command))
         {
-            return (GenerateSingleFallbackResponse(command, fs.CurrentDirectory), true, false, 0, 0);
+            return (GenerateSingleFallbackResponse(command, fs.CurrentDirectory), true, false, 0, 0, "");
         }
 
         if (!isCompoundCommand && IsCpuInfoCommand(command))
@@ -2040,17 +2053,17 @@ static class CommandResolver
             if (!LlmRateLimiter.IsAllowed(rateLimitKey, out var cpuInfoFallbackMessage))
             {
                 Logger.LogMsg($"Rate limit triggered for session {sessionId}, using fallback response");
-                return (cpuInfoFallbackMessage ?? "Rate limit exceeded. Please wait.", false, true, 0, 0);
+                return (cpuInfoFallbackMessage ?? "Rate limit exceeded. Please wait.", false, true, 0, 0, "");
             }
 
             LlmRateLimiter.LogLimitStatus(rateLimitKey);
-            var (cpuInfo, cpuInfoPromptTokens, cpuInfoCompletionTokens, usedFallback) =
+            var (cpuInfo, cpuInfoPromptTokens, cpuInfoCompletionTokens, usedFallback, cpuInfoModel) =
                 await GenerateCpuInfoResponseAsync(cancellationToken).ConfigureAwait(false);
-            return (cpuInfo, usedFallback, false, cpuInfoPromptTokens, cpuInfoCompletionTokens);
+            return (cpuInfo, usedFallback, false, cpuInfoPromptTokens, cpuInfoCompletionTokens, cpuInfoModel);
         }
 
         if (!isCompoundCommand && IsFindSuidDiscoveryCommand(command))
-            return (GenerateLocalFallbackResponse(command, fs.CurrentDirectory), true, false, 0, 0);
+            return (GenerateLocalFallbackResponse(command, fs.CurrentDirectory), true, false, 0, 0, "");
 
         if (isCompoundCommand)
             ApplyLocalShellStateChanges(command, fs);
@@ -2065,19 +2078,19 @@ static class CommandResolver
                     var targetDir = command[3..].Trim();
                     fs.ChangeDirectory(targetDir);
                 }
-                return (staticResponse, true, false, 0, 0);
+                return (staticResponse, true, false, 0, 0, "");
             }
         }
 
         if (!LlmRateLimiter.IsAllowed(rateLimitKey, out var fallbackMessage))
         {
             Logger.LogMsg($"Rate limit triggered for session {sessionId}, using fallback response");
-            return (fallbackMessage ?? "Rate limit exceeded. Please wait.", false, true, 0, 0);
+            return (fallbackMessage ?? "Rate limit exceeded. Please wait.", false, true, 0, 0, "");
         }
 
         LlmRateLimiter.LogLimitStatus(rateLimitKey);
 
-        var (response, promptTokens, completionTokens, _) =
+        var (response, promptTokens, completionTokens, _, llmModel) =
             await Program.GetLLMResponseAsync(messageHistory, cancellationToken).ConfigureAwait(false);
         response = Program.NormalizeTerminalOutput(response);
         if (IsModelFailureResponse(response) || ShouldOverrideImplausibleFailure(command, response))
@@ -2085,7 +2098,7 @@ static class CommandResolver
             Logger.LogMsg($"LLM response failed for session {sessionId}; returning model error without local fallback: {response}");
         }
 
-        return (response, false, false, promptTokens, completionTokens);
+        return (response, false, false, promptTokens, completionTokens, llmModel);
     }
 
     private static void ApplyLocalShellStateChanges(string command, FakeFileSystem fs)
@@ -2741,7 +2754,7 @@ static class CommandResolver
         return normalized is "cat /proc/cpuinfo" or "/bin/cat /proc/cpuinfo";
     }
 
-    internal static async Task<(string response, int promptTokens, int completionTokens, bool usedFallback)> GenerateCpuInfoResponseAsync(
+    internal static async Task<(string response, int promptTokens, int completionTokens, bool usedFallback, string llmModel)> GenerateCpuInfoResponseAsync(
         CancellationToken cancellationToken)
     {
         var prompt = "Return JSON only for a plausible old Linux /proc/cpuinfo response on a low-power ARM or embedded server. " +
@@ -2753,11 +2766,11 @@ static class CommandResolver
             new() { Role = "user", Content = prompt }
         };
 
-        var (response, promptTokens, completionTokens, _) = await Program.GetLLMResponseAsync(history, cancellationToken).ConfigureAwait(false);
+        var (response, promptTokens, completionTokens, _, llmModel) = await Program.GetLLMResponseAsync(history, cancellationToken).ConfigureAwait(false);
         if (TryParseCpuInfoValues(response, out var values))
-            return (FormatCpuInfo(values), promptTokens, completionTokens, false);
+            return (FormatCpuInfo(values), promptTokens, completionTokens, false, llmModel);
 
-        return (FormatCpuInfo(CpuInfoValues.Fallback()), 0, 0, true);
+        return (FormatCpuInfo(CpuInfoValues.Fallback()), 0, 0, true, llmModel);
     }
 
     internal static bool TryParseCpuInfoValues(string response, out CpuInfoValues values)

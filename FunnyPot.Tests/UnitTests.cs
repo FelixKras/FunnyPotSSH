@@ -627,7 +627,7 @@ public class CommandResolverTests
         var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
         var history = new List<ChatRequestData.ChatMessage>();
 
-        var (response, usedStatic, rateLimited, promptTokens, completionTokens) = await CommandResolver.ResolveCommandAsync(
+        var (response, usedStatic, rateLimited, promptTokens, completionTokens, _) = await CommandResolver.ResolveCommandAsync(
             "/ip cloud print",
             Guid.NewGuid().ToString("N"),
             Guid.NewGuid().ToString("N"),
@@ -756,7 +756,7 @@ public class CommandResolverTests
         var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
         var history = new List<ChatRequestData.ChatMessage>();
 
-        var (response, _, _, _, _) = await CommandResolver.ResolveCommandAsync(
+        var (response, _, _, _, _, _) = await CommandResolver.ResolveCommandAsync(
             command,
             Guid.NewGuid().ToString("N"),
             Guid.NewGuid().ToString("N"),
@@ -819,7 +819,7 @@ public class CommandResolverTests
             history,
             CancellationToken.None);
 
-        var (response, usedStatic, rateLimited, promptTokens, completionTokens) = await CommandResolver.ResolveCommandAsync(
+        var (response, usedStatic, rateLimited, promptTokens, completionTokens, _) = await CommandResolver.ResolveCommandAsync(
             "cat /tmp/a.sh",
             sessionId,
             sessionId,
@@ -841,7 +841,7 @@ public class CommandResolverTests
         var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
         var history = new List<ChatRequestData.ChatMessage>();
 
-        var (response, usedStatic, rateLimited, promptTokens, completionTokens) = await CommandResolver.ResolveCommandAsync(
+        var (response, usedStatic, rateLimited, promptTokens, completionTokens, _) = await CommandResolver.ResolveCommandAsync(
             "scp /tmp/a remote:/tmp/a",
             Guid.NewGuid().ToString("N"),
             Guid.NewGuid().ToString("N"),
@@ -862,7 +862,7 @@ public class CommandResolverTests
         var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
         var history = new List<ChatRequestData.ChatMessage>();
 
-        var (response, usedStatic, rateLimited, promptTokens, completionTokens) = await CommandResolver.ResolveCommandAsync(
+        var (response, usedStatic, rateLimited, promptTokens, completionTokens, _) = await CommandResolver.ResolveCommandAsync(
             "cat /bin/echo",
             Guid.NewGuid().ToString("N"),
             Guid.NewGuid().ToString("N"),
@@ -973,7 +973,7 @@ public class AppConfigurationTests
         var config = AppConfiguration.Load(path);
 
         Assert.Equal("deepseek/deepseek-v4-pro", config.Llm.Model);
-        Assert.Contains("openrouter/free", config.Llm.FallbackModels);
+        Assert.Contains("nvidia/nemotron-3-super-120b-a12b:free", config.Llm.FallbackModels);
         Assert.Equal("/var/log/funnypot", config.Logging.LogDir);
         Assert.Equal(3, config.Ssh.PasswordHarvestAttempt);
         Assert.Equal("/chat/completions", config.Api.OpenRouter.ChatEndpoint);

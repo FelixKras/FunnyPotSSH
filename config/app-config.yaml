@@ -26,9 +26,7 @@ llm:
   rate-limit-window-seconds: 60
   model: "deepseek/deepseek-v4-pro"
   fallback-models:
-    - "openrouter/free"
-    - "deepseek/deepseek-r1-distill:free"
-    - "openai/gpt-oss-20b:free"
+    - "nvidia/nemotron-3-super-120b-a12b:free"
   max-tokens: 2000
   timeout-seconds: 30
 

@@ -74,7 +74,7 @@ namespace FunnyPot
         public int RateLimitMaxPerWindow { get; set; } = 20;
         public int RateLimitWindowSeconds { get; set; } = 60;
         public string Model { get; set; } = "deepseek/deepseek-v4-pro";
-        public List<string> FallbackModels { get; set; } = new() { "openrouter/free", "deepseek/deepseek-r1-distill:free", "openai/gpt-oss-20b:free" };
+        public List<string> FallbackModels { get; set; } = new() { "nvidia/nemotron-3-super-120b-a12b:free" };
         public int MaxTokens { get; set; } = 2000;
         public int TimeoutSeconds { get; set; } = 30;
     }

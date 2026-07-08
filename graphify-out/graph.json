@@ -765,7 +765,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L936",
       "id": "funnypot_tests_unittests_appconfigurationtests",
-      "community": 26,
+      "community": 78,
       "norm_label": "appconfigurationtests"
     },
     {
@@ -774,7 +774,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L938",
       "id": "funnypot_tests_unittests_appconfigurationtests_load_whenconfigmissing_returnsdefaults",
-      "community": 26,
+      "community": 78,
       "norm_label": ".load_whenconfigmissing_returnsdefaults()"
     },
     {
@@ -783,7 +783,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L948",
       "id": "funnypot_tests_unittests_appconfigurationtests_load_whenconfigexists_usesfilevalues",
-      "community": 26,
+      "community": 78,
       "norm_label": ".load_whenconfigexists_usesfilevalues()"
     },
     {
@@ -792,7 +792,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L968",
       "id": "funnypot_tests_unittests_appconfigurationtests_load_projectconfig_bindsrootsections",
-      "community": 26,
+      "community": 78,
       "norm_label": ".load_projectconfig_bindsrootsections()"
     },
     {
@@ -801,7 +801,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L985",
       "id": "funnypot_tests_unittests_appconfigurationtests_load_defaultpathfallsbacktoworkingdirectoryconfig",
-      "community": 26,
+      "community": 78,
       "norm_label": ".load_defaultpathfallsbacktoworkingdirectoryconfig()"
     },
     {
@@ -810,7 +810,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L1009",
       "id": "funnypot_tests_unittests_autoresearchrunnertests",
-      "community": 27,
+      "community": 78,
       "norm_label": "autoresearchrunnertests"
     },
     {
@@ -819,7 +819,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L1011",
       "id": "funnypot_tests_unittests_autoresearchrunnertests_tryparsemetric_readsnamedvaluegroup",
-      "community": 27,
+      "community": 78,
       "norm_label": ".tryparsemetric_readsnamedvaluegroup()"
     },
     {
@@ -828,7 +828,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L1022",
       "id": "funnypot_tests_unittests_autoresearchrunnertests_isimprovement_respectsmetricdirection",
-      "community": 27,
+      "community": 78,
       "norm_label": ".isimprovement_respectsmetricdirection()"
     },
     {
@@ -837,7 +837,7 @@
       "source_file": "FunnyPot.Tests/UnitTests.cs",
       "source_location": "L1033",
       "id": "funnypot_tests_unittests_autoresearchrunnertests_validatemutablepaths_allowsonlypathsinsideworktree",
-      "community": 27,
+      "community": 78,
       "norm_label": ".validatemutablepaths_allowsonlypathsinsideworktree()"
     },
     {
@@ -1845,7 +1845,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L149",
       "id": "net8_0_funnypot_tests_deps_microsoft_extensions_primitives_1_1_1_dependencies",
-      "community": 105,
+      "community": 118,
       "norm_label": "dependencies"
     },
     {
@@ -1854,7 +1854,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L151",
       "id": "net8_0_funnypot_tests_deps_dependencies_system_runtime_compilerservices_unsafe",
-      "community": 105,
+      "community": 118,
       "norm_label": "system.runtime.compilerservices.unsafe"
     },
     {
@@ -2088,7 +2088,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L188",
       "id": "net8_0_funnypot_tests_deps_resources_lib_netcoreapp3_1_cs_microsoft_testplatform_coreutilities_resources_dll",
-      "community": 50,
+      "community": 413,
       "norm_label": "lib/netcoreapp3.1/cs/microsoft.testplatform.coreutilities.resources.dll"
     },
     {
@@ -2097,7 +2097,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L189",
       "id": "net8_0_funnypot_tests_deps_lib_netcoreapp3_1_cs_microsoft_testplatform_coreutilities_resources_dll_locale",
-      "community": 50,
+      "community": 413,
       "norm_label": "locale"
     },
     {
@@ -2124,7 +2124,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L194",
       "id": "net8_0_funnypot_tests_deps_resources_lib_netcoreapp3_1_de_microsoft_testplatform_coreutilities_resources_dll",
-      "community": 360,
+      "community": 50,
       "norm_label": "lib/netcoreapp3.1/de/microsoft.testplatform.coreutilities.resources.dll"
     },
     {
@@ -2133,7 +2133,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L195",
       "id": "net8_0_funnypot_tests_deps_lib_netcoreapp3_1_de_microsoft_testplatform_coreutilities_resources_dll_locale",
-      "community": 360,
+      "community": 50,
       "norm_label": "locale"
     },
     {
@@ -3582,7 +3582,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L433",
       "id": "net8_0_funnypot_tests_deps_dependencies_system_globalization",
-      "community": 56,
+      "community": 28,
       "norm_label": "system.globalization"
     },
     {
@@ -3600,7 +3600,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L435",
       "id": "net8_0_funnypot_tests_deps_dependencies_system_io",
-      "community": 34,
+      "community": 200,
       "norm_label": "system.io"
     },
     {
@@ -3807,7 +3807,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L460",
       "id": "net8_0_funnypot_tests_deps_dependencies_system_text_encoding",
-      "community": 28,
+      "community": 200,
       "norm_label": "system.text.encoding"
     },
     {
@@ -3834,7 +3834,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L464",
       "id": "net8_0_funnypot_tests_deps_dependencies_system_threading_tasks",
-      "community": 28,
+      "community": 200,
       "norm_label": "system.threading.tasks"
     },
     {
@@ -4383,7 +4383,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L584",
       "id": "net8_0_funnypot_tests_deps_netcoreapp_version_v8_0_system_console_4_3_0",
-      "community": 28,
+      "community": 200,
       "norm_label": "system.console/4.3.0"
     },
     {
@@ -4392,7 +4392,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L585",
       "id": "net8_0_funnypot_tests_deps_system_console_4_3_0_dependencies",
-      "community": 28,
+      "community": 200,
       "norm_label": "dependencies"
     },
     {
@@ -4491,7 +4491,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L630",
       "id": "net8_0_funnypot_tests_deps_netcoreapp_version_v8_0_system_globalization_calendars_4_3_0",
-      "community": 56,
+      "community": 28,
       "norm_label": "system.globalization.calendars/4.3.0"
     },
     {
@@ -4500,7 +4500,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L631",
       "id": "net8_0_funnypot_tests_deps_system_globalization_calendars_4_3_0_dependencies",
-      "community": 56,
+      "community": 28,
       "norm_label": "dependencies"
     },
     {
@@ -4527,7 +4527,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L648",
       "id": "net8_0_funnypot_tests_deps_netcoreapp_version_v8_0_system_io_4_3_0",
-      "community": 28,
+      "community": 200,
       "norm_label": "system.io/4.3.0"
     },
     {
@@ -4536,7 +4536,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L649",
       "id": "net8_0_funnypot_tests_deps_system_io_4_3_0_dependencies",
-      "community": 28,
+      "community": 200,
       "norm_label": "dependencies"
     },
     {
@@ -4563,7 +4563,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L660",
       "id": "net8_0_funnypot_tests_deps_dependencies_system_buffers",
-      "community": 34,
+      "community": 200,
       "norm_label": "system.buffers"
     },
     {
@@ -4590,7 +4590,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L676",
       "id": "net8_0_funnypot_tests_deps_netcoreapp_version_v8_0_system_io_compression_zipfile_4_3_0",
-      "community": 34,
+      "community": 200,
       "norm_label": "system.io.compression.zipfile/4.3.0"
     },
     {
@@ -4599,7 +4599,7 @@
       "source_file": "FunnyPot.Tests/bin/Release/net8.0/FunnyPot.Tests.deps.json",
       "source_location": "L677",
       "id": "net8_0_funnypot_tests_deps_system_io_compression_zipfile_4_3_0_dependencies",
-      "community": 34,
+      "community": 200,
       "norm_label": "dependencies"
     },
     {
@@ -4950,7 +4950,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L27",
       "id": "net8_0_funnypot_deps_dependencies_system_text_regularexpressions",
-      "community": 3,
+      "community": 111,
       "norm_label": "system.text.regularexpressions"
     },
     {
@@ -5751,7 +5751,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L156",
       "id": "net8_0_funnypot_deps_dependencies_system_runtime",
-      "community": 36,
+      "community": 7,
       "norm_label": "system.runtime"
     },
     {
@@ -5850,7 +5850,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L170",
       "id": "net8_0_funnypot_deps_dependencies_system_globalization",
-      "community": 31,
+      "community": 111,
       "norm_label": "system.globalization"
     },
     {
@@ -5868,7 +5868,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L172",
       "id": "net8_0_funnypot_deps_dependencies_system_io",
-      "community": 111,
+      "community": 77,
       "norm_label": "system.io"
     },
     {
@@ -5877,7 +5877,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L173",
       "id": "net8_0_funnypot_deps_dependencies_system_io_compression",
-      "community": 111,
+      "community": 77,
       "norm_label": "system.io.compression"
     },
     {
@@ -5895,7 +5895,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L175",
       "id": "net8_0_funnypot_deps_dependencies_system_io_filesystem",
-      "community": 111,
+      "community": 77,
       "norm_label": "system.io.filesystem"
     },
     {
@@ -5904,7 +5904,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L176",
       "id": "net8_0_funnypot_deps_dependencies_system_io_filesystem_primitives",
-      "community": 111,
+      "community": 77,
       "norm_label": "system.io.filesystem.primitives"
     },
     {
@@ -5913,7 +5913,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L177",
       "id": "net8_0_funnypot_deps_dependencies_system_linq",
-      "community": 3,
+      "community": 111,
       "norm_label": "system.linq"
     },
     {
@@ -5931,7 +5931,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L180",
       "id": "net8_0_funnypot_deps_dependencies_system_net_primitives",
-      "community": 111,
+      "community": 26,
       "norm_label": "system.net.primitives"
     },
     {
@@ -5949,7 +5949,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L182",
       "id": "net8_0_funnypot_deps_dependencies_system_objectmodel",
-      "community": 31,
+      "community": 36,
       "norm_label": "system.objectmodel"
     },
     {
@@ -5967,7 +5967,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L184",
       "id": "net8_0_funnypot_deps_dependencies_system_reflection_extensions",
-      "community": 77,
+      "community": 31,
       "norm_label": "system.reflection.extensions"
     },
     {
@@ -6012,7 +6012,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L190",
       "id": "net8_0_funnypot_deps_dependencies_system_runtime_interopservices",
-      "community": 77,
+      "community": 31,
       "norm_label": "system.runtime.interopservices"
     },
     {
@@ -6039,7 +6039,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L193",
       "id": "net8_0_funnypot_deps_dependencies_system_security_cryptography_algorithms",
-      "community": 111,
+      "community": 26,
       "norm_label": "system.security.cryptography.algorithms"
     },
     {
@@ -6048,7 +6048,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L194",
       "id": "net8_0_funnypot_deps_dependencies_system_security_cryptography_encoding",
-      "community": 111,
+      "community": 26,
       "norm_label": "system.security.cryptography.encoding"
     },
     {
@@ -6057,7 +6057,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L195",
       "id": "net8_0_funnypot_deps_dependencies_system_security_cryptography_primitives",
-      "community": 111,
+      "community": 26,
       "norm_label": "system.security.cryptography.primitives"
     },
     {
@@ -6066,7 +6066,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L196",
       "id": "net8_0_funnypot_deps_dependencies_system_security_cryptography_x509certificates",
-      "community": 111,
+      "community": 26,
       "norm_label": "system.security.cryptography.x509certificates"
     },
     {
@@ -6075,7 +6075,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L197",
       "id": "net8_0_funnypot_deps_dependencies_system_text_encoding",
-      "community": 111,
+      "community": 77,
       "norm_label": "system.text.encoding"
     },
     {
@@ -6102,7 +6102,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L201",
       "id": "net8_0_funnypot_deps_dependencies_system_threading_tasks",
-      "community": 111,
+      "community": 26,
       "norm_label": "system.threading.tasks"
     },
     {
@@ -6435,7 +6435,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L256",
       "id": "net8_0_funnypot_deps_sprache_2_3_1_dependencies",
-      "community": 3,
+      "community": 111,
       "norm_label": "dependencies"
     },
     {
@@ -6444,7 +6444,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L259",
       "id": "net8_0_funnypot_deps_dependencies_system_private_uri",
-      "community": 3,
+      "community": 111,
       "norm_label": "system.private.uri"
     },
     {
@@ -6489,7 +6489,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L270",
       "id": "net8_0_funnypot_deps_netcoreapp_version_v8_0_system_appcontext_4_3_0",
-      "community": 36,
+      "community": 117,
       "norm_label": "system.appcontext/4.3.0"
     },
     {
@@ -6498,7 +6498,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L271",
       "id": "net8_0_funnypot_deps_system_appcontext_4_3_0_dependencies",
-      "community": 36,
+      "community": 117,
       "norm_label": "dependencies"
     },
     {
@@ -6561,7 +6561,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L305",
       "id": "net8_0_funnypot_deps_netcoreapp_version_v8_0_system_console_4_3_0",
-      "community": 111,
+      "community": 77,
       "norm_label": "system.console/4.3.0"
     },
     {
@@ -6570,7 +6570,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L306",
       "id": "net8_0_funnypot_deps_system_console_4_3_0_dependencies",
-      "community": 111,
+      "community": 77,
       "norm_label": "dependencies"
     },
     {
@@ -6669,7 +6669,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L351",
       "id": "net8_0_funnypot_deps_netcoreapp_version_v8_0_system_globalization_calendars_4_3_0",
-      "community": 31,
+      "community": 111,
       "norm_label": "system.globalization.calendars/4.3.0"
     },
     {
@@ -6678,7 +6678,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L352",
       "id": "net8_0_funnypot_deps_system_globalization_calendars_4_3_0_dependencies",
-      "community": 31,
+      "community": 111,
       "norm_label": "dependencies"
     },
     {
@@ -6705,7 +6705,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L369",
       "id": "net8_0_funnypot_deps_netcoreapp_version_v8_0_system_io_4_3_0",
-      "community": 111,
+      "community": 26,
       "norm_label": "system.io/4.3.0"
     },
     {
@@ -6714,7 +6714,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L370",
       "id": "net8_0_funnypot_deps_system_io_4_3_0_dependencies",
-      "community": 111,
+      "community": 26,
       "norm_label": "dependencies"
     },
     {
@@ -6723,7 +6723,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L378",
       "id": "net8_0_funnypot_deps_netcoreapp_version_v8_0_system_io_compression_4_3_0",
-      "community": 77,
+      "community": 31,
       "norm_label": "system.io.compression/4.3.0"
     },
     {
@@ -6732,7 +6732,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L379",
       "id": "net8_0_funnypot_deps_system_io_compression_4_3_0_dependencies",
-      "community": 77,
+      "community": 31,
       "norm_label": "dependencies"
     },
     {
@@ -6741,7 +6741,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L381",
       "id": "net8_0_funnypot_deps_dependencies_system_buffers",
-      "community": 111,
+      "community": 77,
       "norm_label": "system.buffers"
     },
     {
@@ -6750,7 +6750,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L393",
       "id": "net8_0_funnypot_deps_dependencies_runtime_native_system",
-      "community": 77,
+      "community": 31,
       "norm_label": "runtime.native.system"
     },
     {
@@ -6759,7 +6759,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L394",
       "id": "net8_0_funnypot_deps_dependencies_runtime_native_system_io_compression",
-      "community": 77,
+      "community": 31,
       "norm_label": "runtime.native.system.io.compression"
     },
     {
@@ -6768,7 +6768,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L397",
       "id": "net8_0_funnypot_deps_netcoreapp_version_v8_0_system_io_compression_zipfile_4_3_0",
-      "community": 111,
+      "community": 77,
       "norm_label": "system.io.compression.zipfile/4.3.0"
     },
     {
@@ -6777,7 +6777,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L398",
       "id": "net8_0_funnypot_deps_system_io_compression_zipfile_4_3_0_dependencies",
-      "community": 111,
+      "community": 77,
       "norm_label": "dependencies"
     },
     {
@@ -6786,7 +6786,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L410",
       "id": "net8_0_funnypot_deps_netcoreapp_version_v8_0_system_io_filesystem_4_3_0",
-      "community": 111,
+      "community": 77,
       "norm_label": "system.io.filesystem/4.3.0"
     },
     {
@@ -6795,7 +6795,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L411",
       "id": "net8_0_funnypot_deps_system_io_filesystem_4_3_0_dependencies",
-      "community": 111,
+      "community": 77,
       "norm_label": "dependencies"
     },
     {
@@ -6840,7 +6840,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L436",
       "id": "net8_0_funnypot_deps_netcoreapp_version_v8_0_system_linq_expressions_4_3_0",
-      "community": 31,
+      "community": 36,
       "norm_label": "system.linq.expressions/4.3.0"
     },
     {
@@ -6849,7 +6849,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L437",
       "id": "net8_0_funnypot_deps_system_linq_expressions_4_3_0_dependencies",
-      "community": 31,
+      "community": 36,
       "norm_label": "dependencies"
     },
     {
@@ -6858,7 +6858,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L445",
       "id": "net8_0_funnypot_deps_dependencies_system_reflection_emit",
-      "community": 31,
+      "community": 36,
       "norm_label": "system.reflection.emit"
     },
     {
@@ -6876,7 +6876,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L447",
       "id": "net8_0_funnypot_deps_dependencies_system_reflection_emit_lightweight",
-      "community": 31,
+      "community": 36,
       "norm_label": "system.reflection.emit.lightweight"
     },
     {
@@ -6885,7 +6885,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L450",
       "id": "net8_0_funnypot_deps_dependencies_system_reflection_typeextensions",
-      "community": 31,
+      "community": 36,
       "norm_label": "system.reflection.typeextensions"
     },
     {
@@ -6894,7 +6894,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L457",
       "id": "net8_0_funnypot_deps_netcoreapp_version_v8_0_system_net_http_4_3_4",
-      "community": 111,
+      "community": 26,
       "norm_label": "system.net.http/4.3.4"
     },
     {
@@ -6903,7 +6903,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L458",
       "id": "net8_0_funnypot_deps_system_net_http_4_3_4_dependencies",
-      "community": 111,
+      "community": 26,
       "norm_label": "dependencies"
     },
     {
@@ -6912,7 +6912,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L462",
       "id": "net8_0_funnypot_deps_dependencies_system_diagnostics_diagnosticsource",
-      "community": 111,
+      "community": 26,
       "norm_label": "system.diagnostics.diagnosticsource"
     },
     {
@@ -6921,7 +6921,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L465",
       "id": "net8_0_funnypot_deps_dependencies_system_globalization_extensions",
-      "community": 111,
+      "community": 26,
       "norm_label": "system.globalization.extensions"
     },
     {
@@ -6930,7 +6930,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L476",
       "id": "net8_0_funnypot_deps_dependencies_system_security_cryptography_openssl",
-      "community": 111,
+      "community": 26,
       "norm_label": "system.security.cryptography.openssl"
     },
     {
@@ -6939,7 +6939,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L483",
       "id": "net8_0_funnypot_deps_dependencies_runtime_native_system_net_http",
-      "community": 111,
+      "community": 26,
       "norm_label": "runtime.native.system.net.http"
     },
     {
@@ -6948,7 +6948,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L484",
       "id": "net8_0_funnypot_deps_dependencies_runtime_native_system_security_cryptography_openssl",
-      "community": 111,
+      "community": 26,
       "norm_label": "runtime.native.system.security.cryptography.openssl"
     },
     {
@@ -6975,7 +6975,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L495",
       "id": "net8_0_funnypot_deps_netcoreapp_version_v8_0_system_net_sockets_4_3_0",
-      "community": 111,
+      "community": 26,
       "norm_label": "system.net.sockets/4.3.0"
     },
     {
@@ -6984,7 +6984,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L496",
       "id": "net8_0_funnypot_deps_system_net_sockets_4_3_0_dependencies",
-      "community": 111,
+      "community": 26,
       "norm_label": "dependencies"
     },
     {
@@ -7029,7 +7029,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L520",
       "id": "net8_0_funnypot_deps_netcoreapp_version_v8_0_system_reflection_4_3_0",
-      "community": 36,
+      "community": 77,
       "norm_label": "system.reflection/4.3.0"
     },
     {
@@ -7038,7 +7038,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L521",
       "id": "net8_0_funnypot_deps_system_reflection_4_3_0_dependencies",
-      "community": 36,
+      "community": 77,
       "norm_label": "dependencies"
     },
     {
@@ -7101,7 +7101,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L553",
       "id": "net8_0_funnypot_deps_netcoreapp_version_v8_0_system_reflection_extensions_4_3_0",
-      "community": 36,
+      "community": 7,
       "norm_label": "system.reflection.extensions/4.3.0"
     },
     {
@@ -7110,7 +7110,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L554",
       "id": "net8_0_funnypot_deps_system_reflection_extensions_4_3_0_dependencies",
-      "community": 36,
+      "community": 7,
       "norm_label": "dependencies"
     },
     {
@@ -7155,7 +7155,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L574",
       "id": "net8_0_funnypot_deps_netcoreapp_version_v8_0_system_resources_resourcemanager_4_3_0",
-      "community": 36,
+      "community": 7,
       "norm_label": "system.resources.resourcemanager/4.3.0"
     },
     {
@@ -7164,7 +7164,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L575",
       "id": "net8_0_funnypot_deps_system_resources_resourcemanager_4_3_0_dependencies",
-      "community": 36,
+      "community": 7,
       "norm_label": "dependencies"
     },
     {
@@ -7191,7 +7191,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L589",
       "id": "net8_0_funnypot_deps_netcoreapp_version_v8_0_system_runtime_compilerservices_unsafe_4_3_0",
-      "community": 117,
+      "community": 7,
       "norm_label": "system.runtime.compilerservices.unsafe/4.3.0"
     },
     {
@@ -7200,7 +7200,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L590",
       "id": "net8_0_funnypot_deps_system_runtime_compilerservices_unsafe_4_3_0_dependencies",
-      "community": 117,
+      "community": 7,
       "norm_label": "dependencies"
     },
     {
@@ -7263,7 +7263,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L618",
       "id": "net8_0_funnypot_deps_netcoreapp_version_v8_0_system_runtime_interopservices_runtimeinformation_4_3_0",
-      "community": 77,
+      "community": 31,
       "norm_label": "system.runtime.interopservices.runtimeinformation/4.3.0"
     },
     {
@@ -7272,7 +7272,7 @@
       "source_file": "FunnyPot/bin/Release/net8.0/FunnyPot.deps.json",
       "source_location": "L619",
       "id": "net8_0_funnypot_deps_system_runtime_interopservices_runtimeinformation_4_3_0_dependencies",
-      "community": 77,
+      "community": 31,
       "norm_label": "dependencies"
     },
     {
@@ -8703,7 +8703,7 @@
       "source_file": "FunnyPot.Tests/obj/project.assets.json",
       "source_location": "L227",
       "id": "obj_project_assets_resource_lib_netcoreapp3_1_cs_microsoft_testplatform_coreutilities_resources_dll",
-      "community": 84,
+      "community": 414,
       "norm_label": "lib/netcoreapp3.1/cs/microsoft.testplatform.coreutilities.resources.dll"
     },
     {
@@ -8712,7 +8712,7 @@
       "source_file": "FunnyPot.Tests/obj/project.assets.json",
       "source_location": "L228",
       "id": "obj_project_assets_lib_netcoreapp3_1_cs_microsoft_testplatform_coreutilities_resources_dll_locale",
-      "community": 84,
+      "community": 414,
       "norm_label": "locale"
     },
     {
@@ -8739,7 +8739,7 @@
       "source_file": "FunnyPot.Tests/obj/project.assets.json",
       "source_location": "L233",
       "id": "obj_project_assets_resource_lib_netcoreapp3_1_de_microsoft_testplatform_coreutilities_resources_dll",
-      "community": 335,
+      "community": 84,
       "norm_label": "lib/netcoreapp3.1/de/microsoft.testplatform.coreutilities.resources.dll"
     },
     {
@@ -8748,7 +8748,7 @@
       "source_file": "FunnyPot.Tests/obj/project.assets.json",
       "source_location": "L234",
       "id": "obj_project_assets_lib_netcoreapp3_1_de_microsoft_testplatform_coreutilities_resources_dll_locale",
-      "community": 335,
+      "community": 84,
       "norm_label": "locale"
     },
     {
@@ -9846,7 +9846,7 @@
       "source_file": "FunnyPot.Tests/obj/project.assets.json",
       "source_location": "L422",
       "id": "obj_project_assets_resource_lib_netcoreapp3_1_ru_microsoft_testplatform_crossplatengine_resources_dll",
-      "community": 407,
+      "community": 415,
       "norm_label": "lib/netcoreapp3.1/ru/microsoft.testplatform.crossplatengine.resources.dll"
     },
     {
@@ -9855,7 +9855,7 @@
       "source_file": "FunnyPot.Tests/obj/project.assets.json",
       "source_location": "L423",
       "id": "obj_project_assets_lib_netcoreapp3_1_ru_microsoft_testplatform_crossplatengine_resources_dll_locale",
-      "community": 407,
+      "community": 415,
       "norm_label": "locale"
     },
     {
@@ -12096,7 +12096,7 @@
       "source_file": "FunnyPot.Tests/obj/FunnyPot.Tests.csproj.nuget.dgspec.json",
       "source_location": "L132",
       "id": "obj_funnypot_tests_csproj_nuget_dgspec_dependencies_yamldotnet",
-      "community": 247,
+      "community": 412,
       "norm_label": "yamldotnet"
     },
     {
@@ -12105,7 +12105,7 @@
       "source_file": "FunnyPot.Tests/obj/FunnyPot.Tests.csproj.nuget.dgspec.json",
       "source_location": "L133",
       "id": "obj_funnypot_tests_csproj_nuget_dgspec_yamldotnet_target",
-      "community": 247,
+      "community": 412,
       "norm_label": "target"
     },
     {
@@ -12114,7 +12114,7 @@
       "source_file": "FunnyPot.Tests/obj/FunnyPot.Tests.csproj.nuget.dgspec.json",
       "source_location": "L134",
       "id": "obj_funnypot_tests_csproj_nuget_dgspec_yamldotnet_version",
-      "community": 247,
+      "community": 412,
       "norm_label": "version"
     },
     {
@@ -12301,9 +12301,9 @@
       "label": "Dictionary",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2969",
+      "source_location": "L2982",
       "id": "dictionary",
-      "community": 113,
+      "community": 38,
       "norm_label": "dictionary"
     },
     {
@@ -12312,7 +12312,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L58",
       "id": "object",
-      "community": 113,
+      "community": 190,
       "norm_label": "object"
     },
     {
@@ -12771,7 +12771,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L45",
       "id": "concurrentdictionary",
-      "community": 79,
+      "community": 285,
       "norm_label": "concurrentdictionary"
     },
     {
@@ -12834,7 +12834,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L63",
       "id": "funnypot_program_program_getintenvironmentordefault",
-      "community": 2,
+      "community": 27,
       "norm_label": ".getintenvironmentordefault()"
     },
     {
@@ -12843,7 +12843,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L69",
       "id": "funnypot_program_program_loadruntimesettings",
-      "community": 2,
+      "community": 27,
       "norm_label": ".loadruntimesettings()"
     },
     {
@@ -12852,7 +12852,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L87",
       "id": "funnypot_program_program_parsebannerpool",
-      "community": 2,
+      "community": 27,
       "norm_label": ".parsebannerpool()"
     },
     {
@@ -12861,7 +12861,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L105",
       "id": "funnypot_program_program_gethostkeypem",
-      "community": 2,
+      "community": 27,
       "norm_label": ".gethostkeypem()"
     },
     {
@@ -12870,7 +12870,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L120",
       "id": "funnypot_program_program_startsshserver",
-      "community": 2,
+      "community": 27,
       "norm_label": ".startsshserver()"
     },
     {
@@ -12879,7 +12879,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L133",
       "id": "funnypot_program_program_startsshserverunlocked",
-      "community": 2,
+      "community": 27,
       "norm_label": ".startsshserverunlocked()"
     },
     {
@@ -12888,7 +12888,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L148",
       "id": "funnypot_program_program_rotatebanner",
-      "community": 2,
+      "community": 27,
       "norm_label": ".rotatebanner()"
     },
     {
@@ -12897,7 +12897,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L175",
       "id": "funnypot_program_program_getprompt",
-      "community": 2,
+      "community": 27,
       "norm_label": ".getprompt()"
     },
     {
@@ -12906,7 +12906,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L181",
       "id": "funnypot_program_program_getsecretorenvironment",
-      "community": 2,
+      "community": 242,
       "norm_label": ".getsecretorenvironment()"
     },
     {
@@ -12915,7 +12915,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L195",
       "id": "funnypot_program_program_main",
-      "community": 2,
+      "community": 27,
       "norm_label": ".main()"
     },
     {
@@ -12924,7 +12924,7 @@
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L256",
       "id": "funnypot_program_program_loaddotenvfiles",
-      "community": 2,
+      "community": 27,
       "norm_label": ".loaddotenvfiles()"
     },
     {
@@ -12976,7 +12976,7 @@
       "label": ".BuildSystemPrompt()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L928",
+      "source_location": "L930",
       "id": "funnypot_program_program_buildsystemprompt",
       "community": 2,
       "norm_label": ".buildsystemprompt()"
@@ -12985,7 +12985,7 @@
       "label": ".BuildCommandUserPrompt()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L999",
+      "source_location": "L1001",
       "id": "funnypot_program_program_buildcommanduserprompt",
       "community": 63,
       "norm_label": ".buildcommanduserprompt()"
@@ -12994,7 +12994,7 @@
       "label": ".ResolveUserIdentity()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1019",
+      "source_location": "L1021",
       "id": "funnypot_program_program_resolveuseridentity",
       "community": 2,
       "norm_label": ".resolveuseridentity()"
@@ -13003,16 +13003,16 @@
       "label": ".NormalizeTerminalOutput()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1028",
+      "source_location": "L1030",
       "id": "funnypot_program_program_normalizeterminaloutput",
-      "community": 68,
+      "community": 63,
       "norm_label": ".normalizeterminaloutput()"
     },
     {
       "label": ".GetLLMResponseAsync()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1042",
+      "source_location": "L1044",
       "id": "funnypot_program_program_getllmresponseasync",
       "community": 2,
       "norm_label": ".getllmresponseasync()"
@@ -13021,7 +13021,7 @@
       "label": ".GetLlmAttemptModels()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1064",
+      "source_location": "L1066",
       "id": "funnypot_program_program_getllmattemptmodels",
       "community": 2,
       "norm_label": ".getllmattemptmodels()"
@@ -13030,7 +13030,7 @@
       "label": ".TryGetOpenRouterResponseAsync()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1080",
+      "source_location": "L1082",
       "id": "funnypot_program_program_trygetopenrouterresponseasync",
       "community": 2,
       "norm_label": ".trygetopenrouterresponseasync()"
@@ -13039,7 +13039,7 @@
       "label": ".IsApiOrNetworkError()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1131",
+      "source_location": "L1134",
       "id": "funnypot_program_program_isapiornetworkerror",
       "community": 2,
       "norm_label": ".isapiornetworkerror()"
@@ -13048,7 +13048,7 @@
       "label": ".LooksLikeContextLengthError()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1137",
+      "source_location": "L1140",
       "id": "funnypot_program_program_lookslikecontextlengtherror",
       "community": 2,
       "norm_label": ".lookslikecontextlengtherror()"
@@ -13057,7 +13057,7 @@
       "label": ".Truncate()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1145",
+      "source_location": "L1148",
       "id": "funnypot_program_program_truncate",
       "community": 2,
       "norm_label": ".truncate()"
@@ -13066,7 +13066,7 @@
       "label": ".BuildApiUrl()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1147",
+      "source_location": "L1150",
       "id": "funnypot_program_program_buildapiurl",
       "community": 2,
       "norm_label": ".buildapiurl()"
@@ -13075,7 +13075,7 @@
       "label": ".TryParseOpenRouterResponse()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1152",
+      "source_location": "L1155",
       "id": "funnypot_program_program_tryparseopenrouterresponse",
       "community": 2,
       "norm_label": ".tryparseopenrouterresponse()"
@@ -13084,7 +13084,7 @@
       "label": "HarvestedCredential",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1187",
+      "source_location": "L1190",
       "id": "funnypot_program_harvestedcredential",
       "community": 1,
       "norm_label": "harvestedcredential"
@@ -13093,7 +13093,7 @@
       "label": "AuthAttemptLogEntry",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1198",
+      "source_location": "L1201",
       "id": "funnypot_program_authattemptlogentry",
       "community": 1,
       "norm_label": "authattemptlogentry"
@@ -13102,7 +13102,7 @@
       "label": "SessionLogEntry",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1216",
+      "source_location": "L1219",
       "id": "funnypot_program_sessionlogentry",
       "community": 1,
       "norm_label": "sessionlogentry"
@@ -13111,7 +13111,7 @@
       "label": "CommandLogEntry",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1230",
+      "source_location": "L1233",
       "id": "funnypot_program_commandlogentry",
       "community": 1,
       "norm_label": "commandlogentry"
@@ -13120,7 +13120,7 @@
       "label": "CommandResultLogEntry",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1256",
+      "source_location": "L1259",
       "id": "funnypot_program_commandresultlogentry",
       "community": 1,
       "norm_label": "commandresultlogentry"
@@ -13129,7 +13129,7 @@
       "label": "PayloadCaptureLogEntry",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1276",
+      "source_location": "L1280",
       "id": "funnypot_program_payloadcapturelogentry",
       "community": 1,
       "norm_label": "payloadcapturelogentry"
@@ -13138,7 +13138,7 @@
       "label": "HarvestedEvent",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1290",
+      "source_location": "L1294",
       "id": "funnypot_program_harvestedevent",
       "community": 1,
       "norm_label": "harvestedevent"
@@ -13147,7 +13147,7 @@
       "label": "HarvestSummary",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1297",
+      "source_location": "L1301",
       "id": "funnypot_program_harvestsummary",
       "community": 1,
       "norm_label": "harvestsummary"
@@ -13156,7 +13156,7 @@
       "label": "DhsCommandAnalysis",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1310",
+      "source_location": "L1314",
       "id": "funnypot_program_dhscommandanalysis",
       "community": 1,
       "norm_label": "dhscommandanalysis"
@@ -13165,16 +13165,25 @@
       "label": "ChatRequestData",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1324",
+      "source_location": "L1328",
       "id": "funnypot_program_chatrequestdata",
       "community": 1,
       "norm_label": "chatrequestdata"
     },
     {
+      "label": "ReasoningOptions",
+      "file_type": "code",
+      "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1345",
+      "id": "funnypot_program_reasoningoptions",
+      "community": 1,
+      "norm_label": "reasoningoptions"
+    },
+    {
       "label": "ChatMessage",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1338",
+      "source_location": "L1351",
       "id": "funnypot_program_chatmessage",
       "community": 1,
       "norm_label": "chatmessage"
@@ -13183,7 +13192,7 @@
       "label": "GlobalStats",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1348",
+      "source_location": "L1361",
       "id": "funnypot_program_globalstats",
       "community": 1,
       "norm_label": "globalstats"
@@ -13192,7 +13201,7 @@
       "label": "ShellSessionAnalytics",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1366",
+      "source_location": "L1379",
       "id": "funnypot_program_shellsessionanalytics",
       "community": 63,
       "norm_label": "shellsessionanalytics"
@@ -13201,7 +13210,7 @@
       "label": ".RecordCommand()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1378",
+      "source_location": "L1391",
       "id": "funnypot_program_shellsessionanalytics_recordcommand",
       "community": 63,
       "norm_label": ".recordcommand()"
@@ -13210,7 +13219,7 @@
       "label": ".RecordResult()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1389",
+      "source_location": "L1402",
       "id": "funnypot_program_shellsessionanalytics_recordresult",
       "community": 63,
       "norm_label": ".recordresult()"
@@ -13219,7 +13228,7 @@
       "label": ".CalculateTuringMultiplier()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1395",
+      "source_location": "L1408",
       "id": "funnypot_program_shellsessionanalytics_calculateturingmultiplier",
       "community": 63,
       "norm_label": ".calculateturingmultiplier()"
@@ -13228,7 +13237,7 @@
       "label": "InputValidator",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1403",
+      "source_location": "L1416",
       "id": "funnypot_program_inputvalidator",
       "community": 1,
       "norm_label": "inputvalidator"
@@ -13237,7 +13246,7 @@
       "label": ".Validate()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1408",
+      "source_location": "L1421",
       "id": "funnypot_program_inputvalidator_validate",
       "community": 1,
       "norm_label": ".validate()"
@@ -13246,7 +13255,7 @@
       "label": ".ContainsNullBytes()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1421",
+      "source_location": "L1434",
       "id": "funnypot_program_inputvalidator_containsnullbytes",
       "community": 1,
       "norm_label": ".containsnullbytes()"
@@ -13255,7 +13264,7 @@
       "label": ".IsRepetitiveNoise()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1428",
+      "source_location": "L1441",
       "id": "funnypot_program_inputvalidator_isrepetitivenoise",
       "community": 1,
       "norm_label": ".isrepetitivenoise()"
@@ -13264,16 +13273,16 @@
       "label": "SCPDetector",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1450",
+      "source_location": "L1463",
       "id": "funnypot_program_scpdetector",
-      "community": 68,
+      "community": 63,
       "norm_label": "scpdetector"
     },
     {
       "label": "Regex",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1452",
+      "source_location": "L1465",
       "id": "regex",
       "community": 4,
       "norm_label": "regex"
@@ -13282,34 +13291,34 @@
       "label": ".IsSCPCommand()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1456",
+      "source_location": "L1469",
       "id": "funnypot_program_scpdetector_isscpcommand",
-      "community": 68,
+      "community": 63,
       "norm_label": ".isscpcommand()"
     },
     {
       "label": ".IsSCPUpload()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1467",
+      "source_location": "L1480",
       "id": "funnypot_program_scpdetector_isscpupload",
-      "community": 68,
+      "community": 63,
       "norm_label": ".isscpupload()"
     },
     {
       "label": ".ParseSCPUpload()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1472",
+      "source_location": "L1485",
       "id": "funnypot_program_scpdetector_parsescpupload",
-      "community": 68,
+      "community": 63,
       "norm_label": ".parsescpupload()"
     },
     {
       "label": "SCPUploadHandler",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1484",
+      "source_location": "L1497",
       "id": "funnypot_program_scpuploadhandler",
       "community": 79,
       "norm_label": "scpuploadhandler"
@@ -13318,7 +13327,7 @@
       "label": ".EnsureUploadDir()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1499",
+      "source_location": "L1512",
       "id": "funnypot_program_scpuploadhandler_ensureuploaddir",
       "community": 79,
       "norm_label": ".ensureuploaddir()"
@@ -13327,7 +13336,7 @@
       "label": ".CaptureUpload()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1501",
+      "source_location": "L1514",
       "id": "funnypot_program_scpuploadhandler_captureupload",
       "community": 79,
       "norm_label": ".captureupload()"
@@ -13336,7 +13345,7 @@
       "label": "SCPUploadSession",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1557",
+      "source_location": "L1570",
       "id": "funnypot_program_scpuploadsession",
       "community": 79,
       "norm_label": "scpuploadsession"
@@ -13345,7 +13354,7 @@
       "label": "byte",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1560",
+      "source_location": "L1573",
       "id": "byte",
       "community": 79,
       "norm_label": "byte"
@@ -13354,7 +13363,7 @@
       "label": "MemoryStream",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1564",
+      "source_location": "L1577",
       "id": "memorystream",
       "community": 79,
       "norm_label": "memorystream"
@@ -13363,7 +13372,7 @@
       "label": "long",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1567",
+      "source_location": "L1580",
       "id": "long",
       "community": 79,
       "norm_label": "long"
@@ -13372,7 +13381,7 @@
       "label": "State",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1569",
+      "source_location": "L1582",
       "id": "state",
       "community": 79,
       "norm_label": "state"
@@ -13381,7 +13390,7 @@
       "label": ".HandleData()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1577",
+      "source_location": "L1590",
       "id": "funnypot_program_scpuploadsession_handledata",
       "community": 79,
       "norm_label": ".handledata()"
@@ -13390,7 +13399,7 @@
       "label": ".ReadHeader()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1597",
+      "source_location": "L1610",
       "id": "funnypot_program_scpuploadsession_readheader",
       "community": 79,
       "norm_label": ".readheader()"
@@ -13399,7 +13408,7 @@
       "label": ".ReadContent()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1646",
+      "source_location": "L1659",
       "id": "funnypot_program_scpuploadsession_readcontent",
       "community": 79,
       "norm_label": ".readcontent()"
@@ -13408,7 +13417,7 @@
       "label": ".ReadTerminator()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1663",
+      "source_location": "L1676",
       "id": "funnypot_program_scpuploadsession_readterminator",
       "community": 79,
       "norm_label": ".readterminator()"
@@ -13417,7 +13426,7 @@
       "label": ".TryParseHeader()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1680",
+      "source_location": "L1693",
       "id": "funnypot_program_scpuploadsession_tryparseheader",
       "community": 79,
       "norm_label": ".tryparseheader()"
@@ -13426,7 +13435,7 @@
       "label": "SCPUploadLogEntry",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1706",
+      "source_location": "L1719",
       "id": "funnypot_program_scpuploadlogentry",
       "community": 1,
       "norm_label": "scpuploadlogentry"
@@ -13435,7 +13444,7 @@
       "label": "SyntheticHostClock",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1717",
+      "source_location": "L1730",
       "id": "funnypot_program_synthetichostclock",
       "community": 113,
       "norm_label": "synthetichostclock"
@@ -13444,7 +13453,7 @@
       "label": "DateTime",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1720",
+      "source_location": "L1733",
       "id": "datetime",
       "community": 113,
       "norm_label": "datetime"
@@ -13453,7 +13462,7 @@
       "label": ".GetUptime()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1725",
+      "source_location": "L1738",
       "id": "funnypot_program_synthetichostclock_getuptime",
       "community": 113,
       "norm_label": ".getuptime()"
@@ -13462,7 +13471,7 @@
       "label": ".FormatPromptUptime()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1732",
+      "source_location": "L1745",
       "id": "funnypot_program_synthetichostclock_formatpromptuptime",
       "community": 113,
       "norm_label": ".formatpromptuptime()"
@@ -13471,7 +13480,7 @@
       "label": ".FormatProcUptime()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1738",
+      "source_location": "L1751",
       "id": "funnypot_program_synthetichostclock_formatprocuptime",
       "community": 113,
       "norm_label": ".formatprocuptime()"
@@ -13480,7 +13489,7 @@
       "label": ".ResetForTests()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1745",
+      "source_location": "L1758",
       "id": "funnypot_program_synthetichostclock_resetfortests",
       "community": 113,
       "norm_label": ".resetfortests()"
@@ -13489,7 +13498,7 @@
       "label": ".GetBootTimeUtc()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1754",
+      "source_location": "L1767",
       "id": "funnypot_program_synthetichostclock_getboottimeutc",
       "community": 113,
       "norm_label": ".getboottimeutc()"
@@ -13498,7 +13507,7 @@
       "label": ".GetStatePath()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1778",
+      "source_location": "L1791",
       "id": "funnypot_program_synthetichostclock_getstatepath",
       "community": 113,
       "norm_label": ".getstatepath()"
@@ -13507,7 +13516,7 @@
       "label": ".TryReadState()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1783",
+      "source_location": "L1796",
       "id": "funnypot_program_synthetichostclock_tryreadstate",
       "community": 113,
       "norm_label": ".tryreadstate()"
@@ -13516,7 +13525,7 @@
       "label": ".WriteState()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1805",
+      "source_location": "L1818",
       "id": "funnypot_program_synthetichostclock_writestate",
       "community": 113,
       "norm_label": ".writestate()"
@@ -13525,7 +13534,7 @@
       "label": "SyntheticHostState",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1822",
+      "source_location": "L1835",
       "id": "funnypot_program_synthetichoststate",
       "community": 1,
       "norm_label": "synthetichoststate"
@@ -13534,9 +13543,9 @@
       "label": "SessionCommandWorker",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1828",
+      "source_location": "L1841",
       "id": "funnypot_program_sessioncommandworker",
-      "community": 63,
+      "community": 249,
       "norm_label": "sessioncommandworker"
     },
     {
@@ -13545,113 +13554,113 @@
       "source_file": "",
       "source_location": "",
       "id": "idisposable",
-      "community": 63,
+      "community": 249,
       "norm_label": "idisposable"
     },
     {
       "label": "BlockingCollection",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1830",
+      "source_location": "L1843",
       "id": "blockingcollection",
-      "community": 63,
+      "community": 249,
       "norm_label": "blockingcollection"
     },
     {
       "label": "Thread",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1831",
+      "source_location": "L1844",
       "id": "thread",
-      "community": 63,
+      "community": 249,
       "norm_label": "thread"
     },
     {
       "label": ".TryPost()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1846",
+      "source_location": "L1859",
       "id": "funnypot_program_sessioncommandworker_trypost",
-      "community": 63,
+      "community": 249,
       "norm_label": ".trypost()"
     },
     {
       "label": ".ProcessQueue()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1862",
+      "source_location": "L1875",
       "id": "funnypot_program_sessioncommandworker_processqueue",
-      "community": 63,
+      "community": 249,
       "norm_label": ".processqueue()"
     },
     {
       "label": ".Dispose()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1883",
+      "source_location": "L1896",
       "id": "funnypot_program_sessioncommandworker_dispose",
-      "community": 63,
+      "community": 249,
       "norm_label": ".dispose()"
     },
     {
       "label": "LlmRateLimiter",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1897",
+      "source_location": "L1910",
       "id": "funnypot_program_llmratelimiter",
-      "community": 79,
+      "community": 285,
       "norm_label": "llmratelimiter"
     },
     {
       "label": ".IsAllowed()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1903",
+      "source_location": "L1916",
       "id": "funnypot_program_llmratelimiter_isallowed",
-      "community": 79,
+      "community": 285,
       "norm_label": ".isallowed()"
     },
     {
       "label": ".Reset()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1934",
+      "source_location": "L1947",
       "id": "funnypot_program_llmratelimiter_reset",
-      "community": 79,
+      "community": 285,
       "norm_label": ".reset()"
     },
     {
       "label": ".CleanupExpired()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1939",
+      "source_location": "L1952",
       "id": "funnypot_program_llmratelimiter_cleanupexpired",
-      "community": 79,
+      "community": 285,
       "norm_label": ".cleanupexpired()"
     },
     {
       "label": ".LogLimitStatus()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1949",
+      "source_location": "L1962",
       "id": "funnypot_program_llmratelimiter_loglimitstatus",
-      "community": 68,
+      "community": 285,
       "norm_label": ".loglimitstatus()"
     },
     {
       "label": "RateLimitInfo",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1958",
+      "source_location": "L1971",
       "id": "funnypot_program_ratelimitinfo",
-      "community": 113,
+      "community": 190,
       "norm_label": "ratelimitinfo"
     },
     {
       "label": "CommandResolver",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1966",
+      "source_location": "L1979",
       "id": "funnypot_program_commandresolver",
       "community": 68,
       "norm_label": "commandresolver"
@@ -13660,7 +13669,7 @@
       "label": ".ClassifyCommand()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1977",
+      "source_location": "L1990",
       "id": "funnypot_program_commandresolver_classifycommand",
       "community": 68,
       "norm_label": ".classifycommand()"
@@ -13669,16 +13678,16 @@
       "label": ".ResolveCommandAsync()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L1996",
+      "source_location": "L2009",
       "id": "funnypot_program_commandresolver_resolvecommandasync",
-      "community": 68,
+      "community": 63,
       "norm_label": ".resolvecommandasync()"
     },
     {
       "label": ".ApplyLocalShellStateChanges()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2091",
+      "source_location": "L2104",
       "id": "funnypot_program_commandresolver_applylocalshellstatechanges",
       "community": 68,
       "norm_label": ".applylocalshellstatechanges()"
@@ -13687,16 +13696,16 @@
       "label": ".IsFindSuidDiscoveryCommand()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2113",
+      "source_location": "L2126",
       "id": "funnypot_program_commandresolver_isfindsuiddiscoverycommand",
-      "community": 68,
+      "community": 63,
       "norm_label": ".isfindsuiddiscoverycommand()"
     },
     {
       "label": ".ShouldOverrideImplausibleFailure()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2120",
+      "source_location": "L2133",
       "id": "funnypot_program_commandresolver_shouldoverrideimplausiblefailure",
       "community": 68,
       "norm_label": ".shouldoverrideimplausiblefailure()"
@@ -13705,7 +13714,7 @@
       "label": ".ExtractShellCommandNames()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2129",
+      "source_location": "L2142",
       "id": "funnypot_program_commandresolver_extractshellcommandnames",
       "community": 68,
       "norm_label": ".extractshellcommandnames()"
@@ -13714,7 +13723,7 @@
       "label": ".IsPlausibleLocalCommandName()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2143",
+      "source_location": "L2156",
       "id": "funnypot_program_commandresolver_isplausiblelocalcommandname",
       "community": 68,
       "norm_label": ".isplausiblelocalcommandname()"
@@ -13723,7 +13732,7 @@
       "label": ".PreferStaticResponse()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2151",
+      "source_location": "L2164",
       "id": "funnypot_program_commandresolver_preferstaticresponse",
       "community": 68,
       "norm_label": ".preferstaticresponse()"
@@ -13732,7 +13741,7 @@
       "label": ".ExpandHomePath()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2162",
+      "source_location": "L2175",
       "id": "funnypot_program_commandresolver_expandhomepath",
       "community": 68,
       "norm_label": ".expandhomepath()"
@@ -13741,7 +13750,7 @@
       "label": ".SplitShellControlSegments()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2172",
+      "source_location": "L2185",
       "id": "funnypot_program_commandresolver_splitshellcontrolsegments",
       "community": 68,
       "norm_label": ".splitshellcontrolsegments()"
@@ -13750,16 +13759,16 @@
       "label": ".IsModelFailureResponse()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2230",
+      "source_location": "L2243",
       "id": "funnypot_program_commandresolver_ismodelfailureresponse",
-      "community": 68,
+      "community": 63,
       "norm_label": ".ismodelfailureresponse()"
     },
     {
       "label": ".IsCompoundShellCommand()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2236",
+      "source_location": "L2249",
       "id": "funnypot_program_commandresolver_iscompoundshellcommand",
       "community": 68,
       "norm_label": ".iscompoundshellcommand()"
@@ -13768,25 +13777,25 @@
       "label": ".GenerateLocalFallbackResponse()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2271",
+      "source_location": "L2284",
       "id": "funnypot_program_commandresolver_generatelocalfallbackresponse",
-      "community": 68,
+      "community": 63,
       "norm_label": ".generatelocalfallbackresponse()"
     },
     {
       "label": ".GenerateSingleFallbackResponse()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2283",
+      "source_location": "L2296",
       "id": "funnypot_program_commandresolver_generatesinglefallbackresponse",
-      "community": 68,
+      "community": 63,
       "norm_label": ".generatesinglefallbackresponse()"
     },
     {
       "label": ".TryGeneratePipelineFallback()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2332",
+      "source_location": "L2345",
       "id": "funnypot_program_commandresolver_trygeneratepipelinefallback",
       "community": 68,
       "norm_label": ".trygeneratepipelinefallback()"
@@ -13795,7 +13804,7 @@
       "label": ".IsBuiltInCommand()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2385",
+      "source_location": "L2398",
       "id": "funnypot_program_commandresolver_isbuiltincommand",
       "community": 68,
       "norm_label": ".isbuiltincommand()"
@@ -13804,7 +13813,7 @@
       "label": ".FormatLsResponse()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2627",
+      "source_location": "L2640",
       "id": "funnypot_program_commandresolver_formatlsresponse",
       "community": 68,
       "norm_label": ".formatlsresponse()"
@@ -13813,7 +13822,7 @@
       "label": ".FormatCatResponse()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2633",
+      "source_location": "L2646",
       "id": "funnypot_program_commandresolver_formatcatresponse",
       "community": 68,
       "norm_label": ".formatcatresponse()"
@@ -13822,7 +13831,7 @@
       "label": ".TryApplyLocalFilesystemMutation()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2652",
+      "source_location": "L2665",
       "id": "funnypot_program_commandresolver_tryapplylocalfilesystemmutation",
       "community": 68,
       "norm_label": ".tryapplylocalfilesystemmutation()"
@@ -13831,7 +13840,7 @@
       "label": ".MaterializeDownloadedFile()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2666",
+      "source_location": "L2679",
       "id": "funnypot_program_commandresolver_materializedownloadedfile",
       "community": 68,
       "norm_label": ".materializedownloadedfile()"
@@ -13840,7 +13849,7 @@
       "label": ".StripShellQuotes()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2694",
+      "source_location": "L2707",
       "id": "funnypot_program_commandresolver_stripshellquotes",
       "community": 68,
       "norm_label": ".stripshellquotes()"
@@ -13849,25 +13858,25 @@
       "label": ".IsBinaryExecutableCatCommand()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2720",
+      "source_location": "L2733",
       "id": "funnypot_program_commandresolver_isbinaryexecutablecatcommand",
-      "community": 68,
+      "community": 63,
       "norm_label": ".isbinaryexecutablecatcommand()"
     },
     {
       "label": ".IsCpuInfoCommand()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2738",
+      "source_location": "L2751",
       "id": "funnypot_program_commandresolver_iscpuinfocommand",
-      "community": 68,
+      "community": 63,
       "norm_label": ".iscpuinfocommand()"
     },
     {
       "label": ".GenerateCpuInfoResponseAsync()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2744",
+      "source_location": "L2757",
       "id": "funnypot_program_commandresolver_generatecpuinforesponseasync",
       "community": 204,
       "norm_label": ".generatecpuinforesponseasync()"
@@ -13876,7 +13885,7 @@
       "label": ".TryParseCpuInfoValues()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2763",
+      "source_location": "L2776",
       "id": "funnypot_program_commandresolver_tryparsecpuinfovalues",
       "community": 204,
       "norm_label": ".tryparsecpuinfovalues()"
@@ -13885,7 +13894,7 @@
       "label": ".ExtractJsonObject()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2797",
+      "source_location": "L2810",
       "id": "funnypot_program_commandresolver_extractjsonobject",
       "community": 204,
       "norm_label": ".extractjsonobject()"
@@ -13894,7 +13903,7 @@
       "label": ".GetInt()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2804",
+      "source_location": "L2817",
       "id": "funnypot_program_commandresolver_getint",
       "community": 204,
       "norm_label": ".getint()"
@@ -13903,7 +13912,7 @@
       "label": ".GetString()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2809",
+      "source_location": "L2822",
       "id": "funnypot_program_commandresolver_getstring",
       "community": 204,
       "norm_label": ".getstring()"
@@ -13912,7 +13921,7 @@
       "label": ".GetStringArray()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2816",
+      "source_location": "L2829",
       "id": "funnypot_program_commandresolver_getstringarray",
       "community": 204,
       "norm_label": ".getstringarray()"
@@ -13921,7 +13930,7 @@
       "label": ".FormatCpuInfo()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2829",
+      "source_location": "L2842",
       "id": "funnypot_program_commandresolver_formatcpuinfo",
       "community": 204,
       "norm_label": ".formatcpuinfo()"
@@ -13930,16 +13939,16 @@
       "label": ".BinaryExecutableCatResponse()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2854",
+      "source_location": "L2867",
       "id": "funnypot_program_commandresolver_binaryexecutablecatresponse",
-      "community": 68,
+      "community": 63,
       "norm_label": ".binaryexecutablecatresponse()"
     },
     {
       "label": ".IsBuiltInCommandName()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2872",
+      "source_location": "L2885",
       "id": "funnypot_program_commandresolver_isbuiltincommandname",
       "community": 68,
       "norm_label": ".isbuiltincommandname()"
@@ -13948,7 +13957,7 @@
       "label": ".FormatLocateResponse()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2888",
+      "source_location": "L2901",
       "id": "funnypot_program_commandresolver_formatlocateresponse",
       "community": 68,
       "norm_label": ".formatlocateresponse()"
@@ -13957,7 +13966,7 @@
       "label": ".NormalizeExecutableName()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2919",
+      "source_location": "L2932",
       "id": "funnypot_program_commandresolver_normalizeexecutablename",
       "community": 68,
       "norm_label": ".normalizeexecutablename()"
@@ -13966,7 +13975,7 @@
       "label": ".IsNonLinuxNetworkDeviceProbe()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2925",
+      "source_location": "L2938",
       "id": "funnypot_program_commandresolver_isnonlinuxnetworkdeviceprobe",
       "community": 68,
       "norm_label": ".isnonlinuxnetworkdeviceprobe()"
@@ -13975,7 +13984,7 @@
       "label": ".FormatUname()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2935",
+      "source_location": "L2948",
       "id": "funnypot_program_commandresolver_formatuname",
       "community": 68,
       "norm_label": ".formatuname()"
@@ -13984,79 +13993,79 @@
       "label": ".FormatUptime()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2957",
+      "source_location": "L2970",
       "id": "funnypot_program_commandresolver_formatuptime",
-      "community": 68,
+      "community": 113,
       "norm_label": ".formatuptime()"
     },
     {
       "label": "StaticResponseStore",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2967",
+      "source_location": "L2980",
       "id": "funnypot_program_staticresponsestore",
-      "community": 113,
+      "community": 38,
       "norm_label": "staticresponsestore"
     },
     {
       "label": "JsonSerializerOptions",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2970",
+      "source_location": "L2983",
       "id": "jsonserializeroptions",
-      "community": 113,
+      "community": 38,
       "norm_label": "jsonserializeroptions"
     },
     {
       "label": "bool",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2971",
+      "source_location": "L2984",
       "id": "bool",
-      "community": 113,
+      "community": 38,
       "norm_label": "bool"
     },
     {
       "label": ".EnsureLoaded()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2974",
+      "source_location": "L2987",
       "id": "funnypot_program_staticresponsestore_ensureloaded",
-      "community": 113,
+      "community": 38,
       "norm_label": ".ensureloaded()"
     },
     {
       "label": ".LoadResponses()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L2985",
+      "source_location": "L2998",
       "id": "funnypot_program_staticresponsestore_loadresponses",
-      "community": 113,
+      "community": 38,
       "norm_label": ".loadresponses()"
     },
     {
       "label": ".ResolveDataPath()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3021",
+      "source_location": "L3034",
       "id": "funnypot_program_staticresponsestore_resolvedatapath",
-      "community": 113,
+      "community": 38,
       "norm_label": ".resolvedatapath()"
     },
     {
       "label": ".GetResponse()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3036",
+      "source_location": "L3049",
       "id": "funnypot_program_staticresponsestore_getresponse",
-      "community": 113,
+      "community": 63,
       "norm_label": ".getresponse()"
     },
     {
       "label": ".GenerateDynamicResponse()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3063",
+      "source_location": "L3076",
       "id": "funnypot_program_staticresponsestore_generatedynamicresponse",
       "community": 113,
       "norm_label": ".generatedynamicresponse()"
@@ -14065,16 +14074,16 @@
       "label": ".IsKnownCommand()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3195",
+      "source_location": "L3208",
       "id": "funnypot_program_staticresponsestore_isknowncommand",
-      "community": 113,
+      "community": 38,
       "norm_label": ".isknowncommand()"
     },
     {
       "label": "StaticResponseEntry",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3204",
+      "source_location": "L3217",
       "id": "funnypot_program_staticresponseentry",
       "community": 1,
       "norm_label": "staticresponseentry"
@@ -14083,7 +14092,7 @@
       "label": "CpuInfoValues",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3211",
+      "source_location": "L3224",
       "id": "funnypot_program_cpuinfovalues",
       "community": 204,
       "norm_label": "cpuinfovalues"
@@ -14092,7 +14101,7 @@
       "label": ".Fallback()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3221",
+      "source_location": "L3234",
       "id": "funnypot_program_cpuinfovalues_fallback",
       "community": 204,
       "norm_label": ".fallback()"
@@ -14101,7 +14110,7 @@
       "label": "DataHarvester",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3233",
+      "source_location": "L3246",
       "id": "funnypot_program_dataharvester",
       "community": 4,
       "norm_label": "dataharvester"
@@ -14110,7 +14119,7 @@
       "label": ".AnalyzeCommand()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3243",
+      "source_location": "L3256",
       "id": "funnypot_program_dataharvester_analyzecommand",
       "community": 4,
       "norm_label": ".analyzecommand()"
@@ -14119,7 +14128,7 @@
       "label": ".AddMitreTactic()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3280",
+      "source_location": "L3293",
       "id": "funnypot_program_dataharvester_addmitretactic",
       "community": 4,
       "norm_label": ".addmitretactic()"
@@ -14128,7 +14137,7 @@
       "label": ".CalculateEntropy()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3286",
+      "source_location": "L3299",
       "id": "funnypot_program_dataharvester_calculateentropy",
       "community": 4,
       "norm_label": ".calculateentropy()"
@@ -14137,7 +14146,7 @@
       "label": ".LevenshteinDistance()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3296",
+      "source_location": "L3309",
       "id": "funnypot_program_dataharvester_levenshteindistance",
       "community": 4,
       "norm_label": ".levenshteindistance()"
@@ -14146,7 +14155,7 @@
       "label": ".CalculateFingerprintHash()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3318",
+      "source_location": "L3331",
       "id": "funnypot_program_dataharvester_calculatefingerprinthash",
       "community": 4,
       "norm_label": ".calculatefingerprinthash()"
@@ -14155,16 +14164,16 @@
       "label": ".CapturePayloadMetadataAsync()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3327",
+      "source_location": "L3340",
       "id": "funnypot_program_dataharvester_capturepayloadmetadataasync",
-      "community": 5,
+      "community": 4,
       "norm_label": ".capturepayloadmetadataasync()"
     },
     {
       "label": ".IsFailureResponse()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3391",
+      "source_location": "L3404",
       "id": "funnypot_program_dataharvester_isfailureresponse",
       "community": 63,
       "norm_label": ".isfailureresponse()"
@@ -14173,7 +14182,7 @@
       "label": ".DetectHallucinationFeedback()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3397",
+      "source_location": "L3410",
       "id": "funnypot_program_dataharvester_detecthallucinationfeedback",
       "community": 63,
       "norm_label": ".detecthallucinationfeedback()"
@@ -14182,7 +14191,7 @@
       "label": ".CalculateDiscoveryDepthScore()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3402",
+      "source_location": "L3415",
       "id": "funnypot_program_dataharvester_calculatediscoverydepthscore",
       "community": 4,
       "norm_label": ".calculatediscoverydepthscore()"
@@ -14191,7 +14200,7 @@
       "label": ".IsDiscoveryCommand()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3413",
+      "source_location": "L3426",
       "id": "funnypot_program_dataharvester_isdiscoverycommand",
       "community": 4,
       "norm_label": ".isdiscoverycommand()"
@@ -14200,7 +14209,7 @@
       "label": ".IsToolTransferCommand()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3426",
+      "source_location": "L3439",
       "id": "funnypot_program_dataharvester_istooltransfercommand",
       "community": 4,
       "norm_label": ".istooltransfercommand()"
@@ -14209,7 +14218,7 @@
       "label": ".DetectPersistenceVector()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3443",
+      "source_location": "L3456",
       "id": "funnypot_program_dataharvester_detectpersistencevector",
       "community": 4,
       "norm_label": ".detectpersistencevector()"
@@ -14218,7 +14227,7 @@
       "label": ".DetectTunnelingIntent()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3452",
+      "source_location": "L3465",
       "id": "funnypot_program_dataharvester_detecttunnelingintent",
       "community": 4,
       "norm_label": ".detecttunnelingintent()"
@@ -14227,7 +14236,7 @@
       "label": ".DetectPersonaBreakout()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3461",
+      "source_location": "L3474",
       "id": "funnypot_program_dataharvester_detectpersonabreakout",
       "community": 4,
       "norm_label": ".detectpersonabreakout()"
@@ -14236,7 +14245,7 @@
       "label": ".DetectReconnaissanceProbe()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3466",
+      "source_location": "L3479",
       "id": "funnypot_program_dataharvester_detectreconnaissanceprobe",
       "community": 4,
       "norm_label": ".detectreconnaissanceprobe()"
@@ -14245,7 +14254,7 @@
       "label": ".CalculateSemanticComplexity()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3481",
+      "source_location": "L3494",
       "id": "funnypot_program_dataharvester_calculatesemanticcomplexity",
       "community": 4,
       "norm_label": ".calculatesemanticcomplexity()"
@@ -14254,7 +14263,7 @@
       "label": ".ExtractEgressTargets()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3488",
+      "source_location": "L3501",
       "id": "funnypot_program_dataharvester_extractegresstargets",
       "community": 4,
       "norm_label": ".extractegresstargets()"
@@ -14263,7 +14272,7 @@
       "label": "Logger",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3498",
+      "source_location": "L3511",
       "id": "funnypot_program_logger",
       "community": 5,
       "norm_label": "logger"
@@ -14272,7 +14281,7 @@
       "label": ".LogYaml()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3516",
+      "source_location": "L3529",
       "id": "funnypot_program_logger_logyaml",
       "community": 5,
       "norm_label": ".logyaml()"
@@ -14281,7 +14290,7 @@
       "label": ".TryGetSessionKey()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3538",
+      "source_location": "L3551",
       "id": "funnypot_program_logger_trygetsessionkey",
       "community": 5,
       "norm_label": ".trygetsessionkey()"
@@ -14290,7 +14299,7 @@
       "label": ".IsPublicationBoundaryEvent()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3544",
+      "source_location": "L3557",
       "id": "funnypot_program_logger_ispublicationboundaryevent",
       "community": 5,
       "norm_label": ".ispublicationboundaryevent()"
@@ -14299,7 +14308,7 @@
       "label": ".ShouldRequestDataPush()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3549",
+      "source_location": "L3562",
       "id": "funnypot_program_logger_shouldrequestdatapush",
       "community": 5,
       "norm_label": ".shouldrequestdatapush()"
@@ -14308,7 +14317,7 @@
       "label": ".RequestDataPush()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3554",
+      "source_location": "L3567",
       "id": "funnypot_program_logger_requestdatapush",
       "community": 5,
       "norm_label": ".requestdatapush()"
@@ -14317,7 +14326,7 @@
       "label": ".IsPrivateEndpoint()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3568",
+      "source_location": "L3581",
       "id": "funnypot_program_logger_isprivateendpoint",
       "community": 5,
       "norm_label": ".isprivateendpoint()"
@@ -14326,7 +14335,7 @@
       "label": ".LogHarvestUnsafe()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3578",
+      "source_location": "L3591",
       "id": "funnypot_program_logger_logharvestunsafe",
       "community": 5,
       "norm_label": ".logharvestunsafe()"
@@ -14335,7 +14344,7 @@
       "label": ".ShouldPublishFrontendEvent()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3603",
+      "source_location": "L3616",
       "id": "funnypot_program_logger_shouldpublishfrontendevent",
       "community": 5,
       "norm_label": ".shouldpublishfrontendevent()"
@@ -14344,7 +14353,7 @@
       "label": ".UpdateHarvestSummaryUnsafe()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3612",
+      "source_location": "L3625",
       "id": "funnypot_program_logger_updateharvestsummaryunsafe",
       "community": 5,
       "norm_label": ".updateharvestsummaryunsafe()"
@@ -14353,7 +14362,7 @@
       "label": ".ApplyHarvestSummaryEvent()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3628",
+      "source_location": "L3641",
       "id": "funnypot_program_logger_applyharvestsummaryevent",
       "community": 5,
       "norm_label": ".applyharvestsummaryevent()"
@@ -14362,7 +14371,7 @@
       "label": ".TryGetRemoteIp()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3678",
+      "source_location": "L3691",
       "id": "funnypot_program_logger_trygetremoteip",
       "community": 5,
       "norm_label": ".trygetremoteip()"
@@ -14371,52 +14380,52 @@
       "label": ".UpdateGlobalStats()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3687",
+      "source_location": "L3700",
       "id": "funnypot_program_logger_updateglobalstats",
-      "community": 2,
+      "community": 27,
       "norm_label": ".updateglobalstats()"
     },
     {
       "label": ".GetLogFilePath()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3745",
+      "source_location": "L3758",
       "id": "funnypot_program_logger_getlogfilepath",
-      "community": 5,
+      "community": 27,
       "norm_label": ".getlogfilepath()"
     },
     {
       "label": ".GetSessionLogUniquePart()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3757",
+      "source_location": "L3770",
       "id": "funnypot_program_logger_getsessionloguniquepart",
-      "community": 5,
+      "community": 27,
       "norm_label": ".getsessionloguniquepart()"
     },
     {
       "label": ".LogMsg()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3764",
+      "source_location": "L3777",
       "id": "funnypot_program_logger_logmsg",
-      "community": 2,
+      "community": 27,
       "norm_label": ".logmsg()"
     },
     {
       "label": ".LogMetric()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3780",
+      "source_location": "L3793",
       "id": "funnypot_program_logger_logmetric",
-      "community": 5,
+      "community": 27,
       "norm_label": ".logmetric()"
     },
     {
       "label": ".PushToGit()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3796",
+      "source_location": "L3809",
       "id": "funnypot_program_logger_pushtogit",
       "community": 5,
       "norm_label": ".pushtogit()"
@@ -14425,7 +14434,7 @@
       "label": ".PreparePublicationRepository()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3867",
+      "source_location": "L3880",
       "id": "funnypot_program_logger_preparepublicationrepository",
       "community": 5,
       "norm_label": ".preparepublicationrepository()"
@@ -14434,7 +14443,7 @@
       "label": ".RemoveLegacyTelemetryFiles()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3904",
+      "source_location": "L3917",
       "id": "funnypot_program_logger_removelegacytelemetryfiles",
       "community": 5,
       "norm_label": ".removelegacytelemetryfiles()"
@@ -14443,7 +14452,7 @@
       "label": ".EnsureValidPublicationJson()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3915",
+      "source_location": "L3928",
       "id": "funnypot_program_logger_ensurevalidpublicationjson",
       "community": 5,
       "norm_label": ".ensurevalidpublicationjson()"
@@ -14452,7 +14461,7 @@
       "label": ".IsValidJson()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3936",
+      "source_location": "L3949",
       "id": "funnypot_program_logger_isvalidjson",
       "community": 5,
       "norm_label": ".isvalidjson()"
@@ -14461,7 +14470,7 @@
       "label": ".SyncPublicationBranch()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3955",
+      "source_location": "L3968",
       "id": "funnypot_program_logger_syncpublicationbranch",
       "community": 5,
       "norm_label": ".syncpublicationbranch()"
@@ -14470,7 +14479,7 @@
       "label": ".SnapshotPublicationFiles()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3968",
+      "source_location": "L3981",
       "id": "funnypot_program_logger_snapshotpublicationfiles",
       "community": 5,
       "norm_label": ".snapshotpublicationfiles()"
@@ -14479,7 +14488,7 @@
       "label": ".RestorePublicationSnapshot()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L3986",
+      "source_location": "L3999",
       "id": "funnypot_program_logger_restorepublicationsnapshot",
       "community": 5,
       "norm_label": ".restorepublicationsnapshot()"
@@ -14488,7 +14497,7 @@
       "label": ".CleanupPublicationSnapshot()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L4000",
+      "source_location": "L4013",
       "id": "funnypot_program_logger_cleanuppublicationsnapshot",
       "community": 5,
       "norm_label": ".cleanuppublicationsnapshot()"
@@ -14497,7 +14506,7 @@
       "label": ".CopyDirectory()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L4013",
+      "source_location": "L4026",
       "id": "funnypot_program_logger_copydirectory",
       "community": 5,
       "norm_label": ".copydirectory()"
@@ -14506,7 +14515,7 @@
       "label": ".RunGitCommand()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L4024",
+      "source_location": "L4037",
       "id": "funnypot_program_logger_rungitcommand",
       "community": 5,
       "norm_label": ".rungitcommand()"
@@ -14515,7 +14524,7 @@
       "label": ".TryRunGitCommand()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L4030",
+      "source_location": "L4043",
       "id": "funnypot_program_logger_tryrungitcommand",
       "community": 5,
       "norm_label": ".tryrungitcommand()"
@@ -14524,7 +14533,7 @@
       "label": ".EnsurePublicationRepository()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L4061",
+      "source_location": "L4074",
       "id": "funnypot_program_logger_ensurepublicationrepository",
       "community": 5,
       "norm_label": ".ensurepublicationrepository()"
@@ -14533,7 +14542,7 @@
       "label": ".GetStaticDashboardRemoteUrl()",
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
-      "source_location": "L4081",
+      "source_location": "L4094",
       "id": "funnypot_program_logger_getstaticdashboardremoteurl",
       "community": 5,
       "norm_label": ".getstaticdashboardremoteurl()"
@@ -15327,7 +15336,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L81",
       "id": "linux_x64_funnypot_deps_runtime_system_componentmodel_eventbasedasync_dll",
-      "community": 70,
+      "community": 103,
       "norm_label": "system.componentmodel.eventbasedasync.dll"
     },
     {
@@ -15336,7 +15345,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L82",
       "id": "linux_x64_funnypot_deps_system_componentmodel_eventbasedasync_dll_assemblyversion",
-      "community": 70,
+      "community": 103,
       "norm_label": "assemblyversion"
     },
     {
@@ -15345,7 +15354,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L83",
       "id": "linux_x64_funnypot_deps_system_componentmodel_eventbasedasync_dll_fileversion",
-      "community": 70,
+      "community": 103,
       "norm_label": "fileversion"
     },
     {
@@ -15408,7 +15417,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L93",
       "id": "linux_x64_funnypot_deps_runtime_system_componentmodel_dll",
-      "community": 103,
+      "community": 70,
       "norm_label": "system.componentmodel.dll"
     },
     {
@@ -15417,7 +15426,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L94",
       "id": "linux_x64_funnypot_deps_system_componentmodel_dll_assemblyversion",
-      "community": 103,
+      "community": 70,
       "norm_label": "assemblyversion"
     },
     {
@@ -15426,7 +15435,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L95",
       "id": "linux_x64_funnypot_deps_system_componentmodel_dll_fileversion",
-      "community": 103,
+      "community": 70,
       "norm_label": "fileversion"
     },
     {
@@ -15570,7 +15579,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L117",
       "id": "linux_x64_funnypot_deps_runtime_system_data_dll",
-      "community": 249,
+      "community": 70,
       "norm_label": "system.data.dll"
     },
     {
@@ -15579,7 +15588,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L118",
       "id": "linux_x64_funnypot_deps_system_data_dll_assemblyversion",
-      "community": 249,
+      "community": 70,
       "norm_label": "assemblyversion"
     },
     {
@@ -15588,7 +15597,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L119",
       "id": "linux_x64_funnypot_deps_system_data_dll_fileversion",
-      "community": 249,
+      "community": 70,
       "norm_label": "fileversion"
     },
     {
@@ -15597,7 +15606,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L121",
       "id": "linux_x64_funnypot_deps_runtime_system_diagnostics_contracts_dll",
-      "community": 70,
+      "community": 286,
       "norm_label": "system.diagnostics.contracts.dll"
     },
     {
@@ -15606,7 +15615,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L122",
       "id": "linux_x64_funnypot_deps_system_diagnostics_contracts_dll_assemblyversion",
-      "community": 70,
+      "community": 286,
       "norm_label": "assemblyversion"
     },
     {
@@ -15615,7 +15624,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L123",
       "id": "linux_x64_funnypot_deps_system_diagnostics_contracts_dll_fileversion",
-      "community": 70,
+      "community": 286,
       "norm_label": "fileversion"
     },
     {
@@ -16569,7 +16578,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L265",
       "id": "linux_x64_funnypot_deps_runtime_system_linq_dll",
-      "community": 176,
+      "community": 289,
       "norm_label": "system.linq.dll"
     },
     {
@@ -16578,7 +16587,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L266",
       "id": "linux_x64_funnypot_deps_system_linq_dll_assemblyversion",
-      "community": 176,
+      "community": 289,
       "norm_label": "assemblyversion"
     },
     {
@@ -16587,7 +16596,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L267",
       "id": "linux_x64_funnypot_deps_system_linq_dll_fileversion",
-      "community": 176,
+      "community": 289,
       "norm_label": "fileversion"
     },
     {
@@ -16785,7 +16794,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L297",
       "id": "linux_x64_funnypot_deps_runtime_system_net_ping_dll",
-      "community": 70,
+      "community": 176,
       "norm_label": "system.net.ping.dll"
     },
     {
@@ -16794,7 +16803,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L298",
       "id": "linux_x64_funnypot_deps_system_net_ping_dll_assemblyversion",
-      "community": 70,
+      "community": 176,
       "norm_label": "assemblyversion"
     },
     {
@@ -16803,7 +16812,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L299",
       "id": "linux_x64_funnypot_deps_system_net_ping_dll_fileversion",
-      "community": 70,
+      "community": 176,
       "norm_label": "fileversion"
     },
     {
@@ -16812,7 +16821,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L301",
       "id": "linux_x64_funnypot_deps_runtime_system_net_primitives_dll",
-      "community": 190,
+      "community": 70,
       "norm_label": "system.net.primitives.dll"
     },
     {
@@ -16821,7 +16830,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L302",
       "id": "linux_x64_funnypot_deps_system_net_primitives_dll_assemblyversion",
-      "community": 190,
+      "community": 70,
       "norm_label": "assemblyversion"
     },
     {
@@ -16830,7 +16839,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L303",
       "id": "linux_x64_funnypot_deps_system_net_primitives_dll_fileversion",
-      "community": 190,
+      "community": 70,
       "norm_label": "fileversion"
     },
     {
@@ -17136,7 +17145,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L349",
       "id": "linux_x64_funnypot_deps_runtime_system_numerics_vectors_dll",
-      "community": 200,
+      "community": 335,
       "norm_label": "system.numerics.vectors.dll"
     },
     {
@@ -17145,7 +17154,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L350",
       "id": "linux_x64_funnypot_deps_system_numerics_vectors_dll_assemblyversion",
-      "community": 200,
+      "community": 335,
       "norm_label": "assemblyversion"
     },
     {
@@ -17154,7 +17163,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L351",
       "id": "linux_x64_funnypot_deps_system_numerics_vectors_dll_fileversion",
-      "community": 200,
+      "community": 335,
       "norm_label": "fileversion"
     },
     {
@@ -17730,7 +17739,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L437",
       "id": "linux_x64_funnypot_deps_runtime_system_runtime_extensions_dll",
-      "community": 285,
+      "community": 360,
       "norm_label": "system.runtime.extensions.dll"
     },
     {
@@ -17739,7 +17748,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L438",
       "id": "linux_x64_funnypot_deps_system_runtime_extensions_dll_assemblyversion",
-      "community": 285,
+      "community": 360,
       "norm_label": "assemblyversion"
     },
     {
@@ -17748,7 +17757,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L439",
       "id": "linux_x64_funnypot_deps_system_runtime_extensions_dll_fileversion",
-      "community": 285,
+      "community": 360,
       "norm_label": "fileversion"
     },
     {
@@ -18324,7 +18333,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L525",
       "id": "linux_x64_funnypot_deps_runtime_system_security_cryptography_x509certificates_dll",
-      "community": 242,
+      "community": 407,
       "norm_label": "system.security.cryptography.x509certificates.dll"
     },
     {
@@ -18333,7 +18342,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L526",
       "id": "linux_x64_funnypot_deps_system_security_cryptography_x509certificates_dll_assemblyversion",
-      "community": 242,
+      "community": 407,
       "norm_label": "assemblyversion"
     },
     {
@@ -18342,7 +18351,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L527",
       "id": "linux_x64_funnypot_deps_system_security_cryptography_x509certificates_dll_fileversion",
-      "community": 242,
+      "community": 407,
       "norm_label": "fileversion"
     },
     {
@@ -18540,7 +18549,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L557",
       "id": "linux_x64_funnypot_deps_runtime_system_text_encoding_codepages_dll",
-      "community": 70,
+      "community": 247,
       "norm_label": "system.text.encoding.codepages.dll"
     },
     {
@@ -18549,7 +18558,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L558",
       "id": "linux_x64_funnypot_deps_system_text_encoding_codepages_dll_assemblyversion",
-      "community": 70,
+      "community": 247,
       "norm_label": "assemblyversion"
     },
     {
@@ -18558,7 +18567,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L559",
       "id": "linux_x64_funnypot_deps_system_text_encoding_codepages_dll_fileversion",
-      "community": 70,
+      "community": 247,
       "norm_label": "fileversion"
     },
     {
@@ -18594,7 +18603,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L565",
       "id": "linux_x64_funnypot_deps_runtime_system_text_encoding_dll",
-      "community": 286,
+      "community": 70,
       "norm_label": "system.text.encoding.dll"
     },
     {
@@ -18603,7 +18612,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L566",
       "id": "linux_x64_funnypot_deps_system_text_encoding_dll_assemblyversion",
-      "community": 286,
+      "community": 70,
       "norm_label": "assemblyversion"
     },
     {
@@ -18612,7 +18621,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L567",
       "id": "linux_x64_funnypot_deps_system_text_encoding_dll_fileversion",
-      "community": 286,
+      "community": 70,
       "norm_label": "fileversion"
     },
     {
@@ -18810,7 +18819,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L597",
       "id": "linux_x64_funnypot_deps_runtime_system_threading_tasks_parallel_dll",
-      "community": 284,
+      "community": 410,
       "norm_label": "system.threading.tasks.parallel.dll"
     },
     {
@@ -18819,7 +18828,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L598",
       "id": "linux_x64_funnypot_deps_system_threading_tasks_parallel_dll_assemblyversion",
-      "community": 284,
+      "community": 410,
       "norm_label": "assemblyversion"
     },
     {
@@ -18828,7 +18837,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L599",
       "id": "linux_x64_funnypot_deps_system_threading_tasks_parallel_dll_fileversion",
-      "community": 284,
+      "community": 410,
       "norm_label": "fileversion"
     },
     {
@@ -18864,7 +18873,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L605",
       "id": "linux_x64_funnypot_deps_runtime_system_threading_thread_dll",
-      "community": 70,
+      "community": 284,
       "norm_label": "system.threading.thread.dll"
     },
     {
@@ -18873,7 +18882,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L606",
       "id": "linux_x64_funnypot_deps_system_threading_thread_dll_assemblyversion",
-      "community": 70,
+      "community": 284,
       "norm_label": "assemblyversion"
     },
     {
@@ -18882,7 +18891,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L607",
       "id": "linux_x64_funnypot_deps_system_threading_thread_dll_fileversion",
-      "community": 70,
+      "community": 284,
       "norm_label": "fileversion"
     },
     {
@@ -18999,7 +19008,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L625",
       "id": "linux_x64_funnypot_deps_runtime_system_transactions_dll",
-      "community": 289,
+      "community": 70,
       "norm_label": "system.transactions.dll"
     },
     {
@@ -19008,7 +19017,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L626",
       "id": "linux_x64_funnypot_deps_system_transactions_dll_assemblyversion",
-      "community": 289,
+      "community": 70,
       "norm_label": "assemblyversion"
     },
     {
@@ -19017,7 +19026,7 @@
       "source_file": "FunnyPot/obj/Release/net8.0/linux-x64/FunnyPot.deps.json",
       "source_location": "L627",
       "id": "linux_x64_funnypot_deps_system_transactions_dll_fileversion",
-      "community": 289,
+      "community": 70,
       "norm_label": "fileversion"
     },
     {
@@ -22283,7 +22292,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1758",
-      "community": 113,
+      "community": 190,
       "norm_label": "fakefilesystem",
       "id": "funnypot_program_fakefilesystem"
     },
@@ -22292,7 +22301,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1765",
-      "community": 113,
+      "community": 63,
       "norm_label": ".getorcreate()",
       "id": "funnypot_program_fakefilesystem_getorcreate"
     },
@@ -22301,7 +22310,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1778",
-      "community": 113,
+      "community": 63,
       "norm_label": ".remove()",
       "id": "funnypot_program_fakefilesystem_remove"
     },
@@ -22310,7 +22319,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1786",
-      "community": 113,
+      "community": 190,
       "norm_label": ".resolvepath()",
       "id": "funnypot_program_fakefilesystem_resolvepath"
     },
@@ -22319,7 +22328,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1807",
-      "community": 113,
+      "community": 190,
       "norm_label": ".normalizepath()",
       "id": "funnypot_program_fakefilesystem_normalizepath"
     },
@@ -22328,7 +22337,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1825",
-      "community": 68,
+      "community": 190,
       "norm_label": ".changedirectory()",
       "id": "funnypot_program_fakefilesystem_changedirectory"
     },
@@ -22337,7 +22346,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1830",
-      "community": 113,
+      "community": 190,
       "norm_label": ".isvaliddirectory()",
       "id": "funnypot_program_fakefilesystem_isvaliddirectory"
     },
@@ -22346,7 +22355,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1839",
-      "community": 113,
+      "community": 190,
       "norm_label": ".listdirectory()",
       "id": "funnypot_program_fakefilesystem_listdirectory"
     },
@@ -22355,7 +22364,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1876",
-      "community": 113,
+      "community": 190,
       "norm_label": ".fileexists()",
       "id": "funnypot_program_fakefilesystem_fileexists"
     },
@@ -22364,7 +22373,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1916",
-      "community": 113,
+      "community": 190,
       "norm_label": ".readfile()",
       "id": "funnypot_program_fakefilesystem_readfile"
     },
@@ -22427,7 +22436,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1936",
-      "community": 68,
+      "community": 63,
       "norm_label": ".resolvecommand()",
       "id": "funnypot_program_commandresolver_resolvecommand"
     },
@@ -22463,7 +22472,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L3040",
-      "community": 2,
+      "community": 242,
       "norm_label": "ntfynotifier",
       "id": "funnypot_program_ntfynotifier"
     },
@@ -22472,7 +22481,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L3042",
-      "community": 2,
+      "community": 242,
       "norm_label": ".notifyshellsessionasync()",
       "id": "funnypot_program_ntfynotifier_notifyshellsessionasync"
     },
@@ -22481,7 +22490,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L3082",
-      "community": 2,
+      "community": 242,
       "norm_label": ".buildshellsessionmessage()",
       "id": "funnypot_program_ntfynotifier_buildshellsessionmessage"
     },
@@ -22490,7 +22499,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L3093",
-      "community": 2,
+      "community": 242,
       "norm_label": ".istruthy()",
       "id": "funnypot_program_ntfynotifier_istruthy"
     },
@@ -22652,7 +22661,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L2032",
-      "community": 2,
+      "community": 242,
       "norm_label": ".notifyauthattemptasync()",
       "id": "funnypot_program_ntfynotifier_notifyauthattemptasync"
     },
@@ -22661,7 +22670,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L2072",
-      "community": 2,
+      "community": 242,
       "norm_label": ".buildauthattemptmessage()",
       "id": "funnypot_program_ntfynotifier_buildauthattemptmessage"
     },
@@ -22688,7 +22697,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1143",
-      "community": 2,
+      "community": 242,
       "norm_label": ".notifyconnectionacceptedasync()",
       "id": "funnypot_program_ntfynotifier_notifyconnectionacceptedasync"
     },
@@ -22697,7 +22706,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L1175",
-      "community": 2,
+      "community": 242,
       "norm_label": ".buildconnectionmessage()",
       "id": "funnypot_program_ntfynotifier_buildconnectionmessage"
     },
@@ -22706,7 +22715,7 @@
       "file_type": "code",
       "source_file": "FunnyPot/Program.cs",
       "source_location": "L103",
-      "community": 2,
+      "community": 27,
       "norm_label": ".handlesession()",
       "id": "funnypot_program_program_handlesession"
     }
@@ -42366,6 +42375,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "FunnyPot/Program.cs",
+      "source_location": "L1345",
+      "weight": 1.0,
+      "source": "funnypot_program_cs",
+      "target": "funnypot_program_reasoningoptions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "FunnyPot/Program.cs",
       "source_location": "L317",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -56854,5 +56873,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "c065dfeeb2ef1d0ce89e75ade0cd20077205b1b9"
+  "built_at_commit": "a7d29409a2fc39bfd7bbdc8d850caa23ee1c2802"
 }
