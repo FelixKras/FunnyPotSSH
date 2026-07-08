@@ -73,7 +73,7 @@ namespace FunnyPot
         public int DelayMs { get; set; } = 500;
         public int RateLimitMaxPerWindow { get; set; } = 20;
         public int RateLimitWindowSeconds { get; set; } = 60;
-        public string Model { get; set; } = "deepseek/deepseek-v4-pro";
+        public string Model { get; set; } = "minimax/minimax-m3";
         public List<string> FallbackModels { get; set; } = new() { "nvidia/nemotron-3-super-120b-a12b:free" };
         public int MaxTokens { get; set; } = 2000;
         public int TimeoutSeconds { get; set; } = 30;

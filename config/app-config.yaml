@@ -24,7 +24,7 @@ llm:
   delay-ms: 500
   rate-limit-max-per-window: 20
   rate-limit-window-seconds: 60
-  model: "deepseek/deepseek-v4-pro"
+  model: "minimax/minimax-m3"
   fallback-models:
     - "nvidia/nemotron-3-super-120b-a12b:free"
   max-tokens: 2000

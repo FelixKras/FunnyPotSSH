@@ -972,7 +972,7 @@ public class AppConfigurationTests
 
         var config = AppConfiguration.Load(path);
 
-        Assert.Equal("deepseek/deepseek-v4-pro", config.Llm.Model);
+        Assert.Equal("minimax/minimax-m3", config.Llm.Model);
         Assert.Contains("nvidia/nemotron-3-super-120b-a12b:free", config.Llm.FallbackModels);
         Assert.Equal("/var/log/funnypot", config.Logging.LogDir);
         Assert.Equal(3, config.Ssh.PasswordHarvestAttempt);
