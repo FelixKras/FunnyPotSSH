@@ -1,16 +1,16 @@
 # Graph Report - FunnyPot  (2026-07-09)
 
 ## Corpus Check
-- 55 files · ~84,353 words
+- 17 files · ~167,321 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2531 nodes · 3389 edges · 411 communities (291 shown, 120 thin omitted)
+- 3503 nodes · 3815 edges · 179 communities (138 shown, 41 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0131a296`
+- Built from commit: `67805a8b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -27,11 +27,22 @@
 - [[_COMMUNITY_Community 9|Community 9]]
 - [[_COMMUNITY_Community 10|Community 10]]
 - [[_COMMUNITY_Community 11|Community 11]]
+- [[_COMMUNITY_Community 12|Community 12]]
+- [[_COMMUNITY_Community 13|Community 13]]
+- [[_COMMUNITY_Community 14|Community 14]]
+- [[_COMMUNITY_Community 15|Community 15]]
+- [[_COMMUNITY_Community 16|Community 16]]
+- [[_COMMUNITY_Community 17|Community 17]]
+- [[_COMMUNITY_Community 18|Community 18]]
+- [[_COMMUNITY_Community 19|Community 19]]
+- [[_COMMUNITY_Community 20|Community 20]]
+- [[_COMMUNITY_Community 21|Community 21]]
 - [[_COMMUNITY_Community 22|Community 22]]
 - [[_COMMUNITY_Community 23|Community 23]]
 - [[_COMMUNITY_Community 24|Community 24]]
 - [[_COMMUNITY_Community 25|Community 25]]
 - [[_COMMUNITY_Community 26|Community 26]]
+- [[_COMMUNITY_Community 27|Community 27]]
 - [[_COMMUNITY_Community 28|Community 28]]
 - [[_COMMUNITY_Community 29|Community 29]]
 - [[_COMMUNITY_Community 30|Community 30]]
@@ -107,6 +118,7 @@
 - [[_COMMUNITY_Community 100|Community 100]]
 - [[_COMMUNITY_Community 101|Community 101]]
 - [[_COMMUNITY_Community 102|Community 102]]
+- [[_COMMUNITY_Community 103|Community 103]]
 - [[_COMMUNITY_Community 104|Community 104]]
 - [[_COMMUNITY_Community 105|Community 105]]
 - [[_COMMUNITY_Community 106|Community 106]]
@@ -180,245 +192,18 @@
 - [[_COMMUNITY_Community 174|Community 174]]
 - [[_COMMUNITY_Community 175|Community 175]]
 - [[_COMMUNITY_Community 176|Community 176]]
-- [[_COMMUNITY_Community 177|Community 177]]
-- [[_COMMUNITY_Community 178|Community 178]]
-- [[_COMMUNITY_Community 179|Community 179]]
-- [[_COMMUNITY_Community 180|Community 180]]
-- [[_COMMUNITY_Community 181|Community 181]]
-- [[_COMMUNITY_Community 182|Community 182]]
-- [[_COMMUNITY_Community 183|Community 183]]
-- [[_COMMUNITY_Community 184|Community 184]]
-- [[_COMMUNITY_Community 185|Community 185]]
-- [[_COMMUNITY_Community 186|Community 186]]
-- [[_COMMUNITY_Community 187|Community 187]]
-- [[_COMMUNITY_Community 188|Community 188]]
-- [[_COMMUNITY_Community 189|Community 189]]
-- [[_COMMUNITY_Community 190|Community 190]]
-- [[_COMMUNITY_Community 191|Community 191]]
-- [[_COMMUNITY_Community 192|Community 192]]
-- [[_COMMUNITY_Community 193|Community 193]]
-- [[_COMMUNITY_Community 194|Community 194]]
-- [[_COMMUNITY_Community 195|Community 195]]
-- [[_COMMUNITY_Community 196|Community 196]]
-- [[_COMMUNITY_Community 197|Community 197]]
-- [[_COMMUNITY_Community 198|Community 198]]
-- [[_COMMUNITY_Community 199|Community 199]]
-- [[_COMMUNITY_Community 200|Community 200]]
-- [[_COMMUNITY_Community 201|Community 201]]
-- [[_COMMUNITY_Community 202|Community 202]]
-- [[_COMMUNITY_Community 203|Community 203]]
-- [[_COMMUNITY_Community 204|Community 204]]
-- [[_COMMUNITY_Community 205|Community 205]]
-- [[_COMMUNITY_Community 206|Community 206]]
-- [[_COMMUNITY_Community 207|Community 207]]
-- [[_COMMUNITY_Community 208|Community 208]]
-- [[_COMMUNITY_Community 209|Community 209]]
-- [[_COMMUNITY_Community 210|Community 210]]
-- [[_COMMUNITY_Community 211|Community 211]]
-- [[_COMMUNITY_Community 212|Community 212]]
-- [[_COMMUNITY_Community 213|Community 213]]
-- [[_COMMUNITY_Community 214|Community 214]]
-- [[_COMMUNITY_Community 215|Community 215]]
-- [[_COMMUNITY_Community 216|Community 216]]
-- [[_COMMUNITY_Community 217|Community 217]]
-- [[_COMMUNITY_Community 218|Community 218]]
-- [[_COMMUNITY_Community 219|Community 219]]
-- [[_COMMUNITY_Community 220|Community 220]]
-- [[_COMMUNITY_Community 221|Community 221]]
-- [[_COMMUNITY_Community 222|Community 222]]
-- [[_COMMUNITY_Community 223|Community 223]]
-- [[_COMMUNITY_Community 224|Community 224]]
-- [[_COMMUNITY_Community 225|Community 225]]
-- [[_COMMUNITY_Community 226|Community 226]]
-- [[_COMMUNITY_Community 227|Community 227]]
-- [[_COMMUNITY_Community 228|Community 228]]
-- [[_COMMUNITY_Community 229|Community 229]]
-- [[_COMMUNITY_Community 230|Community 230]]
-- [[_COMMUNITY_Community 231|Community 231]]
-- [[_COMMUNITY_Community 232|Community 232]]
-- [[_COMMUNITY_Community 233|Community 233]]
-- [[_COMMUNITY_Community 234|Community 234]]
-- [[_COMMUNITY_Community 235|Community 235]]
-- [[_COMMUNITY_Community 236|Community 236]]
-- [[_COMMUNITY_Community 237|Community 237]]
-- [[_COMMUNITY_Community 238|Community 238]]
-- [[_COMMUNITY_Community 239|Community 239]]
-- [[_COMMUNITY_Community 240|Community 240]]
-- [[_COMMUNITY_Community 241|Community 241]]
-- [[_COMMUNITY_Community 242|Community 242]]
-- [[_COMMUNITY_Community 243|Community 243]]
-- [[_COMMUNITY_Community 244|Community 244]]
-- [[_COMMUNITY_Community 245|Community 245]]
-- [[_COMMUNITY_Community 246|Community 246]]
-- [[_COMMUNITY_Community 247|Community 247]]
-- [[_COMMUNITY_Community 248|Community 248]]
-- [[_COMMUNITY_Community 249|Community 249]]
-- [[_COMMUNITY_Community 250|Community 250]]
-- [[_COMMUNITY_Community 251|Community 251]]
-- [[_COMMUNITY_Community 252|Community 252]]
-- [[_COMMUNITY_Community 253|Community 253]]
-- [[_COMMUNITY_Community 254|Community 254]]
-- [[_COMMUNITY_Community 255|Community 255]]
-- [[_COMMUNITY_Community 256|Community 256]]
-- [[_COMMUNITY_Community 257|Community 257]]
-- [[_COMMUNITY_Community 258|Community 258]]
-- [[_COMMUNITY_Community 259|Community 259]]
-- [[_COMMUNITY_Community 260|Community 260]]
-- [[_COMMUNITY_Community 261|Community 261]]
-- [[_COMMUNITY_Community 262|Community 262]]
-- [[_COMMUNITY_Community 263|Community 263]]
-- [[_COMMUNITY_Community 264|Community 264]]
-- [[_COMMUNITY_Community 265|Community 265]]
-- [[_COMMUNITY_Community 266|Community 266]]
-- [[_COMMUNITY_Community 267|Community 267]]
-- [[_COMMUNITY_Community 268|Community 268]]
-- [[_COMMUNITY_Community 269|Community 269]]
-- [[_COMMUNITY_Community 270|Community 270]]
-- [[_COMMUNITY_Community 271|Community 271]]
-- [[_COMMUNITY_Community 272|Community 272]]
-- [[_COMMUNITY_Community 273|Community 273]]
-- [[_COMMUNITY_Community 274|Community 274]]
-- [[_COMMUNITY_Community 275|Community 275]]
-- [[_COMMUNITY_Community 276|Community 276]]
-- [[_COMMUNITY_Community 277|Community 277]]
-- [[_COMMUNITY_Community 278|Community 278]]
-- [[_COMMUNITY_Community 279|Community 279]]
-- [[_COMMUNITY_Community 280|Community 280]]
-- [[_COMMUNITY_Community 281|Community 281]]
-- [[_COMMUNITY_Community 282|Community 282]]
-- [[_COMMUNITY_Community 283|Community 283]]
-- [[_COMMUNITY_Community 284|Community 284]]
-- [[_COMMUNITY_Community 285|Community 285]]
-- [[_COMMUNITY_Community 286|Community 286]]
-- [[_COMMUNITY_Community 287|Community 287]]
-- [[_COMMUNITY_Community 288|Community 288]]
-- [[_COMMUNITY_Community 289|Community 289]]
-- [[_COMMUNITY_Community 290|Community 290]]
-- [[_COMMUNITY_Community 291|Community 291]]
-- [[_COMMUNITY_Community 292|Community 292]]
-- [[_COMMUNITY_Community 293|Community 293]]
-- [[_COMMUNITY_Community 294|Community 294]]
-- [[_COMMUNITY_Community 295|Community 295]]
-- [[_COMMUNITY_Community 296|Community 296]]
-- [[_COMMUNITY_Community 297|Community 297]]
-- [[_COMMUNITY_Community 298|Community 298]]
-- [[_COMMUNITY_Community 299|Community 299]]
-- [[_COMMUNITY_Community 300|Community 300]]
-- [[_COMMUNITY_Community 301|Community 301]]
-- [[_COMMUNITY_Community 302|Community 302]]
-- [[_COMMUNITY_Community 303|Community 303]]
-- [[_COMMUNITY_Community 304|Community 304]]
-- [[_COMMUNITY_Community 305|Community 305]]
-- [[_COMMUNITY_Community 306|Community 306]]
-- [[_COMMUNITY_Community 307|Community 307]]
-- [[_COMMUNITY_Community 308|Community 308]]
-- [[_COMMUNITY_Community 309|Community 309]]
-- [[_COMMUNITY_Community 310|Community 310]]
-- [[_COMMUNITY_Community 311|Community 311]]
-- [[_COMMUNITY_Community 312|Community 312]]
-- [[_COMMUNITY_Community 313|Community 313]]
-- [[_COMMUNITY_Community 314|Community 314]]
-- [[_COMMUNITY_Community 315|Community 315]]
-- [[_COMMUNITY_Community 316|Community 316]]
-- [[_COMMUNITY_Community 317|Community 317]]
-- [[_COMMUNITY_Community 318|Community 318]]
-- [[_COMMUNITY_Community 319|Community 319]]
-- [[_COMMUNITY_Community 320|Community 320]]
-- [[_COMMUNITY_Community 321|Community 321]]
-- [[_COMMUNITY_Community 322|Community 322]]
-- [[_COMMUNITY_Community 323|Community 323]]
-- [[_COMMUNITY_Community 324|Community 324]]
-- [[_COMMUNITY_Community 325|Community 325]]
-- [[_COMMUNITY_Community 326|Community 326]]
-- [[_COMMUNITY_Community 327|Community 327]]
-- [[_COMMUNITY_Community 328|Community 328]]
-- [[_COMMUNITY_Community 329|Community 329]]
-- [[_COMMUNITY_Community 330|Community 330]]
-- [[_COMMUNITY_Community 331|Community 331]]
-- [[_COMMUNITY_Community 332|Community 332]]
-- [[_COMMUNITY_Community 333|Community 333]]
-- [[_COMMUNITY_Community 334|Community 334]]
-- [[_COMMUNITY_Community 335|Community 335]]
-- [[_COMMUNITY_Community 336|Community 336]]
-- [[_COMMUNITY_Community 337|Community 337]]
-- [[_COMMUNITY_Community 338|Community 338]]
-- [[_COMMUNITY_Community 339|Community 339]]
-- [[_COMMUNITY_Community 340|Community 340]]
-- [[_COMMUNITY_Community 341|Community 341]]
-- [[_COMMUNITY_Community 342|Community 342]]
-- [[_COMMUNITY_Community 343|Community 343]]
-- [[_COMMUNITY_Community 344|Community 344]]
-- [[_COMMUNITY_Community 345|Community 345]]
-- [[_COMMUNITY_Community 346|Community 346]]
-- [[_COMMUNITY_Community 347|Community 347]]
-- [[_COMMUNITY_Community 348|Community 348]]
-- [[_COMMUNITY_Community 349|Community 349]]
-- [[_COMMUNITY_Community 350|Community 350]]
-- [[_COMMUNITY_Community 351|Community 351]]
-- [[_COMMUNITY_Community 352|Community 352]]
-- [[_COMMUNITY_Community 353|Community 353]]
-- [[_COMMUNITY_Community 354|Community 354]]
-- [[_COMMUNITY_Community 355|Community 355]]
-- [[_COMMUNITY_Community 356|Community 356]]
-- [[_COMMUNITY_Community 357|Community 357]]
-- [[_COMMUNITY_Community 358|Community 358]]
-- [[_COMMUNITY_Community 359|Community 359]]
-- [[_COMMUNITY_Community 360|Community 360]]
-- [[_COMMUNITY_Community 361|Community 361]]
-- [[_COMMUNITY_Community 362|Community 362]]
-- [[_COMMUNITY_Community 363|Community 363]]
-- [[_COMMUNITY_Community 364|Community 364]]
-- [[_COMMUNITY_Community 365|Community 365]]
-- [[_COMMUNITY_Community 366|Community 366]]
-- [[_COMMUNITY_Community 367|Community 367]]
-- [[_COMMUNITY_Community 368|Community 368]]
-- [[_COMMUNITY_Community 369|Community 369]]
-- [[_COMMUNITY_Community 370|Community 370]]
-- [[_COMMUNITY_Community 371|Community 371]]
-- [[_COMMUNITY_Community 372|Community 372]]
-- [[_COMMUNITY_Community 373|Community 373]]
-- [[_COMMUNITY_Community 374|Community 374]]
-- [[_COMMUNITY_Community 375|Community 375]]
-- [[_COMMUNITY_Community 376|Community 376]]
-- [[_COMMUNITY_Community 377|Community 377]]
-- [[_COMMUNITY_Community 378|Community 378]]
-- [[_COMMUNITY_Community 379|Community 379]]
-- [[_COMMUNITY_Community 380|Community 380]]
-- [[_COMMUNITY_Community 381|Community 381]]
-- [[_COMMUNITY_Community 382|Community 382]]
-- [[_COMMUNITY_Community 383|Community 383]]
-- [[_COMMUNITY_Community 384|Community 384]]
-- [[_COMMUNITY_Community 385|Community 385]]
-- [[_COMMUNITY_Community 386|Community 386]]
-- [[_COMMUNITY_Community 394|Community 394]]
-- [[_COMMUNITY_Community 395|Community 395]]
-- [[_COMMUNITY_Community 396|Community 396]]
-- [[_COMMUNITY_Community 397|Community 397]]
-- [[_COMMUNITY_Community 398|Community 398]]
-- [[_COMMUNITY_Community 401|Community 401]]
-- [[_COMMUNITY_Community 402|Community 402]]
-- [[_COMMUNITY_Community 403|Community 403]]
-- [[_COMMUNITY_Community 405|Community 405]]
-- [[_COMMUNITY_Community 406|Community 406]]
-- [[_COMMUNITY_Community 407|Community 407]]
-- [[_COMMUNITY_Community 408|Community 408]]
-- [[_COMMUNITY_Community 409|Community 409]]
-- [[_COMMUNITY_Community 410|Community 410]]
-- [[_COMMUNITY_Community 411|Community 411]]
-- [[_COMMUNITY_Community 412|Community 412]]
-- [[_COMMUNITY_Community 415|Community 415]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `runtime` - 162 edges
-2. `.NETCoreApp,Version=v8.0` - 70 edges
-3. `.NETCoreApp,Version=v8.0` - 52 edges
-4. `net8.0` - 52 edges
-5. `CommandResolver` - 49 edges
-6. `Program` - 45 edges
-7. `CommandResolverTests` - 44 edges
-8. `resources` - 40 edges
-9. `System.Runtime` - 40 edges
-10. `resource` - 40 edges
+1. `Session: Check Google Gemma responsiveness` - 177 edges
+2. `Session: Attacker exchange tab and details` - 158 edges
+3. `Session: Project status check` - 140 edges
+4. `Session: Redesigning fake file system for continuity` - 127 edges
+5. `Session: [api error] responses troubleshooting` - 124 edges
+6. `Session: FunnyPot session and data branch issue` - 101 edges
+7. `Relevant Files` - 100 edges
+8. `Relevant Files` - 95 edges
+9. `Relevant Files` - 90 edges
+10. `Session: Cryptocurrency names next to IPs` - 86 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `FakeFileSystem` --references--> `Dictionary`  [EXTRACTED]
@@ -426,395 +211,443 @@
 - `FakeFileSystem` --references--> `object`  [EXTRACTED]
   FunnyPot/FakeFileSystem.cs → FunnyPot/Program.cs
 
-## Communities (411 total, 120 thin omitted)
+## Communities (179 total, 41 thin omitted)
+
+### Community 0 - "Community 0"
+Cohesion: 0.01
+Nodes (177): Assistant / 08/07/2026 17:20:33.071, Assistant / 08/07/2026 17:20:43.155, Assistant / 08/07/2026 17:20:50.880, Assistant / 08/07/2026 17:21:15.216, Assistant / 08/07/2026 17:21:23.924, Assistant / 08/07/2026 17:21:43.977, Assistant / 08/07/2026 17:22:04.931, Assistant / 08/07/2026 17:22:16.338 (+169 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.09
-Nodes (19): AuthAttemptLogEntry, BannerSlot, ChatMessage, ChatRequestData, CommandLogEntry, CommandResultLogEntry, DhsCommandAnalysis, GlobalStats (+11 more)
+Cohesion: 0.01
+Nodes (155): Assistant / 29/06/2026 09:22:07.251, Assistant / 29/06/2026 09:22:19.541, Assistant / 29/06/2026 09:22:31.813, Assistant / 29/06/2026 09:23:21.640, Assistant / 29/06/2026 09:23:28.438, Assistant / 29/06/2026 09:24:05.862, Assistant / 29/06/2026 09:24:31.632, Assistant / 29/06/2026 09:25:48.658 (+147 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.12
-Nodes (9): AppConfiguration, FieldInfo, Program, HttpClient, List, ReaderWriterLockSlim, SemaphoreSlim, SshServer (+1 more)
+Cohesion: 0.01
+Nodes (134): Assistant / 19/05/2026 08:55:15.153, Assistant / 19/05/2026 08:56:31.118, Assistant / 19/05/2026 08:57:21.441, Assistant / 19/05/2026 08:57:27.004, Assistant / 19/05/2026 11:39:48.887, Assistant / 19/05/2026 11:43:47.256, Assistant / 19/05/2026 11:43:59.062, Assistant / 19/05/2026 11:44:18.715 (+126 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.27
-Nodes (4): bool, Dictionary, StaticResponseStore, JsonSerializerOptions
+Cohesion: 0.02
+Nodes (127): Assistant / 06/06/2026 17:04:19.145, Assistant / 06/06/2026 17:04:27.565, Assistant / 06/06/2026 17:04:32.018, Assistant / 06/06/2026 17:04:43.307, Assistant / 06/06/2026 17:05:00.836, Assistant / 06/06/2026 17:05:16.693, Assistant / 06/06/2026 17:08:32.288, Assistant / 06/06/2026 17:09:20.298 (+119 more)
+
+### Community 4 - "Community 4"
+Cohesion: 0.02
+Nodes (117): Assistant / 29/06/2026 20:57:12.240, Assistant / 29/06/2026 20:57:19.751, Assistant / 29/06/2026 20:57:30.146, Assistant / 29/06/2026 20:57:45.094, Assistant / 29/06/2026 21:00:28.331, Assistant / 29/06/2026 21:00:48.725, Assistant / 29/06/2026 21:00:57.671, Assistant / 29/06/2026 21:01:11.467 (+109 more)
+
+### Community 5 - "Community 5"
+Cohesion: 0.02
+Nodes (98): Assistant / 24/05/2026 19:51:26.648, Assistant / 24/05/2026 19:51:35.083, Assistant / 24/05/2026 19:51:55.143, Assistant / 24/05/2026 19:52:06.163, Assistant / 24/05/2026 19:53:05.511, Assistant / 24/05/2026 20:02:06.066, Assistant / 24/05/2026 20:03:06.476, Assistant / 24/05/2026 20:03:26.546 (+90 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.12
-Nodes (15): Asset Value Perception, Data Acquisition Architecture, Data Collection Modules, Data Harvesting Specification: LLM-Driven SSH Analytics, GitHub Pages Publication, Log Format, M-1: SSH Protocol and Authentication Metadata, M-2: Behavioral and Tactical Metrics (+7 more)
+Cohesion: 0.02
+Nodes (95): Assistant / 09/07/2026 10:13:41.602, Assistant / 09/07/2026 10:13:50.316, Assistant / 09/07/2026 10:13:57.708, Assistant / 09/07/2026 10:14:02.358, Assistant / 09/07/2026 10:14:05.884, Assistant / 09/07/2026 10:14:32.118, Assistant / 09/07/2026 10:14:47.370, Assistant / 09/07/2026 10:15:03.742 (+87 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.08
-Nodes (44): Microsoft.NETCore.Platforms, Microsoft.NETCore.Targets, System.Runtime, System.Runtime.Handles, dependencies, Microsoft.Win32.Primitives/4.3.0, runtime.native.System/4.3.0, runtime.native.System.IO.Compression/4.3.0 (+36 more)
+Cohesion: 0.02
+Nodes (94): Assistant / 20/05/2026 05:49:47.794, Assistant / 20/05/2026 05:50:09.074, Assistant / 20/05/2026 05:50:36.798, Assistant / 20/05/2026 05:51:26.945, Assistant / 20/05/2026 05:51:45.241, Assistant / 20/05/2026 05:58:48.065, Assistant / 20/05/2026 06:01:18.075, Assistant / 20/05/2026 06:01:32.408 (+86 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.26
-Nodes (17): Microsoft.NETCore.Platforms, Microsoft.NETCore.Targets, System.Runtime, System.Text.Encoding, System.Threading.Tasks, dependencies, dependencies, dependencies (+9 more)
+Cohesion: 0.02
+Nodes (90): Assistant / 07/06/2026 17:33:10.295, Assistant / 07/06/2026 17:33:21.868, Assistant / 07/06/2026 17:33:32.859, Assistant / 07/06/2026 17:33:42.251, Assistant / 07/06/2026 17:34:06.988, Assistant / 07/06/2026 17:34:13.787, Assistant / 07/06/2026 17:34:17.285, Assistant / 07/06/2026 17:34:25.660 (+82 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.24
-Nodes (4): AutoResearchConfig, AutoResearchRunner, AutoResearchState, TextWriter
+Cohesion: 0.02
+Nodes (85): Assistant / 28/05/2026 07:59:05.741, Assistant / 28/05/2026 07:59:18.835, Assistant / 28/05/2026 08:00:35.397, Assistant / 28/05/2026 08:04:08.104, Assistant / 28/05/2026 08:04:27.095, Assistant / 28/05/2026 08:05:50.265, Assistant / 28/05/2026 08:06:11.132, Assistant / 28/05/2026 08:07:39.359 (+77 more)
 
 ### Community 10 - "Community 10"
-Cohesion: 0.13
-Nodes (14): code:bash (git push origin main), code:bash (docker exec funnypot-container cat /proc/1/net/tcp), code:bash (docker compose stop             # graceful, leaves container), code:bash (graphify query "how is this app deployed"), Cold start, Common pitfalls, Deploy paths, Deployment (+6 more)
+Cohesion: 0.03
+Nodes (79): Assistant / 20/05/2026 13:42:44.436, Assistant / 20/05/2026 13:43:00.158, Assistant / 20/05/2026 13:43:06.191, Assistant / 20/05/2026 13:43:09.122, Assistant / 20/05/2026 13:43:17.143, Assistant / 20/05/2026 13:44:21.655, Assistant / 20/05/2026 13:44:30.388, Assistant / 20/05/2026 13:44:43.581 (+71 more)
+
+### Community 11 - "Community 11"
+Cohesion: 0.03
+Nodes (79): Assistant / 24/06/2026 10:46:19.692, Assistant / 24/06/2026 10:47:18.294, Assistant / 24/06/2026 10:48:33.539, Assistant / 24/06/2026 10:54:06.094, Assistant / 24/06/2026 10:54:47.783, Assistant / 24/06/2026 10:55:17.346, Assistant / 24/06/2026 10:55:52.011, Assistant / 24/06/2026 10:56:25.916 (+71 more)
+
+### Community 12 - "Community 12"
+Cohesion: 0.03
+Nodes (70): Assistant / 11/06/2026 18:52:14.548, Assistant / 11/06/2026 18:52:27.014, Assistant / 11/06/2026 18:52:33.650, Assistant / 11/06/2026 18:52:43.110, Assistant / 11/06/2026 18:52:54.129, Assistant / 11/06/2026 18:54:18.912, Assistant / 11/06/2026 18:54:33.265, Assistant / 11/06/2026 18:54:43.372 (+62 more)
+
+### Community 13 - "Community 13"
+Cohesion: 0.03
+Nodes (70): Assistant / 24/05/2026 04:14:12.823, Assistant / 24/05/2026 04:14:23.102, Assistant / 24/05/2026 04:14:51.927, Assistant / 24/05/2026 04:15:27.584, Assistant / 24/05/2026 04:16:09.537, Assistant / 24/05/2026 04:16:15.843, Assistant / 24/05/2026 04:17:15.200, Assistant / 24/05/2026 04:17:32.778 (+62 more)
+
+### Community 14 - "Community 14"
+Cohesion: 0.03
+Nodes (69): Assistant / 30/05/2026 19:14:15.528, Assistant / 30/05/2026 19:14:35.279, Assistant / 30/05/2026 19:14:54.459, Assistant / 30/05/2026 19:15:20.631, Assistant / 30/05/2026 19:16:38.779, Assistant / 30/05/2026 19:16:54.255, Assistant / 30/05/2026 19:17:33.205, Assistant / 30/05/2026 19:17:53.656 (+61 more)
+
+### Community 15 - "Community 15"
+Cohesion: 0.03
+Nodes (68): Assistant / 10/06/2026 06:07:17.875, Assistant / 10/06/2026 06:07:26.963, Assistant / 10/06/2026 06:07:50.962, Assistant / 10/06/2026 06:07:54.093, Assistant / 10/06/2026 06:07:58.020, Assistant / 10/06/2026 06:08:23.643, Assistant / 10/06/2026 06:08:28.550, Assistant / 10/06/2026 06:08:35.127 (+60 more)
+
+### Community 16 - "Community 16"
+Cohesion: 0.03
+Nodes (63): Assistant / 11/06/2026 19:36:29.413, Assistant / 11/06/2026 19:36:34.532, Assistant / 11/06/2026 19:36:40.657, Assistant / 11/06/2026 19:36:45.554, Assistant / 11/06/2026 19:36:55.686, Assistant / 11/06/2026 19:37:07.778, Assistant / 11/06/2026 19:37:13.666, Assistant / 12/06/2026 07:46:28.692 (+55 more)
+
+### Community 17 - "Community 17"
+Cohesion: 0.03
+Nodes (58): Assistant / 12/06/2026 13:55:52.746, Assistant / 12/06/2026 13:56:01.421, Assistant / 12/06/2026 13:56:14.229, Assistant / 12/06/2026 13:56:20.332, Assistant / 12/06/2026 13:56:30.299, Assistant / 12/06/2026 13:56:48.591, Assistant / 12/06/2026 13:57:19.422, Assistant / 12/06/2026 13:57:40.452 (+50 more)
+
+### Community 18 - "Community 18"
+Cohesion: 0.04
+Nodes (56): 4.1 Log Format, 4.2 Storage Tiers, 4.3 Metrics Export, 4. Data Storage & Output Schema, Assistant / 12/05/2026 10:07:13.033, Assistant / 12/05/2026 10:07:22.446, Assistant / 12/05/2026 10:07:53.577, Assistant / 12/05/2026 10:09:55.065 (+48 more)
+
+### Community 19 - "Community 19"
+Cohesion: 0.04
+Nodes (56): Assistant / 22/05/2026 13:32:23.659, Assistant / 22/05/2026 13:33:19.290, Assistant / 22/05/2026 13:34:03.822, Assistant / 22/05/2026 13:36:42.534, Assistant / 22/05/2026 13:37:08.565, Assistant / 22/05/2026 13:37:41.806, Assistant / 22/05/2026 13:38:01.909, Assistant / 22/05/2026 13:39:17.421 (+48 more)
+
+### Community 20 - "Community 20"
+Cohesion: 0.04
+Nodes (50): 1. Architectural Strategy, 3. Estimated Development Effort, 4. Trade-offs & Choices to Consider, Assistant / 23/05/2026 09:35:06.431, Assistant / 23/05/2026 09:36:07.987, Assistant / 23/05/2026 09:37:52.754, Assistant / 23/05/2026 09:38:44.880, Assistant / 23/05/2026 09:42:21.931 (+42 more)
+
+### Community 21 - "Community 21"
+Cohesion: 0.04
+Nodes (49): Assistant / 11/05/2026 15:22:57.831, Assistant / 11/05/2026 15:23:24.776, Assistant / 11/05/2026 15:23:46.796, Assistant / 11/05/2026 15:24:33.787, Assistant / 11/05/2026 15:24:37.482, Assistant / 11/05/2026 15:27:26.393, Assistant / 11/05/2026 15:45:17.501, Assistant / 11/05/2026 15:48:53.390 (+41 more)
 
 ### Community 22 - "Community 22"
 Cohesion: 0.04
-Nodes (46): runtimeTargets, LibGit2Sharp.NativeBinaries/2.0.322, assetType, fileVersion, rid, assetType, fileVersion, rid (+38 more)
+Nodes (47): Assistant / 03/06/2026 13:34:31.257, Assistant / 03/06/2026 13:34:46.262, Assistant / 03/06/2026 13:34:56.150, Assistant / 03/06/2026 13:34:59.993, Assistant / 03/06/2026 13:35:49.880, Assistant / 03/06/2026 13:36:00.043, Assistant / 03/06/2026 13:36:09.488, Assistant / 03/06/2026 13:36:14.374 (+39 more)
 
 ### Community 23 - "Community 23"
-Cohesion: 0.04
-Nodes (46): runtimeTargets, LibGit2Sharp.NativeBinaries/2.0.322, assetType, fileVersion, rid, assetType, fileVersion, rid (+38 more)
+Cohesion: 0.05
+Nodes (44): 1. Data Acquisition Architecture, Constraints & Preferences, Constraints & Preferences, Constraints & Preferences, Constraints & Preferences, Constraints & Preferences, Constraints & Preferences, Constraints & Preferences (+36 more)
 
 ### Community 24 - "Community 24"
-Cohesion: 0.24
-Nodes (14): restore, restore, configFilePaths, originalTargetFrameworks, outputPath, packagesPath, projectName, projectPath (+6 more)
+Cohesion: 0.05
+Nodes (44): Assistant / 21/05/2026 09:10:56.776, Assistant / 21/05/2026 09:11:07.407, Assistant / 21/05/2026 09:11:39.278, Assistant / 21/05/2026 09:14:14.702, Assistant / 21/05/2026 09:33:03.285, Assistant / 21/05/2026 10:42:20.275, Assistant / 21/05/2026 10:44:07.090, Assistant / 21/05/2026 10:53:11.529 (+36 more)
 
 ### Community 25 - "Community 25"
 Cohesion: 0.05
-Nodes (42): build/_._, build/LibGit2Sharp.NativeBinaries.props, buildMultiTargeting/_._, buildMultiTargeting/LibGit2Sharp.NativeBinaries.props, build, buildMultiTargeting, runtimeTargets, type (+34 more)
+Nodes (43): 1. Recording & Presentation (GitHub Pages), 1. Safety Precautions Added, 2. Binary Interaction & Token Wasting Precautions, 2. Unit Tests Added, Assistant / 07/05/2026 10:23:10.829, Assistant / 07/05/2026 10:23:26.762, Assistant / 07/05/2026 10:26:07.200, Assistant / 07/05/2026 10:26:13.488 (+35 more)
 
 ### Community 26 - "Community 26"
-Cohesion: 0.06
-Nodes (43): Microsoft.Win32.Primitives, runtime.native.System.Net.Http, runtime.native.System.Security.Cryptography.OpenSsl, System.AppContext, System.Buffers, System.Collections.Concurrent, System.Console, System.Diagnostics.DiagnosticSource (+35 more)
+Cohesion: 0.05
+Nodes (43): Assistant / 31/05/2026 06:00:31.016, Assistant / 31/05/2026 06:15:49.552, Assistant / 31/05/2026 06:16:34.851, Assistant / 31/05/2026 06:17:08.349, Assistant / 31/05/2026 06:17:38.877, Assistant / 31/05/2026 06:34:14.864, Assistant / 31/05/2026 06:34:27.697, Assistant / 31/05/2026 06:34:42.528 (+35 more)
 
 ### Community 28 - "Community 28"
-Cohesion: 0.12
-Nodes (26): Microsoft.NETCore.Platforms, Microsoft.NETCore.Targets, System.Globalization, System.Runtime, dependencies, Microsoft.Win32.Primitives/4.3.0, runtime.native.System/4.3.0, runtime.native.System.IO.Compression/4.3.0 (+18 more)
-
-### Community 29 - "Community 29"
-Cohesion: 0.11
-Nodes (18): include, suppressParent, target, version, coverlet.collector, DotNetEnv, FxSsh, LibGit2Sharp (+10 more)
+Cohesion: 0.05
+Nodes (39): Assistant / 26/05/2026 08:49:13.951, Assistant / 26/05/2026 08:49:27.968, Assistant / 26/05/2026 08:49:50.614, Assistant / 26/05/2026 08:54:16.880, Assistant / 26/05/2026 08:54:35.237, Assistant / 26/05/2026 08:56:13.212, Assistant / 26/05/2026 08:56:41.212, Assistant / 26/05/2026 08:56:53.399 (+31 more)
 
 ### Community 30 - "Community 30"
-Cohesion: 0.08
-Nodes (24): Microsoft.Win32.Primitives, System.AppContext, System.Collections.Concurrent, System.Console, System.Diagnostics.Tools, System.Globalization.Calendars, System.IO.Compression.ZipFile, System.Linq.Expressions (+16 more)
+Cohesion: 0.05
+Nodes (38): Assistant / 25/05/2026 07:44:32.030, Assistant / 25/05/2026 07:47:45.564, Assistant / 25/05/2026 07:51:40.536, Assistant / 25/05/2026 07:51:46.153, Assistant / 25/05/2026 07:53:31.323, Assistant / 25/05/2026 07:54:11.957, Assistant / 25/05/2026 07:54:43.656, Assistant / 25/05/2026 07:55:06.208 (+30 more)
 
 ### Community 31 - "Community 31"
-Cohesion: 0.13
-Nodes (28): runtime.native.System, runtime.native.System.IO.Compression, System.Collections, System.Diagnostics.Debug, System.Diagnostics.Tracing, System.Reflection.Extensions, System.Resources.ResourceManager, System.Runtime.Extensions (+20 more)
+Cohesion: 0.05
+Nodes (37): Assistant / 02/06/2026 20:46:51.463, Assistant / 02/06/2026 20:48:00.134, Assistant / 02/06/2026 20:50:11.574, Assistant / 02/06/2026 20:50:28.183, Assistant / 02/06/2026 20:50:44.403, Assistant / 02/06/2026 20:50:48.613, Assistant / 02/06/2026 20:51:03.430, Assistant / 02/06/2026 20:51:30.007 (+29 more)
 
 ### Community 32 - "Community 32"
-Cohesion: 0.07
-Nodes (27): Microsoft.Win32.Primitives, System.AppContext, System.Collections.Concurrent, System.Console, System.Diagnostics.Tools, System.Globalization.Calendars, System.IO.Compression, System.IO.Compression.ZipFile (+19 more)
+Cohesion: 0.05
+Nodes (37): Assistant / 26/05/2026 22:49:34.945, Assistant / 26/05/2026 22:49:48.478, Assistant / 26/05/2026 22:50:15.015, Assistant / 26/05/2026 22:50:50.576, Assistant / 26/05/2026 22:51:01.460, Assistant / 26/05/2026 22:51:18.682, Assistant / 26/05/2026 22:56:14.635, Assistant / 26/05/2026 22:56:27.987 (+29 more)
 
 ### Community 33 - "Community 33"
-Cohesion: 0.40
-Nodes (5): ref/netstandard1.3/System.Collections.dll, System.Collections/4.3.0, related, compile, type
+Cohesion: 0.13
+Nodes (5): bool, Dictionary, FakeFileSystem, StaticResponseStore, JsonSerializerOptions
 
 ### Community 34 - "Community 34"
-Cohesion: 0.15
-Nodes (21): runtime.native.System, runtime.native.System.IO.Compression, System.Collections, System.Diagnostics.Debug, System.Diagnostics.Tracing, System.Reflection, System.Resources.ResourceManager, System.Runtime.Extensions (+13 more)
-
-### Community 35 - "Community 35"
-Cohesion: 0.20
-Nodes (14): runtime.native.System, runtime.native.System.IO.Compression, System.Buffers, System.IO, System.IO.Compression, System.IO.FileSystem, System.IO.FileSystem.Primitives, System.Resources.ResourceManager (+6 more)
-
-### Community 36 - "Community 36"
-Cohesion: 0.14
-Nodes (20): System.IO, System.ObjectModel, System.Reflection, System.Reflection.Emit, System.Reflection.Emit.ILGeneration, System.Reflection.Emit.Lightweight, System.Reflection.Primitives, System.Reflection.TypeExtensions (+12 more)
-
-### Community 37 - "Community 37"
-Cohesion: 0.06
-Nodes (38): lib/netstandard1.0/Microsoft.Extensions.Configuration.Abstractions.dll, lib/netstandard1.0/Microsoft.Extensions.Primitives.dll, lib/netstandard1.1/Microsoft.Extensions.Configuration.dll, lib/netstandard1.3/DotNetEnv.dll, Microsoft.Extensions.Configuration, Microsoft.Extensions.Configuration.Abstractions, Microsoft.Extensions.Primitives, NETStandard.Library (+30 more)
-
-### Community 39 - "Community 39"
-Cohesion: 0.09
-Nodes (23): Microsoft.CodeCoverage, Microsoft.TestPlatform.TestHost, runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.Apple, dependencies, coverlet.collector/6.0.0, Microsoft.NET.Test.Sdk/17.8.0, Microsoft.NETCore.Platforms/1.1.1, Microsoft.NETCore.Targets/1.1.3 (+15 more)
-
-### Community 40 - "Community 40"
-Cohesion: 0.09
-Nodes (22): Microsoft.Extensions.Configuration.Abstractions, Microsoft.Extensions.Primitives, NETStandard.Library, System.Runtime.CompilerServices.Unsafe, assemblyVersion, fileVersion, assemblyVersion, fileVersion (+14 more)
-
-### Community 41 - "Community 41"
-Cohesion: 0.08
-Nodes (28): lib/netstandard1.0/_._, runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.Apple, compile, runtime, type, compile, runtime, type (+20 more)
-
-### Community 42 - "Community 42"
-Cohesion: 0.11
-Nodes (18): compilationOptions, DotNetEnv, FxSsh, LibGit2Sharp, Microsoft.NET.ILLink.Tasks, runtimepack.Microsoft.NETCore.App.Runtime.linux-x64, YamlDotNet, dependencies (+10 more)
-
-### Community 43 - "Community 43"
-Cohesion: 0.10
-Nodes (20): Microsoft.TestPlatform.ObjectModel, Newtonsoft.Json, assemblyVersion, fileVersion, assemblyVersion, fileVersion, assemblyVersion, fileVersion (+12 more)
-
-### Community 44 - "Community 44"
-Cohesion: 0.29
-Nodes (7): LibGit2Sharp.NativeBinaries, assemblyVersion, fileVersion, dependencies, runtime, LibGit2Sharp/0.30.0, lib/net6.0/LibGit2Sharp.dll
-
-### Community 45 - "Community 45"
 Cohesion: 0.06
 Nodes (34): 10. פקודת Payload מרכזית, 11. MITRE ATT&CK, Payloads ו־Egress, 12. איכות הסימולציה וה־LLM, 13. מסקנות מוצריות, 14. שורה תחתונה, 15. מקורות נתונים, 1. תקציר מנהלים, 2. מה המוצר עושה? (+26 more)
 
+### Community 35 - "Community 35"
+Cohesion: 0.11
+Nodes (9): AppConfiguration, FieldInfo, Program, HttpClient, List, ReaderWriterLockSlim, SemaphoreSlim, SshServer (+1 more)
+
+### Community 36 - "Community 36"
+Cohesion: 0.06
+Nodes (31): Assistant / 20/05/2026 10:17:33.243, code:text (fake FS match -> no LLM), code:text (LLM_MAX_CALLS_PER_IP=20), code:csharp (static class LlmRateLimiter), code:csharp (static readonly ConcurrentDictionary<string, LlmRateBucket> ), code:csharp (public class LlmRateBucket), code:csharp (Program.GetRemoteAttemptKey(remoteEndpoint)), code:csharp (Logger.LogYaml("llm_rate_limited", new LlmRateLimitLogEntry ) (+23 more)
+
+### Community 38 - "Community 38"
+Cohesion: 0.06
+Nodes (31): Assistant / 02/07/2026 12:08:29.968, Assistant / 02/07/2026 15:02:49.989, Assistant / 02/07/2026 15:03:04.786, Assistant / 02/07/2026 15:03:15.305, Assistant / 02/07/2026 15:19:47.511, Assistant / 02/07/2026 15:19:53.662, Assistant / 02/07/2026 15:20:15.621, Assistant / 02/07/2026 15:20:26.347 (+23 more)
+
+### Community 39 - "Community 39"
+Cohesion: 0.07
+Nodes (29): code:csharp (using var response = httpClient.Send(requestMessage);), code:csharp (if (IsExitCommand(response))), code:csharp (void SendPrompt()), code:csharp (public class ChatRequestData), Constraints & Preferences, Constraints & Preferences, Critical Context, Critical Context (+21 more)
+
+### Community 40 - "Community 40"
+Cohesion: 0.07
+Nodes (27): 1. Project Overview, 2. Complete Directory Structure (Project Files Only), 5. Documentation System / Patterns, 6. Summary, Check Logs, code:bash (# Inside the container:), code:text (Git push skipped: /home/test/app/frontend not a valid reposi), code:block38 (/home/felix/FunnyPot/) (+19 more)
+
+### Community 41 - "Community 41"
+Cohesion: 0.08
+Nodes (26): Assistant / 02/06/2026 18:39:24.540, Assistant / 02/06/2026 18:40:22.800, Assistant / 02/06/2026 18:40:35.305, Assistant / 02/06/2026 18:40:46.575, Assistant / 02/06/2026 18:40:53.635, Assistant / 02/06/2026 18:41:03.874, Assistant / 02/06/2026 18:41:11.549, Assistant / 02/06/2026 18:41:36.562 (+18 more)
+
+### Community 42 - "Community 42"
+Cohesion: 0.08
+Nodes (25): Assistant / 31/05/2026 07:03:15.474, Assistant / 31/05/2026 07:03:22.407, Assistant / 31/05/2026 07:05:32.862, Assistant / 31/05/2026 08:58:18.572, Assistant / 31/05/2026 08:58:24.838, Assistant / 31/05/2026 08:58:43.308, Assistant / 31/05/2026 08:59:27.740, Assistant / 31/05/2026 08:59:34.739 (+17 more)
+
+### Community 43 - "Community 43"
+Cohesion: 0.08
+Nodes (24): Assistant / 20/05/2026 09:23:17.671, Assistant / 20/05/2026 09:24:35.766, Assistant / 20/05/2026 09:27:27.384, Assistant / 20/05/2026 09:28:00.026, Assistant / 20/05/2026 09:49:59.832, Assistant / 20/05/2026 09:52:22.584, Assistant / 20/05/2026 09:56:49.426, Assistant / 20/05/2026 09:58:57.223 (+16 more)
+
+### Community 44 - "Community 44"
+Cohesion: 0.08
+Nodes (24): Assistant / 11/05/2026 14:47:36.233, Assistant / 11/05/2026 14:47:48.700, Assistant / 11/05/2026 14:48:35.976, Assistant / 11/05/2026 14:51:00.973, Assistant / 11/05/2026 14:59:14.705, Assistant / 11/05/2026 15:00:31.538, Assistant / 11/05/2026 15:02:15.263, Assistant / 11/05/2026 15:06:03.678 (+16 more)
+
+### Community 45 - "Community 45"
+Cohesion: 0.09
+Nodes (23): Assistant / 20/05/2026 18:09:58.072, Assistant / 20/05/2026 18:10:22.206, Assistant / 20/05/2026 18:14:06.948, Assistant / 20/05/2026 18:14:48.992, Assistant / 20/05/2026 18:23:59.009, Assistant / 20/05/2026 18:25:41.730, Assistant / 20/05/2026 18:28:35.058, Assistant / 20/05/2026 18:35:00.901 (+15 more)
+
 ### Community 46 - "Community 46"
-Cohesion: 0.13
-Nodes (15): runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.rhel.7-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl (+7 more)
+Cohesion: 0.10
+Nodes (17): AuthAttemptLogEntry, ChatMessage, ChatRequestData, CommandLogEntry, CommandResultLogEntry, DhsCommandAnalysis, GlobalStats, HarvestedCredential (+9 more)
 
 ### Community 47 - "Community 47"
-Cohesion: 0.14
-Nodes (14): NuGet.Frameworks, System.Reflection.Metadata, assemblyVersion, fileVersion, assemblyVersion, fileVersion, assemblyVersion, fileVersion (+6 more)
+Cohesion: 0.11
+Nodes (7): BlockingCollection, SCPDetector, SessionCommandWorker, ShellSessionAnalytics, IDisposable, Regex, Thread
 
 ### Community 48 - "Community 48"
-Cohesion: 0.14
-Nodes (14): build/netcoreapp3.1/Microsoft.NET.Test.Sdk.props, build/netcoreapp3.1/Microsoft.NET.Test.Sdk.targets, buildMultiTargeting/Microsoft.NET.Test.Sdk.props, lib/netcoreapp3.1/_._, Microsoft.CodeCoverage, Microsoft.TestPlatform.TestHost, build, buildMultiTargeting (+6 more)
+Cohesion: 0.10
+Nodes (21): Assistant / 22/05/2026 23:18:29.794, Assistant / 23/05/2026 08:17:31.904, Assistant / 23/05/2026 08:19:54.496, Assistant / 23/05/2026 08:32:00.385, Assistant / 23/05/2026 08:34:59.897, Assistant / 23/05/2026 09:16:04.294, Assistant / 23/05/2026 09:18:23.039, Assistant / 23/05/2026 09:24:34.602 (+13 more)
 
 ### Community 49 - "Community 49"
-Cohesion: 0.14
-Nodes (12): ApiConfig, AppConfiguration, AutoResearchConfig, DataHarvesterConfig, FunnyPot, GitConfig, LlmConfig, LoggingConfig (+4 more)
-
-### Community 50 - "Community 50"
-Cohesion: 0.15
-Nodes (13): locale, locale, locale, locale, locale, locale, resources, lib/netcoreapp3.1/de/Microsoft.TestPlatform.CoreUtilities.resources.dll (+5 more)
+Cohesion: 0.11
+Nodes (19): Assistant / 11/05/2026 16:30:41.441, Assistant / 11/05/2026 16:31:01.122, Assistant / 11/05/2026 16:31:14.404, Assistant / 11/05/2026 16:31:52.141, Assistant / 11/05/2026 16:32:12.372, Assistant / 11/05/2026 16:36:18.314, Assistant / 11/05/2026 16:36:25.012, Assistant / 11/05/2026 16:36:30.061 (+11 more)
 
 ### Community 51 - "Community 51"
-Cohesion: 0.15
-Nodes (13): DotNetEnv, FxSsh, LibGit2Sharp, YamlDotNet, target, version, target, version (+5 more)
+Cohesion: 0.12
+Nodes (17): Assistant / 11/05/2026 15:14:20.004, Assistant / 11/05/2026 15:15:20.726, Assistant / 11/05/2026 15:16:11.575, Assistant / 11/05/2026 15:17:46.152, Assistant / 11/05/2026 15:18:38.403, Assistant / 11/05/2026 15:19:32.858, Changes Summary, Codebase changes (+9 more)
 
 ### Community 52 - "Community 52"
-Cohesion: 0.15
-Nodes (13): restore, configFilePaths, originalTargetFrameworks, outputPath, packagesPath, projectName, projectPath, projectStyle (+5 more)
+Cohesion: 0.23
+Nodes (4): AutoResearchConfig, AutoResearchRunner, AutoResearchState, TextWriter
 
 ### Community 53 - "Community 53"
-Cohesion: 0.17
-Nodes (8): System.Reflection.Metadata.MetadataUpdater.IsSupported, System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization, name, version, runtimeOptions, configProperties, framework, tfm
+Cohesion: 0.12
+Nodes (15): Asset Value Perception, Data Acquisition Architecture, Data Collection Modules, Data Harvesting Specification: LLM-Driven SSH Analytics, GitHub Pages Publication, Log Format, M-1: SSH Protocol and Authentication Metadata, M-2: Behavioral and Tactical Metrics (+7 more)
 
 ### Community 54 - "Community 54"
-Cohesion: 0.17
-Nodes (12): runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.rhel.7-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl (+4 more)
-
-### Community 55 - "Community 55"
-Cohesion: 0.17
-Nodes (12): runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.rhel.7-x64.runtime.native.System.Security.Cryptography.OpenSsl, runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl (+4 more)
-
-### Community 56 - "Community 56"
-Cohesion: 0.22
-Nodes (9): System.Linq, System.Private.Uri, System.Text.RegularExpressions, assemblyVersion, fileVersion, Sprache/2.3.1, lib/netstandard2.1/Sprache.dll, dependencies (+1 more)
-
-### Community 57 - "Community 57"
-Cohesion: 0.17
-Nodes (12): Microsoft.NETCore.App, net8.0, privateAssets, assetTargetFallback, downloadDependencies, frameworkReferences, imports, projectReferences (+4 more)
-
-### Community 58 - "Community 58"
-Cohesion: 0.17
-Nodes (12): ref/netstandard1.3/_._, System.Globalization.Extensions/4.3.0, related, assetType, rid, assetType, rid, runtimes/unix/lib/netstandard1.3/System.Globalization.Extensions.dll (+4 more)
-
-### Community 59 - "Community 59"
-Cohesion: 0.17
-Nodes (12): ref/netstandard1.3/System.IO.Compression.dll, System.IO.Compression/4.3.0, related, assetType, rid, assetType, rid, runtimes/unix/lib/netstandard1.3/System.IO.Compression.dll (+4 more)
-
-### Community 61 - "Community 61"
-Cohesion: 0.18
-Nodes (11): locale, locale, locale, locale, locale, resource, lib/netcoreapp3.1/cs/Microsoft.TestPlatform.CommunicationUtilities.resources.dll, lib/netcoreapp3.1/cs/Microsoft.TestPlatform.CrossPlatEngine.resources.dll (+3 more)
-
-### Community 62 - "Community 62"
-Cohesion: 0.20
-Nodes (8): System.Reflection.Metadata.MetadataUpdater.IsSupported, System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization, name, version, runtimeOptions, configProperties, framework, tfm
-
-### Community 64 - "Community 64"
-Cohesion: 0.22
-Nodes (9): coverlet.collector, FunnyPot, Microsoft.NET.Test.Sdk, xunit, xunit.runner.visualstudio, dependencies, runtime, FunnyPot.Tests/1.0.0 (+1 more)
-
-### Community 65 - "Community 65"
-Cohesion: 0.22
-Nodes (9): build/netstandard2.0/Microsoft.CodeCoverage.props, build/netstandard2.0/Microsoft.CodeCoverage.targets, lib/netcoreapp3.1/Microsoft.VisualStudio.CodeCoverage.Shim.dll, build, compile, runtime, type, Microsoft.CodeCoverage/17.8.0 (+1 more)
-
-### Community 66 - "Community 66"
-Cohesion: 0.25
-Nodes (9): lib/net6.0/LibGit2Sharp.dll, LibGit2Sharp.NativeBinaries, related, compile, dependencies, runtime, type, LibGit2Sharp/0.30.0 (+1 more)
-
-### Community 67 - "Community 67"
-Cohesion: 0.25
-Nodes (7): System.Reflection.Metadata.MetadataUpdater.IsSupported, System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization, System.Text.Json.JsonSerializer.IsReflectionEnabledByDefault, runtimeOptions, configProperties, includedFrameworks, tfm
-
-### Community 69 - "Community 69"
-Cohesion: 0.25
-Nodes (8): DotNetEnv, FxSsh, LibGit2Sharp, YamlDotNet, dependencies, runtime, FunnyPot/1.0.0, FunnyPot.dll
-
-### Community 70 - "Community 70"
-Cohesion: 0.09
-Nodes (23): System.ComponentModel.DataAnnotations.dll, System.Data.dll, System.Net.Requests.dll, System.Reflection.DispatchProxy.dll, System.Runtime.InteropServices.JavaScript.dll, System.Text.Encoding.CodePages.dll, System.Threading.ThreadPool.dll, System.Xml.XPath.dll (+15 more)
-
-### Community 71 - "Community 71"
-Cohesion: 0.25
-Nodes (8): frameworks, runtimes, version, #import, /home/felix/FunnyPot/FunnyPot/FunnyPot.csproj, linux-x64, win-x64, #import
-
-### Community 72 - "Community 72"
-Cohesion: 0.15
-Nodes (13): Microsoft.NETCore.App, net8.0, privateAssets, assetTargetFallback, downloadDependencies, frameworkReferences, imports, projectReferences (+5 more)
-
-### Community 73 - "Community 73"
-Cohesion: 0.25
-Nodes (8): lib/netstandard1.3/_._, related, related, System.Diagnostics.DiagnosticSource/4.3.0, lib/netstandard1.3/System.Diagnostics.DiagnosticSource.dll, compile, runtime, type
-
-### Community 74 - "Community 74"
-Cohesion: 0.25
-Nodes (8): ref/netstandard1.6/System.AppContext.dll, System.AppContext/4.3.0, related, lib/netstandard1.6/System.AppContext.dll, compile, dependencies, runtime, type
-
-### Community 76 - "Community 76"
-Cohesion: 0.38
-Nodes (5): compilationOptions, runtimeTarget, name, signature, targets
-
-### Community 77 - "Community 77"
-Cohesion: 0.28
-Nodes (9): lib/netcoreapp3.1/Microsoft.TestPlatform.CommunicationUtilities.dll, lib/netcoreapp3.1/Microsoft.TestPlatform.CoreUtilities.dll, lib/netcoreapp3.1/Microsoft.TestPlatform.CrossPlatEngine.dll, lib/netcoreapp3.1/Microsoft.TestPlatform.PlatformAbstractions.dll, lib/netcoreapp3.1/Microsoft.TestPlatform.Utilities.dll, lib/netcoreapp3.1/Microsoft.VisualStudio.TestPlatform.Common.dll, lib/netcoreapp3.1/Microsoft.VisualStudio.TestPlatform.ObjectModel.dll, compile (+1 more)
-
-### Community 78 - "Community 78"
-Cohesion: 0.18
-Nodes (4): LlmRateLimiterTests, SCPDetectorTests, SCPUploadSessionTests, SessionCommandWorkerTests
-
-### Community 79 - "Community 79"
 Cohesion: 0.19
 Nodes (8): byte, SCPUploadHandler, SCPUploadSession, int, long, MemoryStream, State, string
 
+### Community 55 - "Community 55"
+Cohesion: 0.13
+Nodes (14): code:bash (git push origin main), code:bash (docker exec funnypot-container cat /proc/1/net/tcp), code:bash (docker compose stop             # graceful, leaves container), code:bash (graphify query "how is this app deployed"), Cold start, Common pitfalls, Deploy paths, Deployment (+6 more)
+
+### Community 56 - "Community 56"
+Cohesion: 0.13
+Nodes (15): Assistant / 02/06/2026 20:28:38.532, Assistant / 02/06/2026 20:29:58.781, Assistant / 02/06/2026 20:30:32.314, Assistant / 02/06/2026 20:35:46.367, Assistant / 02/06/2026 20:36:40.167, Assistant / 02/06/2026 20:37:32.075, Assistant / 02/06/2026 20:37:40.194, Assistant / 02/06/2026 20:38:09.491 (+7 more)
+
+### Community 57 - "Community 57"
+Cohesion: 0.21
+Nodes (3): ConcurrentDictionary, CommandResponseCache, LlmRateLimiter
+
+### Community 58 - "Community 58"
+Cohesion: 0.14
+Nodes (13): Assistant / 11/06/2026 19:09:34.534, FunnyPot AutoResearch Program, FunnyPot AutoResearch Program, FunnyPot AutoResearch Program, FunnyPot AutoResearch Program, Session: FunnyPot AutoResearch improvement, Session: New session - 2026-06-11T16:11:57.946Z, Session: New session - 2026-06-11T16:21:02.217Z (+5 more)
+
+### Community 59 - "Community 59"
+Cohesion: 0.15
+Nodes (11): ApiConfig, AppConfiguration, AutoResearchConfig, DataHarvesterConfig, FunnyPot, GitConfig, LlmConfig, LoggingConfig (+3 more)
+
+### Community 60 - "Community 60"
+Cohesion: 0.26
+Nodes (4): DateTime, RateLimitInfo, SyntheticHostClock, object
+
+### Community 62 - "Community 62"
+Cohesion: 0.18
+Nodes (11): Assistant / 02/06/2026 08:54:46.297, Assistant / 02/06/2026 08:55:15.950, Assistant / 02/06/2026 08:56:24.908, Assistant / 02/06/2026 08:57:33.229, Assistant / 02/06/2026 08:58:12.872, Session: Pedantic code review request, User / 02/06/2026 08:54:45.101, User / 02/06/2026 08:55:15.939 (+3 more)
+
+### Community 63 - "Community 63"
+Cohesion: 0.18
+Nodes (11): Assistant / 29/06/2026 17:58:55.371, Assistant / 29/06/2026 18:00:19.624, Assistant / 29/06/2026 18:00:55.657, Assistant / 29/06/2026 18:01:21.691, Assistant / 29/06/2026 18:05:31.880, code:csv (datetime,user,command), Relevant Files, User / 29/06/2026 17:58:55.223 (+3 more)
+
+### Community 64 - "Community 64"
+Cohesion: 0.20
+Nodes (10): Assistant / 20/05/2026 13:06:36.809, Assistant / 20/05/2026 13:07:17.682, Assistant / 20/05/2026 13:09:36.539, Assistant / 20/05/2026 13:38:28.039, Session: Project todos overview, User / 20/05/2026 13:05:59.598, User / 20/05/2026 13:08:46.487, User / 20/05/2026 13:38:18.202 (+2 more)
+
+### Community 65 - "Community 65"
+Cohesion: 0.20
+Nodes (10): Assistant / 11/05/2026 14:32:07.970, Assistant / 11/05/2026 14:33:14.738, code:block3 (/tmp/graphify-venv/bin/graphify update .), Graphify Memory System - Integration Complete, Key Graph Insights, Security Issues Found (7 total), To update graph after code changes, User / 11/05/2026 14:32:04.271 (+2 more)
+
+### Community 66 - "Community 66"
+Cohesion: 0.20
+Nodes (10): Assistant / 29/06/2026 17:27:48.647, code:bash (cat /proc/cpuinfo | grep name | wc -l), code:text (processor	: 0), code:text (model name	: Intel(R) Xeon(R) CPU), code:text (2), code:text (# /proc/cpuinfo), code:bash (cmd1 && cmd2), code:bash (cmd1 || cmd2) (+2 more)
+
+### Community 68 - "Community 68"
+Cohesion: 0.22
+Nodes (9): Assistant / 25/05/2026 07:37:17.308, Assistant / 25/05/2026 07:37:22.132, Assistant / 25/05/2026 07:37:32.207, Assistant / 25/05/2026 07:37:37.288, Assistant / 25/05/2026 07:37:41.714, Assistant / 25/05/2026 07:41:51.661, Session: Code review and bug detection, User / 25/05/2026 07:36:24.905 (+1 more)
+
+### Community 69 - "Community 69"
+Cohesion: 0.22
+Nodes (9): 1. Architectural Patterns, 2. Stability and Error Handling, 3. Security, 4. Concurrency, 5. Code Quality and Modern Patterns, Assistant / 23/05/2026 09:42:03.844, Recommendations, Session: Perform a thorough codebase review of FunnyPot. (@explore subagent) (+1 more)
+
+### Community 70 - "Community 70"
+Cohesion: 0.22
+Nodes (9): 3. Key Configuration Files, code:block39 (*.dll), code:block40 (.env), docker-compose.yaml, Dockerfile, .dockerignore, FunnyPot.csproj (Main Project), FunnyPot.Tests.csproj (Test Project) (+1 more)
+
+### Community 71 - "Community 71"
+Cohesion: 0.22
+Nodes (9): Assistant / 11/05/2026 16:28:27.479, Assistant / 11/05/2026 16:29:03.648, Assistant / 11/05/2026 16:29:11.556, Assistant / 11/05/2026 16:29:32.371, Assistant / 11/05/2026 16:29:43.722, code:bash (docker exec funnypot-container ls -la /var/log/funnypot), code:text (Build succeeded), To Make Static GitHub Page Work (+1 more)
+
+### Community 72 - "Community 72"
+Cohesion: 0.22
+Nodes (9): Assistant / 19/05/2026 12:20:38.079, code:bash (curl \), code:text (NOTIFY_WEBHOOK_URL=https://ntfy.sh/funnypot-felix-alerts-928), code:text (FunnyPot SSH connection), code:bash (curl \), code:text (NOTIFY_WEBHOOK_URL=https://gotify.example.com/message), code:text (NOTIFY_WEBHOOK_URL=https://gotify.example.com/message?token=), code:text (NOTIFY_ENABLED=true) (+1 more)
+
+### Community 73 - "Community 73"
+Cohesion: 0.25
+Nodes (8): Assistant / 02/06/2026 09:09:04.414, Assistant / 02/06/2026 09:29:47.240, Assistant / 02/06/2026 09:33:00.653, Assistant / 02/06/2026 09:42:30.555, Session: Test message, User / 02/06/2026 09:09:04.400, User / 02/06/2026 09:29:47.227, User / 02/06/2026 09:32:24.211
+
+### Community 74 - "Community 74"
+Cohesion: 0.25
+Nodes (8): Assistant / 11/06/2026 18:59:29.527, code:text (AutoResearch iteration 1/1), code:text (AutoResearch rejected: metric ... did not improve), code:text (autoresearch/state.json), code:bash (dotnet test FunnyPot.sln), code:text (autoresearch_metric=7.5), code:yaml (agent-command: "opencode run 'Read autoresearch/program.md a), code:text (autoresearch_metric=12.3)
+
+### Community 75 - "Community 75"
+Cohesion: 0.25
+Nodes (3): LlmRateLimiterTests, SCPDetectorTests, SessionCommandWorkerTests
+
+### Community 76 - "Community 76"
+Cohesion: 0.29
+Nodes (7): Assistant / 11/05/2026 14:26:05.852, Assistant / 11/05/2026 14:29:01.310, Assistant / 11/05/2026 14:29:05.361, Assistant / 11/05/2026 14:29:34.100, Assistant / 11/05/2026 14:29:50.161, Session: Graphify memory system integration, User / 11/05/2026 14:24:47.209
+
+### Community 77 - "Community 77"
+Cohesion: 0.29
+Nodes (7): Assistant / 30/06/2026 09:02:59.412, code:sh (sudo systemctl isolate multi-user.target), code:sh (sudo systemctl isolate graphical.target), code:sh (sudo systemctl set-default multi-user.target), code:sh (sudo systemctl set-default graphical.target), code:text (Ctrl+Alt+F3), code:text (Ctrl+Alt+F2)
+
+### Community 78 - "Community 78"
+Cohesion: 0.33
+Nodes (6): Assistant / 20/05/2026 10:47:22.280, Relevant Files, User / 20/05/2026 10:47:22.252, User / 20/05/2026 10:58:32.577, User / 20/05/2026 11:03:51.658, User / 20/05/2026 12:20:17.582
+
+### Community 79 - "Community 79"
+Cohesion: 0.33
+Nodes (6): 2. Required Code Modifications & Additions, **A. Configuration Upgrades (`AppConfiguration.cs` & `.env`)**, **B. The HTTP Listener Layer (`HttpHoneypot.cs` - New Class)**, **C. LLM Interaction & Persona Breakout (M-4 Ext.)**, code:csharp (public class HttpConfiguration), **D. Unified Data Harvesting & Storage**
+
 ### Community 80 - "Community 80"
 Cohesion: 0.33
-Nodes (7): lib/netstandard2.0/Newtonsoft.Json.dll, related, Newtonsoft.Json/13.0.1, compile, runtime, type, lib/netstandard2.0/Newtonsoft.Json.dll
+Nodes (6): Assistant / 11/05/2026 16:10:42.033, code:text ([api error] 401: {"error":{"message":"User not found.","code), code:bash (docker exec funnypot-container bash -lc 'k="$OPENROUTER_API_), code:bash (source .env), code:bash (nano .env), code:bash (ssh test@46.117.18.129)
 
 ### Community 81 - "Community 81"
-Cohesion: 0.18
-Nodes (12): lib/netstandard2.1/Sprache.dll, System.Globalization, System.Linq, System.Private.Uri, System.Text.RegularExpressions, related, Sprache/2.3.1, lib/netstandard2.1/Sprache.dll (+4 more)
+Cohesion: 0.33
+Nodes (6): Assistant / 11/05/2026 14:25:16.503, Assistant / 11/05/2026 14:25:20.896, Assistant / 11/05/2026 14:25:28.788, Assistant / 11/05/2026 14:25:33.679, Session: Explore project structure (@explore subagent), User / 11/05/2026 14:25:16.498
 
 ### Community 82 - "Community 82"
-Cohesion: 0.29
-Nodes (7): ref/netstandard1.3/System.Collections.Concurrent.dll, System.Collections.Concurrent/4.3.0, related, lib/netstandard1.3/System.Collections.Concurrent.dll, compile, runtime, type
+Cohesion: 0.40
+Nodes (5): 2.1 SSH Protocol & Authentication Metadata (M-1), 2.2 Behavioral & Tactical Metrics (M-2), 2.3 Payload & Egress Telemetry (M-3), 2.4 LLM Interaction & Persona Metrics (M-4), 2. Functional Requirements: Data Collection Modules
 
 ### Community 83 - "Community 83"
-Cohesion: 0.29
-Nodes (7): ref/netstandard1.3/System.IO.Compression.ZipFile.dll, System.IO.Compression.ZipFile/4.3.0, related, lib/netstandard1.3/System.IO.Compression.ZipFile.dll, compile, runtime, type
+Cohesion: 0.40
+Nodes (5): Assistant / 02/06/2026 09:05:03.736, Assistant / 02/06/2026 09:05:37.096, Session: Code review with pedantic reviewer, User / 02/06/2026 09:04:56.306, User / 02/06/2026 09:05:24.762
 
 ### Community 84 - "Community 84"
-Cohesion: 0.08
-Nodes (25): locale, locale, locale, locale, locale, locale, locale, locale (+17 more)
+Cohesion: 0.40
+Nodes (5): Assistant / 27/05/2026 13:58:45.418, Assistant / 27/05/2026 13:59:14.948, Assistant / 27/05/2026 14:14:51.554, Session: Honeypot command response anomalies, User / 27/05/2026 13:58:45.408
 
 ### Community 85 - "Community 85"
-Cohesion: 0.33
-Nodes (4): documents, /home/felix/FunnyPot/*, /home/felix/FunnyPot/frontend/*, /home/felix/FunnyPot/frontend-main/*
+Cohesion: 0.40
+Nodes (5): Assistant / 12/05/2026 10:51:25.081, code:text (.secrets/), code:gitignore (.secrets/), code:yaml (services:), code:text (/run/secrets/github_token)
 
 ### Community 86 - "Community 86"
-Cohesion: 0.33
-Nodes (4): documents, /home/felix/FunnyPot/*, /home/felix/FunnyPot/frontend/*, /home/felix/FunnyPot/frontend-main/*
+Cohesion: 0.40
+Nodes (5): Assistant / 11/05/2026 14:30:29.903, Assistant / 11/05/2026 14:30:37.559, Assistant / 11/05/2026 14:30:44.778, Assistant / 11/05/2026 14:30:52.912, Security Scan Results
 
 ### Community 87 - "Community 87"
-Cohesion: 0.33
-Nodes (6): lib/net8.0/FxSsh.dll, compile, runtime, type, FxSsh/1.3.0, lib/net8.0/FxSsh.dll
-
-### Community 88 - "Community 88"
-Cohesion: 0.33
-Nodes (6): lib/netstandard1.1/_._, System.Buffers/4.3.0, lib/netstandard1.1/System.Buffers.dll, compile, runtime, type
-
-### Community 89 - "Community 89"
-Cohesion: 0.33
-Nodes (6): runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2, runtimeTargets, type, assetType, rid, runtimes/opensuse.42.1-x64/native/System.Security.Cryptography.Native.OpenSsl.so
+Cohesion: 0.40
+Nodes (5): Assistant / 11/06/2026 19:11:59.026, code:json ({), FunnyPot AutoResearch Program, Session: FunnyPot improvement, User / 11/06/2026 19:15:05.798
 
 ### Community 90 - "Community 90"
-Cohesion: 0.40
-Nodes (5): ref/netstandard1.3/System.Globalization.dll, System.Globalization/4.3.0, related, compile, type
+Cohesion: 0.50
+Nodes (4): Blocked, Done, In Progress, Progress
 
 ### Community 91 - "Community 91"
-Cohesion: 0.17
-Nodes (11): LastUpdated, MeanEngagementSeconds, MitreTechniqueDistribution, SessionsByBanner, TopUsers, TotalBlockedOperations, TotalCompletionTokens, TotalDurationMs (+3 more)
+Cohesion: 0.50
+Nodes (4): Blocked, Done, In Progress, Progress
 
 ### Community 92 - "Community 92"
-Cohesion: 0.16
-Nodes (16): EventCounts, auth_attempt, harvested_credential, session_end, session_start, LastUpdated, ScansByIp, 87.251.64.176 (+8 more)
+Cohesion: 0.50
+Nodes (4): Blocked, Done, In Progress, Progress
 
 ### Community 93 - "Community 93"
-Cohesion: 0.33
-Nodes (6): runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2, runtimeTargets, type, assetType, rid, runtimes/fedora.24-x64/native/System.Security.Cryptography.Native.OpenSsl.so
+Cohesion: 0.50
+Nodes (4): Blocked, Done, In Progress, Progress
 
 ### Community 94 - "Community 94"
-Cohesion: 0.33
-Nodes (6): runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2, runtimeTargets, type, assetType, rid, runtimes/opensuse.13.2-x64/native/System.Security.Cryptography.Native.OpenSsl.so
+Cohesion: 0.50
+Nodes (4): Blocked, Done, In Progress, Progress
+
+### Community 95 - "Community 95"
+Cohesion: 0.50
+Nodes (4): Blocked, Done, In Progress, Progress
 
 ### Community 96 - "Community 96"
-Cohesion: 0.40
-Nodes (5): ref/netstandard1.0/System.Diagnostics.Tools.dll, System.Diagnostics.Tools/4.3.0, related, compile, type
+Cohesion: 0.50
+Nodes (4): Blocked, Done, In Progress, Progress
 
 ### Community 97 - "Community 97"
-Cohesion: 0.40
-Nodes (5): ref/netstandard1.5/System.IO.dll, System.IO/4.3.0, related, compile, type
+Cohesion: 0.50
+Nodes (4): Blocked, Done, In Progress, Progress
 
 ### Community 98 - "Community 98"
-Cohesion: 0.39
-Nodes (5): compilationOptions, runtimeTarget, name, signature, targets
+Cohesion: 0.50
+Nodes (4): Assistant / 22/05/2026 23:09:58.938, Session: Top 5 code quality and functionality fixes, User / 22/05/2026 23:07:19.060, User / 22/05/2026 23:09:03.879
 
 ### Community 99 - "Community 99"
-Cohesion: 0.33
-Nodes (6): runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2, runtimeTargets, type, assetType, rid, runtimes/ubuntu.14.04-x64/native/System.Security.Cryptography.Native.OpenSsl.so
+Cohesion: 0.50
+Nodes (4): Assistant / 11/05/2026 16:25:56.928, code:bash (docker exec funnypot-container cat /var/log/funnypot/harvest), code:yaml (---), code:bash (docker exec funnypot-container ls /home/test/app/frontend/se)
 
 ### Community 100 - "Community 100"
-Cohesion: 0.67
-Nodes (3): System.ComponentModel.TypeConverter.dll, assemblyVersion, fileVersion
+Cohesion: 0.50
+Nodes (4): 4. Source Code Architecture (Program.cs, ~582 lines), Classes / Components, Core Flow, The "Omega-Black" System Prompt
 
 ### Community 101 - "Community 101"
-Cohesion: 0.33
-Nodes (6): runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.Apple/4.3.0, runtimeTargets, type, assetType, rid, runtimes/osx.10.10-x64/native/System.Security.Cryptography.Native.Apple.dylib
+Cohesion: 0.50
+Nodes (4): Blocked, Done, In Progress, Progress
 
 ### Community 102 - "Community 102"
-Cohesion: 0.40
-Nodes (4): format, projects, restore, /home/felix/FunnyPot/FunnyPot/FunnyPot.csproj
+Cohesion: 0.50
+Nodes (4): Blocked, Done, In Progress, Progress
+
+### Community 103 - "Community 103"
+Cohesion: 0.50
+Nodes (4): Blocked, Done, In Progress, Progress
 
 ### Community 104 - "Community 104"
-Cohesion: 0.67
-Nodes (3): System.Net.Primitives.dll, assemblyVersion, fileVersion
+Cohesion: 0.50
+Nodes (4): Blocked, Done, In Progress, Progress
 
 ### Community 105 - "Community 105"
-Cohesion: 0.43
-Nodes (8): System.Collections, System.Diagnostics.Debug, System.Diagnostics.Tracing, System.Reflection, System.Threading, dependencies, dependencies, dependencies
+Cohesion: 0.50
+Nodes (4): Assistant / 29/06/2026 20:58:14.101, code:sh (cd ~; chattr -ia .ssh; ...), code:sh (printenv OPENROUTER_API_KEY), code:sh (curl -s https://openrouter.ai/api/v1/auth/key -H "Authorizat)
 
 ### Community 106 - "Community 106"
-Cohesion: 0.40
-Nodes (5): assemblyVersion, fileVersion, runtime, Microsoft.CodeCoverage/17.8.0, lib/netcoreapp3.1/Microsoft.VisualStudio.CodeCoverage.Shim.dll
+Cohesion: 0.50
+Nodes (4): Assistant / 29/06/2026 12:41:08.842, code:bash (cat /proc/cpuinfo | grep name | wc -l), code:text (2), code:text (1)
 
 ### Community 107 - "Community 107"
-Cohesion: 0.40
-Nodes (5): assemblyVersion, fileVersion, Newtonsoft.Json/13.0.1, runtime, lib/netstandard2.0/Newtonsoft.Json.dll
+Cohesion: 0.50
+Nodes (4): Assistant / 29/06/2026 17:32:18.808, code:text (# /proc/cpuinfo), code:text (Generated maintenance artifact for omegablack.), code:text (attacker command)
 
 ### Community 108 - "Community 108"
-Cohesion: 0.40
-Nodes (5): assemblyVersion, fileVersion, NuGet.Frameworks/6.5.0, runtime, lib/netstandard2.0/NuGet.Frameworks.dll
+Cohesion: 0.50
+Nodes (4): Assistant / 11/06/2026 19:31:39.185, code:bash (opencode run --agent build --model openrouter/openai/gpt-5.5), code:text (gemma-4-12b), code:text (159/159)
 
 ### Community 109 - "Community 109"
-Cohesion: 0.40
-Nodes (5): assemblyVersion, fileVersion, runtime, Microsoft.Extensions.Primitives/1.1.1, lib/netstandard1.0/Microsoft.Extensions.Primitives.dll
+Cohesion: 0.50
+Nodes (4): Assistant / 20/05/2026 06:47:31.739, code:text (cannot push because a reference that you are trying to updat), code:text (local new history     A), code:text (remote data history   X -- Y -- Z)
 
 ### Community 110 - "Community 110"
-Cohesion: 0.29
-Nodes (7): LibGit2Sharp.NativeBinaries, assemblyVersion, fileVersion, dependencies, runtime, LibGit2Sharp/0.30.0, lib/net6.0/LibGit2Sharp.dll
+Cohesion: 0.50
+Nodes (4): Assistant / 20/05/2026 09:02:43.290, code:bash (scripts/deploy.sh "Commit message"), code:text (Deploy FunnyPot updates), code:bash (scripts/deploy.sh)
 
 ### Community 111 - "Community 111"
-Cohesion: 0.10
-Nodes (21): Microsoft.Extensions.Configuration, Sprache, System.Globalization, System.Linq, System.Net.Http, System.Private.Uri, System.Text.RegularExpressions, dependencies (+13 more)
+Cohesion: 0.50
+Nodes (4): Assistant / 22/05/2026 19:08:42.260, code:bash (-s  kernel name), code:bash (/bin/./uname), code:bash (cat .gnupg)
 
 ### Community 112 - "Community 112"
-Cohesion: 0.33
-Nodes (6): runtime.rhel.7-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2, runtimeTargets, type, assetType, rid, runtimes/rhel.7-x64/native/System.Security.Cryptography.Native.OpenSsl.so
+Cohesion: 0.50
+Nodes (4): Blocked, Done, In Progress, Progress
 
 ### Community 113 - "Community 113"
-Cohesion: 0.15
-Nodes (5): DateTime, FakeFileSystem, RateLimitInfo, SyntheticHostClock, object
+Cohesion: 0.50
+Nodes (4): Blocked, Done, In Progress, Progress
 
 ### Community 114 - "Community 114"
-Cohesion: 0.67
-Nodes (3): System.Linq.Queryable.dll, assemblyVersion, fileVersion
+Cohesion: 0.50
+Nodes (4): Assistant / 19/05/2026 13:39:08.083, code:text (Git push failed ... Static dashboard remote is not configure), code:text (/home/test/app/frontend/), code:text (GITHUB_REPOSITORY=owner/repo)
 
 ### Community 115 - "Community 115"
-Cohesion: 0.25
-Nodes (7): format, frameworks, version, projects, /home/felix/FunnyPot/FunnyPot.Tests/FunnyPot.Tests.csproj, restore, /home/felix/FunnyPot/FunnyPot.Tests/FunnyPot.Tests.csproj
+Cohesion: 0.50
+Nodes (4): Assistant / 19/05/2026 14:52:40.915, code:bash (ssh -p 22722 test@localhost), code:text (test), code:bash (exit)
 
 ### Community 116 - "Community 116"
-Cohesion: 0.33
-Nodes (6): runtime.ubuntu.16.10-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2, runtimeTargets, type, assetType, rid, runtimes/ubuntu.16.10-x64/native/System.Security.Cryptography.Native.OpenSsl.so
-
-### Community 117 - "Community 117"
-Cohesion: 0.09
-Nodes (22): runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.Apple, Microsoft.NETCore.Platforms/1.1.1, Microsoft.NETCore.Targets/1.1.3, runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2, runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2, runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2, runtime.native.System.Security.Cryptography.Apple/4.3.0, runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2 (+14 more)
-
-### Community 118 - "Community 118"
-Cohesion: 0.08
-Nodes (26): Microsoft.Extensions.Configuration, Microsoft.Extensions.Configuration.Abstractions, Microsoft.Extensions.Primitives, NETStandard.Library, Sprache, System.Net.Http, System.Runtime.CompilerServices.Unsafe, dependencies (+18 more)
+Cohesion: 0.50
+Nodes (4): Assistant / 19/05/2026 12:13:23.801, code:text (.secrets/openrouter_api_key), code:bash (docker compose up -d --force-recreate), code:text (GITHUB_REPOSITORY=owner/repo)
 
 ### Community 119 - "Community 119"
 Cohesion: 0.83
@@ -822,719 +655,127 @@ Nodes (3): commit_parent_if_needed(), commit_submodule_if_needed(), ensure_clean
 
 ### Community 121 - "Community 121"
 Cohesion: 0.67
-Nodes (3): assemblyVersion, fileVersion, Microsoft.CSharp.dll
+Nodes (3): 3.1 Temporal Correlation, 3.2 Asset Value Perception (AVP), 3. Processing & Correlation Requirements
 
 ### Community 122 - "Community 122"
 Cohesion: 0.67
-Nodes (3): assemblyVersion, fileVersion, Microsoft.VisualBasic.Core.dll
+Nodes (3): Assistant / 20/05/2026 18:07:01.927, Relevant Files, User / 20/05/2026 18:07:01.906
 
 ### Community 123 - "Community 123"
 Cohesion: 0.67
-Nodes (3): assemblyVersion, fileVersion, Microsoft.VisualBasic.dll
+Nodes (3): Assistant / 02/06/2026 18:25:46.608, Relevant Files, User / 02/06/2026 18:23:49.665
 
 ### Community 124 - "Community 124"
 Cohesion: 0.67
-Nodes (3): assemblyVersion, fileVersion, Microsoft.Win32.Primitives.dll
+Nodes (3): Assistant / 24/05/2026 19:50:44.691, Relevant Files, User / 24/05/2026 19:50:44.474
 
 ### Community 125 - "Community 125"
 Cohesion: 0.67
-Nodes (3): assemblyVersion, fileVersion, Microsoft.Win32.Registry.dll
+Nodes (3): Assistant / 12/05/2026 10:29:28.424, code:bash (export GITHUB_USER='your-github-username'), code:bash (GITHUB_USER='your-github-username' GITHUB_TOKEN='your-token')
 
 ### Community 126 - "Community 126"
 Cohesion: 0.67
-Nodes (3): System.AppContext.dll, assemblyVersion, fileVersion
+Nodes (3): Assistant / 11/05/2026 15:58:28.279, code:bash (# From your WSL terminal, not the Windows one:), code:powershell (netsh interface portproxy add v4tov4 listenport=22722 listen)
 
 ### Community 127 - "Community 127"
 Cohesion: 0.67
-Nodes (3): System.Buffers.dll, assemblyVersion, fileVersion
+Nodes (3): Assistant / 11/05/2026 16:05:35.828, code:bash (git pull), code:bash (timeout 3 bash -c 'exec 3<>/dev/tcp/localhost/22722; head -1)
 
 ### Community 128 - "Community 128"
 Cohesion: 0.67
-Nodes (3): System.Collections.Concurrent.dll, assemblyVersion, fileVersion
+Nodes (3): Assistant / 11/05/2026 16:21:33.708, code:bash (./run-docker.sh), code:bash (ssh test@46.117.18.129)
 
 ### Community 129 - "Community 129"
 Cohesion: 0.67
-Nodes (3): System.Collections.dll, assemblyVersion, fileVersion
+Nodes (3): code:bash (./run-docker.sh), code:bash (watch docker ps --filter name=funnypot-container), Deploy
 
 ### Community 130 - "Community 130"
 Cohesion: 0.67
-Nodes (3): System.Collections.Immutable.dll, assemblyVersion, fileVersion
+Nodes (3): code:bash (OPENROUTER_API_KEY=sk-or-v1-...), code:bash (mkdir -p app/frontend/sessions), Prerequisites
 
 ### Community 131 - "Community 131"
 Cohesion: 0.67
-Nodes (3): System.Collections.NonGeneric.dll, assemblyVersion, fileVersion
+Nodes (3): Assistant / 11/05/2026 16:30:15.705, Relevant Files, User / 11/05/2026 16:30:15.669
 
 ### Community 132 - "Community 132"
 Cohesion: 0.67
-Nodes (3): System.Collections.Specialized.dll, assemblyVersion, fileVersion
+Nodes (3): Session: Data collection requirements for GitHub site, User / 12/05/2026 10:03:04.552, User / 12/05/2026 10:07:13.029
 
 ### Community 133 - "Community 133"
 Cohesion: 0.67
-Nodes (3): System.ComponentModel.Annotations.dll, assemblyVersion, fileVersion
+Nodes (3): Assistant / 25/05/2026 09:17:34.892, code:text (/home/felix/FunnyPot-Reviewer/), code:markdown (# FunnyPot Attacker Command Review)
 
 ### Community 134 - "Community 134"
-Cohesion: 0.33
-Nodes (6): runtime.ubuntu.16.04-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2, runtimeTargets, type, assetType, rid, runtimes/ubuntu.16.04-x64/native/System.Security.Cryptography.Native.OpenSsl.so
+Cohesion: 0.67
+Nodes (3): Assistant / 25/05/2026 09:33:30.318, code:bash (cd /home/felix/FunnyPot-Reviewer), code:cron (0 */6 * * * cd /home/felix/FunnyPot-Reviewer && python3 scri)
 
 ### Community 135 - "Community 135"
 Cohesion: 0.67
-Nodes (3): System.Configuration.dll, assemblyVersion, fileVersion
+Nodes (3): Assistant / 30/06/2026 13:25:40.656, Session: Forge reconnection greeting, User / 30/06/2026 13:25:40.160
 
 ### Community 136 - "Community 136"
 Cohesion: 0.67
-Nodes (3): System.ComponentModel.Primitives.dll, assemblyVersion, fileVersion
+Nodes (3): Assistant / 29/06/2026 21:34:50.357, code:text (18:32:25.637 shell_session_start Event=ExecOpened), code:text (18:32:31.108 shell_session_start Event=ExecOpened)
 
 ### Community 137 - "Community 137"
-Cohesion: 0.40
-Nodes (5): ref/netstandard1.3/Microsoft.Win32.Primitives.dll, compile, type, Microsoft.Win32.Primitives/4.3.0, related
+Cohesion: 0.67
+Nodes (3): Assistant / 11/06/2026 18:57:01.424, code:bash (dotnet run --project FunnyPot -- --autoresearch), code:yaml (auto-research:)
 
 ### Community 138 - "Community 138"
 Cohesion: 0.67
-Nodes (3): System.Net.WebSockets.Client.dll, assemblyVersion, fileVersion
+Nodes (3): Assistant / 11/06/2026 19:28:10.487, code:bash (opencode run --agent build --dangerously-skip-permissions ..), code:text (build · gemma-4-12b)
 
 ### Community 139 - "Community 139"
 Cohesion: 0.67
-Nodes (3): System.Console.dll, assemblyVersion, fileVersion
+Nodes (3): Assistant / 11/06/2026 19:32:37.518, code:text (openrouter/google/gemini-2.5-flash), code:bash (opencode run --agent build --model openrouter/google/gemini-)
 
 ### Community 140 - "Community 140"
-Cohesion: 0.25
-Nodes (8): frameworks, runtimes, version, #import, /home/felix/FunnyPot/FunnyPot/FunnyPot.csproj, linux-x64, win-x64, #import
+Cohesion: 0.67
+Nodes (3): Assistant / 11/06/2026 19:37:45.698, code:text (openai/gpt-5.5-fast), code:text (SHELL=/bin/bash)
 
 ### Community 141 - "Community 141"
 Cohesion: 0.67
-Nodes (3): System.Data.Common.dll, assemblyVersion, fileVersion
+Nodes (3): Assistant / 30/05/2026 09:20:57.626, code:html (<td>${analysisTooltip(session)}</td>), code:js (<span class="tooltip-trigger session-analysis">?</span>)
 
 ### Community 142 - "Community 142"
 Cohesion: 0.67
-Nodes (3): System.Private.CoreLib.dll, assemblyVersion, fileVersion
+Nodes (3): Assistant / 20/05/2026 05:59:14.569, code:csharp (if (!accepted && tries >= PasswordHarvestAttempt)), code:csharp (conn.CommandOpened += (_, args) =>)
 
 ### Community 143 - "Community 143"
-Cohesion: 0.33
-Nodes (6): runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2, runtimeTargets, type, assetType, rid, runtimes/debian.8-x64/native/System.Security.Cryptography.Native.OpenSsl.so
+Cohesion: 0.67
+Nodes (3): Assistant / 20/05/2026 06:15:45.991, code:bash (git clone --recurse-submodules <repo>), code:bash (git submodule update --init --remote)
 
 ### Community 144 - "Community 144"
-Cohesion: 0.40
-Nodes (5): ref/netstandard1.3/System.Diagnostics.Debug.dll, System.Diagnostics.Debug/4.3.0, related, compile, type
+Cohesion: 0.67
+Nodes (3): Assistant / 20/05/2026 06:05:53.553, code:bash (git clone --recurse-submodules <repo>), code:bash (git submodule update --init --remote)
 
 ### Community 145 - "Community 145"
 Cohesion: 0.67
-Nodes (3): System.Diagnostics.DiagnosticSource.dll, assemblyVersion, fileVersion
+Nodes (3): code:csharp (if (!usedStatic && !rateLimited)), code:csharp (if (messageHistory.Count > 0), Critical — the LLM history logic is broken
 
 ### Community 146 - "Community 146"
 Cohesion: 0.67
-Nodes (3): System.Diagnostics.FileVersionInfo.dll, assemblyVersion, fileVersion
-
-### Community 147 - "Community 147"
-Cohesion: 0.67
-Nodes (3): System.Diagnostics.Process.dll, assemblyVersion, fileVersion
-
-### Community 148 - "Community 148"
-Cohesion: 0.67
-Nodes (3): System.Diagnostics.StackTrace.dll, assemblyVersion, fileVersion
-
-### Community 149 - "Community 149"
-Cohesion: 0.17
-Nodes (11): LastUpdated, MeanEngagementSeconds, MitreTechniqueDistribution, SessionsByBanner, TopUsers, TotalBlockedOperations, TotalCompletionTokens, TotalDurationMs (+3 more)
-
-### Community 150 - "Community 150"
-Cohesion: 0.67
-Nodes (3): System.Diagnostics.Tools.dll, assemblyVersion, fileVersion
-
-### Community 151 - "Community 151"
-Cohesion: 0.67
-Nodes (3): System.Diagnostics.TraceSource.dll, assemblyVersion, fileVersion
-
-### Community 152 - "Community 152"
-Cohesion: 0.67
-Nodes (3): System.Diagnostics.Tracing.dll, assemblyVersion, fileVersion
-
-### Community 153 - "Community 153"
-Cohesion: 0.67
-Nodes (3): System.Drawing.dll, assemblyVersion, fileVersion
-
-### Community 154 - "Community 154"
-Cohesion: 0.67
-Nodes (3): System.Drawing.Primitives.dll, assemblyVersion, fileVersion
-
-### Community 155 - "Community 155"
-Cohesion: 0.67
-Nodes (3): System.Dynamic.Runtime.dll, assemblyVersion, fileVersion
-
-### Community 156 - "Community 156"
-Cohesion: 0.67
-Nodes (3): System.Formats.Asn1.dll, assemblyVersion, fileVersion
-
-### Community 157 - "Community 157"
-Cohesion: 0.67
-Nodes (3): System.Formats.Tar.dll, assemblyVersion, fileVersion
-
-### Community 158 - "Community 158"
-Cohesion: 0.67
-Nodes (3): System.Globalization.Calendars.dll, assemblyVersion, fileVersion
-
-### Community 159 - "Community 159"
-Cohesion: 0.67
-Nodes (3): System.Globalization.dll, assemblyVersion, fileVersion
-
-### Community 160 - "Community 160"
-Cohesion: 0.67
-Nodes (3): System.Globalization.Extensions.dll, assemblyVersion, fileVersion
-
-### Community 161 - "Community 161"
-Cohesion: 0.67
-Nodes (3): System.IO.Compression.Brotli.dll, assemblyVersion, fileVersion
-
-### Community 162 - "Community 162"
-Cohesion: 0.67
-Nodes (3): System.IO.Compression.dll, assemblyVersion, fileVersion
-
-### Community 163 - "Community 163"
-Cohesion: 0.67
-Nodes (3): System.IO.Compression.FileSystem.dll, assemblyVersion, fileVersion
-
-### Community 164 - "Community 164"
-Cohesion: 0.67
-Nodes (3): System.IO.Compression.ZipFile.dll, assemblyVersion, fileVersion
-
-### Community 165 - "Community 165"
-Cohesion: 0.67
-Nodes (3): System.IO.dll, assemblyVersion, fileVersion
-
-### Community 166 - "Community 166"
-Cohesion: 0.67
-Nodes (3): System.IO.FileSystem.AccessControl.dll, assemblyVersion, fileVersion
-
-### Community 167 - "Community 167"
-Cohesion: 0.67
-Nodes (3): System.IO.FileSystem.dll, assemblyVersion, fileVersion
-
-### Community 168 - "Community 168"
-Cohesion: 0.67
-Nodes (3): System.IO.FileSystem.DriveInfo.dll, assemblyVersion, fileVersion
-
-### Community 169 - "Community 169"
-Cohesion: 0.67
-Nodes (3): System.IO.FileSystem.Primitives.dll, assemblyVersion, fileVersion
-
-### Community 170 - "Community 170"
-Cohesion: 0.67
-Nodes (3): System.IO.FileSystem.Watcher.dll, assemblyVersion, fileVersion
-
-### Community 171 - "Community 171"
-Cohesion: 0.67
-Nodes (3): System.IO.IsolatedStorage.dll, assemblyVersion, fileVersion
-
-### Community 172 - "Community 172"
-Cohesion: 0.67
-Nodes (3): System.IO.MemoryMappedFiles.dll, assemblyVersion, fileVersion
-
-### Community 173 - "Community 173"
-Cohesion: 0.67
-Nodes (3): System.IO.Pipes.AccessControl.dll, assemblyVersion, fileVersion
-
-### Community 174 - "Community 174"
-Cohesion: 0.67
-Nodes (3): System.IO.Pipes.dll, assemblyVersion, fileVersion
-
-### Community 175 - "Community 175"
-Cohesion: 0.67
-Nodes (3): System.IO.UnmanagedMemoryStream.dll, assemblyVersion, fileVersion
-
-### Community 176 - "Community 176"
-Cohesion: 0.67
-Nodes (3): System.Net.Ping.dll, assemblyVersion, fileVersion
-
-### Community 177 - "Community 177"
-Cohesion: 0.67
-Nodes (3): System.Net.Mail.dll, assemblyVersion, fileVersion
-
-### Community 178 - "Community 178"
-Cohesion: 0.67
-Nodes (3): System.Linq.Parallel.dll, assemblyVersion, fileVersion
-
-### Community 179 - "Community 179"
-Cohesion: 0.67
-Nodes (3): System.Net.Http.Json.dll, assemblyVersion, fileVersion
-
-### Community 180 - "Community 180"
-Cohesion: 0.67
-Nodes (3): System.Memory.dll, assemblyVersion, fileVersion
-
-### Community 181 - "Community 181"
-Cohesion: 0.67
-Nodes (3): System.Runtime.InteropServices.RuntimeInformation.dll, assemblyVersion, fileVersion
-
-### Community 182 - "Community 182"
-Cohesion: 0.67
-Nodes (3): System.Net.Http.dll, assemblyVersion, fileVersion
-
-### Community 184 - "Community 184"
-Cohesion: 0.67
-Nodes (3): System.Net.HttpListener.dll, assemblyVersion, fileVersion
-
-### Community 185 - "Community 185"
-Cohesion: 0.67
-Nodes (3): System.Net.Security.dll, assemblyVersion, fileVersion
-
-### Community 186 - "Community 186"
-Cohesion: 0.67
-Nodes (3): System.Runtime.InteropServices.dll, assemblyVersion, fileVersion
-
-### Community 188 - "Community 188"
-Cohesion: 0.67
-Nodes (3): System.Diagnostics.TextWriterTraceListener.dll, assemblyVersion, fileVersion
-
-### Community 189 - "Community 189"
-Cohesion: 0.67
-Nodes (3): System.Net.Quic.dll, assemblyVersion, fileVersion
-
-### Community 190 - "Community 190"
-Cohesion: 0.67
-Nodes (3): System.ComponentModel.dll, assemblyVersion, fileVersion
-
-### Community 191 - "Community 191"
-Cohesion: 0.67
-Nodes (3): System.Runtime.CompilerServices.VisualC.dll, assemblyVersion, fileVersion
-
-### Community 192 - "Community 192"
-Cohesion: 0.67
-Nodes (3): System.Runtime.CompilerServices.Unsafe.dll, assemblyVersion, fileVersion
-
-### Community 193 - "Community 193"
-Cohesion: 0.67
-Nodes (3): System.Text.Json.dll, assemblyVersion, fileVersion
-
-### Community 194 - "Community 194"
-Cohesion: 0.67
-Nodes (3): System.Net.WebClient.dll, assemblyVersion, fileVersion
-
-### Community 195 - "Community 195"
-Cohesion: 0.15
-Nodes (13): build/netstandard1.0/coverlet.collector.targets, ref/netstandard1.3/System.Globalization.Calendars.dll, build, type, coverlet.collector/6.0.0, NETStandard.Library/1.6.1, System.Globalization.Calendars/4.3.0, System.IO.FileSystem/4.3.0 (+5 more)
-
-### Community 196 - "Community 196"
-Cohesion: 0.67
-Nodes (3): System.Data.DataSetExtensions.dll, assemblyVersion, fileVersion
-
-### Community 197 - "Community 197"
-Cohesion: 0.67
-Nodes (3): System.Linq.Expressions.dll, assemblyVersion, fileVersion
-
-### Community 198 - "Community 198"
-Cohesion: 0.67
-Nodes (3): System.Net.WebSockets.dll, assemblyVersion, fileVersion
-
-### Community 199 - "Community 199"
-Cohesion: 0.67
-Nodes (3): System.Numerics.dll, assemblyVersion, fileVersion
-
-### Community 200 - "Community 200"
-Cohesion: 0.20
-Nodes (10): System.Buffers, System.IO, System.Text.Encoding, System.Threading.Tasks, System.Console/4.3.0, System.IO/4.3.0, System.IO.Compression.ZipFile/4.3.0, dependencies (+2 more)
-
-### Community 201 - "Community 201"
-Cohesion: 0.67
-Nodes (3): System.ObjectModel.dll, assemblyVersion, fileVersion
-
-### Community 202 - "Community 202"
-Cohesion: 0.67
-Nodes (3): System.Net.NetworkInformation.dll, assemblyVersion, fileVersion
-
-### Community 203 - "Community 203"
-Cohesion: 0.40
-Nodes (5): runtime, assemblyVersion, fileVersion, FxSsh/1.3.0, lib/net8.0/FxSsh.dll
-
-### Community 204 - "Community 204"
-Cohesion: 0.67
-Nodes (3): System.Net.WebHeaderCollection.dll, assemblyVersion, fileVersion
-
-### Community 205 - "Community 205"
-Cohesion: 0.67
-Nodes (3): System.Private.Xml.Linq.dll, assemblyVersion, fileVersion
-
-### Community 206 - "Community 206"
-Cohesion: 0.67
-Nodes (3): System.Core.dll, assemblyVersion, fileVersion
-
-### Community 207 - "Community 207"
-Cohesion: 0.40
-Nodes (5): ref/netstandard1.3/System.Console.dll, System.Console/4.3.0, related, compile, type
-
-### Community 208 - "Community 208"
-Cohesion: 0.67
-Nodes (3): System.Reflection.Emit.dll, assemblyVersion, fileVersion
-
-### Community 209 - "Community 209"
-Cohesion: 0.67
-Nodes (3): System.Net.WebProxy.dll, assemblyVersion, fileVersion
-
-### Community 210 - "Community 210"
-Cohesion: 0.67
-Nodes (3): System.Private.Xml.dll, assemblyVersion, fileVersion
-
-### Community 211 - "Community 211"
-Cohesion: 0.67
-Nodes (3): System.Reflection.Extensions.dll, assemblyVersion, fileVersion
-
-### Community 212 - "Community 212"
-Cohesion: 0.29
-Nodes (7): build/netcoreapp3.1/Microsoft.TestPlatform.TestHost.props, Microsoft.TestPlatform.ObjectModel, Newtonsoft.Json, build, dependencies, type, Microsoft.TestPlatform.TestHost/17.8.0
-
-### Community 213 - "Community 213"
-Cohesion: 0.67
-Nodes (3): System.Reflection.Primitives.dll, assemblyVersion, fileVersion
-
-### Community 214 - "Community 214"
-Cohesion: 0.67
-Nodes (3): System.Reflection.TypeExtensions.dll, assemblyVersion, fileVersion
-
-### Community 215 - "Community 215"
-Cohesion: 0.67
-Nodes (3): System.Resources.Reader.dll, assemblyVersion, fileVersion
-
-### Community 216 - "Community 216"
-Cohesion: 0.67
-Nodes (3): System.Resources.ResourceManager.dll, assemblyVersion, fileVersion
-
-### Community 218 - "Community 218"
-Cohesion: 0.67
-Nodes (3): System.Reflection.dll, assemblyVersion, fileVersion
-
-### Community 219 - "Community 219"
-Cohesion: 0.67
-Nodes (3): System.Text.Encoding.Extensions.dll, assemblyVersion, fileVersion
-
-### Community 220 - "Community 220"
-Cohesion: 0.40
-Nodes (5): xunit.runner.visualstudio, include, suppressParent, target, version
-
-### Community 221 - "Community 221"
-Cohesion: 0.67
-Nodes (3): System.Reflection.Emit.Lightweight.dll, assemblyVersion, fileVersion
-
-### Community 224 - "Community 224"
-Cohesion: 0.20
-Nodes (12): lib/netcoreapp3.1/testhost.dll, related, runtime, runtime, lib/netcoreapp3.1/Microsoft.TestPlatform.CommunicationUtilities.dll, lib/netcoreapp3.1/Microsoft.TestPlatform.CoreUtilities.dll, lib/netcoreapp3.1/Microsoft.TestPlatform.CrossPlatEngine.dll, lib/netcoreapp3.1/Microsoft.TestPlatform.PlatformAbstractions.dll (+4 more)
-
-### Community 225 - "Community 225"
-Cohesion: 0.11
-Nodes (19): locale, locale, locale, locale, locale, locale, locale, locale (+11 more)
-
-### Community 226 - "Community 226"
-Cohesion: 0.67
-Nodes (3): System.Net.Sockets.dll, assemblyVersion, fileVersion
-
-### Community 227 - "Community 227"
-Cohesion: 0.67
-Nodes (3): System.Runtime.Numerics.dll, assemblyVersion, fileVersion
-
-### Community 229 - "Community 229"
-Cohesion: 0.67
-Nodes (3): System.Runtime.Serialization.Formatters.dll, assemblyVersion, fileVersion
-
-### Community 230 - "Community 230"
-Cohesion: 0.67
-Nodes (3): System.Runtime.Serialization.Json.dll, assemblyVersion, fileVersion
-
-### Community 231 - "Community 231"
-Cohesion: 0.67
-Nodes (3): System.Runtime.Serialization.Primitives.dll, assemblyVersion, fileVersion
-
-### Community 232 - "Community 232"
-Cohesion: 0.67
-Nodes (3): System.Runtime.Serialization.Xml.dll, assemblyVersion, fileVersion
-
-### Community 233 - "Community 233"
-Cohesion: 0.67
-Nodes (3): System.Security.AccessControl.dll, assemblyVersion, fileVersion
-
-### Community 234 - "Community 234"
-Cohesion: 0.67
-Nodes (3): System.Security.Claims.dll, assemblyVersion, fileVersion
-
-### Community 235 - "Community 235"
-Cohesion: 0.67
-Nodes (3): System.Security.Cryptography.Algorithms.dll, assemblyVersion, fileVersion
-
-### Community 236 - "Community 236"
-Cohesion: 0.67
-Nodes (3): System.Security.Cryptography.Cng.dll, assemblyVersion, fileVersion
-
-### Community 237 - "Community 237"
-Cohesion: 0.67
-Nodes (3): System.Security.Cryptography.Csp.dll, assemblyVersion, fileVersion
-
-### Community 238 - "Community 238"
-Cohesion: 0.67
-Nodes (3): System.Security.Cryptography.dll, assemblyVersion, fileVersion
-
-### Community 239 - "Community 239"
-Cohesion: 0.67
-Nodes (3): System.Security.Cryptography.Encoding.dll, assemblyVersion, fileVersion
-
-### Community 240 - "Community 240"
-Cohesion: 0.67
-Nodes (3): System.Security.Cryptography.OpenSsl.dll, assemblyVersion, fileVersion
-
-### Community 241 - "Community 241"
-Cohesion: 0.67
-Nodes (3): System.Security.Cryptography.Primitives.dll, assemblyVersion, fileVersion
-
-### Community 243 - "Community 243"
-Cohesion: 0.67
-Nodes (3): System.Security.dll, assemblyVersion, fileVersion
-
-### Community 244 - "Community 244"
-Cohesion: 0.67
-Nodes (3): System.Security.Principal.dll, assemblyVersion, fileVersion
-
-### Community 245 - "Community 245"
-Cohesion: 0.67
-Nodes (3): System.Net.dll, assemblyVersion, fileVersion
-
-### Community 246 - "Community 246"
-Cohesion: 0.67
-Nodes (3): System.Security.SecureString.dll, assemblyVersion, fileVersion
-
-### Community 247 - "Community 247"
-Cohesion: 0.67
-Nodes (3): System.Reflection.Metadata.dll, assemblyVersion, fileVersion
-
-### Community 248 - "Community 248"
-Cohesion: 0.67
-Nodes (3): System.ServiceProcess.dll, assemblyVersion, fileVersion
-
-### Community 249 - "Community 249"
-Cohesion: 0.16
-Nodes (5): BlockingCollection, SessionCommandWorker, ShellSessionAnalytics, IDisposable, Thread
-
-### Community 251 - "Community 251"
-Cohesion: 0.67
-Nodes (3): System.Text.Encodings.Web.dll, assemblyVersion, fileVersion
-
-### Community 252 - "Community 252"
-Cohesion: 0.67
-Nodes (3): System.Diagnostics.Debug.dll, assemblyVersion, fileVersion
-
-### Community 253 - "Community 253"
-Cohesion: 0.67
-Nodes (3): System.Text.RegularExpressions.dll, assemblyVersion, fileVersion
-
-### Community 254 - "Community 254"
-Cohesion: 0.40
-Nodes (5): runtime, assemblyVersion, fileVersion, FxSsh/1.3.0, lib/net8.0/FxSsh.dll
-
-### Community 255 - "Community 255"
-Cohesion: 0.67
-Nodes (3): System.Threading.dll, assemblyVersion, fileVersion
-
-### Community 256 - "Community 256"
-Cohesion: 0.67
-Nodes (3): System.Threading.Overlapped.dll, assemblyVersion, fileVersion
-
-### Community 257 - "Community 257"
-Cohesion: 0.67
-Nodes (3): System.Threading.Tasks.Dataflow.dll, assemblyVersion, fileVersion
-
-### Community 258 - "Community 258"
-Cohesion: 0.67
-Nodes (3): System.Threading.Tasks.dll, assemblyVersion, fileVersion
-
-### Community 259 - "Community 259"
-Cohesion: 0.67
-Nodes (3): System.Threading.Tasks.Extensions.dll, assemblyVersion, fileVersion
-
-### Community 260 - "Community 260"
-Cohesion: 0.40
-Nodes (5): NuGet.Frameworks, System.Reflection.Metadata, dependencies, type, Microsoft.TestPlatform.ObjectModel/17.8.0
-
-### Community 261 - "Community 261"
-Cohesion: 0.67
-Nodes (3): System.ServiceModel.Web.dll, assemblyVersion, fileVersion
-
-### Community 262 - "Community 262"
-Cohesion: 0.67
-Nodes (3): System.Net.ServicePoint.dll, assemblyVersion, fileVersion
-
-### Community 263 - "Community 263"
-Cohesion: 0.67
-Nodes (3): System.Net.NameResolution.dll, assemblyVersion, fileVersion
-
-### Community 264 - "Community 264"
-Cohesion: 0.33
-Nodes (6): lib/netstandard2.0/NuGet.Frameworks.dll, NuGet.Frameworks/6.5.0, compile, runtime, type, lib/netstandard2.0/NuGet.Frameworks.dll
-
-### Community 265 - "Community 265"
-Cohesion: 0.67
-Nodes (3): System.ValueTuple.dll, assemblyVersion, fileVersion
-
-### Community 266 - "Community 266"
-Cohesion: 0.67
-Nodes (3): System.Web.dll, assemblyVersion, fileVersion
-
-### Community 267 - "Community 267"
-Cohesion: 0.67
-Nodes (3): System.Web.HttpUtility.dll, assemblyVersion, fileVersion
-
-### Community 268 - "Community 268"
-Cohesion: 0.67
-Nodes (3): System.Windows.dll, assemblyVersion, fileVersion
-
-### Community 269 - "Community 269"
-Cohesion: 0.67
-Nodes (3): System.Xml.Linq.dll, assemblyVersion, fileVersion
-
-### Community 270 - "Community 270"
-Cohesion: 0.67
-Nodes (3): System.Xml.ReaderWriter.dll, assemblyVersion, fileVersion
-
-### Community 271 - "Community 271"
-Cohesion: 0.67
-Nodes (3): System.Xml.Serialization.dll, assemblyVersion, fileVersion
-
-### Community 272 - "Community 272"
-Cohesion: 0.67
-Nodes (3): System.Xml.XDocument.dll, assemblyVersion, fileVersion
-
-### Community 273 - "Community 273"
-Cohesion: 0.67
-Nodes (3): System.Xml.XPath.XDocument.dll, assemblyVersion, fileVersion
-
-### Community 276 - "Community 276"
-Cohesion: 0.33
-Nodes (6): runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2, runtimeTargets, type, assetType, rid, runtimes/fedora.23-x64/native/System.Security.Cryptography.Native.OpenSsl.so
-
-### Community 277 - "Community 277"
-Cohesion: 0.67
-Nodes (3): System.Resources.Writer.dll, assemblyVersion, fileVersion
-
-### Community 278 - "Community 278"
-Cohesion: 0.67
-Nodes (3): System.Runtime.Handles.dll, assemblyVersion, fileVersion
-
-### Community 279 - "Community 279"
-Cohesion: 0.67
-Nodes (3): System.Runtime.Intrinsics.dll, assemblyVersion, fileVersion
-
-### Community 282 - "Community 282"
-Cohesion: 0.67
-Nodes (3): System.Security.Principal.Windows.dll, assemblyVersion, fileVersion
-
-### Community 283 - "Community 283"
-Cohesion: 0.67
-Nodes (3): System.Private.DataContractSerialization.dll, assemblyVersion, fileVersion
-
-### Community 284 - "Community 284"
-Cohesion: 0.67
-Nodes (3): System.Threading.Thread.dll, assemblyVersion, fileVersion
-
-### Community 285 - "Community 285"
-Cohesion: 0.21
-Nodes (3): ConcurrentDictionary, CommandResponseCache, LlmRateLimiter
-
-### Community 286 - "Community 286"
-Cohesion: 0.67
-Nodes (3): System.Diagnostics.Contracts.dll, assemblyVersion, fileVersion
-
-### Community 288 - "Community 288"
-Cohesion: 0.67
-Nodes (3): System.Runtime.Loader.dll, assemblyVersion, fileVersion
-
-### Community 289 - "Community 289"
-Cohesion: 0.67
-Nodes (3): System.Linq.dll, assemblyVersion, fileVersion
-
-### Community 293 - "Community 293"
-Cohesion: 0.33
-Nodes (6): runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2, runtimeTargets, type, assetType, rid, runtimes/osx.10.10-x64/native/System.Security.Cryptography.Native.OpenSsl.dylib
-
-### Community 294 - "Community 294"
-Cohesion: 0.67
-Nodes (3): System.Threading.Channels.dll, assemblyVersion, fileVersion
-
-### Community 296 - "Community 296"
-Cohesion: 0.67
-Nodes (3): System.ComponentModel.EventBasedAsync.dll, assemblyVersion, fileVersion
-
-### Community 299 - "Community 299"
-Cohesion: 0.67
-Nodes (3): System.Private.Uri.dll, assemblyVersion, fileVersion
-
-### Community 300 - "Community 300"
-Cohesion: 0.67
-Nodes (3): System.Runtime.Extensions.dll, assemblyVersion, fileVersion
-
-### Community 311 - "Community 311"
-Cohesion: 0.67
-Nodes (3): System.Runtime.dll, assemblyVersion, fileVersion
-
-### Community 332 - "Community 332"
-Cohesion: 0.67
-Nodes (3): Microsoft.NET.Test.Sdk, target, version
-
-### Community 335 - "Community 335"
-Cohesion: 0.67
-Nodes (3): System.Numerics.Vectors.dll, assemblyVersion, fileVersion
-
-### Community 336 - "Community 336"
-Cohesion: 0.67
-Nodes (3): System.Reflection.Emit.ILGeneration.dll, assemblyVersion, fileVersion
-
-### Community 339 - "Community 339"
-Cohesion: 0.67
-Nodes (3): System.Runtime.Serialization.dll, assemblyVersion, fileVersion
-
-### Community 340 - "Community 340"
-Cohesion: 0.67
-Nodes (3): System.Threading.Timer.dll, assemblyVersion, fileVersion
-
-### Community 342 - "Community 342"
-Cohesion: 0.67
-Nodes (3): System.Text.Encoding.dll, assemblyVersion, fileVersion
-
-### Community 354 - "Community 354"
-Cohesion: 0.40
-Nodes (5): ref/netstandard1.5/System.Diagnostics.Tracing.dll, System.Diagnostics.Tracing/4.3.0, related, compile, type
-
-### Community 356 - "Community 356"
-Cohesion: 0.67
-Nodes (3): System.Transactions.dll, assemblyVersion, fileVersion
-
-### Community 360 - "Community 360"
-Cohesion: 0.67
-Nodes (3): System.Transactions.Local.dll, assemblyVersion, fileVersion
-
-### Community 407 - "Community 407"
-Cohesion: 0.67
-Nodes (3): System.Security.Cryptography.X509Certificates.dll, assemblyVersion, fileVersion
-
-### Community 410 - "Community 410"
-Cohesion: 0.67
-Nodes (3): System.Threading.Tasks.Parallel.dll, assemblyVersion, fileVersion
-
-### Community 412 - "Community 412"
-Cohesion: 0.67
-Nodes (3): YamlDotNet, target, version
+Nodes (3): Assistant / 02/06/2026 20:45:54.073, User / 02/06/2026 20:42:49.536, What changed for "more positive" responses
 
 ## Knowledge Gaps
-- **1129 isolated node(s):** `BestMetric`, `LastImprovedAtUtc`, `name`, `signature`, `FunnyPot` (+1124 more)
+- **2958 isolated node(s):** `BestMetric`, `LastImprovedAtUtc`, `AutoResearchConfig`, `TextWriter`, `AutoResearchState` (+2953 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **120 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **41 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `net8.0` connect `Community 195` to `Community 260`, `Community 134`, `Community 264`, `Community 137`, `Community 143`, `Community 144`, `Community 276`, `Community 281`, `Community 25`, `Community 33`, `Community 37`, `Community 293`, `Community 41`, `Community 46`, `Community 48`, `Community 58`, `Community 59`, `Community 65`, `Community 66`, `Community 73`, `Community 74`, `Community 207`, `Community 80`, `Community 81`, `Community 82`, `Community 83`, `Community 212`, `Community 87`, `Community 88`, `Community 89`, `Community 90`, `Community 93`, `Community 94`, `Community 96`, `Community 97`, `Community 354`, `Community 99`, `Community 101`, `Community 112`, `Community 116`?**
-  _High betweenness centrality (0.069) - this node is a cross-community bridge._
-- **Why does `.NETCoreApp,Version=v8.0` connect `Community 39` to `Community 64`, `Community 34`, `Community 200`, `Community 106`, `Community 43`, `Community 76`, `Community 109`, `Community 110`, `Community 47`, `Community 107`, `Community 108`, `Community 55`, `Community 118`, `Community 23`, `Community 56`, `Community 28`, `Community 254`?**
-  _High betweenness centrality (0.029) - this node is a cross-community bridge._
-- **Why does `Microsoft.TestPlatform.TestHost/17.8.0` connect `Community 212` to `Community 224`, `Community 61`, `Community 195`, `Community 77`?**
-  _High betweenness centrality (0.023) - this node is a cross-community bridge._
-- **What connects `BestMetric`, `LastImprovedAtUtc`, `name` to the rest of the system?**
-  _1129 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `Data Harvesting Specification: LLM-Driven SSH Analytics` connect `Community 23` to `Community 2`, `Community 5`, `Community 7`, `Community 9`, `Community 10`, `Community 13`, `Community 14`, `Community 18`, `Community 19`, `Community 20`, `Community 24`, `Community 26`, `Community 28`, `Community 30`, `Community 32`, `Community 42`, `Community 43`, `Community 45`, `Community 48`, `Community 58`, `Community 62`, `Community 64`, `Community 68`, `Community 69`, `Community 73`, `Community 78`, `Community 82`, `Community 83`, `Community 84`, `Community 90`, `Community 91`, `Community 92`, `Community 93`, `Community 94`, `Community 95`, `Community 96`, `Community 97`, `Community 98`, `Community 121`, `Community 122`, `Community 123`, `Community 124`?**
+  _High betweenness centrality (0.480) - this node is a cross-community bridge._
+- **Why does `FunnyPot AutoResearch Program` connect `Community 16` to `Community 0`, `Community 1`, `Community 4`, `Community 38`, `Community 135`, `Community 104`, `Community 103`, `Community 6`, `Community 11`, `Community 17`, `Community 58`, `Community 63`?**
+  _High betweenness centrality (0.340) - this node is a cross-community bridge._
+- **Why does `Pedantic Code Review — `messages` flow in `FunnyPot/Program.cs`` connect `Community 39` to `Community 3`, `Community 8`, `Community 41`, `Community 12`, `Community 15`, `Community 112`, `Community 145`, `Community 146`, `Community 113`, `Community 22`, `Community 56`, `Community 58`, `Community 31`?**
+  _High betweenness centrality (0.240) - this node is a cross-community bridge._
+- **What connects `BestMetric`, `LastImprovedAtUtc`, `AutoResearchConfig` to the rest of the system?**
+  _2958 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Community 0` be split into smaller, more focused modules?**
+  _Cohesion score 0.011299435028248588 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.09486166007905138 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.012903225806451613 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.11612903225806452 - nodes in this community are weakly interconnected._
-- **Should `Community 6` be split into smaller, more focused modules?**
-  _Cohesion score 0.125 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.014925373134328358 - nodes in this community are weakly interconnected._

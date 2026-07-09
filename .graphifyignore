@@ -6,6 +6,13 @@ venv/
 frontend/
 graphify-out/
 backups/
+bin/
+obj/
+**/bin/**
+**/obj/**
+**/backups/**
+**/*.deps.json
+**/project.assets.json
 *.dll
 *.pdb
 *.exe
