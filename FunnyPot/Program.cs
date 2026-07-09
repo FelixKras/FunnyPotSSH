@@ -620,7 +620,7 @@ class Program
                     || command.Equals("logout", StringComparison.OrdinalIgnoreCase);
             }
 
-            void LogCommandResult(string line, string response, string exchangeId, int messageNumber, int shellMessageNumber, long responseDurationMs, bool failedCommand, string llmModel = "")
+            void LogCommandResult(string line, string response, string exchangeId, int messageNumber, int shellMessageNumber, long responseDurationMs, bool failedCommand, string llmModel = "", string responseSource = "")
             {
                 var hallucinationFeedback = false;
                 try
@@ -646,6 +646,7 @@ class Program
                     Command = line,
                     Response = response,
                     LlmModel = llmModel,
+                    ResponseSource = responseSource,
                     FailedCommand = failedCommand,
                     ResponseDurationMs = responseDurationMs,
                     HallucinationFeedback = hallucinationFeedback,
@@ -747,7 +748,7 @@ class Program
                         var blockedFailedCommand = true;
                         shellAnalytics.RecordResult(blockedFailedCommand);
                         LastCommandEndedAt[sessionId] = DateTime.UtcNow;
-                        LogCommandResult(line, blockedResponse, exchangeId, exchangeNumber, commandCount, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, blockedFailedCommand);
+                        LogCommandResult(line, blockedResponse, exchangeId, exchangeNumber, commandCount, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, blockedFailedCommand, responseSource: "input validation");
                         commandResultLogged = true;
                         CloseShell("BlockedCommand");
                         return;
@@ -761,7 +762,7 @@ class Program
                     TrimHistoryToWindow();
 
                     processingStage = "resolving command response";
-                    var (response, usedStatic, rateLimited, promptTokens, completionTokens, llmModel) = CommandResolver.ResolveCommandAsync(
+                    var (response, usedStatic, rateLimited, promptTokens, completionTokens, llmModel, responseSource) = CommandResolver.ResolveCommandAsync(
                         line,
                         sessionId,
                         rateLimitKey,
@@ -794,7 +795,7 @@ class Program
                     totalCompletionTokens += completionTokens;
                     sessionDurationMs += stopwatch.ElapsedMilliseconds;
 
-                    Logger.LogMsg($"[Session {sessionId}] Response (static={usedStatic}, rateLimited={rateLimited}): {response}");
+                    Logger.LogMsg($"[Session {sessionId}] Response (source={responseSource}, static={usedStatic}, rateLimited={rateLimited}): {response}");
 
                     processingStage = "classifying response";
                     var failedCommand = DataHarvester.IsFailureResponse(response);
@@ -808,6 +809,7 @@ class Program
                         PromptTokens = promptTokens,
                         CompletionTokens = completionTokens,
                         LlmModel = llmModel,
+                        ResponseSource = responseSource,
                         DurationMs = stopwatch.ElapsedMilliseconds,
                         FailedCommand = failedCommand,
                         UsedStaticDataset = usedStatic,
@@ -819,7 +821,7 @@ class Program
                     });
 
                     processingStage = "logging command result";
-                    LogCommandResult(line, response, exchangeId, exchangeNumber, commandCount, stopwatch.ElapsedMilliseconds, failedCommand, llmModel);
+                    LogCommandResult(line, response, exchangeId, exchangeNumber, commandCount, stopwatch.ElapsedMilliseconds, failedCommand, llmModel, responseSource);
                     commandResultLogged = true;
 
                     processingStage = "sending command response";
@@ -838,7 +840,7 @@ class Program
                         var failureResponse = $"FunnyPot internal command handling error during {processingStage}: {ex.Message}";
                         shellAnalytics.RecordResult(true);
                         LastCommandEndedAt[sessionId] = DateTime.UtcNow;
-                        LogCommandResult(line, failureResponse, exchangeId, exchangeNumber, commandCount, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, true);
+                        LogCommandResult(line, failureResponse, exchangeId, exchangeNumber, commandCount, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, true, responseSource: "internal error");
                         TrySendData(Encoding.UTF8.GetBytes("bash: command handling failed\r\n"));
                     }
 
@@ -1277,6 +1279,7 @@ public class CommandResultLogEntry
     public string Command { get; set; } = "";
     public string Response { get; set; } = "";
     public string LlmModel { get; set; } = "";
+    public string ResponseSource { get; set; } = "";
     public bool FailedCommand { get; set; }
     public long ResponseDurationMs { get; set; }
     public bool HallucinationFeedback { get; set; }
@@ -2014,7 +2017,7 @@ static class CommandResolver
         return CommandResolutionPath.Llm;
     }
 
-    public static async Task<(string response, bool usedStatic, bool rateLimited, int promptTokens, int completionTokens, string llmModel)> ResolveCommandAsync(
+    public static async Task<(string response, bool usedStatic, bool rateLimited, int promptTokens, int completionTokens, string llmModel, string responseSource)> ResolveCommandAsync(
         string command,
         string sessionId,
         string rateLimitKey,
@@ -2025,7 +2028,7 @@ static class CommandResolver
         var (isValid, errorMsg) = InputValidator.Validate(command);
         if (!isValid)
         {
-            return ($"{errorMsg} - connection terminated.", false, false, 0, 0, "");
+            return ($"{errorMsg} - connection terminated.", false, false, 0, 0, "", "input validation");
         }
 
         if (SCPDetector.IsSCPCommand(command))
@@ -2035,25 +2038,25 @@ static class CommandResolver
                 var (_, filename) = SCPDetector.ParseSCPUpload(command);
                 if (!string.IsNullOrWhiteSpace(filename))
                     fs.Touch(filename);
-                return ("", true, false, 0, 0, "");
+                return ("", true, false, 0, 0, "", "scp upload");
             }
-            return ("", true, false, 0, 0, "");
+            return ("", true, false, 0, 0, "", "scp");
         }
 
         var isCompoundCommand = IsCompoundShellCommand(command);
         if (!isCompoundCommand && IsBinaryExecutableCatCommand(command))
         {
-            return (BinaryExecutableCatResponse(), false, false, 0, 0, "");
+            return (BinaryExecutableCatResponse(), false, false, 0, 0, "", "built-in");
         }
 
         if (!isCompoundCommand && IsBuiltInCommand(command, fs, out var builtinResponse))
         {
-            return (builtinResponse!, false, false, 0, 0, "");
+            return (builtinResponse!, false, false, 0, 0, "", "built-in");
         }
 
         if (!isCompoundCommand && IsNonLinuxNetworkDeviceProbe(command))
         {
-            return (GenerateSingleFallbackResponse(command, fs.CurrentDirectory), true, false, 0, 0, "");
+            return (GenerateSingleFallbackResponse(command, fs.CurrentDirectory), true, false, 0, 0, "", "local fallback");
         }
 
         if (!isCompoundCommand && IsCpuInfoCommand(command))
@@ -2061,17 +2064,17 @@ static class CommandResolver
             if (!LlmRateLimiter.IsAllowed(rateLimitKey, out var cpuInfoFallbackMessage))
             {
                 Logger.LogMsg($"Rate limit triggered for session {sessionId}, using fallback response");
-                return (cpuInfoFallbackMessage ?? "Rate limit exceeded. Please wait.", false, true, 0, 0, "");
+                return (cpuInfoFallbackMessage ?? "Rate limit exceeded. Please wait.", false, true, 0, 0, "", "rate limit fallback");
             }
 
             LlmRateLimiter.LogLimitStatus(rateLimitKey);
             var (cpuInfo, cpuInfoPromptTokens, cpuInfoCompletionTokens, usedFallback, cpuInfoModel) =
                 await GenerateCpuInfoResponseAsync(cancellationToken).ConfigureAwait(false);
-            return (cpuInfo, usedFallback, false, cpuInfoPromptTokens, cpuInfoCompletionTokens, cpuInfoModel);
+            return (cpuInfo, usedFallback, false, cpuInfoPromptTokens, cpuInfoCompletionTokens, cpuInfoModel, usedFallback ? "local fallback" : "llm");
         }
 
         if (!isCompoundCommand && IsFindSuidDiscoveryCommand(command))
-            return (GenerateLocalFallbackResponse(command, fs.CurrentDirectory), true, false, 0, 0, "");
+            return (GenerateLocalFallbackResponse(command, fs.CurrentDirectory), true, false, 0, 0, "", "local fallback");
 
         if (isCompoundCommand)
             ApplyLocalShellStateChanges(command, fs);
@@ -2086,17 +2089,17 @@ static class CommandResolver
                     var targetDir = command[3..].Trim();
                     fs.ChangeDirectory(targetDir);
                 }
-                return (staticResponse, true, false, 0, 0, "");
+                return (staticResponse, true, false, 0, 0, "", "static response");
             }
         }
 
         if (CommandResponseCache.TryGet(command, out var cachedResponse))
-            return (cachedResponse.Response, true, false, 0, 0, cachedResponse.LlmModel);
+            return (cachedResponse.Response, true, false, 0, 0, cachedResponse.LlmModel, "cache");
 
         if (!LlmRateLimiter.IsAllowed(rateLimitKey, out var fallbackMessage))
         {
             Logger.LogMsg($"Rate limit triggered for session {sessionId}, using fallback response");
-            return (fallbackMessage ?? "Rate limit exceeded. Please wait.", false, true, 0, 0, "");
+            return (fallbackMessage ?? "Rate limit exceeded. Please wait.", false, true, 0, 0, "", "rate limit fallback");
         }
 
         LlmRateLimiter.LogLimitStatus(rateLimitKey);
@@ -2114,7 +2117,7 @@ static class CommandResolver
 
         CommandResponseCache.Store(command, response, llmModel);
 
-        return (response, false, false, promptTokens, completionTokens, llmModel);
+        return (response, false, false, promptTokens, completionTokens, llmModel, promptTokens == 0 && completionTokens == 0 ? "local fallback" : "llm");
     }
 
     private static void ApplyLocalShellStateChanges(string command, FakeFileSystem fs)
