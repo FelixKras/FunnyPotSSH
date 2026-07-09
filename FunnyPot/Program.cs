@@ -46,6 +46,7 @@ class Program
     static readonly ConcurrentDictionary<string, List<HarvestedCredential>> HarvestedCredentials = new(StringComparer.OrdinalIgnoreCase);
     static readonly ConcurrentDictionary<string, string> LastCredentials = new(StringComparer.OrdinalIgnoreCase);
     static readonly ConcurrentDictionary<string, DateTime> LastCommandEndedAt = new(StringComparer.OrdinalIgnoreCase);
+    static readonly ConcurrentDictionary<string, int> ConnectionCommandCounts = new(StringComparer.OrdinalIgnoreCase);
     static readonly ConcurrentDictionary<string, ShellSessionAnalytics> ShellAnalyticsBySession = new(StringComparer.OrdinalIgnoreCase);
     static SemaphoreSlim ConnectionLimit = new(MaxSessions, MaxSessions);
     static readonly FieldInfo? SessionSocketField = typeof(Session).GetField("_socket", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -304,6 +305,7 @@ class Program
 
                 if (Interlocked.Exchange(ref connectionReleased, 1) == 0)
                 {
+                    ConnectionCommandCounts.TryRemove(sessionKey, out _);
                     Interlocked.Decrement(ref _activeConnections);
                     ConnectionLimit.Release();
                 }
@@ -618,7 +620,7 @@ class Program
                     || command.Equals("logout", StringComparison.OrdinalIgnoreCase);
             }
 
-            void LogCommandResult(string line, string response, string exchangeId, int messageNumber, long responseDurationMs, bool failedCommand, string llmModel = "")
+            void LogCommandResult(string line, string response, string exchangeId, int messageNumber, int shellMessageNumber, long responseDurationMs, bool failedCommand, string llmModel = "")
             {
                 var hallucinationFeedback = false;
                 try
@@ -640,6 +642,7 @@ class Program
                     ExchangeId = exchangeId,
                     ExchangeRole = "output",
                     MessageNumber = messageNumber,
+                    ShellMessageNumber = shellMessageNumber,
                     Command = line,
                     Response = response,
                     LlmModel = llmModel,
@@ -675,6 +678,8 @@ class Program
                     return;
                 }
 
+                var exchangeNumber = ConnectionCommandCounts.AddOrUpdate(connectionSessionKey, 1, (_, current) => current + 1);
+
                 Logger.LogMsg($"[Session {sessionId}] User input: {line}");
                 var commandStartedAt = DateTime.UtcNow;
                 var processingStage = "analyzing command";
@@ -696,7 +701,7 @@ class Program
                 long? commandSequenceLatencyMs = LastCommandEndedAt.TryGetValue(sessionId, out var previousEndedAt)
                     ? (long)(commandStartedAt - previousEndedAt).TotalMilliseconds
                     : null;
-                var exchangeId = $"{sessionId}:{commandCount:D6}";
+                var exchangeId = $"{connectionSessionKey}:{exchangeNumber:D6}";
 
                 Logger.LogYaml("command", new CommandLogEntry
                 {
@@ -708,7 +713,8 @@ class Program
                     ExchangeId = exchangeId,
                     ExchangeRole = "input",
                     Command = line,
-                    MessageNumber = commandCount,
+                    MessageNumber = exchangeNumber,
+                    ShellMessageNumber = commandCount,
                     CommandSequenceLatencyMs = commandSequenceLatencyMs,
                     ActorAutomationHint = commandSequenceLatencyMs is < 50 ? "automation" : "unknown",
                     DiscoveryDepthScore = commandAnalysis.DiscoveryDepthScore,
@@ -741,7 +747,7 @@ class Program
                         var blockedFailedCommand = true;
                         shellAnalytics.RecordResult(blockedFailedCommand);
                         LastCommandEndedAt[sessionId] = DateTime.UtcNow;
-                        LogCommandResult(line, blockedResponse, exchangeId, commandCount, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, blockedFailedCommand);
+                        LogCommandResult(line, blockedResponse, exchangeId, exchangeNumber, commandCount, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, blockedFailedCommand);
                         commandResultLogged = true;
                         CloseShell("BlockedCommand");
                         return;
@@ -813,7 +819,7 @@ class Program
                     });
 
                     processingStage = "logging command result";
-                    LogCommandResult(line, response, exchangeId, commandCount, stopwatch.ElapsedMilliseconds, failedCommand, llmModel);
+                    LogCommandResult(line, response, exchangeId, exchangeNumber, commandCount, stopwatch.ElapsedMilliseconds, failedCommand, llmModel);
                     commandResultLogged = true;
 
                     processingStage = "sending command response";
@@ -832,7 +838,7 @@ class Program
                         var failureResponse = $"FunnyPot internal command handling error during {processingStage}: {ex.Message}";
                         shellAnalytics.RecordResult(true);
                         LastCommandEndedAt[sessionId] = DateTime.UtcNow;
-                        LogCommandResult(line, failureResponse, exchangeId, commandCount, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, true);
+                        LogCommandResult(line, failureResponse, exchangeId, exchangeNumber, commandCount, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, true);
                         TrySendData(Encoding.UTF8.GetBytes("bash: command handling failed\r\n"));
                     }
 
@@ -1234,6 +1240,7 @@ public class CommandLogEntry
 {
     [JsonPropertyName("MessageNumber")]
     public int MessageNumber { get; set; }
+    public int ShellMessageNumber { get; set; }
     public DateTime Timestamp { get; set; }
     public string SessionKey { get; set; } = "";
     public string ShellSessionId { get; set; } = "";
@@ -1266,6 +1273,7 @@ public class CommandResultLogEntry
     public string ExchangeId { get; set; } = "";
     public string ExchangeRole { get; set; } = "output";
     public int MessageNumber { get; set; }
+    public int ShellMessageNumber { get; set; }
     public string Command { get; set; } = "";
     public string Response { get; set; } = "";
     public string LlmModel { get; set; } = "";
@@ -2082,6 +2090,9 @@ static class CommandResolver
             }
         }
 
+        if (CommandResponseCache.TryGet(command, out var cachedResponse))
+            return (cachedResponse.Response, true, false, 0, 0, cachedResponse.LlmModel);
+
         if (!LlmRateLimiter.IsAllowed(rateLimitKey, out var fallbackMessage))
         {
             Logger.LogMsg($"Rate limit triggered for session {sessionId}, using fallback response");
@@ -2100,6 +2111,8 @@ static class CommandResolver
             promptTokens = 0;
             completionTokens = 0;
         }
+
+        CommandResponseCache.Store(command, response, llmModel);
 
         return (response, false, false, promptTokens, completionTokens, llmModel);
     }
@@ -2977,6 +2990,82 @@ static class CommandResolver
             return $"up {uptime.Days} days, {uptime.Hours} hours, {uptime.Minutes} minutes";
 
         return $"{DateTime.Now:HH:mm:ss} up {uptime.Days} days,  {uptime.Hours}:{uptime.Minutes:D2},  2 users,  load average: 1.72, 1.84, 1.91";
+    }
+}
+
+public sealed record CachedCommandResponse(string Response, string LlmModel);
+
+static class CommandResponseCache
+{
+    private static readonly ConcurrentDictionary<string, CachedCommandResponse> Responses = new(StringComparer.Ordinal);
+    private static int Loaded;
+
+    public static bool TryGet(string command, out CachedCommandResponse cached)
+    {
+        EnsureLoaded();
+        return Responses.TryGetValue(CacheKey(command), out cached!);
+    }
+
+    public static void Store(string command, string response, string llmModel)
+    {
+        if (!IsCacheable(command, response))
+            return;
+
+        Responses.TryAdd(CacheKey(command), new CachedCommandResponse(response, llmModel));
+    }
+
+    private static void EnsureLoaded()
+    {
+        if (Interlocked.Exchange(ref Loaded, 1) != 0)
+            return;
+
+        LoadFromJsonl(Path.Combine(Program.LogDir, "events.jsonl"));
+        LoadFromJsonl(Path.Combine(Program.AppDir, "frontend", "data", "events.jsonl"));
+    }
+
+    private static void LoadFromJsonl(string path)
+    {
+        if (!File.Exists(path))
+            return;
+
+        try
+        {
+            foreach (var line in File.ReadLines(path))
+            {
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
+
+                using var doc = JsonDocument.Parse(line);
+                var root = doc.RootElement;
+                if (!root.TryGetProperty("Event", out var eventName)
+                    || !string.Equals(eventName.GetString(), "command_result", StringComparison.OrdinalIgnoreCase)
+                    || !root.TryGetProperty("Data", out var data))
+                {
+                    continue;
+                }
+
+                var command = data.TryGetProperty("Command", out var commandElement) ? commandElement.GetString() ?? "" : "";
+                var response = data.TryGetProperty("Response", out var responseElement) ? responseElement.GetString() ?? "" : "";
+                var llmModel = data.TryGetProperty("LlmModel", out var modelElement) ? modelElement.GetString() ?? "" : "";
+                Store(command, response, llmModel);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogMsg($"Command response cache load skipped for {path}: {ex.Message}");
+        }
+    }
+
+    private static bool IsCacheable(string command, string response)
+    {
+        return !string.IsNullOrWhiteSpace(command)
+            && !string.IsNullOrWhiteSpace(response)
+            && !CommandResolver.IsModelFailureResponse(response);
+    }
+
+    private static string CacheKey(string command)
+    {
+        return Regex.Replace(command.Trim(), @"\s+", " ");
     }
 }
 
