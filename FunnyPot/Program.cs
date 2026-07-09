@@ -2095,7 +2095,10 @@ static class CommandResolver
         response = Program.NormalizeTerminalOutput(response);
         if (IsModelFailureResponse(response) || ShouldOverrideImplausibleFailure(command, response))
         {
-            Logger.LogMsg($"LLM response failed for session {sessionId}; returning model error without local fallback: {response}");
+            Logger.LogMsg($"LLM response failed for session {sessionId}; using local fallback instead of exposing model error: {response}");
+            response = GenerateLocalFallbackResponse(command, fs.CurrentDirectory);
+            promptTokens = 0;
+            completionTokens = 0;
         }
 
         return (response, false, false, promptTokens, completionTokens, llmModel);
