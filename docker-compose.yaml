@@ -3,7 +3,7 @@ services:
     build: .
     container_name: funnypot-container
     ports:
-      - "22722:22722"
+      - "${SSH_PORT:-22722}:${SSH_PORT:-22722}"
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true

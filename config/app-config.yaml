@@ -3,7 +3,7 @@
 
 ssh:
   # SSH Server Configuration
-  port: 22422
+  port: 22722
   banner: "SSH-2.0-OmegaBlack_Classified_Server_v1.0"
   user: "remote"
   password: "test"

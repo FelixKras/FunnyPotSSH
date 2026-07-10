@@ -940,7 +940,7 @@ public class AppConfigurationTests
     {
         var config = AppConfiguration.Load("/tmp/non-existent-funnypot-config.yaml");
 
-        Assert.Equal(22422, config.Ssh.Port);
+        Assert.Equal(22722, config.Ssh.Port);
         Assert.Equal(50, config.Ssh.MaxSessions);
         Assert.Equal(500, config.Llm.DelayMs);
     }
@@ -983,26 +983,44 @@ public class AppConfigurationTests
     }
 
     [Fact]
-    public void Load_DefaultPathFallsBackToWorkingDirectoryConfig()
+    public void Load_DefaultPathPrefersPublishedConfiguration()
     {
-        var previousDirectory = Directory.GetCurrentDirectory();
-        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var configDir = Path.Combine(tempDir, "config");
-        Directory.CreateDirectory(configDir);
-        File.WriteAllText(Path.Combine(configDir, "app-config.yaml"), "auto-research:\n  agent-command: \"opencode run test\"\n");
+        var config = AppConfiguration.Load();
 
-        try
-        {
-            Directory.SetCurrentDirectory(tempDir);
-            var config = AppConfiguration.Load();
+        Assert.Equal(22722, config.Ssh.Port);
+        Assert.Equal("minimax/minimax-m3", config.Llm.Model);
+    }
 
-            Assert.Equal("opencode run test", config.AutoResearch.AgentCommand);
-        }
-        finally
-        {
-            Directory.SetCurrentDirectory(previousDirectory);
-            Directory.Delete(tempDir, recursive: true);
-        }
+    [Fact]
+    public void BuildOutput_IncludesDefaultConfiguration()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "config", "app-config.yaml");
+
+        Assert.True(File.Exists(path));
+        Assert.Equal(22722, AppConfiguration.Load(path).Ssh.Port);
+    }
+}
+
+public class TelemetryWriteQueueTests
+{
+    [Fact]
+    public void TryEnqueue_ProcessesWritesBeforeDispose()
+    {
+        using var queue = new TelemetryWriteQueue();
+        using var completed = new ManualResetEventSlim(false);
+
+        Assert.True(queue.TryEnqueue(completed.Set));
+
+        Assert.True(completed.Wait(TimeSpan.FromSeconds(2)));
+    }
+
+    [Fact]
+    public void TryEnqueue_ReturnsFalseAfterDispose()
+    {
+        var queue = new TelemetryWriteQueue();
+        queue.Dispose();
+
+        Assert.False(queue.TryEnqueue(() => { }));
     }
 }
 

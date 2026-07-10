@@ -14,6 +14,7 @@ using LibGit2Sharp;
 using FxSsh;
 using FxSsh.Services;
 using System.IO;
+using System.Runtime.InteropServices;
 using FunnyPot;
 
 class Program
@@ -27,6 +28,7 @@ class Program
     internal static readonly TimeSpan HttpRequestTimeout = TimeSpan.FromSeconds(30);
 
     static readonly HttpClient httpClient = new() { Timeout = HttpRequestTimeout };
+    static readonly CancellationTokenSource ApplicationStopping = new();
     internal static HttpClient SharedHttpClient => httpClient;
     static AppConfiguration Config => _config ??= AppConfiguration.Load();
     internal static AppConfiguration RuntimeConfig => Config;
@@ -43,6 +45,7 @@ class Program
     internal static readonly string AppDir = AppDomain.CurrentDomain.BaseDirectory;
 
     static readonly ConcurrentDictionary<string, int> AuthAttempts = new(StringComparer.OrdinalIgnoreCase);
+    const int MaxTrackedRemoteAttempts = 10_000;
     static readonly ConcurrentDictionary<string, List<HarvestedCredential>> HarvestedCredentials = new(StringComparer.OrdinalIgnoreCase);
     static readonly ConcurrentDictionary<string, string> LastCredentials = new(StringComparer.OrdinalIgnoreCase);
     static readonly ConcurrentDictionary<string, DateTime> LastCommandEndedAt = new(StringComparer.OrdinalIgnoreCase);
@@ -212,7 +215,8 @@ class Program
         {
             try
             {
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(ApplicationStopping.Token);
+                cts.CancelAfter(TimeSpan.FromSeconds(10));
                 var ping = new HttpRequestMessage(HttpMethod.Get, "https://openrouter.ai/api/v1/auth/key")
                 {
                     Headers = { { "Authorization", $"Bearer {GetSecretOrEnvironment("OPENROUTER_API_KEY") ?? ""}" } }
@@ -234,24 +238,42 @@ class Program
         _currentBanner = initialBanner;
         StartSshServer(initialBanner, SshPort);
 
+        System.Timers.Timer? rotationTimer = null;
         var rotationInterval = Math.Max(0, GetIntEnvironmentOrDefault("SSH_BANNER_ROTATION_INTERVAL", Config.Ssh.BannerRotationInterval));
         if (rotationInterval > 0 && BannerPool.Count > 1)
         {
-            var rotationTimer = new System.Timers.Timer(rotationInterval * 1000) { AutoReset = true };
+            rotationTimer = new System.Timers.Timer(rotationInterval * 1000) { AutoReset = true };
             rotationTimer.Elapsed += (_, _) => RotateBanner();
             rotationTimer.Start();
             Logger.LogMsg($"Banner rotation every {rotationInterval}s across {BannerPool.Count} banners");
         }
 
         Logger.LogMsg("Press Ctrl+C to stop.");
-        Console.CancelKeyPress += (_, _) =>
+        Console.CancelKeyPress += (_, args) =>
         {
-            Logger.LogMsg("Shutting down...");
-            _sshServer?.Stop();
+            args.Cancel = true;
+            RequestShutdown();
         };
+        using var sigterm = PosixSignalRegistration.Create(PosixSignal.SIGTERM, context =>
+        {
+            context.Cancel = true;
+            RequestShutdown();
+        });
 
-        Thread.Sleep(Timeout.Infinite);
+        ApplicationStopping.Token.WaitHandle.WaitOne();
+        rotationTimer?.Dispose();
+        _sshServer?.Stop();
+        Logger.Shutdown();
         return 0;
+    }
+
+    static void RequestShutdown()
+    {
+        if (ApplicationStopping.IsCancellationRequested)
+            return;
+
+        Logger.LogMsg("Shutting down...");
+        ApplicationStopping.Cancel();
     }
 
     static void LoadDotEnvFiles()
@@ -306,6 +328,9 @@ class Program
                 if (Interlocked.Exchange(ref connectionReleased, 1) == 0)
                 {
                     ConnectionCommandCounts.TryRemove(sessionKey, out _);
+                    HarvestedCredentials.TryRemove(sessionKey, out _);
+                    LastCredentials.TryRemove(sessionKey, out _);
+                    LastCommandEndedAt.TryRemove(sessionKey, out _);
                     Interlocked.Decrement(ref _activeConnections);
                     ConnectionLimit.Release();
                 }
@@ -372,7 +397,7 @@ class Program
         userauth.Userauth += (_, args) =>
         {
             int tries = args.AuthMethod == "password"
-                ? AuthAttempts.AddOrUpdate(remoteAttemptKey, 1, (_, count) => count + 1)
+                ? IncrementAuthAttempts(remoteAttemptKey)
                 : AuthAttempts.GetValueOrDefault(remoteAttemptKey);
             var accepted = false;
             var acceptanceReason = "rejected";
@@ -456,6 +481,17 @@ class Program
         };
     }
 
+    static int IncrementAuthAttempts(string remoteAttemptKey)
+    {
+        var attempts = AuthAttempts.AddOrUpdate(remoteAttemptKey, 1, (_, count) => count + 1);
+        if (AuthAttempts.Count > MaxTrackedRemoteAttempts)
+        {
+            foreach (var key in AuthAttempts.Keys.Take(AuthAttempts.Count - MaxTrackedRemoteAttempts))
+                AuthAttempts.TryRemove(key, out _);
+        }
+        return attempts;
+    }
+
     static void SetupShell(ConnectionService conn, string connectionSessionKey, string remoteEndpoint, DateTime connectionStartedAt, string sshBanner = "")
     {
         conn.PtyReceived += (_, args) =>
@@ -488,7 +524,7 @@ class Program
             {
                 new() { Role = "system", Content = BuildSystemPrompt(username) }
             };
-            var llmCts = new CancellationTokenSource();
+            var llmCts = CancellationTokenSource.CreateLinkedTokenSource(ApplicationStopping.Token);
             var shellAnalytics = ShellAnalyticsBySession.GetOrAdd(sessionId, _ => new ShellSessionAnalytics
             {
                 SessionStartedAt = DateTime.UtcNow
@@ -3609,8 +3645,11 @@ static class Logger
     private static readonly object _metricLock = new();
     private static readonly object _statsLock = new();
     private static readonly object _pushLock = new();
+    private static readonly TelemetryWriteQueue TelemetryWriter = new();
     private static DateTime _lastDataPushRequestedAt = DateTime.MinValue;
     private static readonly TimeSpan DataPushInterval = TimeSpan.FromSeconds(Math.Max(1, Program.GetIntEnvironmentOrDefault("DATA_PUSH_INTERVAL_SECONDS", Program.RuntimeConfig.Git.DataPushIntervalSeconds)));
+    private static readonly long MaxTelemetryFileBytes = Math.Max(1024, Program.GetIntEnvironmentOrDefault("TELEMETRY_MAX_BYTES", 50 * 1024 * 1024));
+    private const int MaxSummaryEntries = 1_000;
 
     static Logger()
     {
@@ -3627,21 +3666,24 @@ static class Logger
             return;
 
         var sessionKey = TryGetSessionKey(data);
-
-        lock (_lock)
+        if (!TelemetryWriter.TryEnqueue(() =>
         {
             try
             {
                 LogHarvestUnsafe(eventType, data);
+                RequestDataPush(sessionKey ?? eventType, force: IsPublicationBoundaryEvent(eventType));
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"Failed to write yaml log entry: {ex.Message}");
             }
+        }))
+        {
+            Console.Error.WriteLine($"Telemetry queue is full; dropped {eventType} event.");
         }
-
-        RequestDataPush(sessionKey ?? eventType, force: IsPublicationBoundaryEvent(eventType));
     }
+
+    public static void Shutdown() => TelemetryWriter.Dispose();
 
     static string? TryGetSessionKey(object data)
     {
@@ -3697,15 +3739,24 @@ static class Logger
 
         var json = JsonSerializer.Serialize(harvestedEvent, new JsonSerializerOptions { WriteIndented = false });
         var hotPath = Path.Combine(Program.LogDir, "events.jsonl");
-        File.AppendAllText(hotPath, json + Environment.NewLine);
+        AppendJsonLine(hotPath, json);
 
         var staticDataDir = Path.Combine(Program.AppDir, "frontend", "data");
         Directory.CreateDirectory(staticDataDir);
         if (!ShouldPublishFrontendEvent(eventType))
             return;
 
-        File.AppendAllText(Path.Combine(staticDataDir, "events.jsonl"), json + Environment.NewLine);
+        AppendJsonLine(Path.Combine(staticDataDir, "events.jsonl"), json);
         UpdateHarvestSummaryUnsafe(staticDataDir, eventType, data);
+    }
+
+    private static void AppendJsonLine(string path, string json)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var bytesToAppend = Encoding.UTF8.GetByteCount(json) + Environment.NewLine.Length;
+        if (File.Exists(path) && new FileInfo(path).Length + bytesToAppend > MaxTelemetryFileBytes)
+            File.Delete(path);
+        File.AppendAllText(path, json + Environment.NewLine);
     }
 
     static bool ShouldPublishFrontendEvent(string eventType)
@@ -3781,6 +3832,21 @@ static class Logger
         {
             summary.TotalShells++;
         }
+
+        TrimSummary(summary.EventCounts);
+        TrimSummary(summary.TopUsernames);
+        TrimSummary(summary.TopPasswords);
+        TrimSummary(summary.ScansByIp);
+        summary.UniqueScanIps = summary.ScansByIp.Count;
+    }
+
+    private static void TrimSummary(Dictionary<string, int> counts)
+    {
+        if (counts.Count <= MaxSummaryEntries)
+            return;
+
+        foreach (var key in counts.OrderBy(kv => kv.Value).ThenBy(kv => kv.Key, StringComparer.Ordinal).Take(counts.Count - MaxSummaryEntries).Select(kv => kv.Key).ToList())
+            counts.Remove(key);
     }
 
     static string? TryGetRemoteIp(object data)

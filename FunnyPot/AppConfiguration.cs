@@ -57,7 +57,7 @@ namespace FunnyPot
 
     public class SshConfig
     {
-        public int Port { get; set; } = 22422;
+        public int Port { get; set; } = 22722;
         public string Banner { get; set; } = "SSH-2.0-OmegaBlack_Classified_Server_v1.0";
         public string User { get; set; } = "remote";
         public string Password { get; set; } = "test";

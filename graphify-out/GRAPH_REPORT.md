@@ -1,16 +1,16 @@
-# Graph Report - FunnyPot  (2026-07-09)
+# Graph Report - FunnyPot  (2026-07-10)
 
 ## Corpus Check
-- 17 files · ~167,321 words
+- 18 files · ~167,652 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3503 nodes · 3815 edges · 179 communities (138 shown, 41 thin omitted)
+- 3520 nodes · 3845 edges · 177 communities (137 shown, 40 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `67805a8b`
+- Built from commit: `6d46eec8`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -132,7 +132,6 @@
 - [[_COMMUNITY_Community 114|Community 114]]
 - [[_COMMUNITY_Community 115|Community 115]]
 - [[_COMMUNITY_Community 116|Community 116]]
-- [[_COMMUNITY_Community 117|Community 117]]
 - [[_COMMUNITY_Community 118|Community 118]]
 - [[_COMMUNITY_Community 119|Community 119]]
 - [[_COMMUNITY_Community 120|Community 120]]
@@ -162,7 +161,6 @@
 - [[_COMMUNITY_Community 144|Community 144]]
 - [[_COMMUNITY_Community 145|Community 145]]
 - [[_COMMUNITY_Community 146|Community 146]]
-- [[_COMMUNITY_Community 147|Community 147]]
 - [[_COMMUNITY_Community 148|Community 148]]
 - [[_COMMUNITY_Community 149|Community 149]]
 - [[_COMMUNITY_Community 150|Community 150]]
@@ -208,10 +206,16 @@
 ## Surprising Connections (you probably didn't know these)
 - `FakeFileSystem` --references--> `Dictionary`  [EXTRACTED]
   FunnyPot/FakeFileSystem.cs → FunnyPot/Program.cs
+- `TelemetryWriteQueue` --references--> `BlockingCollection`  [EXTRACTED]
+  FunnyPot/TelemetryWriteQueue.cs → FunnyPot/Program.cs
+- `TelemetryWriteQueue` --references--> `Thread`  [EXTRACTED]
+  FunnyPot/TelemetryWriteQueue.cs → FunnyPot/Program.cs
 - `FakeFileSystem` --references--> `object`  [EXTRACTED]
   FunnyPot/FakeFileSystem.cs → FunnyPot/Program.cs
+- `TelemetryWriteQueue` --references--> `int`  [EXTRACTED]
+  FunnyPot/TelemetryWriteQueue.cs → FunnyPot/Program.cs
 
-## Communities (179 total, 41 thin omitted)
+## Communities (177 total, 40 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.01
@@ -339,15 +343,15 @@ Nodes (37): Assistant / 26/05/2026 22:49:34.945, Assistant / 26/05/2026 22:49:48
 
 ### Community 33 - "Community 33"
 Cohesion: 0.13
-Nodes (5): bool, Dictionary, FakeFileSystem, StaticResponseStore, JsonSerializerOptions
+Nodes (7): bool, Dictionary, FakeFileSystem, RateLimitInfo, StaticResponseStore, JsonSerializerOptions, object
 
 ### Community 34 - "Community 34"
 Cohesion: 0.06
 Nodes (34): 10. פקודת Payload מרכזית, 11. MITRE ATT&CK, Payloads ו־Egress, 12. איכות הסימולציה וה־LLM, 13. מסקנות מוצריות, 14. שורה תחתונה, 15. מקורות נתונים, 1. תקציר מנהלים, 2. מה המוצר עושה? (+26 more)
 
 ### Community 35 - "Community 35"
-Cohesion: 0.11
-Nodes (9): AppConfiguration, FieldInfo, Program, HttpClient, List, ReaderWriterLockSlim, SemaphoreSlim, SshServer (+1 more)
+Cohesion: 0.10
+Nodes (10): AppConfiguration, CancellationTokenSource, FieldInfo, Program, HttpClient, List, ReaderWriterLockSlim, SemaphoreSlim (+2 more)
 
 ### Community 36 - "Community 36"
 Cohesion: 0.06
@@ -390,8 +394,8 @@ Cohesion: 0.10
 Nodes (17): AuthAttemptLogEntry, ChatMessage, ChatRequestData, CommandLogEntry, CommandResultLogEntry, DhsCommandAnalysis, GlobalStats, HarvestedCredential (+9 more)
 
 ### Community 47 - "Community 47"
-Cohesion: 0.11
-Nodes (7): BlockingCollection, SCPDetector, SessionCommandWorker, ShellSessionAnalytics, IDisposable, Regex, Thread
+Cohesion: 0.19
+Nodes (3): SCPDetector, ShellSessionAnalytics, Regex
 
 ### Community 48 - "Community 48"
 Cohesion: 0.10
@@ -414,8 +418,8 @@ Cohesion: 0.12
 Nodes (15): Asset Value Perception, Data Acquisition Architecture, Data Collection Modules, Data Harvesting Specification: LLM-Driven SSH Analytics, GitHub Pages Publication, Log Format, M-1: SSH Protocol and Authentication Metadata, M-2: Behavioral and Tactical Metrics (+7 more)
 
 ### Community 54 - "Community 54"
-Cohesion: 0.19
-Nodes (8): byte, SCPUploadHandler, SCPUploadSession, int, long, MemoryStream, State, string
+Cohesion: 0.10
+Nodes (13): BlockingCollection, byte, SCPUploadHandler, SCPUploadSession, SessionCommandWorker, TelemetryWriteQueue, IDisposable, int (+5 more)
 
 ### Community 55 - "Community 55"
 Cohesion: 0.13
@@ -436,10 +440,6 @@ Nodes (13): Assistant / 11/06/2026 19:09:34.534, FunnyPot AutoResearch Program, 
 ### Community 59 - "Community 59"
 Cohesion: 0.15
 Nodes (11): ApiConfig, AppConfiguration, AutoResearchConfig, DataHarvesterConfig, FunnyPot, GitConfig, LlmConfig, LoggingConfig (+3 more)
-
-### Community 60 - "Community 60"
-Cohesion: 0.26
-Nodes (4): DateTime, RateLimitInfo, SyntheticHostClock, object
 
 ### Community 62 - "Community 62"
 Cohesion: 0.18
@@ -490,8 +490,8 @@ Cohesion: 0.25
 Nodes (8): Assistant / 11/06/2026 18:59:29.527, code:text (AutoResearch iteration 1/1), code:text (AutoResearch rejected: metric ... did not improve), code:text (autoresearch/state.json), code:bash (dotnet test FunnyPot.sln), code:text (autoresearch_metric=7.5), code:yaml (agent-command: "opencode run 'Read autoresearch/program.md a), code:text (autoresearch_metric=12.3)
 
 ### Community 75 - "Community 75"
-Cohesion: 0.25
-Nodes (3): LlmRateLimiterTests, SCPDetectorTests, SessionCommandWorkerTests
+Cohesion: 0.11
+Nodes (6): AutoResearchRunnerTests, LlmRateLimiterTests, SCPDetectorTests, SCPUploadSessionTests, SessionCommandWorkerTests, TelemetryWriteQueueTests
 
 ### Community 76 - "Community 76"
 Cohesion: 0.29
@@ -758,21 +758,21 @@ Cohesion: 0.67
 Nodes (3): Assistant / 02/06/2026 20:45:54.073, User / 02/06/2026 20:42:49.536, What changed for "more positive" responses
 
 ## Knowledge Gaps
-- **2958 isolated node(s):** `BestMetric`, `LastImprovedAtUtc`, `AutoResearchConfig`, `TextWriter`, `AutoResearchState` (+2953 more)
+- **2957 isolated node(s):** `BestMetric`, `LastImprovedAtUtc`, `AutoResearchConfig`, `TextWriter`, `AutoResearchState` (+2952 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **41 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **40 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Data Harvesting Specification: LLM-Driven SSH Analytics` connect `Community 23` to `Community 2`, `Community 5`, `Community 7`, `Community 9`, `Community 10`, `Community 13`, `Community 14`, `Community 18`, `Community 19`, `Community 20`, `Community 24`, `Community 26`, `Community 28`, `Community 30`, `Community 32`, `Community 42`, `Community 43`, `Community 45`, `Community 48`, `Community 58`, `Community 62`, `Community 64`, `Community 68`, `Community 69`, `Community 73`, `Community 78`, `Community 82`, `Community 83`, `Community 84`, `Community 90`, `Community 91`, `Community 92`, `Community 93`, `Community 94`, `Community 95`, `Community 96`, `Community 97`, `Community 98`, `Community 121`, `Community 122`, `Community 123`, `Community 124`?**
-  _High betweenness centrality (0.480) - this node is a cross-community bridge._
+  _High betweenness centrality (0.474) - this node is a cross-community bridge._
 - **Why does `FunnyPot AutoResearch Program` connect `Community 16` to `Community 0`, `Community 1`, `Community 4`, `Community 38`, `Community 135`, `Community 104`, `Community 103`, `Community 6`, `Community 11`, `Community 17`, `Community 58`, `Community 63`?**
-  _High betweenness centrality (0.340) - this node is a cross-community bridge._
+  _High betweenness centrality (0.323) - this node is a cross-community bridge._
 - **Why does `Pedantic Code Review — `messages` flow in `FunnyPot/Program.cs`` connect `Community 39` to `Community 3`, `Community 8`, `Community 41`, `Community 12`, `Community 15`, `Community 112`, `Community 145`, `Community 146`, `Community 113`, `Community 22`, `Community 56`, `Community 58`, `Community 31`?**
-  _High betweenness centrality (0.240) - this node is a cross-community bridge._
+  _High betweenness centrality (0.238) - this node is a cross-community bridge._
 - **What connects `BestMetric`, `LastImprovedAtUtc`, `AutoResearchConfig` to the rest of the system?**
-  _2958 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _2957 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.011299435028248588 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
