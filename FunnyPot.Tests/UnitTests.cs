@@ -793,6 +793,143 @@ public class CommandResolverTests
     }
 
     [Theory]
+    [InlineData("echo 'password' | sudo -S nproc 2>/dev/null || /usr/bin/nproc 2>/dev/null || grep -c '^processor' /proc/cpuinfo 2>/dev/null", "2")]
+    [InlineData("cat /proc/cpuinfo | grep name | wc -l", "2")]
+    [InlineData("cat /proc/cpuinfo | grep model | grep name | wc -l", "2")]
+    [InlineData("cat /proc/cpuinfo | grep name | head -n 1 | awk '{print $4,$5,$6,$7,$8,$9;}'", "Platinum 8259CL")]
+    [InlineData("lscpu | grep Model", "Model name:")]
+    [InlineData("free -m | grep Mem | awk '{print $2 ,$3, $4, $5, $6, $7}'", "7888 2401 3170 229 2308 5081")]
+    [InlineData("df -h | head -n 2 | awk 'FNR == 2 {print $2;}'", "49G")]
+    [InlineData("ls -lh $(which ls)", "/bin/ls")]
+    [InlineData("crontab -l", "no crontab for remote")]
+    public void FrequentCommandResponse_ReturnsConsistentHostOutput(string command, string expected)
+    {
+        Assert.True(CommandResolver.TryGenerateFrequentCommandResponse(command, out var response));
+        Assert.Contains(expected, response);
+    }
+
+    [Theory]
+    [InlineData("cd ~; chattr -ia .ssh; lockr -ia .ssh")]
+    [InlineData("cd ~ && rm -rf .ssh && mkdir .ssh && echo 'ssh-rsa key' >> .ssh/authorized_keys && chmod -R go= ~/.ssh && cd ~")]
+    public void FrequentCommandResponse_PersistenceSetupSucceedsSilently(string command)
+    {
+        Assert.True(CommandResolver.TryGenerateFrequentCommandResponse(command, out var response));
+        Assert.Equal("", response);
+    }
+
+    [Fact]
+    public async Task ResolveCommand_FrequentCpuProbeBypassesInconsistentCache()
+    {
+        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
+        var command = "echo 'different-password' | sudo -S nproc 2>/dev/null || /usr/bin/nproc 2>/dev/null || grep -c '^processor' /proc/cpuinfo 2>/dev/null";
+
+        var (response, usedStatic, rateLimited, promptTokens, completionTokens, _, source) = await CommandResolver.ResolveCommandAsync(
+            command,
+            Guid.NewGuid().ToString("N"),
+            Guid.NewGuid().ToString("N"),
+            fs,
+            new List<ChatRequestData.ChatMessage>(),
+            CancellationToken.None);
+
+        Assert.Equal("2", response);
+        Assert.True(usedStatic);
+        Assert.False(rateLimited);
+        Assert.Equal(0, promptTokens);
+        Assert.Equal(0, completionTokens);
+        Assert.Equal("local frequent response", source);
+    }
+
+    [Theory]
+    [InlineData("echo -e \"old\\nnew\\nnew\"|passwd|bash", "password unchanged")]
+    [InlineData("echo \"root:new-password\"|chpasswd|bash", "Authentication failure")]
+    [InlineData("cat /etc/centos-release 2>/dev/null | head -1", "No such file or directory")]
+    [InlineData("cat /etc/debian_version 2>/dev/null | head -1", "6.0.10")]
+    [InlineData("df -h / | awk 'NR==2 {print $4}'", "39G")]
+    [InlineData("free -h | grep Mem | awk '{print $2}'", "7.7G")]
+    [InlineData("ps -e --no-headers | wc -l", "89")]
+    [InlineData("who | wc -l", "1")]
+    [InlineData("netstat -tulpn 2>/dev/null | grep LISTEN | head -20", "1247/sshd")]
+    [InlineData("ps -ef | grep '[Mm]iner'", "xmrig")]
+    public void FrequentCommandResponse_RepairsRemainingObservedFamilies(string command, string expected)
+    {
+        Assert.True(CommandResolver.TryGenerateFrequentCommandResponse(command, out var response));
+        Assert.Contains(expected, response);
+    }
+
+    [Fact]
+    public void FrequentCommandResponse_NvidiaProbeIsConsistentlyEmptyOnAmdHost()
+    {
+        Assert.True(CommandResolver.TryGenerateFrequentCommandResponse(
+            "nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1",
+            out var response));
+        Assert.Equal("", response);
+    }
+
+    [Fact]
+    public async Task ResolveCommand_DirectCpuInfoUsesConsistentTwoCpuProfile()
+    {
+        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
+
+        var (response, _, _, promptTokens, completionTokens, _, source) = await CommandResolver.ResolveCommandAsync(
+            "cat /proc/cpuinfo",
+            Guid.NewGuid().ToString("N"),
+            Guid.NewGuid().ToString("N"),
+            fs,
+            new List<ChatRequestData.ChatMessage>(),
+            CancellationToken.None);
+
+        Assert.Equal(2, response.Split("processor\t:", StringSplitOptions.None).Length - 1);
+        Assert.Contains("Platinum 8259CL", response);
+        Assert.Equal(0, promptTokens);
+        Assert.Equal(0, completionTokens);
+        Assert.Equal("local host profile", source);
+    }
+
+    [Fact]
+    public async Task ResolveCommand_IpInfoReturnsSyntheticNetworkIdentity()
+    {
+        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
+
+        var (response, _, _, _, _, _, source) = await CommandResolver.ResolveCommandAsync(
+            "curl -s ipinfo.io/json",
+            Guid.NewGuid().ToString("N"),
+            Guid.NewGuid().ToString("N"),
+            fs,
+            new List<ChatRequestData.ChatMessage>(),
+            CancellationToken.None);
+
+        Assert.Contains("198.51.100.42", response);
+        Assert.Equal("built-in", source);
+    }
+
+    [Fact]
+    public async Task ResolveCommand_MemoryAndTopAgreeOnHostCapacity()
+    {
+        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
+        var session = Guid.NewGuid().ToString("N");
+        var history = new List<ChatRequestData.ChatMessage>();
+
+        var (memInfo, _, _, _, _, _, _) = await CommandResolver.ResolveCommandAsync(
+            "cat /proc/meminfo", session, session, fs, history, CancellationToken.None);
+        var (top, _, _, _, _, _, _) = await CommandResolver.ResolveCommandAsync(
+            "top", session, session, fs, history, CancellationToken.None);
+
+        Assert.Contains("MemTotal:        8077312 kB", memInfo);
+        Assert.Contains("7888.0 total", top);
+        Assert.Contains("Tasks:  89 total", top);
+    }
+
+    [Fact]
+    public void CommandResponseCache_DoesNotStorePasswordChangingCommands()
+    {
+        var command = $"echo root:{Guid.NewGuid():N} | chpasswd | bash";
+
+        CommandResponseCache.Store(command, "password updated successfully", "test-model");
+
+        Assert.False(CommandResponseCache.TryGet(command, out _));
+    }
+
+    [Theory]
     [InlineData("cd ~; chattr -ia .ssh; lockr -ia .ssh")]
     [InlineData("cd ~ && rm -rf .ssh && mkdir .ssh && echo \"ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEArDp4cun2 attacker\">>.ssh/authorized_keys && chmod -R go= ~/.ssh && cd ~")]
     public void ClassifyCommand_PersistenceSetupChainsRouteToLlm(string command)

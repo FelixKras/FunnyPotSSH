@@ -2085,6 +2085,9 @@ static class CommandResolver
             return (BinaryExecutableCatResponse(), false, false, 0, 0, "", "built-in");
         }
 
+        if (!isCompoundCommand && IsCpuInfoCommand(command))
+            return (GenerateSyntheticCpuInfo(), true, false, 0, 0, "", "local host profile");
+
         if (!isCompoundCommand && IsBuiltInCommand(command, fs, out var builtinResponse))
         {
             return (builtinResponse!, false, false, 0, 0, "", "built-in");
@@ -2095,25 +2098,14 @@ static class CommandResolver
             return (GenerateSingleFallbackResponse(command, fs.CurrentDirectory), true, false, 0, 0, "", "local fallback");
         }
 
-        if (!isCompoundCommand && IsCpuInfoCommand(command))
-        {
-            if (!LlmRateLimiter.IsAllowed(rateLimitKey, out var cpuInfoFallbackMessage))
-            {
-                Logger.LogMsg($"Rate limit triggered for session {sessionId}, using fallback response");
-                return (cpuInfoFallbackMessage ?? "Rate limit exceeded. Please wait.", false, true, 0, 0, "", "rate limit fallback");
-            }
-
-            LlmRateLimiter.LogLimitStatus(rateLimitKey);
-            var (cpuInfo, cpuInfoPromptTokens, cpuInfoCompletionTokens, usedFallback, cpuInfoModel) =
-                await GenerateCpuInfoResponseAsync(cancellationToken).ConfigureAwait(false);
-            return (cpuInfo, usedFallback, false, cpuInfoPromptTokens, cpuInfoCompletionTokens, cpuInfoModel, usedFallback ? "local fallback" : "llm");
-        }
-
         if (!isCompoundCommand && IsFindSuidDiscoveryCommand(command))
             return (GenerateLocalFallbackResponse(command, fs.CurrentDirectory), true, false, 0, 0, "", "local fallback");
 
         if (isCompoundCommand)
             ApplyLocalShellStateChanges(command, fs);
+
+        if (TryGenerateFrequentCommandResponse(command, out var frequentResponse))
+            return (frequentResponse, true, false, 0, 0, "", "local frequent response");
 
         if (!isCompoundCommand)
         {
@@ -2176,6 +2168,179 @@ static class CommandResolver
             else
                 TryApplyLocalFilesystemMutation(segment.Command, fs);
         }
+    }
+
+    internal static bool TryGenerateFrequentCommandResponse(string command, out string response)
+    {
+        response = "";
+        var normalized = Regex.Replace(command.Trim(), @"\s+", " ");
+        var lower = normalized.ToLowerInvariant();
+
+        // Common bot probes try many sudo passwords, but every chain eventually runs
+        // nproc without sudo. Keep the synthetic host at the same two CPUs advertised
+        // by nproc and lscpu instead of caching a different model answer per password.
+        if (lower.Contains("nproc 2>/dev/null", StringComparison.Ordinal)
+            && lower.Contains("/proc/cpuinfo", StringComparison.Ordinal)
+            && lower.Contains("grep -c", StringComparison.Ordinal))
+        {
+            response = "2";
+            return true;
+        }
+
+        if (lower.StartsWith("cd ~", StringComparison.Ordinal)
+            && lower.Contains("chattr -ia .ssh", StringComparison.Ordinal)
+            && lower.Contains("lockr -ia .ssh", StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        if (lower.StartsWith("cd ~", StringComparison.Ordinal)
+            && lower.Contains(".ssh/authorized_keys", StringComparison.Ordinal)
+            && lower.Contains("chmod -r go= ~/.ssh", StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        if (lower.StartsWith("export path=", StringComparison.Ordinal)
+            && lower.Contains("uname=$(", StringComparison.Ordinal)
+            && lower.Contains("cpus=$(", StringComparison.Ordinal)
+            && lower.Contains("echo \"uname:$uname\"", StringComparison.Ordinal))
+        {
+            var uptime = SyntheticHostClock.GetUptime();
+            var uptimeSeconds = Math.Max(604800, (long)uptime.TotalSeconds);
+            response = string.Join("\n",
+                "UNAME:Linux 2.6.32-5-amd64 omegablack x86_64",
+                "ARCH:x86_64",
+                $"UPTIME:{uptimeSeconds}.00 {uptimeSeconds}.00",
+                "CPUS:2",
+                "CPU_MODEL:Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz",
+                "GPU:00:02.0 VGA compatible controller: Advanced Micro Devices, Inc. [AMD/ATI] RS780M [Radeon HD 3200 Graphics]",
+                "LAST:remote   pts/0        192.168.1.100    " + DateTime.UtcNow.ToString("ddd MMM dd HH:mm") + "   still logged in",
+                lower.Contains("===shell_behavior===", StringComparison.Ordinal)
+                    ? "FILTER:===SHELL_BEHAVIOR===\npath_err=sh: ./xxxxxx: not found\ncmd_err=sh: xxxxxx: not found\nexecute_err=xxxxxx\n===DONE==="
+                    : "FILTER:");
+            return true;
+        }
+
+        if ((lower.Contains("|passwd", StringComparison.Ordinal) || lower.Contains("| passwd", StringComparison.Ordinal))
+            && lower.StartsWith("echo", StringComparison.Ordinal))
+        {
+            response = "passwd: Authentication token manipulation error\npasswd: password unchanged";
+            return true;
+        }
+
+        if ((lower.Contains("|chpasswd", StringComparison.Ordinal) || lower.Contains("| chpasswd", StringComparison.Ordinal))
+            && lower.StartsWith("echo", StringComparison.Ordinal))
+        {
+            response = "chpasswd: PAM: Authentication failure";
+            return true;
+        }
+
+        if (lower.StartsWith("which ", StringComparison.Ordinal) && lower.Contains("|| apt install", StringComparison.Ordinal))
+        {
+            var utility = lower.Split(' ', StringSplitOptions.RemoveEmptyEntries).ElementAtOrDefault(1);
+            response = utility switch
+            {
+                "curl" => "/usr/bin/curl",
+                "df" => "/bin/df",
+                "free" => "/usr/bin/free",
+                "lscpu" => "/usr/bin/lscpu",
+                _ => ""
+            };
+            return response.Length > 0;
+        }
+
+        if (lower.Contains("wget -qo-", StringComparison.Ordinal)
+            && lower.Contains("curl -s", StringComparison.Ordinal)
+            && lower.Contains("payload_done", StringComparison.Ordinal))
+        {
+            response = "PAYLOAD_DONE";
+            return true;
+        }
+
+        if (lower.StartsWith("rm -rf ", StringComparison.Ordinal)
+            && lower.Contains("pkill -9", StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        if (lower.Contains("wget http://", StringComparison.Ordinal)
+            && lower.Contains("curl -o http://", StringComparison.Ordinal)
+            && lower.Contains("chmod 777", StringComparison.Ordinal))
+        {
+            response = "--2026-07-16 05:55:00--  downloading payload\nHTTP request sent, awaiting response... 200 OK\nPayload saved";
+            return true;
+        }
+
+        if (lower.Contains("cat /bin/echo", StringComparison.Ordinal))
+        {
+            response = BinaryExecutableCatResponse();
+            return true;
+        }
+
+        if (lower == "nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1")
+            return true;
+
+        if (lower.StartsWith("ps -ef | grep '[mm]iner'", StringComparison.Ordinal)
+            || lower.StartsWith("ps | grep '[mm]iner'", StringComparison.Ordinal))
+        {
+            response = "root        1337  0.0  0.2  14248  3124 ?        S    Mar01   2:14 /tmp/.xminer/xmrig --config=/tmp/.xminer/config.json";
+            return true;
+        }
+
+        if (lower == "ps aux 2>/dev/null | head -10")
+        {
+            response = "USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND\nroot         1  0.0  0.1   2372   644 ?        Ss   Jan16   0:01 /sbin/init\nroot      1247  0.0  0.2  55312  4100 ?        Ss   Jan16   0:12 /usr/sbin/sshd\nwww-data  2103  0.1  0.4  48200  8200 ?        S    Jan16   1:42 nginx: worker process\nremote    3271  0.0  0.1   8934  4532 pts/0    Ss   05:55   0:00 -bash";
+            return true;
+        }
+
+        if (lower.StartsWith("histfile=;", StringComparison.Ordinal)
+            && lower.Contains("/etc/*release", StringComparison.Ordinal))
+        {
+            response = "Debian GNU/Linux 6.0 (squeeze)\nConnection to omegablack closed.";
+            return true;
+        }
+
+        response = lower switch
+        {
+            "cat /proc/cpuinfo | grep name | wc -l" => "2",
+            "cat /proc/cpuinfo | grep model | grep name | wc -l" => "2",
+            "cat /proc/cpuinfo | grep name | head -n 1 | awk '{print $4,$5,$6,$7,$8,$9;}'" => "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz",
+            "lscpu | grep model" => "Model name:            Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz\n    Model:               85",
+            "lspci | grep vga | cut -f5- -d ' '" => "Advanced Micro Devices, Inc. [AMD/ATI] RS780M [Radeon HD 3200 Graphics]",
+            "free -m | grep mem | awk '{print $2 ,$3, $4, $5, $6, $7}'" => "7888 2401 3170 229 2308 5081",
+            "df -h | head -n 2 | awk 'fnr == 2 {print $2;}'" => "49G",
+            "df -h / | awk 'nr==2 {print $2}'" => "49G",
+            "df -h / | awk 'nr==2 {print $4}'" => "39G",
+            "free -h | grep mem | awk '{print $2}'" => "7.7G",
+            "ls -lh $(which ls)" => "-rwxr-xr-x 1 root root 108K Jan 10  2012 /bin/ls",
+            "top" => GenerateSyntheticTop(),
+            "crontab -l" => "no crontab for remote",
+            "cat /etc/os-release | grep pretty_name | cut -d '\"' -f2" => "Debian GNU/Linux 6.0 (squeeze)",
+            "cat /etc/arch-release 2>/dev/null | head -1" => "cat: /etc/arch-release: No such file or directory",
+            "cat /etc/centos-release 2>/dev/null | head -1" => "cat: /etc/centos-release: No such file or directory",
+            "cat /etc/debian_version 2>/dev/null | head -1" => "6.0.10",
+            "cat /etc/fedora-release 2>/dev/null | head -1" => "cat: /etc/fedora-release: No such file or directory",
+            "cat /etc/lsb-release 2>/dev/null | head -1" => "DISTRIB_ID=Debian",
+            "cat /etc/os-release 2>/dev/null | head -1" => "PRETTY_NAME=\"Debian GNU/Linux 6.0 (squeeze)\"",
+            "cat /etc/redhat-release 2>/dev/null | head -1" => "cat: /etc/redhat-release: No such file or directory",
+            "cat /proc/cpuinfo | grep 'model name' | head -1 | cut -d':' -f2" => " Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz",
+            "lscpu | grep 'model name' | cut -d ':' -f2" => " Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz",
+            "ps -e --no-headers | wc -l" => "89",
+            "who | wc -l" => "1",
+            "nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1" => "",
+            "netstat -tulpn 2>/dev/null | grep listen | head -20" => "tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      1247/sshd\ntcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      2103/nginx",
+            "netstat -tulpn 2>/dev/null | head -10" => "Active Internet connections (only servers)\nProto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name\ntcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      1247/sshd\ntcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      2103/nginx",
+            "echo hi | cat -n" => "     1\tHi",
+            "./" => "bash: ./: Is a directory",
+            "cat /proc" => "cat: /proc: Is a directory",
+            "echo $shell exit;" => "/bin/bash exit",
+            "cat ~/.bash_history exit;" => "ls\ncd /home/secretOps\ncat mission_brief.txt\ncat .env\nexit\ncat: exit: No such file or directory",
+            "passwd" => "Changing password for remote.\n(current) UNIX password:\npasswd: Authentication failure\npasswd: password unchanged",
+            _ => ""
+        };
+
+        return response.Length > 0;
     }
 
     private static bool IsFindSuidDiscoveryCommand(string command)
@@ -2550,6 +2715,11 @@ static class CommandResolver
             case "wget":
             case "fetch":
             case "tftp":
+                if (cmd == "curl" && command.Contains("ipinfo.io/json", StringComparison.OrdinalIgnoreCase))
+                {
+                    response = "{\n  \"ip\": \"198.51.100.42\",\n  \"city\": \"Frankfurt am Main\",\n  \"region\": \"Hesse\",\n  \"country\": \"DE\",\n  \"org\": \"AS64500 Omega Black Research Network\"\n}";
+                    return true;
+                }
                 MaterializeDownloadedFile(command, fs);
                 response = "";
                 return true;
@@ -2704,6 +2874,16 @@ static class CommandResolver
         foreach (var arg in args.Where(arg => !arg.StartsWith('-')))
         {
             var target = StripShellQuotes(arg);
+            if (target == "/proc")
+            {
+                outputs.Add("cat: /proc: Is a directory");
+                continue;
+            }
+            if (target == "/proc/cpuinfo")
+            {
+                outputs.Add(GenerateSyntheticCpuInfo());
+                continue;
+            }
             if (IsBinaryExecutableCatCommand($"cat {target}"))
             {
                 outputs.Add(BinaryExecutableCatResponse());
@@ -2807,6 +2987,39 @@ static class CommandResolver
     {
         var normalized = Regex.Replace(command.Trim().ToLowerInvariant(), @"\s+", " ");
         return normalized is "cat /proc/cpuinfo" or "/bin/cat /proc/cpuinfo";
+    }
+
+    internal static string GenerateSyntheticCpuInfo()
+    {
+        var processor = string.Join("\n",
+            "processor\t: {0}",
+            "vendor_id\t: GenuineIntel",
+            "cpu family\t: 6",
+            "model\t\t: 85",
+            "model name\t: Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz",
+            "stepping\t: 7",
+            "cpu MHz\t\t: 2500.000",
+            "cache size\t: 36608 KB",
+            "physical id\t: 0",
+            "core id\t\t: {0}",
+            "cpu cores\t: 2",
+            "flags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat clflush mmx fxsr sse sse2 syscall nx lm constant_tsc rep_good nopl xtopology",
+            "bogomips\t: 5000.00");
+        return string.Format(CultureInfo.InvariantCulture, processor, 0)
+            + "\n\n"
+            + string.Format(CultureInfo.InvariantCulture, processor, 1);
+    }
+
+    internal static string GenerateSyntheticTop()
+    {
+        var uptime = SyntheticHostClock.GetUptime();
+        return $"top - {DateTime.Now:HH:mm:ss} up {uptime.Days} days,  {uptime.Hours}:{uptime.Minutes:D2},  1 user,  load average: 0.52, 0.58, 0.59\n" +
+            "Tasks:  89 total,   1 running,  88 sleeping,   0 stopped,   0 zombie\n" +
+            "%Cpu(s):  5.2 us,  1.3 sy,  0.0 ni, 93.5 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st\n" +
+            "MiB Mem :   7888.0 total,   3170.0 free,   2401.0 used,   2308.0 buff/cache\n" +
+            "MiB Swap:   2047.0 total,   2047.0 free,      0.0 used.   5081.0 avail Mem\n\n" +
+            "  PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND\n" +
+            " 3271 remote    20   0    8934   4532   3216 S   0.0   0.1   0:00.00 -bash";
     }
 
     internal static async Task<(string response, int promptTokens, int completionTokens, bool usedFallback, string llmModel)> GenerateCpuInfoResponseAsync(
@@ -3099,7 +3312,21 @@ static class CommandResponseCache
     {
         return !string.IsNullOrWhiteSpace(command)
             && !string.IsNullOrWhiteSpace(response)
-            && !CommandResolver.IsModelFailureResponse(response);
+            && !CommandResolver.IsModelFailureResponse(response)
+            && !IsSensitiveOrUnstableCommand(command)
+            && !response.Contains("]<]", StringComparison.Ordinal)
+            && !response.Contains("<|", StringComparison.Ordinal)
+            && !response.Contains("---TRUNCATED---", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsSensitiveOrUnstableCommand(string command)
+    {
+        var lower = command.ToLowerInvariant();
+        return lower.Contains("|passwd", StringComparison.Ordinal)
+            || lower.Contains("| passwd", StringComparison.Ordinal)
+            || lower.Contains("|chpasswd", StringComparison.Ordinal)
+            || lower.Contains("| chpasswd", StringComparison.Ordinal)
+            || (lower.Contains("sudo -s", StringComparison.Ordinal) && lower.Contains("nproc", StringComparison.Ordinal));
     }
 
     private static string CacheKey(string command)
