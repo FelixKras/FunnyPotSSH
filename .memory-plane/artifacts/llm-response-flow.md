@@ -23,6 +23,9 @@ FunnyPot does not send every command to the LLM. It short-circuits known, local,
 - `BuildSystemPrompt` defines the Omega-Black persona, Debian 6 host fingerprint, command baseline, protected file behavior, terminal-only output contract, positive bias toward plausible Linux output, binary-file handling, and meta-question lock.
 - Each command sent to the LLM is wrapped by `BuildCommandUserPrompt(command)`, which labels the command as `single` or `chained` and requires raw terminal stdout/stderr only.
 - History is trimmed to `MaxLlmHistoryMessages` while retaining the system prompt.
+- Compound commands receive additional structured guidance: fixed synthetic host facts, extracted visible `echo`/`printf` label prefixes, an execution checklist, and a worked assignment/substitution example suitable for weaker models.
+- Compound commands may use an exact whole-command cache match, but bypass the observed-command local response table. A cached compound response is accepted only when it contains every visible `echo`/`printf` label extracted from the complete command, preventing a nested subcommand value from masquerading as the whole result.
+- If an LLM response omits an extracted visible label, the resolver retries once with a repair prompt containing the command, previous response, and required labels. Only a structurally complete repair replaces the first response.
 
 ## Response Selection Order
 
@@ -55,4 +58,4 @@ FunnyPot does not send every command to the LLM. It short-circuits known, local,
 
 ## Verified Behaviors
 
-- Tests cover command classification, prompt constraints, OpenRouter response parsing, API URL construction, model failure detection, cache-safe local fallbacks, CPU-info parsing, and per-session rate limiting.
+- Tests cover command classification, prompt constraints, compound-label extraction and validation, repair prompts, OpenRouter response parsing, API URL construction, model failure detection, cache-safe local fallbacks, CPU-info parsing, and per-session rate limiting.

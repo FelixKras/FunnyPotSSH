@@ -26,6 +26,7 @@ source_refs:
 5. At the owner's request, the 50 most frequent responses and then all remaining observed command families were repaired with deterministic local routing, a coherent synthetic host profile, and stricter cache eligibility checks.
 6. The dashboard gained an explicit amber `cached response` badge while keeping cache details hidden from SSH attackers.
 7. The owner then approved resetting collected attacker-response telemetry locally and remotely while retaining the cache implementation.
+8. After a live compound fingerprint command incorrectly returned only the nested `nproc` value `2`, the owner approved routing compound commands through the LLM with structured host facts, expected-output labels, a worked example, and one validation-repair retry.
 
 ## Durable Outcome
 
@@ -36,6 +37,7 @@ source_refs:
 - The dashboard identifies telemetry records whose `ResponseSource` is `cache`.
 - Collected telemetry is reset to an empty baseline; future attacker activity repopulates it normally.
 - The generalized implementation passed 185 tests before deployment.
+- Compound commands use an exact whole-command cache match only when its response satisfies the extracted output-label structure. Otherwise they bypass local observed-response routing and use structure-guided LLM prompting.
 
 ## Privacy
 

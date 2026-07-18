@@ -543,8 +543,10 @@ public class CommandResolverTests
 
         Assert.Contains("Execute this exact Bash command", prompt);
         Assert.Contains("command_kind: chained", prompt);
-        Assert.Contains("Notice that this input contains chained commands/operators", prompt);
-        Assert.Contains("Preserve their left-to-right order", prompt);
+        Assert.Contains("Evaluate the COMPLETE shell program", prompt);
+        Assert.Contains("Command substitutions", prompt);
+        Assert.Contains("Synthetic host facts", prompt);
+        Assert.Contains("Worked example", prompt);
         Assert.Contains("output only the final visible terminal stdout/stderr", prompt);
         Assert.Contains("Do not explain, reason aloud", prompt);
         Assert.Contains("show parser steps", prompt);
@@ -818,25 +820,41 @@ public class CommandResolverTests
     }
 
     [Fact]
-    public async Task ResolveCommand_FrequentCpuProbeBypassesInconsistentCache()
+    public void CompoundPrompt_ExtractsAndRequiresVisibleLabels()
     {
-        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-        var command = "echo 'different-password' | sudo -S nproc 2>/dev/null || /usr/bin/nproc 2>/dev/null || grep -c '^processor' /proc/cpuinfo 2>/dev/null";
+        var command = "arch=$(uname -m); cpus=$(nproc); echo \"ARCH:$arch\"; echo \"CPUS:$cpus\"";
 
-        var (response, usedStatic, rateLimited, promptTokens, completionTokens, _, source) = await CommandResolver.ResolveCommandAsync(
-            command,
-            Guid.NewGuid().ToString("N"),
-            Guid.NewGuid().ToString("N"),
-            fs,
-            new List<ChatRequestData.ChatMessage>(),
-            CancellationToken.None);
+        var labels = Program.ExtractExpectedOutputLabels(command);
+        var prompt = Program.BuildCommandUserPrompt(command);
 
-        Assert.Equal("2", response);
-        Assert.True(usedStatic);
-        Assert.False(rateLimited);
-        Assert.Equal(0, promptTokens);
-        Assert.Equal(0, completionTokens);
-        Assert.Equal("local frequent response", source);
+        Assert.Equal(new[] { "ARCH:", "CPUS:" }, labels);
+        Assert.Contains("[\"ARCH:\",\"CPUS:\"]", prompt);
+        Assert.False(Program.ContainsExpectedOutputLabels("2", labels));
+        Assert.True(Program.ContainsExpectedOutputLabels("ARCH:x86_64\r\nCPUS:2", labels));
+    }
+
+    [Fact]
+    public void CompoundRepairPrompt_ExplainsIntermediateValueFailure()
+    {
+        var command = "uname=$(uname -a); cpus=$(nproc); echo \"UNAME:$uname\"; echo \"CPUS:$cpus\"";
+        var labels = Program.ExtractExpectedOutputLabels(command);
+
+        var repair = Program.BuildCompoundRepairPrompt(command, "2", labels);
+
+        Assert.Contains("structurally incomplete", repair);
+        Assert.Contains("intermediate subcommand value", repair);
+        Assert.Contains("UNAME:", repair);
+        Assert.Contains("CPUS:", repair);
+        Assert.Contains(command, repair);
+    }
+
+    [Fact]
+    public void CompoundCache_RequiresWholeCommandOutputStructure()
+    {
+        var command = "arch=$(uname -m); cpus=$(nproc); echo \"ARCH:$arch\"; echo \"CPUS:$cpus\"";
+
+        Assert.False(CommandResolver.IsCachedResponseUsable(command, "2"));
+        Assert.True(CommandResolver.IsCachedResponseUsable(command, "ARCH:x86_64\r\nCPUS:2"));
     }
 
     [Theory]

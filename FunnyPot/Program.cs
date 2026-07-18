@@ -1045,9 +1045,40 @@ CRITICAL: ""bash: who are you: command not found"" is reserved EXCLUSIVELY for m
     internal static string BuildCommandUserPrompt(string command)
     {
         var isChained = CommandResolver.IsCompoundShellCommand(command);
+        var expectedLabels = ExtractExpectedOutputLabels(command);
         var chainInstruction = isChained
-            ? "Notice that this input contains chained commands/operators. Preserve their left-to-right order and Bash semantics: pipes pass stdout to the next command; && runs the next command only after success; || runs the next command only after failure; ; runs the next command afterward. Return only the final visible terminal output from executing the whole command line."
+            ? "Evaluate the COMPLETE shell program. Command substitutions such as value=$(command) assign intermediate values; do not return one intermediate value as the whole answer. Preserve left-to-right Bash semantics: pipes pass stdout, && requires success, || requires failure, and ; continues afterward. Identify the final visible echo/printf statements and render all of them in order."
             : "This input is a single Bash command. Return only its visible terminal output.";
+
+        var compoundGuidance = isChained
+            ? $@"
+Synthetic host facts (use these exact facts whenever relevant):
+- hostname: omegablack
+- os: Debian GNU/Linux 6.0.10 (squeeze)
+- kernel_release: {KernelRelease}
+- kernel_version: {KernelVersion}
+- architecture: x86_64
+- cpu_count: 2
+- cpu_model: Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz
+- gpu: 00:02.0 VGA compatible controller: Advanced Micro Devices, Inc. [AMD/ATI] RS780M [Radeon HD 3200 Graphics]
+- shell: /bin/bash
+
+Required visible label prefixes extracted from the command:
+{JsonSerializer.Serialize(expectedLabels)}
+
+Execution checklist:
+1. Resolve assignments and command substitutions as intermediate values.
+2. Find what the complete shell program visibly prints.
+3. Preserve every required label prefix exactly and in command order.
+4. Check that no required label is missing before answering.
+
+Worked example:
+Input: arch=$(uname -m); cpus=$(nproc); echo ""ARCH:$arch""; echo ""CPUS:$cpus""
+Correct output:
+ARCH:x86_64
+CPUS:2
+Incorrect output: 2"
+            : "";
 
         return $@"Execute this exact Bash command on Omega-Black. Simulate Bash internally, but output only the final visible terminal stdout/stderr.
 
@@ -1056,10 +1087,51 @@ Do not explain, reason aloud, summarize, label sections, show parser steps, show
 Structured input:
 - command_kind: {(isChained ? "chained" : "single")}
 - execution_note: {chainInstruction}
-- output_contract: raw terminal stdout/stderr only; no reasoning, no JSON, no XML, no markdown, no labels.
+- output_contract: raw terminal stdout/stderr only; no reasoning, no JSON, no XML, no markdown, and no extra labels beyond those literally printed by the command.
+{compoundGuidance}
 
-Command:
-{command}";
+<command>
+{command}
+</command>";
+    }
+
+    internal static List<string> ExtractExpectedOutputLabels(string command)
+    {
+        var labels = new List<string>();
+        foreach (Match match in Regex.Matches(command, @"\b(?:echo|printf)\s+(?:-[A-Za-z]+\s+)?[""']([A-Z][A-Z0-9_ -]{1,31}:)", RegexOptions.IgnoreCase))
+        {
+            var label = match.Groups[1].Value;
+            if (!labels.Contains(label, StringComparer.Ordinal))
+                labels.Add(label);
+        }
+        return labels;
+    }
+
+    internal static bool ContainsExpectedOutputLabels(string response, IReadOnlyCollection<string> expectedLabels)
+    {
+        if (expectedLabels.Count == 0)
+            return true;
+        var lines = response.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
+        return expectedLabels.All(label => lines.Any(line => line.StartsWith(label, StringComparison.Ordinal)));
+    }
+
+    internal static string BuildCompoundRepairPrompt(string command, string previousResponse, IReadOnlyCollection<string> expectedLabels)
+    {
+        return $@"Your previous response was structurally incomplete because it omitted visible output required by the complete shell program.
+
+Required label prefixes, in order:
+{JsonSerializer.Serialize(expectedLabels)}
+
+Previous response:
+<previous_response>
+{previousResponse}
+</previous_response>
+
+Re-evaluate every assignment, command substitution, pipeline, and final echo/printf in the COMPLETE command below. Return raw stdout/stderr only. Include every required labelled line. Do not return only an intermediate subcommand value.
+
+<command>
+{command}
+</command>";
     }
 
     static (int uid, string group) ResolveUserIdentity(string username)
@@ -2104,7 +2176,7 @@ static class CommandResolver
         if (isCompoundCommand)
             ApplyLocalShellStateChanges(command, fs);
 
-        if (TryGenerateFrequentCommandResponse(command, out var frequentResponse))
+        if (!isCompoundCommand && TryGenerateFrequentCommandResponse(command, out var frequentResponse))
             return (frequentResponse, true, false, 0, 0, "", "local frequent response");
 
         if (!isCompoundCommand)
@@ -2121,8 +2193,11 @@ static class CommandResolver
             }
         }
 
-        if (CommandResponseCache.TryGet(command, out var cachedResponse))
+        if (CommandResponseCache.TryGet(command, out var cachedResponse)
+            && IsCachedResponseUsable(command, cachedResponse.Response))
+        {
             return (cachedResponse.Response, true, false, 0, 0, cachedResponse.LlmModel, "cache");
+        }
 
         if (!LlmRateLimiter.IsAllowed(rateLimitKey, out var fallbackMessage))
         {
@@ -2135,6 +2210,40 @@ static class CommandResolver
         var (response, promptTokens, completionTokens, _, llmModel) =
             await Program.GetLLMResponseAsync(messageHistory, cancellationToken).ConfigureAwait(false);
         response = Program.NormalizeTerminalOutput(response);
+
+        var expectedLabels = isCompoundCommand ? Program.ExtractExpectedOutputLabels(command) : [];
+        if (!IsModelFailureResponse(response)
+            && expectedLabels.Count > 0
+            && !Program.ContainsExpectedOutputLabels(response, expectedLabels)
+            && !cancellationToken.IsCancellationRequested)
+        {
+            Logger.LogMsg($"LLM response for session {sessionId} omitted compound-command labels; retrying with a repair prompt.");
+            var repairTurn = new ChatRequestData.ChatMessage
+            {
+                Role = "user",
+                Content = Program.BuildCompoundRepairPrompt(command, response, expectedLabels)
+            };
+            messageHistory.Add(repairTurn);
+            try
+            {
+                var (repairedResponse, repairPromptTokens, repairCompletionTokens, _, repairModel) =
+                    await Program.GetLLMResponseAsync(messageHistory, cancellationToken).ConfigureAwait(false);
+                repairedResponse = Program.NormalizeTerminalOutput(repairedResponse);
+                promptTokens += repairPromptTokens;
+                completionTokens += repairCompletionTokens;
+                if (!IsModelFailureResponse(repairedResponse)
+                    && Program.ContainsExpectedOutputLabels(repairedResponse, expectedLabels))
+                {
+                    response = repairedResponse;
+                    llmModel = repairModel;
+                }
+            }
+            finally
+            {
+                messageHistory.Remove(repairTurn);
+            }
+        }
+
         if (IsModelFailureResponse(response) || ShouldOverrideImplausibleFailure(command, response))
         {
             Logger.LogMsg($"LLM response failed for session {sessionId}; using local fallback instead of exposing model error: {response}");
@@ -2143,9 +2252,18 @@ static class CommandResolver
             completionTokens = 0;
         }
 
-        CommandResponseCache.Store(command, response, llmModel);
+        if (IsCachedResponseUsable(command, response))
+            CommandResponseCache.Store(command, response, llmModel);
 
         return (response, false, false, promptTokens, completionTokens, llmModel, promptTokens == 0 && completionTokens == 0 ? "local fallback" : "llm");
+    }
+
+    internal static bool IsCachedResponseUsable(string command, string response)
+    {
+        if (!IsCompoundShellCommand(command))
+            return true;
+        var expectedLabels = Program.ExtractExpectedOutputLabels(command);
+        return Program.ContainsExpectedOutputLabels(response, expectedLabels);
     }
 
     private static void ApplyLocalShellStateChanges(string command, FakeFileSystem fs)
