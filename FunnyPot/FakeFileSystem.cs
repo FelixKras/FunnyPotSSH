@@ -106,6 +106,12 @@ class FakeFileSystem
             || resolved.StartsWith("/run/", StringComparison.Ordinal);
     }
 
+    public bool PathExists(string path)
+    {
+        var resolved = ResolvePath(path);
+        return _files.ContainsKey(resolved) || _directories.ContainsKey(resolved);
+    }
+
     public string? ReadFile(string path)
     {
         var resolved = ResolvePath(path);
@@ -182,8 +188,8 @@ class FakeFileSystem
         AddDirectory("/var/log/nginx", "access.log", "error.log");
         AddDirectory("/var/log/mysql", "error.log", "slow.log");
         AddDirectory("/var/log/apt", "history.log", "term.log");
-        AddDirectory("/tmp", "systemd-private-abc123", "vmware-dragon");
-        AddDirectory("/run", "lock", "network", "sshd", "systemd", "user");
+        AddDirectory("/tmp", "vmware-dragon");
+        AddDirectory("/run", "lock", "network", "sshd", "user");
         AddDirectory("/bin", "bash", "cat", "chmod", "cp", "date", "dd", "df", "echo", "false", "ln", "ls", "mkdir", "mv", "pwd", "rm", "rmdir", "sh", "sleep", "sort", "stat", "true", "uname");
         AddDirectory("/usr", "bin", "local", "sbin", "lib", "share");
         AddDirectory("/usr/bin", "python3", "python", "curl", "wget", "git", "gcc", "make", "perl", "ruby", "node", "php");
@@ -199,14 +205,14 @@ class FakeFileSystem
         AddDirectory("/usr/local", "bin", "etc", "include", "lib", "man", "sbin", "share", "src");
         AddDirectory("/var/www", "html", "cgi-bin");
         AddDirectory("/var/www/html", "index.html", "admin", "uploads", "wp-config.php", ".htaccess");
-        AddDirectory("/var/lib", "apt", "dpkg", "docker", "mongodb", "mysql", "postgresql", "redis", "systemd");
+        AddDirectory("/var/lib", "apt", "dpkg", "docker", "mongodb", "mysql", "postgresql", "redis");
     }
 
     private void SeedFiles()
     {
-        _files["/etc/passwd"] = "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nremote:x:1001:1001:,,,:/home/remote:/bin/bash\nsecretOps:x:1002:1001:,,,:/home/secretOps:/bin/bash";
+        _files["/etc/passwd"] = "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/bin/sh\nbin:x:2:2:bin:/bin:/bin/sh\nremote:x:1001:1001:,,,:/home/remote:/bin/bash\nsecretOps:x:1002:1002:,,,:/home/secretOps:/bin/bash\n";
         _files["/etc/shadow"] = "root:$6$rounds=656000$YqXrHvkz$H7b2Kl3mPnQ9rStUvWxYzAbCdEfGhIjKlMnOpQrStUv:19000:0:99999:7:::\nremote:$6$rounds=656000$AbCdEfGh$IjKlMnOpQrStUvWxYz0123456789AbCdEfGhIjKlMn:19000:0:99999:7:::\nsecretOps:$6$rounds=656000$QrStUvWx$YzAbCdEfGhIjKlMnOpQrStUvWxYzAbCdEfGhIjKl:19000:0:99999:7:::";
-        _files["/etc/group"] = "root:x:0:\nusers:x:100:\nsecretOps:x:1001:secretOps\nsudo:x:27:remote";
+        _files["/etc/group"] = "root:x:0:\ndaemon:x:1:\nbin:x:2:\nusers:x:1001:remote\nsecretOps:x:1002:secretOps\nsudo:x:27:remote\n";
         _files["/etc/hosts"] = "127.0.0.1   localhost\n127.0.1.1   omegablack";
         _files["/etc/hostname"] = "omegablack";
         _files["/etc/resolv.conf"] = "nameserver 8.8.8.8\nnameserver 8.8.4.4";

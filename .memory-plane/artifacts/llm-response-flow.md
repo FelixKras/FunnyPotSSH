@@ -5,17 +5,19 @@ title: LLM Response Flow
 scope: project
 status: approved-by-request
 created_at: 2026-07-12
+updated_at: 2026-08-06
 author: Forge
 source_refs:
   - FunnyPot/Program.cs
   - FunnyPot/AppConfiguration.cs
   - FunnyPot.Tests/UnitTests.cs
   - config/app-config.yaml
+  - docker-compose.yaml
 ---
 
 # LLM Response Flow
 
-FunnyPot does not send every command to the LLM. It short-circuits known, local, static, SCP, binary-cat, CPU-info, and cached responses before using OpenRouter.
+FunnyPot uses one exact-command JSON dictionary before OpenRouter. This artifact's former layered static, telemetry-cache, built-in, and fallback flow was superseded by `mp-artifact-json-command-response-store` on 2026-08-06.
 
 ## Prompt Construction
 
@@ -24,38 +26,34 @@ FunnyPot does not send every command to the LLM. It short-circuits known, local,
 - Each command sent to the LLM is wrapped by `BuildCommandUserPrompt(command)`, which labels the command as `single` or `chained` and requires raw terminal stdout/stderr only.
 - History is trimmed to `MaxLlmHistoryMessages` while retaining the system prompt.
 - Compound commands receive additional structured guidance: fixed synthetic host facts, extracted visible `echo`/`printf` label prefixes, an execution checklist, and a worked assignment/substitution example suitable for weaker models.
-- Compound commands may use an exact whole-command cache match, but bypass the observed-command local response table. A cached compound response is accepted only when it contains every visible `echo`/`printf` label extracted from the complete command, preventing a nested subcommand value from masquerading as the whole result.
+- Exact cache hits are returned without rule-based reinterpretation.
 - If an LLM response omits an extracted visible label, the resolver retries once with a repair prompt containing the command, previous response, and required labels. Only a structurally complete repair replaces the first response.
 
 ## Response Selection Order
 
 1. Reject invalid input before resolution.
-2. Treat SCP and SFTP commands as local built-ins and return empty shell output.
-3. Handle binary executable `cat` locally with binary-looking ELF output.
-4. Handle known built-ins and local filesystem mutations locally.
-5. Return local fallback for non-Linux network-device probes, SUID discovery, and some fallback cases.
-6. Use static responses from `FunnyPot/data/ssh_responses.jsonl` when a simple command has a known entry.
-7. Reuse `CommandResponseCache` entries loaded from prior telemetry where available.
-8. Rate-limit LLM calls per session key.
-9. Call OpenRouter and normalize terminal output.
-10. Replace API, network, context-length, and implausible `command not found` failures with local fallback output when appropriate.
+2. Handle SCP and SFTP protocol control outside shell response selection.
+3. Return an ordinal exact hit from `command_responses.json`, including valid empty responses.
+4. Send every miss to OpenRouter and normalize terminal output.
+5. Repair incomplete compound model output through OpenRouter when required.
+6. Persist successful, structurally complete model output atomically into the same JSON dictionary.
 
 ## OpenRouter Behavior
 
 - The API URL is built from configured base URL and chat endpoint.
 - API keys are read through `GetSecretOrEnvironment("OPENROUTER_API_KEY")`.
+- The default primary model is OpenRouter's `openai/gpt-5.6-luna`.
 - The primary model comes from `LLM_MODEL` or config, and fallback models come from `LLM_FALLBACK_MODELS` or config.
 - Runtime attempts at most two distinct models.
 - Requests set `max_tokens`, low temperature, and reasoning disabled.
 - HTTP failures become `[api error]` responses and exceptions become `[network error]` responses.
 - Missing API keys return `[api error] OpenRouter API key not configured` without making a network call.
 
-## Rate Limiting And Fallbacks
+## Failure Behavior
 
-- `LlmRateLimiter` defaults to 20 requests per 60 seconds per key unless overridden by `LLM_RATE_LIMIT_MAX` and `LLM_RATE_LIMIT_WINDOW_SECONDS`.
-- Rate limit failures return a terminal response explaining the wait time and set `rateLimited=true`.
-- CPU-info generation is a special LLM-assisted path that asks for JSON CPU shape and falls back to deterministic CPU info if parsing fails.
+- API and network failures are returned directly and are not written to the response dictionary.
+- No rule-based shell fallback replaces model output.
 
 ## Verified Behaviors
 
-- Tests cover command classification, prompt constraints, compound-label extraction and validation, repair prompts, OpenRouter response parsing, API URL construction, model failure detection, cache-safe local fallbacks, CPU-info parsing, and per-session rate limiting.
+- Tests cover exact JSON hits, LLM misses, durable learning, compound-label repair, OpenRouter parsing, API URL construction, and model-failure non-learning.

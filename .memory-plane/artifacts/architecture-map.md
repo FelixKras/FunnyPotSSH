@@ -19,7 +19,7 @@ source_refs:
 
 # FunnyPot Architecture Map
 
-FunnyPot is a Docker-hosted SSH honeypot. The runtime accepts SSH connections, records authentication attempts, opens interactive or exec shells, resolves attacker commands through local emulation, static responses, cache, or OpenRouter-backed LLM responses, then publishes structured telemetry for dashboard use.
+FunnyPot is a Docker-hosted SSH honeypot. The runtime accepts SSH connections, records authentication attempts, opens interactive or exec shells, resolves attacker commands through one persistent exact-command JSON dictionary or OpenRouter, then publishes structured telemetry for dashboard use.
 
 ## Runtime Components
 
@@ -27,7 +27,8 @@ FunnyPot is a Docker-hosted SSH honeypot. The runtime accepts SSH connections, r
 - `SshServer` integration: FxSsh server bound to the configured SSH port, with `UserauthService` and `ConnectionService` handlers registered per session.
 - `SetupUserauth`: password authentication and credential harvesting flow, including configured credential acceptance and harvest-threshold acceptance.
 - `SetupShell`: shell and exec channel lifecycle, prompt handling, idle timeout, command queue, command analysis, response resolution, result logging, and publication trigger.
-- `CommandResolver`: input classification and response selection for built-ins, static responses, SCP commands, cached command responses, local fallback, and LLM calls.
+- `CommandResolver`: input validation, SCP protocol exception handling, exact JSON dictionary lookup, OpenRouter miss handling, compound repair, and learned-response persistence.
+- `CommandResponseStore`: startup loading, exact ordinal lookup, concurrent in-memory snapshots, and atomic JSON updates.
 - `FakeFileSystem`: per-shell simulated filesystem state, seeded Linux paths, synthetic file content, and stateful local mutations.
 - `DataHarvester`: command analytics for discovery, payload URLs, egress targets, persistence, tunneling, persona breakout attempts, MITRE tactics, and payload metadata capture.
 - `Logger`: structured JSONL telemetry writer, summary/stat updater, app log writer, and static dashboard Git publisher.

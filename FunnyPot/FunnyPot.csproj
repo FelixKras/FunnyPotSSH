@@ -23,7 +23,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\config\app-config.yaml" Link="config\app-config.yaml" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <None Update="data\ssh_responses.jsonl" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Update="data\command_responses.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="DotNetEnv" Version="3.1.1" />

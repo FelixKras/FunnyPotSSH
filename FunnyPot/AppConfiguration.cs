@@ -13,7 +13,7 @@ namespace FunnyPot
         public DataHarvesterConfig DataHarvester { get; set; } = new();
         public ApiConfig Api { get; set; } = new();
         public GitConfig Git { get; set; } = new();
-        public StaticResponsesConfig StaticResponses { get; set; } = new();
+        public CommandResponsesConfig CommandResponses { get; set; } = new();
         public AutoResearchConfig AutoResearch { get; set; } = new();
 
         public static AppConfiguration Load(string? configPath = null)
@@ -71,9 +71,7 @@ namespace FunnyPot
     public class LlmConfig
     {
         public int DelayMs { get; set; } = 500;
-        public int RateLimitMaxPerWindow { get; set; } = 20;
-        public int RateLimitWindowSeconds { get; set; } = 60;
-        public string Model { get; set; } = "minimax/minimax-m3";
+        public string Model { get; set; } = "openai/gpt-5.6-luna";
         public List<string> FallbackModels { get; set; } = new() { "nvidia/nemotron-3-super-120b-a12b:free" };
         public int MaxTokens { get; set; } = 2000;
         public int TimeoutSeconds { get; set; } = 30;
@@ -111,16 +109,16 @@ namespace FunnyPot
         public int DataPushIntervalSeconds { get; set; } = 300;
     }
 
-    public class StaticResponsesConfig
+    public class CommandResponsesConfig
     {
-        public string DataPath { get; set; } = "data/ssh_responses.jsonl";
+        public string DataPath { get; set; } = "data/command_responses.json";
     }
 
     public class AutoResearchConfig
     {
         public string ProgramPath { get; set; } = "autoresearch/program.md";
         public string WorktreePath { get; set; } = ".";
-        public List<string> MutablePaths { get; set; } = new() { "FunnyPot/Program.cs", "FunnyPot/FakeFileSystem.cs", "FunnyPot/data/ssh_responses.jsonl" };
+        public List<string> MutablePaths { get; set; } = new() { "FunnyPot/Program.cs", "FunnyPot/FakeFileSystem.cs", "FunnyPot/data/command_responses.json" };
         public string AgentCommand { get; set; } = "";
         public string SetupCommand { get; set; } = "dotnet restore FunnyPot.sln";
         public string ExperimentCommand { get; set; } = "dotnet test FunnyPot.sln";

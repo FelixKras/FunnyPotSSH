@@ -18,6 +18,7 @@ process table, to find the running instance.
 | User inside container | `test` (uid 1655), no new privileges, all caps dropped |
 | Log dir inside container | `/var/log/funnypot/` |
 | App dir inside container | `/home/test/app/` |
+| Response store | `/var/lib/funnypot/command_responses.json` on the `command-responses` named volume |
 
 ## Deploy paths
 
@@ -56,8 +57,8 @@ docker ps --format "table {{.Names}}\t{{.Status}}"
 
 A freshly built image takes **2–3 minutes** before the SSH port
 binds. The dotnet process starts immediately (PID 1, ~13 .NET
-threads), but JIT compilation of `FunnyPot.dll` plus initial
-`FakeFileSystem` / LLM client setup runs before the listener is up.
+threads), but JIT compilation of `FunnyPot.dll`, command-response
+dictionary loading, and LLM client setup run before the listener is up.
 The healthcheck will report `starting` (exit 1, "Connection refused")
 during this window. Do not assume the deploy is broken just because
 the first two healthchecks fail.
@@ -72,6 +73,13 @@ docker exec funnypot-container cat /proc/1/net/tcp
 A row with `local_address` ending in `:58D2` (hex for 22722) in state
 `0A` (TCP_LISTEN) means the SSH server is bound and the deploy is
 working. Anything else and the app is still starting up.
+
+## Response dictionary
+
+- Exact cached commands are loaded from `/var/lib/funnypot/command_responses.json` before the SSH listener starts.
+- Successful OpenRouter responses are added to this file atomically at runtime.
+- The `command-responses` named volume preserves learned responses across container rebuilds and recreation.
+- `docker compose down -v` deletes the learned dictionary and causes the next deployment to initialize it from the image seed.
 
 ## Logs
 

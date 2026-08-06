@@ -5,6 +5,7 @@ title: Testing Strategy
 scope: project
 status: approved-by-request
 created_at: 2026-07-12
+updated_at: 2026-08-06
 author: Forge
 source_refs:
   - FunnyPot.Tests/UnitTests.cs
@@ -16,7 +17,7 @@ source_refs:
 
 # Testing Strategy
 
-FunnyPot has a focused xUnit test suite covering input validation, SCP handling, data harvesting, logger aggregation, config loading, command resolution, fake filesystem continuity, AutoResearch, command worker ordering, telemetry queue behavior, and LLM rate limiting.
+FunnyPot has a focused xUnit test suite covering input validation, SCP handling, data harvesting, logger aggregation, config loading, JSON response-store persistence, cache/LLM routing, AutoResearch, command worker ordering, and telemetry queue behavior.
 
 ## Primary Verification Command
 
@@ -32,12 +33,11 @@ dotnet test FunnyPot.sln
 - `DataHarvesterTests`: password mutation distance, payload URL extraction, MITRE tactic classification, persistence, tunneling, RouterOS probes, fingerprint hashing, failure response detection, and shell analytics.
 - `LoggerTests`: session log naming, data-push debounce behavior, and harvest summary aggregation.
 - `ProgramTests`: remote endpoint normalization and integer environment parsing.
-- `CommandResolverTests`: executable normalization, old Debian fingerprinting, CPU-info formatting, uptime persistence, terminal-output normalization, system/user prompt contracts, static responses, LLM-vs-local routing, compound command detection, fake filesystem persistence, binary cat output, OpenRouter parsing, and API URL construction.
+- `CommandResolverTests`: exact ordinal JSON matching, valid empty hits, durable and concurrent learning, cache-hit LLM bypass, miss routing, failure non-learning, compound repair, SCP exceptions, seed validity, terminal normalization, prompt contracts, OpenRouter parsing, and API URL construction.
 - `AppConfigurationTests`: missing config fallback, file binding, project config binding, default path loading, and published config availability.
 - `TelemetryWriteQueueTests`: queued writes before dispose and rejection after dispose.
 - `AutoResearchRunnerTests`: metric parsing, improvement direction, and mutable path confinement.
 - `SessionCommandWorkerTests`: ordered work execution on a dedicated worker thread and rejection after dispose.
-- `LlmRateLimiterTests`: per-session rate limit isolation.
 
 ## Deploy Verification
 

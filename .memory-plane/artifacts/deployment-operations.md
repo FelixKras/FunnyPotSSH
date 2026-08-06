@@ -5,6 +5,7 @@ title: Deployment And Operations
 scope: project
 status: approved-by-request
 created_at: 2026-07-12
+updated_at: 2026-08-06
 author: Forge
 source_refs:
   - docs/DEPLOY.md
@@ -26,6 +27,7 @@ FunnyPot runs as a single Docker Compose service named `funnypot`, with containe
 - Container security settings include `no-new-privileges:true` and dropping all capabilities.
 - Runtime log directory inside the container is `/var/log/funnypot`.
 - Application directory inside the container is `/home/test/app`.
+- Learned command responses persist in the `command-responses` named volume mounted at `/var/lib/funnypot`.
 
 ## Deployment Paths
 

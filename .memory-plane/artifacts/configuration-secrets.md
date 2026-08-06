@@ -5,6 +5,7 @@ title: Configuration And Secrets Rules
 scope: project
 status: approved-by-request
 created_at: 2026-07-12
+updated_at: 2026-08-06
 author: Forge
 source_refs:
   - FunnyPot/AppConfiguration.cs
@@ -29,8 +30,9 @@ FunnyPot uses YAML defaults, `.env` loading, environment overrides, and optional
 ## Runtime Overrides
 
 - `LoadRuntimeSettings` applies environment overrides for auth tries, password harvest attempt, LLM delay, max sessions, idle timeout, SSH banner, SSH port, log directory, banner pool, and host key.
-- Docker Compose passes common runtime variables including SSH credentials, SSH port, auth settings, LLM model and delay, session limits, data push interval, OpenRouter key, GitHub publication settings, LLM rate limits, banner list, and banner rotation interval.
+- Docker Compose passes common runtime variables including SSH credentials, SSH port, auth settings, LLM model and delay, session limits, data push interval, OpenRouter key, GitHub publication settings, command-response path, banner list, and banner rotation interval.
 - `LLM_MODEL` and `LLM_FALLBACK_MODELS` override configured model choices.
+- `COMMAND_RESPONSE_PATH` overrides the configured exact-command JSON dictionary path.
 - `GITHUB_DATA_BRANCH` defaults to `data` at publication time.
 
 ## Secret Lookup

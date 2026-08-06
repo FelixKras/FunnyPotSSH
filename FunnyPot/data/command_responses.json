@@ -1,0 +1,812 @@
+{
+  "[ -d /etc ]": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "[ -f /etc/passwd ]": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "arch": {
+    "response": "x86_64",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "base64 -d": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "base64 /etc/passwd": {
+    "response": "cm9vdDp4OjA6MDpyb290Oi9yb290Oi9iaW4vYmFzaApkYWVtb246eDoxOjE6ZGFlbW9uOi91c3Ivc2JpbjovYmluL3NoCmJpbjp4OjI6MjpiaW46L2JpbjovYmluL3NoCnJlbW90ZTp4OjEwMDE6MTAwMTosLCw6L2hvbWUvcmVtb3RlOi9iaW4vYmFzaApzZWNyZXRPcHM6eDoxMDAyOjEwMDI6LCwsOi9ob21lL3NlY3JldE9wczovYmluL2Jhc2gK",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cat /etc/hostname": {
+    "response": "omegablack",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cat /etc/hosts": {
+    "response": "127.0.0.1   localhost\n127.0.1.1   omegablack\n\n# The following lines are desirable if IPv6 capable hosts\n::1     ip6-localhost ip6-loopback\nfe00::0 ip6-localnet\nff00::0 ip6-mcastprefix\nff02::1 ip6-allnodes\nff02::2 ip6-allrouters",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cat /etc/os-release": {
+    "response": "PRETTY_NAME=\"Debian GNU/Linux 6.0.10 (squeeze)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"6.0.10\"\nVERSION=\"6.0.10 (squeeze)\"\nID=debian",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cat /etc/passwd": {
+    "response": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/bin/sh\nbin:x:2:2:bin:/bin:/bin/sh\nremote:x:1001:1001:,,,:/home/remote:/bin/bash\nsecretOps:x:1002:1002:,,,:/home/secretOps:/bin/bash",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cat /etc/resolv.conf": {
+    "response": "nameserver 8.8.8.8\nnameserver 8.8.4.4",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cat /home/secretOps/.env": {
+    "response": "cat: /home/secretOps/.env: Permission denied",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cat /home/secretOps/mission_brief.txt": {
+    "response": "cat: /home/secretOps/mission_brief.txt: Permission denied",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cat /root/.ssh/id_rsa": {
+    "response": "cat: /root/.ssh/id_rsa: Permission denied",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cd": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cd ..": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cd ../": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cd /": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cd /etc": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cd /home": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cd /root": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cd /var/log": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cd ~": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cd ~; chattr -ia .ssh; lockr -ia .ssh": {
+    "response": "chattr: No such file or directory while trying to stat .ssh\nbash: lockr: command not found",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "chattr -ia .ssh": {
+    "response": "chattr: No such file or directory while trying to stat .ssh",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "chattr -ia ~/.ssh": {
+    "response": "chattr: No such file or directory while trying to stat ~/.ssh",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "chmod 755 /tmp/testfile": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "chown remote:users /tmp/testfile": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "clear": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "cp /etc/passwd /tmp/passwd": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "curl --version": {
+    "response": "curl 7.21.0 (x86_64-pc-linux-gnu) libcurl/7.21.0 OpenSSL/0.9.8o zlib/1.2.3.4 libidn/1.15 libssh2/1.2.6\nProtocols: dict file ftp ftps http https imap imaps ldap ldaps pop3 pop3s rtsp scp sftp smtp smtps telnet tftp\nFeatures: GSS-Negotiate IDN IPv6 Largefile NTLM SSL libz",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "date": {
+    "response": "Wed May 20 12:00:00 UTC 2026",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "df": {
+    "response": "Filesystem     1K-blocks    Used Available Use% Mounted on\n/dev/sda1       51475068 8234512  40610056  17% /\ntmpfs             4039272       0   4039272   0% /dev/shm\n/dev/sda2      206420760 45678912 149522848  24% /home",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "df -h": {
+    "response": "Filesystem      Size  Used Avail Use% Mounted on\n/dev/sda1       49G  7.9G   39G  17% /\ntmpfs          3.9G     0  3.9G   0% /dev/shm\n/dev/sda2      197G   44G  143G  24% /home",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "echo $HOME": {
+    "response": "/home/remote",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "echo $PATH": {
+    "response": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "echo $SHELL": {
+    "response": "/bin/bash",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "echo $USER": {
+    "response": "remote",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "echo Hello World": {
+    "response": "Hello World",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "echo test": {
+    "response": "test",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "env": {
+    "response": "SHELL=/bin/bash\nUSER=remote\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nHOME=/home/remote\nLOGNAME=remote\nTERM=xterm-256color\nLANG=en_US.UTF-8",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "exit": {
+    "response": "Connection to omegablack closed.",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "false": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "file /bin/bash": {
+    "response": "/bin/bash: ELF 64-bit LSB executable, x86-64, version 1 (GNU/Linux)",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "file /bin/ls": {
+    "response": "/bin/ls: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "file /etc/passwd": {
+    "response": "/etc/passwd: ASCII text",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "free": {
+    "response": "             total       used       free     shared    buffers     cached\nMem:       8077312    4831232    3246080          0     234496    2363392\n-/+ buffers/cache:    2233344    5843968\nSwap:      2096128          0    2096128",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "getconf _POSIX_VERSION": {
+    "response": "200809L",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "getconf LONG_BIT": {
+    "response": "64",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "getconf PAGESIZE": {
+    "response": "4096",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "git --version": {
+    "response": "git version 1.7.2.5",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "grep -i root /etc/passwd": {
+    "response": "root:x:0:0:root:/root:/bin/bash",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "grep -n root /etc/passwd": {
+    "response": "1:root:x:0:0:root:/root:/bin/bash",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "grep root /etc/passwd": {
+    "response": "root:x:0:0:root:/root:/bin/bash",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "groups": {
+    "response": "users",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "head -n 5 /etc/passwd": {
+    "response": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/bin/sh\nbin:x:2:2:bin:/bin:/bin/sh\nremote:x:1001:1001:,,,:/home/remote:/bin/bash\nsecretOps:x:1002:1002:,,,:/home/secretOps:/bin/bash",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "hostname": {
+    "response": "omegablack",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "id": {
+    "response": "uid=1001(remote) gid=1001(users) groups=1001(users)",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "la": {
+    "response": ".  ..  .bash_history  .bashrc  Documents  Downloads  Music  Pictures  Public  Templates  Videos",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "ll": {
+    "response": "total 64\ndrwxr-xr-x  15 remote users 4096 May 20 10:30 .\ndrwxr-xr-x  11 remote users 4096 May 20 09:15 ..\ndrwxr-xr-x   5 remote users 4096 May 15 08:22 Documents\ndrwxr-xr-x   3 remote users 4096 May 18 14:45 Downloads\ndrwxr-xr-x   2 remote users 4096 May 10 11:30 Music\ndrwxr-xr-x   2 remote users 4096 May 12 16:00 Pictures\ndrwxr-xr-x   3 remote users 4096 May 14 09:45 Public\ndrwxr-xr-x   2 remote users 4096 May 11 13:20 Templates\ndrwxr-xr-x   2 remote users 4096 May 13 15:10 Videos",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "ln -s /etc/passwd /tmp/passwd_link": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "lockr -ia .ssh": {
+    "response": "bash: lockr: command not found",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "logout": {
+    "response": "Connection to omegablack closed.",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "ls": {
+    "response": "Documents  Downloads  Music  Pictures  Public  Templates  Videos",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "ls -l": {
+    "response": "total 12\ndrwxr-xr-x 2 remote users 4096 May 15 08:22 Documents\ndrwxr-xr-x 2 remote users 4096 May 18 14:45 Downloads\ndrwxr-xr-x 2 remote users 4096 May 10 11:30 projects",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "ls -la": {
+    "response": "total 36\ndrwxr-xr-x  9 remote users 4096 May 20 10:30 .\ndrwxr-xr-x  4 root   root  4096 May 20 09:15 ..\n-rw-------  1 remote users  326 May 20 10:29 .bash_history\n-rw-r--r--  1 remote users  220 May 15 08:22 .bash_logout\n-rw-r--r--  1 remote users 3184 May 15 08:22 .bashrc\n-rw-r--r--  1 remote users  675 May 15 08:22 .profile\ndrwxr-xr-x  2 remote users 4096 May 15 08:22 Documents\ndrwxr-xr-x  2 remote users 4096 May 18 14:45 Downloads\ndrwxr-xr-x  2 remote users 4096 May 10 11:30 projects",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "ls -la /etc/shadow": {
+    "response": "-rw-r----- 1 root shadow 512 May  1 00:00 /etc/shadow",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "ls -la /home/remote": {
+    "response": "drwxr-xr-x  15 remote users 4096 May 20 10:30 .\ndrwxr-xr-x  11 remote users 4096 May 20 09:15 ..\ndrwxr-xr-x   5 remote users 4096 May 15 08:22 Documents\ndrwxr-xr-x   3 remote users 4096 May 18 14:45 Downloads\ndrwxr-xr-x   2 remote users 4096 May 10 11:30 Music\ndrwxr-xr-x   2 remote users 4096 May 12 16:00 Pictures\ndrwxr-xr-x   3 remote users 4096 May 14 09:45 Public\ndrwxr-xr-x   2 remote users 4096 May 11 13:20 Templates\ndrwxr-xr-x   2 remote users 4096 May 13 15:10 Videos",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "ls -la /home/secretOps": {
+    "response": "ls: cannot open directory /home/secretOps: Permission denied",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "ls -la /home/secretOps/.env": {
+    "response": "ls: cannot access /home/secretOps/.env: Permission denied",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "ls -la /root/.ssh": {
+    "response": "ls: cannot open directory /root/.ssh: Permission denied",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "ls /etc": {
+    "response": "adduser.conf  alternatives  apt  bash.bashrc  cron.d  cron.daily  crontab  default  dpkg  environment  fstab  group  hostname  hosts  init.d  issue  login.defs  motd  network  nsswitch.conf  os-release  passwd  profile  resolv.conf  security  shadow  ssh  sudoers  sysctl.conf  timezone",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "ls /home": {
+    "response": "remote  secretOps",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "ls /proc": {
+    "response": "1  1247  2103  3271  acpi  buddyinfo  bus  cmdline  consoles  cpuinfo  crypto  devices  diskstats  dma  driver  execdomains  fb  filesystems  fs  interrupts  iomem  ioports  irq  kallsyms  kcore  keys  key-users  kmsg  loadavg  locks  mdstat  meminfo  misc  modules  mounts  net  pagetypeinfo  partitions  scsi  self  slabinfo  stat  swaps  sys  sysrq-trigger  sysvipc  timer_list  tty  uptime  version  vmstat  zoneinfo",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "ls /root": {
+    "response": "ls: cannot open directory /root: Permission denied",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "ls /tmp": {
+    "response": "vmware-dragon",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "ls /var": {
+    "response": "backups  cache  crash  lib  local  lock  log  mail  opt  run  spool  tmp",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "lsb_release -a": {
+    "response": "No LSB modules are available.\nDistributor ID:\tDebian\nDescription:\tDebian GNU/Linux 6.0.10 (squeeze)\nRelease:\t6.0.10\nCodename:\tsqueeze",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "md5sum /etc/passwd": {
+    "response": "0b3fbfcab5afdb667e748c01e35d8b70  /etc/passwd",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "mkdir testdir": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "mv /tmp/passwd /tmp/passwd.bak": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "nproc": {
+    "response": "2",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "printenv": {
+    "response": "SHELL=/bin/bash\nUSER=remote\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nHOME=/home/remote\nLOGNAME=remote\nTERM=xterm-256color\nLANG=en_US.UTF-8",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "printf '%s\\n' hello": {
+    "response": "hello",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "printf test": {
+    "response": "test",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "pwd": {
+    "response": "/home/remote",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "python --version": {
+    "response": "Python 2.6.6",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "python3 --version": {
+    "response": "Python 3.1.3",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "readlink /tmp/passwd_link": {
+    "response": "/etc/passwd",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "realpath /tmp/passwd_link": {
+    "response": "/etc/passwd",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "reset": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "rm testfile": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "rmdir testdir": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "seq 1 5": {
+    "response": "1\n2\n3\n4\n5",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "sha1sum /etc/passwd": {
+    "response": "b70fdf3523fb36d09e19de43d1a7d2637a8cb7a0  /etc/passwd",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "sha256sum /etc/passwd": {
+    "response": "63002f0c562786b8839a78429f00479f58d69052d3bd8ff63c5d34fef86a89be  /etc/passwd",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "sleep 1": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "stat /etc/passwd": {
+    "response": "  File: `/etc/passwd'\n  Size: 195       Blocks: 8          IO Block: 4096   regular file\nDevice: 801h/2049d  Inode: 1048842      Links: 1\nAccess: (0644/-rw-r--r--)  Uid: (    0/    root)  Gid: (    0/    root)\nAccess: 2026-05-20 10:30:00.000000000 +0000\nModify: 2026-05-01 00:00:00.000000000 +0000\nChange: 2026-05-01 00:00:00.000000000 +0000",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "sudo -l": {
+    "response": "[sudo] password for remote:\nsudo: a password is required",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "sudo id": {
+    "response": "[sudo] password for remote:\nsudo: a password is required",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "sudo su": {
+    "response": "[sudo] password for remote:\nsudo: a password is required",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "sudo su -": {
+    "response": "[sudo] password for remote:\nsudo: a password is required",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "sudo whoami": {
+    "response": "[sudo] password for remote:\nsudo: a password is required",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "tail -n 5 /etc/passwd": {
+    "response": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/bin/sh\nbin:x:2:2:bin:/bin:/bin/sh\nremote:x:1001:1001:,,,:/home/remote:/bin/bash\nsecretOps:x:1002:1002:,,,:/home/secretOps:/bin/bash",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "test -d /etc": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "test -e /etc": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "test -f /etc/passwd": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "test -n \"test\"": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "test -r /etc/passwd": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "test -w /etc/passwd": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "test -x /bin/ls": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "test -z \"\"": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "test 1 -eq 1": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "test 1 -lt 2": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "test 1 -ne 2": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "test 2 -gt 1": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "touch testfile": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "true": {
+    "response": "",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "tty": {
+    "response": "/dev/pts/0",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "type cd": {
+    "response": "cd is a shell builtin",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "type echo": {
+    "response": "echo is a shell builtin",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "type ls": {
+    "response": "ls is /bin/ls",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "type pwd": {
+    "response": "pwd is a shell builtin",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "uname": {
+    "response": "Linux",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "uname -a": {
+    "response": "Linux omegablack 2.6.32-5-amd64 #1 SMP Mon Jan 16 16:22:28 UTC 2012 x86_64 GNU/Linux",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "uptime": {
+    "response": "12:00:00 up 47 days,  3:22,  1 user,  load average: 0.52, 0.58, 0.59",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "wc -l /etc/passwd": {
+    "response": "5 /etc/passwd",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "wc /etc/passwd": {
+    "response": "5 5 195 /etc/passwd",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "which bash": {
+    "response": "/bin/bash",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "which cat": {
+    "response": "/bin/cat",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "which grep": {
+    "response": "/bin/grep",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "which ls": {
+    "response": "/bin/ls",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "which python": {
+    "response": "/usr/bin/python",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "which python3": {
+    "response": "/usr/bin/python3",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "which sh": {
+    "response": "/bin/sh",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  },
+  "whoami": {
+    "response": "remote",
+    "origin": "seed",
+    "llmModel": null,
+    "updatedAtUtc": null
+  }
+}

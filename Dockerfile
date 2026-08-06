@@ -24,18 +24,20 @@ RUN apt-get update && apt-get install -y git libgit2-dev && rm -rf /var/lib/apt/
 RUN groupadd $USERNAME && \
     useradd -m -g $USERNAME -s /bin/bash $USERNAME && \
     mkdir -p /home/$USERNAME/app && \
-    mkdir -p /var/log/funnypot
+    mkdir -p /var/log/funnypot /var/lib/funnypot
 
 WORKDIR /home/$USERNAME/app
 COPY --from=publish /app/publish .
 COPY --from=build /src/frontend ./frontend
 COPY --from=build /src/FunnyPot/data ./data
+COPY --from=build /src/FunnyPot/data/command_responses.json /var/lib/funnypot/command_responses.json
 
 RUN rm -rf /home/$USERNAME/app/frontend/.git && \
     mkdir -p /home/$USERNAME/app/frontend/sessions && \
-    chown -R $USERNAME:$USERNAME /home/$USERNAME/app /var/log/funnypot && \
+    chown -R $USERNAME:$USERNAME /home/$USERNAME/app /var/log/funnypot /var/lib/funnypot && \
     chmod -R 755 /home/$USERNAME/app && \
-    chmod -R 755 /var/log/funnypot
+    chmod -R 755 /var/log/funnypot && \
+    chmod -R 750 /var/lib/funnypot
 
 USER $USERNAME
 

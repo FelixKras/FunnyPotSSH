@@ -14,7 +14,7 @@ services:
       - SSH_PASSWORD=${SSH_PASSWORD:-test}
       - SSH_PORT=${SSH_PORT:-22722}
       - AUTH_MAX_TRIES=${AUTH_MAX_TRIES:-3}
-      - LLM_MODEL=${LLM_MODEL:-minimax/minimax-m3}
+      - LLM_MODEL=${LLM_MODEL:-openai/gpt-5.6-luna}
       - LLM_DELAY_MS=${LLM_DELAY_MS:-500}
       - MAX_SESSIONS=${MAX_SESSIONS:-50}
       - SESSION_IDLE_TIMEOUT_SECONDS=${SESSION_IDLE_TIMEOUT_SECONDS:-300}
@@ -26,7 +26,11 @@ services:
       - GITHUB_REPO=${GITHUB_REPO:-}
       - STATIC_SITE_REMOTE_URL=${STATIC_SITE_REMOTE_URL:-}
       - GITHUB_DATA_BRANCH=${GITHUB_DATA_BRANCH:-data}
-      - LLM_RATE_LIMIT_MAX=${LLM_RATE_LIMIT_MAX:-20}
-      - LLM_RATE_LIMIT_WINDOW_SECONDS=${LLM_RATE_LIMIT_WINDOW_SECONDS:-60}
+      - COMMAND_RESPONSE_PATH=/var/lib/funnypot/command_responses.json
       - SSH_BANNERS=${SSH_BANNERS:-SSH-2.0-OmegaBlack_Classified_Server_v1.0,SSH-2.0-dropbear_2020.80,SSH-2.0-OpenSSH_6.6.1,SSH-2.0-OpenSSH_7.2p2 Ubuntu,SSH-2.0-OpenSSH_for_Windows_8.1}
       - SSH_BANNER_ROTATION_INTERVAL=${SSH_BANNER_ROTATION_INTERVAL:-300}
+    volumes:
+      - command-responses:/var/lib/funnypot
+
+volumes:
+  command-responses:
