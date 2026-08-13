@@ -116,17 +116,3 @@ docker compose up -d --build    # rebuild image + recreate container
   commands"** — the LLM is over-applying the meta-question fallback.
   This is a prompt regression, not a deploy issue. Re-pull the latest
   image and confirm `git rev-parse HEAD` matches the running image.
-
-## Where this doc fits in the graph
-
-This file is extracted as a doc node by `graphify` (see
-`graphify-out/manifest.json`). The deploy-related code nodes
-(`run-docker.sh`, `scripts/deploy.sh`, `docker-compose.yaml`,
-`Dockerfile`) are also in the graph. Use:
-
-```bash
-graphify query "how is this app deployed"
-graphify path "scripts/deploy.sh" "docker-compose.yaml"
-```
-
-to navigate from this doc to the concrete deploy artifacts.

@@ -57,9 +57,6 @@ commit_parent_if_needed() {
   fi
 }
 
-printf 'Updating graphify...\n'
-graphify update .
-
 commit_submodule_if_needed "frontend-main" "main" "Update dashboard UI"
 commit_submodule_if_needed "frontend" "data" "Update dashboard data"
 

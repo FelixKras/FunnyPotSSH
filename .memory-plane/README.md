@@ -23,11 +23,6 @@ Durable project knowledge belongs here as reviewed artifacts and proposals, not 
 - `projections/`: generated indexes derived from source artifacts.
 - `events.jsonl`: append-only audit trail for memory-plane maintenance.
 
-## Generated Projections
-
-- `projections/hierarchy.json`: tree view of approved artifacts organized by type.
-- `projections/community-index.md`: review-friendly table of community names, categories, confidence, and node counts.
-
 ## Maintenance
 
 1. Start substantial work by reading this file and relevant `artifacts/`.

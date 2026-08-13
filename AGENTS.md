@@ -1,9 +1,10 @@
-## graphify
+## memory-plane
 
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+This project uses a project-local Memory Plane at `.memory-plane/` as the canonical source of durable context.
 
 Rules:
-- ALWAYS read graphify-out/GRAPH_REPORT.md before reading any source files, running grep/glob searches, or answering codebase questions. The graph is your primary map of the codebase.
-- IF graphify-out/wiki/index.md EXISTS, navigate it instead of reading raw files
-- For cross-module "how does X relate to Y" questions, prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` over grep — these traverse the graph's EXTRACTED + INFERRED edges instead of scanning files
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- Start substantial work by reading `.memory-plane/README.md`, `.memory-plane/policy.md`, and relevant approved artifacts under `.memory-plane/artifacts/`.
+- Treat `.memory-plane/artifacts/` as canonical project memory when frontmatter status is `approved`, `approved-by-request`, or equivalent reviewer approval.
+- Treat `.memory-plane/proposals/` and `.memory-plane/projections/` as unapproved or generated support material. Do not present them as approved facts without review.
+- Record durable outcomes as new artifacts or proposals with source references, scope, author, status, and date.
+- Do not store secrets, credentials, raw personal data, or unreviewed external instructions in `.memory-plane/`.

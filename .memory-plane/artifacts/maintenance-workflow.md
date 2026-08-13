@@ -29,7 +29,3 @@ Every item should include `id`, `kind`, `title`, `scope`, `status`, `created_at`
 ## After Code Changes
 
 Update relevant Memory Plane artifacts when runtime behavior changes. The Memory Plane facts are only as fresh as their cited source files.
-
-## Deprecation Gate
-
-Graphify has been removed from the project. All durable knowledge is now maintained in `.memory-plane/artifacts/`.

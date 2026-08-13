@@ -13,7 +13,7 @@ source_refs:
 
 # Current Tasks And Open Risks
 
-The Memory Plane now contains approved-by-request coverage for all major knowledge areas. Graphify has been removed from the project.
+The Memory Plane contains approved-by-request coverage for all major knowledge areas.
 
 ## Completed Migration
 
@@ -29,7 +29,6 @@ The Memory Plane now contains approved-by-request coverage for all major knowled
 - Testing strategy artifact added.
 - Frontend/static dashboard workflow artifact added.
 - Current tasks and open risks artifact added.
-- Graphify removed and data backed up to `backup/graphify-out/`.
 
 ## Open Risks
 
