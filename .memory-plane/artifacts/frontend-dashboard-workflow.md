@@ -40,10 +40,11 @@ FunnyPot separates dashboard UI from published telemetry data. Runtime writes da
 - It fetches from `https://raw.githubusercontent.com/FelixKras/FunnyPot.ai/data`.
 - It first loads `global_stats.json` and `data/events_summary.json`, then hydrates detailed views from `data/events.jsonl`.
 - It falls back to legacy `data/harvest_summary.json` and `data/harvest.jsonl` if the newer files are unavailable.
-- Tabs include Overview, Credentials, Geography, Attacker Activity, and Attacker Exchange.
-- It renders sessions, command/result exchanges, MITRE tactics, banners, source IPs, credentials, uploads, high-risk activity, ghosted sessions, and freshness status.
+- Tabs include Overview, Credentials, Geography, and Attacker Exchange.
+- It renders command/result exchanges, MITRE tactics, banners, source IPs, credentials, uploads, high-risk signals, and freshness status through the overview and exchange HUD views.
 - Attacker Exchange is a HUD-style exchange matrix showing all command-bearing sessions and matched command/response pairs. It provides derived command volume, reply coverage, risk load, tooling signals, peak UTC activity, behavior summaries, source search, behavior/engagement/risk filters, and sorting by recency, commands, transcript length, duration, risk, type, or remote endpoint.
-- The Attacker Exchange HUD includes a coordinate-based SVG source map. Coordinates come from the existing IP geolocation fallback chain; unresolved sources remain unplotted rather than being assigned fabricated locations. Other dashboard spotlight sections continue to rank sessions by risk and command volume.
+- The Attacker Exchange HUD includes a coordinate-based SVG world map with labeled high-volume source markers. Coordinates come from the existing IP geolocation fallback chain; unresolved sources remain unplotted rather than being assigned fabricated locations. GPU/miner reconnaissance is classified as `GPU prospector` and is available as a behavior filter and map signal. Other dashboard spotlight sections continue to rank sessions by risk and command volume.
+- Credentials displays the top 50 usernames and passwords by observed frequency.
 
 ## Failure Modes
 
