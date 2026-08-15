@@ -5,7 +5,7 @@ title: Frontend Static Dashboard Workflow
 scope: project
 status: approved-by-request
 created_at: 2026-07-12
-updated_at: 2026-08-13
+updated_at: 2026-08-15
 author: Forge
 source_refs:
   - FunnyPot/Program.cs
@@ -42,7 +42,8 @@ FunnyPot separates dashboard UI from published telemetry data. Runtime writes da
 - It falls back to legacy `data/harvest_summary.json` and `data/harvest.jsonl` if the newer files are unavailable.
 - Tabs include Overview, Credentials, Geography, Attacker Activity, and Attacker Exchange.
 - It renders sessions, command/result exchanges, MITRE tactics, banners, source IPs, credentials, uploads, high-risk activity, ghosted sessions, and freshness status.
-- Attacker Exchange displays up to eight command-bearing sessions ordered by their latest command/result timestamp, newest first. Other dashboard spotlight sections continue to rank sessions by risk and command volume.
+- Attacker Exchange is a HUD-style exchange matrix showing all command-bearing sessions and matched command/response pairs. It provides derived command volume, reply coverage, risk load, tooling signals, peak UTC activity, behavior summaries, source search, behavior/engagement/risk filters, and sorting by recency, commands, transcript length, duration, risk, type, or remote endpoint.
+- The Attacker Exchange HUD includes a coordinate-based SVG source map. Coordinates come from the existing IP geolocation fallback chain; unresolved sources remain unplotted rather than being assigned fabricated locations. Other dashboard spotlight sections continue to rank sessions by risk and command volume.
 
 ## Failure Modes
 
