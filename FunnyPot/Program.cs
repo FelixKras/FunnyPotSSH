@@ -47,8 +47,6 @@ class Program
 
     static readonly ConcurrentDictionary<string, int> AuthAttempts = new(StringComparer.OrdinalIgnoreCase);
     const int MaxTrackedRemoteAttempts = 10_000;
-    static readonly ConcurrentDictionary<string, List<HarvestedCredential>> HarvestedCredentials = new(StringComparer.OrdinalIgnoreCase);
-    static readonly ConcurrentDictionary<string, string> LastCredentials = new(StringComparer.OrdinalIgnoreCase);
     static readonly ConcurrentDictionary<string, DateTime> LastCommandEndedAt = new(StringComparer.OrdinalIgnoreCase);
     static readonly ConcurrentDictionary<string, int> ConnectionCommandCounts = new(StringComparer.OrdinalIgnoreCase);
     static readonly ConcurrentDictionary<string, ShellSessionAnalytics> ShellAnalyticsBySession = new(StringComparer.OrdinalIgnoreCase);
@@ -335,8 +333,6 @@ class Program
                 if (Interlocked.Exchange(ref connectionReleased, 1) == 0)
                 {
                     ConnectionCommandCounts.TryRemove(sessionKey, out _);
-                    HarvestedCredentials.TryRemove(sessionKey, out _);
-                    LastCredentials.TryRemove(sessionKey, out _);
                     LastCommandEndedAt.TryRemove(sessionKey, out _);
                     Interlocked.Decrement(ref _activeConnections);
                     ConnectionLimit.Release();
@@ -423,11 +419,6 @@ class Program
                 }
             }
 
-            var credential = args.AuthMethod == "password" ? $"{args.Username}:{args.Password ?? ""}" : args.Username;
-            LastCredentials.TryGetValue(sessionKey, out var previousCredential);
-            var credentialDistance = previousCredential is null ? 0 : DataHarvester.LevenshteinDistance(previousCredential, credential);
-            LastCredentials[sessionKey] = credential;
-            var credentialEntropy = args.AuthMethod == "password" ? DataHarvester.CalculateEntropy(args.Password ?? "") : 0;
             Logger.LogYaml("auth_attempt", new AuthAttemptLogEntry
             {
                 Timestamp = DateTime.UtcNow,
@@ -436,14 +427,9 @@ class Program
                 Username = args.Username,
                 AuthMethod = args.AuthMethod,
                 Password = args.AuthMethod == "password" ? args.Password ?? "" : null,
-                KeyAlgorithm = args.KeyAlgorithm,
-                Fingerprint = args.Fingerprint,
-                AttemptNumber = tries,
+                ConnectionAttemptNumber = tries,
                 Accepted = accepted,
-                AcceptanceReason = acceptanceReason,
-                CredentialEntropy = credentialEntropy,
-                PreviousCredentialDistance = credentialDistance,
-                FingerprintHash = DataHarvester.CalculateFingerprintHash(args.Session?.ClientVersion, args.KeyAlgorithm, args.Fingerprint)
+                AcceptanceReason = acceptanceReason
             });
 
             if (args.AuthMethod != "password")
@@ -451,19 +437,6 @@ class Program
                 args.Result = false;
                 return;
             }
-
-            var harvested = HarvestedCredentials.GetOrAdd(sessionKey, _ => new List<HarvestedCredential>());
-            harvested.Add(new HarvestedCredential
-            {
-                Timestamp = DateTime.UtcNow,
-                Username = args.Username,
-                Password = args.Password ?? "",
-                SessionKey = sessionKey,
-                RemoteEndpoint = remoteEndpoint,
-                AttemptNumber = tries,
-                AuthMethod = args.AuthMethod
-            });
-            Logger.LogYaml("harvested_credential", harvested[^1]);
 
             args.Result = accepted;
 
@@ -1308,17 +1281,6 @@ Re-evaluate every assignment, command substitution, pipeline, and final echo/pri
     }
 }
 
-public class HarvestedCredential
-{
-    public DateTime Timestamp { get; set; }
-    public string Username { get; set; } = "";
-    public string Password { get; set; } = "";
-    public string SessionKey { get; set; } = "";
-    public string RemoteEndpoint { get; set; } = "";
-    public int AttemptNumber { get; set; }
-    public string AuthMethod { get; set; } = "";
-}
-
 public class AuthAttemptLogEntry
 {
     public DateTime Timestamp { get; set; }
@@ -1327,14 +1289,9 @@ public class AuthAttemptLogEntry
     public string Username { get; set; } = "";
     public string AuthMethod { get; set; } = "";
     public string? Password { get; set; }
-    public string? KeyAlgorithm { get; set; }
-    public string? Fingerprint { get; set; }
-    public int AttemptNumber { get; set; }
+    public int ConnectionAttemptNumber { get; set; }
     public bool Accepted { get; set; }
     public string AcceptanceReason { get; set; } = "rejected";
-    public double CredentialEntropy { get; set; }
-    public int PreviousCredentialDistance { get; set; }
-    public string FingerprintHash { get; set; } = "";
 }
 
 public class SessionLogEntry
@@ -1417,8 +1374,14 @@ public class PayloadCaptureLogEntry
 
 public class HarvestedEvent
 {
-    public string Timestamp { get; set; } = "";
+    public DateTime Timestamp { get; set; }
     public string Event { get; set; } = "";
+    public string SessionId { get; set; } = "";
+    public long Sequence { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ChannelId { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ExchangeId { get; set; }
     public object Data { get; set; } = new();
 }
 
@@ -2424,6 +2387,12 @@ static class Logger
     private static readonly object _statsLock = new();
     private static readonly object _pushLock = new();
     private static readonly TelemetryWriteQueue TelemetryWriter = new();
+    private static readonly ConcurrentDictionary<string, long> SessionEventSequences = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly JsonSerializerOptions EventJsonOptions = new()
+    {
+        WriteIndented = false,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
     private static DateTime _lastDataPushRequestedAt = DateTime.MinValue;
     private static readonly TimeSpan DataPushInterval = TimeSpan.FromSeconds(Math.Max(1, Program.GetIntEnvironmentOrDefault("DATA_PUSH_INTERVAL_SECONDS", Program.RuntimeConfig.Git.DataPushIntervalSeconds)));
     private static readonly long MaxTelemetryFileBytes = Math.Max(1024, Program.GetIntEnvironmentOrDefault("TELEMETRY_MAX_BYTES", 50 * 1024 * 1024));
@@ -2443,20 +2412,28 @@ static class Logger
         if (IsPrivateEndpoint(data))
             return;
 
-        var sessionKey = TryGetSessionKey(data);
+        var telemetryEvent = CreateHarvestedEvent(eventType, data);
+        var sessionKey = telemetryEvent.SessionId;
         if (!TelemetryWriter.TryEnqueue(() =>
         {
             try
             {
-                LogHarvestUnsafe(eventType, data);
-                RequestDataPush(sessionKey ?? eventType, force: IsPublicationBoundaryEvent(eventType));
+                LogHarvestUnsafe(eventType, data, telemetryEvent);
+                RequestDataPush(string.IsNullOrWhiteSpace(sessionKey) ? eventType : sessionKey, force: IsPublicationBoundaryEvent(eventType));
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"Failed to write yaml log entry: {ex.Message}");
             }
+            finally
+            {
+                if (eventType == "session_end" && !string.IsNullOrWhiteSpace(sessionKey))
+                    SessionEventSequences.TryRemove(sessionKey, out _);
+            }
         }))
         {
+            if (eventType == "session_end" && !string.IsNullOrWhiteSpace(sessionKey))
+                SessionEventSequences.TryRemove(sessionKey, out _);
             Console.Error.WriteLine($"Telemetry queue is full; dropped {eventType} event.");
         }
     }
@@ -2468,6 +2445,111 @@ static class Logger
         var value = data.GetType().GetProperty("SessionKey")?.GetValue(data) as string;
         return string.IsNullOrWhiteSpace(value) ? null : value;
     }
+
+    static string? TryGetStringProperty(object data, string propertyName)
+    {
+        var value = data.GetType().GetProperty(propertyName)?.GetValue(data) as string;
+        return string.IsNullOrWhiteSpace(value) ? null : value;
+    }
+
+    static DateTime TryGetEventTimestamp(object data)
+    {
+        return data.GetType().GetProperty("Timestamp")?.GetValue(data) is DateTime timestamp
+            ? timestamp.ToUniversalTime()
+            : DateTime.UtcNow;
+    }
+
+    internal static HarvestedEvent CreateHarvestedEvent(string eventType, object data)
+    {
+        var sessionId = TryGetSessionKey(data) ?? "";
+        var sequence = string.IsNullOrWhiteSpace(sessionId)
+            ? 0
+            : SessionEventSequences.AddOrUpdate(sessionId, 1, (_, current) => current + 1);
+
+        return new HarvestedEvent
+        {
+            Timestamp = TryGetEventTimestamp(data),
+            Event = eventType,
+            SessionId = sessionId,
+            Sequence = sequence,
+            ChannelId = TryGetStringProperty(data, "ShellSessionId"),
+            ExchangeId = TryGetStringProperty(data, "ExchangeId"),
+            Data = BuildEventData(data)
+        };
+    }
+
+    internal static void ResetSessionEventSequenceForTest(string sessionId)
+    {
+        SessionEventSequences.TryRemove(sessionId, out _);
+    }
+
+    internal static object BuildEventData(object data)
+    {
+        return data switch
+        {
+            AuthAttemptLogEntry auth => new
+            {
+                auth.RemoteEndpoint,
+                auth.Username,
+                auth.AuthMethod,
+                auth.Password,
+                auth.ConnectionAttemptNumber,
+                auth.Accepted,
+                auth.AcceptanceReason
+            },
+            SessionLogEntry session => new
+            {
+                session.RemoteEndpoint,
+                Username = NullIfEmpty(session.Username),
+                ClientVersion = NullIfEmpty(session.ClientVersion),
+                SshBanner = NullIfEmpty(session.SshBanner),
+                State = NullIfEmpty(session.Event),
+                DurationSeconds = session.DurationSeconds > 0 ? session.DurationSeconds : (double?)null,
+                TimeToCompromiseMs = session.TimeToCompromiseMs > 0 ? session.TimeToCompromiseMs : (long?)null
+            },
+            CommandLogEntry command => new
+            {
+                command.RemoteEndpoint,
+                command.Username,
+                command.MessageNumber,
+                command.ShellMessageNumber,
+                command.Command
+            },
+            CommandResultLogEntry result => new
+            {
+                result.RemoteEndpoint,
+                result.Username,
+                result.MessageNumber,
+                result.ShellMessageNumber,
+                result.Response,
+                LlmModel = NullIfEmpty(result.LlmModel),
+                ResponseSource = NullIfEmpty(result.ResponseSource),
+                result.FailedCommand,
+                result.ResponseDurationMs
+            },
+            PayloadCaptureLogEntry payload => new
+            {
+                payload.RemoteEndpoint,
+                payload.Url,
+                payload.Status,
+                payload.HttpStatusCode,
+                payload.BytesCaptured,
+                Sha256 = NullIfEmpty(payload.Sha256),
+                Error = NullIfEmpty(payload.Error)
+            },
+            SCPUploadLogEntry upload => new
+            {
+                upload.Filename,
+                upload.Bytes,
+                Sha256 = NullIfEmpty(upload.Sha256),
+                Path = NullIfEmpty(upload.Path),
+                upload.Status
+            },
+            _ => data
+        };
+    }
+
+    static string? NullIfEmpty(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 
     static bool IsPublicationBoundaryEvent(string eventType)
     {
@@ -2503,19 +2585,12 @@ static class Logger
         return false;
     }
 
-    static void LogHarvestUnsafe(string eventType, object data)
+    static void LogHarvestUnsafe(string eventType, object data, HarvestedEvent harvestedEvent)
     {
         if (IsPrivateEndpoint(data))
             return;
 
-        var harvestedEvent = new HarvestedEvent
-        {
-            Timestamp = DateTime.UtcNow.ToString("o"),
-            Event = eventType,
-            Data = data
-        };
-
-        var json = JsonSerializer.Serialize(harvestedEvent, new JsonSerializerOptions { WriteIndented = false });
+        var json = JsonSerializer.Serialize(harvestedEvent, EventJsonOptions);
         var hotPath = Path.Combine(Program.LogDir, "events.jsonl");
         AppendJsonLine(hotPath, json);
 
@@ -2540,7 +2615,7 @@ static class Logger
     static bool ShouldPublishFrontendEvent(string eventType)
     {
         return eventType is "session_start" or "session_end"
-            or "auth_attempt" or "harvested_credential"
+            or "auth_attempt"
             or "shell_session_start" or "shell_session_end"
             or "command" or "command_result"
             or "payload_capture" or "scp_upload_captured" or "scp_upload_rejected";
@@ -2578,25 +2653,6 @@ static class Logger
 
                 if (!string.IsNullOrEmpty(authAttempt.Password))
                     summary.TopPasswords[authAttempt.Password] = summary.TopPasswords.GetValueOrDefault(authAttempt.Password) + 1;
-            }
-
-            var remoteIp = TryGetRemoteIp(data);
-            if (!string.IsNullOrWhiteSpace(remoteIp))
-            {
-                summary.ScansByIp[remoteIp] = summary.ScansByIp.GetValueOrDefault(remoteIp) + 1;
-                summary.UniqueScanIps = summary.ScansByIp.Count;
-            }
-        }
-        else if (eventType == "harvested_credential")
-        {
-            summary.TotalScanAttempts++;
-            if (data is HarvestedCredential credential)
-            {
-                if (!string.IsNullOrWhiteSpace(credential.Username))
-                    summary.TopUsernames[credential.Username] = summary.TopUsernames.GetValueOrDefault(credential.Username) + 1;
-
-                if (!string.IsNullOrEmpty(credential.Password))
-                    summary.TopPasswords[credential.Password] = summary.TopPasswords.GetValueOrDefault(credential.Password) + 1;
             }
 
             var remoteIp = TryGetRemoteIp(data);

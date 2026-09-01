@@ -760,6 +760,50 @@ public class AppConfigurationTests
 public class TelemetryWriteQueueTests
 {
     [Fact]
+    public void CreateHarvestedEvent_UsesSessionSequenceAndLeanAuthData()
+    {
+        var sessionId = $"test-{Guid.NewGuid():N}";
+        var timestamp = DateTime.SpecifyKind(new DateTime(2026, 1, 2, 3, 4, 5), DateTimeKind.Utc);
+        var first = Logger.CreateHarvestedEvent("auth_attempt", new AuthAttemptLogEntry
+        {
+            Timestamp = timestamp,
+            SessionKey = sessionId,
+            RemoteEndpoint = "203.0.113.5:22",
+            Username = "root",
+            AuthMethod = "password",
+            Password = "secret",
+            ConnectionAttemptNumber = 3,
+            Accepted = true,
+            AcceptanceReason = "harvest_threshold"
+        });
+        var second = Logger.CreateHarvestedEvent("auth_attempt", new AuthAttemptLogEntry
+        {
+            Timestamp = timestamp,
+            SessionKey = sessionId,
+            RemoteEndpoint = "203.0.113.5:22",
+            Username = "admin",
+            AuthMethod = "password",
+            Password = "password"
+        });
+
+        try
+        {
+            Assert.Equal(sessionId, first.SessionId);
+            Assert.Equal(1, first.Sequence);
+            Assert.Equal(2, second.Sequence);
+            Assert.Equal(timestamp, first.Timestamp);
+            var json = System.Text.Json.JsonSerializer.Serialize(first);
+            Assert.DoesNotContain("CredentialEntropy", json);
+            Assert.DoesNotContain("PreviousCredentialDistance", json);
+            Assert.DoesNotContain("SessionKey", json);
+        }
+        finally
+        {
+            Logger.ResetSessionEventSequenceForTest(sessionId);
+        }
+    }
+
+    [Fact]
     public void TryEnqueue_ProcessesWritesBeforeDispose()
     {
         using var queue = new TelemetryWriteQueue();

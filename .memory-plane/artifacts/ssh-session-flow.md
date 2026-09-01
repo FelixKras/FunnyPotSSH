@@ -27,8 +27,8 @@ FunnyPot models an SSH honeypot session as a connection session plus one or more
 - `SetupUserauth` tracks attempts by remote IP, not by source port, using `GetRemoteAttemptKey`.
 - Password authentication succeeds when the attacker uses configured `SSH_USER` and `SSH_PASSWORD`, or when failed attempts reach `PASSWORD_HARVEST_ATTEMPT`.
 - Non-password auth methods are logged but rejected.
-- Every password attempt is logged as `auth_attempt`, and password attempts are also logged as `harvested_credential`.
-- Auth telemetry includes username, password for password auth, method, key metadata, attempt number, acceptance reason, credential entropy, previous credential distance, and fingerprint hash.
+- Every password attempt is logged once as `auth_attempt`; the event envelope carries the connection `SessionId` and per-session `Sequence`.
+- Auth telemetry includes username, password for password auth, method, connection attempt number, acceptance status, and acceptance reason.
 
 ## Shell And Exec Flow
 

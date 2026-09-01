@@ -15,7 +15,7 @@ source_refs:
 
 # Telemetry And Logging Schema
 
-FunnyPot emits structured JSONL telemetry through `Logger.LogYaml`. Despite the method name, the current harvested telemetry format is JSONL records with `Timestamp`, `Event`, and `Data` fields.
+FunnyPot emits structured JSONL telemetry through `Logger.LogYaml`. Despite the method name, the current harvested telemetry format is JSONL records with top-level `Timestamp`, `Event`, `SessionId`, `Sequence`, optional `ChannelId` and `ExchangeId`, and lean event-specific `Data` fields.
 
 ## Write Pipeline
 
@@ -38,7 +38,6 @@ FunnyPot emits structured JSONL telemetry through `Logger.LogYaml`. Despite the 
 - `session_start`
 - `session_end`
 - `auth_attempt`
-- `harvested_credential`
 - `shell_session_start`
 - `shell_session_end`
 - `command`
@@ -49,8 +48,7 @@ FunnyPot emits structured JSONL telemetry through `Logger.LogYaml`. Despite the 
 
 ## Event Data Shapes
 
-- `AuthAttemptLogEntry`: timestamp, session key, remote endpoint, username, auth method, password for password auth, key metadata, attempt number, accepted flag, acceptance reason, entropy, credential distance, and fingerprint hash.
-- `HarvestedCredential`: timestamp, username, password, session key, remote endpoint, attempt number, and auth method.
+- `AuthAttemptLogEntry`: remote endpoint, username, auth method, password for password auth, connection attempt number, accepted flag, and acceptance reason.
 - `SessionLogEntry`: timestamp, connection and shell IDs, endpoint, username, client version, banner, event, duration, and time-to-compromise.
 - `CommandLogEntry`: message numbers, endpoint, username, exchange ID, command, latency, automation hint, derived DHS analytics, and MITRE tactics.
 - `CommandResultLogEntry`: command response, LLM model, response source, failed-command flag, response duration, hallucination feedback, standard-error ratio, semantic drift, and Turing multiplier.
@@ -58,6 +56,8 @@ FunnyPot emits structured JSONL telemetry through `Logger.LogYaml`. Despite the 
 - `SCPUploadLogEntry`: filename, byte count, SHA-256, stored path, and status.
 - `GlobalStats`: total sessions, commands, blocked operations, token counts, duration, top users, sessions by banner, MITRE distribution, mean engagement, and last updated time.
 - `HarvestSummary`: event counts, scan attempts, unique source IPs, shell count, top usernames, top passwords, and scans by IP.
+
+Events for a session receive monotonically increasing sequence numbers. Sequence state is released when `session_end` is queued or written. Derived command analytics remain available to the in-process summary path and are not repeated in each raw event.
 
 ## Dashboard Assumptions
 
