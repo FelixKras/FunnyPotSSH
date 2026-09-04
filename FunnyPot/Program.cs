@@ -206,6 +206,13 @@ class Program
             return new AutoResearchRunner(config.AutoResearch).RunAsync().GetAwaiter().GetResult();
         }
 
+        if (args.Length > 0 && args[0].Equals("--rebuild-publication-data", StringComparison.OrdinalIgnoreCase))
+        {
+            var repoPath = args.Length > 1 ? Path.GetFullPath(args[1]) : Path.Combine(AppDir, "frontend");
+            Logger.RecalculatePublicationData(repoPath, "manual-rebuild");
+            return 0;
+        }
+
         var responsePath = Environment.GetEnvironmentVariable("COMMAND_RESPONSE_PATH") ?? Config.CommandResponses.DataPath;
         if (!Path.IsPathRooted(responsePath))
             responsePath = Path.Combine(AppDir, responsePath);
@@ -643,7 +650,7 @@ class Program
                     || command.Equals("logout", StringComparison.OrdinalIgnoreCase);
             }
 
-            void LogCommandResult(string line, string response, string exchangeId, int messageNumber, int shellMessageNumber, long responseDurationMs, bool failedCommand, string llmModel = "", string responseSource = "")
+            void LogCommandResult(string line, string response, string exchangeId, int messageNumber, int shellMessageNumber, long responseDurationMs, bool failedCommand, string llmModel = "", string responseSource = "", int promptTokens = 0, int completionTokens = 0, bool blockedOperation = false)
             {
                 var hallucinationFeedback = false;
                 try
@@ -672,6 +679,9 @@ class Program
                     ResponseSource = responseSource,
                     FailedCommand = failedCommand,
                     ResponseDurationMs = responseDurationMs,
+                    PromptTokens = promptTokens,
+                    CompletionTokens = completionTokens,
+                    BlockedOperation = blockedOperation,
                     HallucinationFeedback = hallucinationFeedback,
                     StandardErrorRatio = shellAnalytics.StandardErrorRatio,
                     SemanticDrift = shellAnalytics.SemanticDrift,
@@ -771,7 +781,7 @@ class Program
                         var blockedFailedCommand = true;
                         shellAnalytics.RecordResult(blockedFailedCommand);
                         LastCommandEndedAt[sessionId] = DateTime.UtcNow;
-                        LogCommandResult(line, blockedResponse, exchangeId, exchangeNumber, commandCount, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, blockedFailedCommand, responseSource: "input validation");
+                        LogCommandResult(line, blockedResponse, exchangeId, exchangeNumber, commandCount, (long)(DateTime.UtcNow - commandStartedAt).TotalMilliseconds, blockedFailedCommand, responseSource: "input validation", blockedOperation: true);
                         commandResultLogged = true;
                         CloseShell("BlockedCommand");
                         return;
@@ -842,7 +852,7 @@ class Program
                     });
 
                     processingStage = "logging command result";
-                    LogCommandResult(line, response, exchangeId, exchangeNumber, commandCount, stopwatch.ElapsedMilliseconds, failedCommand, llmModel, responseSource);
+                    LogCommandResult(line, response, exchangeId, exchangeNumber, commandCount, stopwatch.ElapsedMilliseconds, failedCommand, llmModel, responseSource, promptTokens, completionTokens);
                     commandResultLogged = true;
 
                     processingStage = "sending command response";
@@ -1359,6 +1369,9 @@ public class CommandResultLogEntry
     public string ResponseSource { get; set; } = "";
     public bool FailedCommand { get; set; }
     public long ResponseDurationMs { get; set; }
+    public int PromptTokens { get; set; }
+    public int CompletionTokens { get; set; }
+    public bool BlockedOperation { get; set; }
     public bool HallucinationFeedback { get; set; }
     public double StandardErrorRatio { get; set; }
     public int SemanticDrift { get; set; }
@@ -1431,6 +1444,7 @@ public class SessionDebrief
     public string SshBanner { get; set; } = "";
     public bool AuthAccepted { get; set; }
     public List<AuthAttemptRecord> AuthAttempts { get; set; } = new();
+    public List<SessionTimelineRecord> Timeline { get; set; } = new();
     public bool ShellOpened { get; set; }
     public long TimeToCompromiseMs { get; set; }
     public int CommandCount { get; set; }
@@ -1445,22 +1459,60 @@ public class AuthAttemptRecord
 {
     public string Username { get; set; } = "";
     public string Password { get; set; } = "";
+    public string AuthMethod { get; set; } = "";
+    public int ConnectionAttemptNumber { get; set; }
     public bool Accepted { get; set; }
+    public string AcceptanceReason { get; set; } = "";
     public DateTime? Timestamp { get; set; }
+}
+
+public class SessionTimelineRecord
+{
+    public DateTime Timestamp { get; set; }
+    public string Event { get; set; } = "";
+    public long Sequence { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ChannelId { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ExchangeId { get; set; }
+    public object Data { get; set; } = new();
 }
 
 public class CommandExchangeRecord
 {
     public long Sequence { get; set; }
+    public string? ChannelId { get; set; }
     public string ExchangeId { get; set; } = "";
+    public int MessageNumber { get; set; }
+    public int ShellMessageNumber { get; set; }
     public string Command { get; set; } = "";
     public DateTime? Timestamp { get; set; }
+    public long? CommandSequenceLatencyMs { get; set; }
+    public string ActorAutomationHint { get; set; } = "unknown";
+    public int DiscoveryDepthScore { get; set; }
+    public string PersistenceVector { get; set; } = "none";
+    public List<string> PayloadUrls { get; set; } = new();
+    public List<string> EgressTargets { get; set; } = new();
+    public string TunnelingIntent { get; set; } = "none";
+    public bool PersonaBreakoutAttempt { get; set; }
+    public string ReconnaissanceProbe { get; set; } = "none";
+    public int SemanticComplexity { get; set; }
+    public int AssetValuePerceptionScore { get; set; }
+    public bool HasResponse { get; set; }
+    public DateTime? ResponseTimestamp { get; set; }
     public string Response { get; set; } = "";
     public long ResponseDurationMs { get; set; }
+    public int PromptTokens { get; set; }
+    public int CompletionTokens { get; set; }
+    public bool BlockedOperation { get; set; }
     public bool FailedCommand { get; set; }
     public string? LlmModel { get; set; }
     public string? ResponseSource { get; set; }
-    public List<string> MitreTactics { get; set; } = new();
+    public bool HallucinationFeedback { get; set; }
+    public double StandardErrorRatio { get; set; }
+    public int SemanticDrift { get; set; }
+    public double TuringMultiplier { get; set; }
+    public List<string> MitreAttackTechniques { get; set; } = new();
     public string MitreTechnique { get; set; } = "";
     public string InferredObjective { get; set; } = "";
 }
@@ -2455,6 +2507,7 @@ static class Logger
     private static readonly object _pushLock = new();
     private static readonly TelemetryWriteQueue TelemetryWriter = new();
     private static readonly ConcurrentDictionary<string, long> SessionEventSequences = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, List<(DateTime Timestamp, string Event, string SessionId, long Sequence, string? ChannelId, string? ExchangeId, JsonElement Data)>> ActiveSessionEvents = new(StringComparer.Ordinal);
     private static readonly JsonSerializerOptions EventJsonOptions = new()
     {
         WriteIndented = false,
@@ -2463,6 +2516,7 @@ static class Logger
     private static DateTime _lastDataPushRequestedAt = DateTime.MinValue;
     private static readonly TimeSpan DataPushInterval = TimeSpan.FromSeconds(Math.Max(1, Program.GetIntEnvironmentOrDefault("DATA_PUSH_INTERVAL_SECONDS", Program.RuntimeConfig.Git.DataPushIntervalSeconds)));
     private static readonly long MaxTelemetryFileBytes = Math.Max(1024, Program.GetIntEnvironmentOrDefault("TELEMETRY_MAX_BYTES", 50 * 1024 * 1024));
+    private static readonly int MaxStructuredSessions = Math.Max(1, Program.GetIntEnvironmentOrDefault("STRUCTURED_SESSION_LIMIT", 2_000));
     private const int MaxSummaryEntries = 1_000;
 
     static Logger()
@@ -2605,7 +2659,14 @@ static class Logger
                 LlmModel = NullIfEmpty(result.LlmModel),
                 ResponseSource = NullIfEmpty(result.ResponseSource),
                 result.FailedCommand,
-                result.ResponseDurationMs
+                result.ResponseDurationMs,
+                PromptTokens = result.PromptTokens > 0 ? result.PromptTokens : (int?)null,
+                CompletionTokens = result.CompletionTokens > 0 ? result.CompletionTokens : (int?)null,
+                BlockedOperation = result.BlockedOperation ? true : (bool?)null,
+                HallucinationFeedback = result.HallucinationFeedback ? true : (bool?)null,
+                StandardErrorRatio = result.StandardErrorRatio > 0 ? result.StandardErrorRatio : (double?)null,
+                SemanticDrift = result.SemanticDrift != 0 ? result.SemanticDrift : (int?)null,
+                TuringMultiplier = result.TuringMultiplier > 0 ? result.TuringMultiplier : (double?)null
             },
             PayloadCaptureLogEntry payload => new
             {
@@ -2670,18 +2731,22 @@ static class Logger
         if (IsPrivateEndpoint(data))
             return;
 
-        var json = JsonSerializer.Serialize(harvestedEvent, EventJsonOptions);
-        var hotPath = Path.Combine(Program.LogDir, "events.jsonl");
-        AppendJsonLine(hotPath, json);
+        lock (_lock)
+        {
+            var json = JsonSerializer.Serialize(harvestedEvent, EventJsonOptions);
+            var hotPath = Path.Combine(Program.LogDir, "events.jsonl");
+            AppendJsonLine(hotPath, json);
 
-        var staticDataDir = Path.Combine(Program.AppDir, "frontend", "data");
-        Directory.CreateDirectory(staticDataDir);
-        if (!ShouldPublishFrontendEvent(eventType))
-            return;
+            var staticDataDir = Path.Combine(Program.AppDir, "frontend", "data");
+            Directory.CreateDirectory(staticDataDir);
+            if (!ShouldPublishFrontendEvent(eventType))
+                return;
 
-        AppendJsonLine(Path.Combine(staticDataDir, "events.jsonl"), json);
-        UpdateHarvestSummaryUnsafe(staticDataDir, eventType, data);
-        UpdateThreatIntelUnsafe(staticDataDir, eventType, data);
+            AppendJsonLine(Path.Combine(staticDataDir, "events.jsonl"), json);
+            UpdateHarvestSummaryUnsafe(staticDataDir, eventType, data);
+            UpdateThreatIntelUnsafe(staticDataDir, eventType, data);
+            TrackStructuredSessionEventUnsafe(staticDataDir, harvestedEvent);
+        }
     }
 
     private static void AppendJsonLine(string path, string json)
@@ -2832,58 +2897,61 @@ static class Logger
 
     public static void UpdateGlobalStats(string username, int messages, int blocked, int promptTokens, int completionTokens, long durationMs, ShellSessionAnalytics? analytics = null, string? sshBanner = null)
     {
-        lock (_statsLock)
+        lock (_lock)
         {
-            try
+            lock (_statsLock)
             {
-                string statsPath = Path.Combine(Program.AppDir, "frontend", "global_stats.json");
-                GlobalStats stats = new();
-
-                if (File.Exists(statsPath))
+                try
                 {
-                    string json = File.ReadAllText(statsPath);
-                    stats = JsonSerializer.Deserialize<GlobalStats>(json) ?? new();
+                    string statsPath = Path.Combine(Program.AppDir, "frontend", "global_stats.json");
+                    GlobalStats stats = new();
+
+                    if (File.Exists(statsPath))
+                    {
+                        string json = File.ReadAllText(statsPath);
+                        stats = JsonSerializer.Deserialize<GlobalStats>(json) ?? new();
+                    }
+
+                    stats.TotalSessions++;
+                    stats.TotalCommands += messages;
+                    stats.TotalBlockedOperations += blocked;
+                    stats.TotalPromptTokens += promptTokens;
+                    stats.TotalCompletionTokens += completionTokens;
+                    stats.TotalDurationMs += durationMs;
+                    stats.MeanEngagementSeconds = stats.TotalSessions == 0 ? 0 : Math.Round(stats.TotalDurationMs / 1000.0 / stats.TotalSessions, 2);
+                    stats.LastUpdated = DateTime.UtcNow;
+
+                    if (analytics is not null)
+                    {
+                        foreach (var (technique, count) in analytics.MitreTechniqueCounts)
+                            stats.MitreTechniqueDistribution[technique] = stats.MitreTechniqueDistribution.GetValueOrDefault(technique) + count;
+                    }
+
+                    if (!string.IsNullOrEmpty(sshBanner))
+                    {
+                        stats.SessionsByBanner[sshBanner] = stats.SessionsByBanner.GetValueOrDefault(sshBanner) + 1;
+                    }
+
+                    stats.TopUsers[username] = stats.TopUsers.GetValueOrDefault(username) + 1;
+
+                    if (stats.TopUsers.Count > 10)
+                    {
+                        var threshold = stats.TopUsers.Values.OrderByDescending(v => v).Skip(9).First();
+                        stats.TopUsers = stats.TopUsers
+                            .Where(kv => kv.Value >= threshold)
+                            .OrderByDescending(kv => kv.Value)
+                            .ThenBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+                            .Take(10)
+                            .ToDictionary(kv => kv.Key, kv => kv.Value);
+                    }
+
+                    string newJson = JsonSerializer.Serialize(stats, new JsonSerializerOptions { WriteIndented = true });
+                    File.WriteAllText(statsPath, newJson);
                 }
-
-                stats.TotalSessions++;
-                stats.TotalCommands += messages;
-                stats.TotalBlockedOperations += blocked;
-                stats.TotalPromptTokens += promptTokens;
-                stats.TotalCompletionTokens += completionTokens;
-                stats.TotalDurationMs += durationMs;
-                stats.MeanEngagementSeconds = stats.TotalSessions == 0 ? 0 : Math.Round(stats.TotalDurationMs / 1000.0 / stats.TotalSessions, 2);
-                stats.LastUpdated = DateTime.UtcNow;
-
-                if (analytics is not null)
+                catch (Exception ex)
                 {
-                    foreach (var (technique, count) in analytics.MitreTechniqueCounts)
-                        stats.MitreTechniqueDistribution[technique] = stats.MitreTechniqueDistribution.GetValueOrDefault(technique) + count;
+                    LogMsg($"Failed to update global stats: {ex.Message}");
                 }
-
-                if (!string.IsNullOrEmpty(sshBanner))
-                {
-                    stats.SessionsByBanner[sshBanner] = stats.SessionsByBanner.GetValueOrDefault(sshBanner) + 1;
-                }
-
-                stats.TopUsers[username] = stats.TopUsers.GetValueOrDefault(username) + 1;
-
-                if (stats.TopUsers.Count > 10)
-                {
-                    var threshold = stats.TopUsers.Values.OrderByDescending(v => v).Skip(9).First();
-                    stats.TopUsers = stats.TopUsers
-                        .Where(kv => kv.Value >= threshold)
-                        .OrderByDescending(kv => kv.Value)
-                        .ThenBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
-                        .Take(10)
-                        .ToDictionary(kv => kv.Key, kv => kv.Value);
-                }
-
-                string newJson = JsonSerializer.Serialize(stats, new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(statsPath, newJson);
-            }
-            catch (Exception ex)
-            {
-                LogMsg($"Failed to update global stats: {ex.Message}");
             }
         }
     }
@@ -2962,6 +3030,7 @@ static class Logger
                 string dataDir = Path.Combine(repoPath, "data");
                 string dataBranch = Environment.GetEnvironmentVariable("GITHUB_DATA_BRANCH") ?? "data";
 
+                FlushActiveStructuredSessionsUnsafe(dataDir);
                 var publicationSnapshot = SnapshotPublicationFiles(repoPath);
                 try
                 {
@@ -2977,7 +3046,6 @@ static class Logger
 
                 using var repo = new Repository(repoPath);
                 RemoveLegacyTelemetryFiles(repoPath);
-                RecalculatePublicationData(repoPath, sessionId);
                 EnsureValidPublicationJson(repoPath, sessionId);
 
                 if (File.Exists(statsFile))
@@ -3032,12 +3100,21 @@ static class Logger
 
                 string dataBranch = Environment.GetEnvironmentVariable("GITHUB_DATA_BRANCH") ?? "data";
 
-                using (var syncRepo = new Repository(repoPath))
-                    SyncPublicationBranch(syncRepo, dataBranch);
+                var publicationSnapshot = SnapshotPublicationFiles(repoPath);
+                try
+                {
+                    using (var syncRepo = new Repository(repoPath))
+                        SyncPublicationBranch(syncRepo, dataBranch);
+
+                    RestorePublicationSnapshot(repoPath, publicationSnapshot);
+                }
+                finally
+                {
+                    CleanupPublicationSnapshot(publicationSnapshot);
+                }
 
                 using var repo = new Repository(repoPath);
                 RemoveLegacyTelemetryFiles(repoPath);
-                RecalculatePublicationData(repoPath, "startup");
                 EnsureValidPublicationJson(repoPath, "startup");
 
                 LogMsg($"Static dashboard repository prepared on {dataBranch} branch.");
@@ -3188,13 +3265,13 @@ static class Logger
                         summary.TopUsernames[u.GetString()!] = summary.TopUsernames.GetValueOrDefault(u.GetString()!) + 1;
                     if (e.Data.TryGetProperty("Password", out var p) && !string.IsNullOrEmpty(p.GetString()))
                         summary.TopPasswords[p.GetString()!] = summary.TopPasswords.GetValueOrDefault(p.GetString()!) + 1;
+                    if (e.Data.TryGetProperty("RemoteEndpoint", out var ep))
+                    {
+                        var ip = Program.GetRemoteAttemptKey(ep.GetString() ?? "");
+                        if (!string.IsNullOrWhiteSpace(ip) && ip != "unknown")
+                            summary.ScansByIp[ip] = summary.ScansByIp.GetValueOrDefault(ip) + 1;
+                    }
                 }
-            }
-            if (e.Data.ValueKind == JsonValueKind.Object && e.Data.TryGetProperty("RemoteEndpoint", out var ep))
-            {
-                var ip = Program.GetRemoteAttemptKey(ep.GetString() ?? "");
-                if (!string.IsNullOrWhiteSpace(ip) && ip != "unknown")
-                    summary.ScansByIp[ip] = summary.ScansByIp.GetValueOrDefault(ip) + 1;
             }
         }
         summary.UniqueScanIps = summary.ScansByIp.Count;
@@ -3205,24 +3282,27 @@ static class Logger
         var stats = new GlobalStats
         {
             LastUpdated = DateTime.UtcNow,
-            TotalSessions = parsedEvents.Select(e => e.SessionId).Where(s => !string.IsNullOrEmpty(s)).Distinct().Count(),
+            TotalSessions = parsedEvents.Count(e => e.Event == "shell_session_end"),
             TotalCommands = parsedEvents.Count(e => e.Event == "command")
         };
-        long totalDurationMs = 0;
-        int completedSessions = 0;
         foreach (var e in parsedEvents)
         {
-            if (e.Event == "session_end" && e.Data.ValueKind == JsonValueKind.Object && e.Data.TryGetProperty("DurationSeconds", out var dSec))
-            {
-                totalDurationMs += (long)(dSec.GetDouble() * 1000);
-                completedSessions++;
-            }
             if (e.Data.ValueKind == JsonValueKind.Object)
             {
-                if (e.Data.TryGetProperty("Username", out var u) && !string.IsNullOrWhiteSpace(u.GetString()) && u.GetString() != "unknown")
-                    stats.TopUsers[u.GetString()!] = stats.TopUsers.GetValueOrDefault(u.GetString()!) + 1;
-                if (e.Data.TryGetProperty("SshBanner", out var b) && !string.IsNullOrWhiteSpace(b.GetString()))
-                    stats.SessionsByBanner[b.GetString()!] = stats.SessionsByBanner.GetValueOrDefault(b.GetString()!) + 1;
+                if (e.Event == "shell_session_end")
+                {
+                    if (e.Data.TryGetProperty("Username", out var u) && !string.IsNullOrWhiteSpace(u.GetString()) && u.GetString() != "unknown")
+                        stats.TopUsers[u.GetString()!] = stats.TopUsers.GetValueOrDefault(u.GetString()!) + 1;
+                    if (e.Data.TryGetProperty("SshBanner", out var b) && !string.IsNullOrWhiteSpace(b.GetString()))
+                        stats.SessionsByBanner[b.GetString()!] = stats.SessionsByBanner.GetValueOrDefault(b.GetString()!) + 1;
+                }
+                if (e.Event == "command_result")
+                {
+                    stats.TotalDurationMs += JsonLong(e.Data, "ResponseDurationMs");
+                    stats.TotalPromptTokens += JsonInt(e.Data, "PromptTokens");
+                    stats.TotalCompletionTokens += JsonInt(e.Data, "CompletionTokens");
+                    if (JsonBool(e.Data, "BlockedOperation")) stats.TotalBlockedOperations++;
+                }
                 if (e.Event == "command" && e.Data.TryGetProperty("MitreAttackTechniques", out var mTechs) && mTechs.ValueKind == JsonValueKind.Array)
                 {
                     foreach (var tech in mTechs.EnumerateArray())
@@ -3234,8 +3314,8 @@ static class Logger
                 }
             }
         }
-        stats.TotalDurationMs = totalDurationMs;
-        stats.MeanEngagementSeconds = completedSessions == 0 ? 0 : Math.Round(totalDurationMs / 1000.0 / completedSessions, 2);
+        stats.TopUsers = stats.TopUsers.OrderByDescending(pair => pair.Value).ThenBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase).Take(10).ToDictionary(pair => pair.Key, pair => pair.Value);
+        stats.MeanEngagementSeconds = stats.TotalSessions == 0 ? 0 : Math.Round(stats.TotalDurationMs / 1000.0 / stats.TotalSessions, 2);
         File.WriteAllText(statsPath, JsonSerializer.Serialize(stats, new JsonSerializerOptions { WriteIndented = true }));
 
         // 3. Generate structured sessions.json
@@ -3244,165 +3324,275 @@ static class Logger
 
     internal static void GenerateStructuredSessions(string dataDir, List<(DateTime Timestamp, string Event, string SessionId, long Sequence, string? ChannelId, string? ExchangeId, JsonElement Data)> parsedEvents)
     {
-        var sessionsMap = new Dictionary<string, SessionDebrief>(StringComparer.Ordinal);
-        var resultsBySession = new Dictionary<string, List<(string? ExchangeId, DateTime Timestamp, JsonElement Data)>>(StringComparer.Ordinal);
+        var sessions = parsedEvents
+            .Where(e => !string.IsNullOrWhiteSpace(e.SessionId))
+            .GroupBy(e => e.SessionId, StringComparer.Ordinal)
+            .Select(group => BuildStructuredSession(group.Key, group.ToList()))
+            .ToList();
+        PersistStructuredSessionsUnsafe(dataDir, sessions, replaceExisting: true);
+    }
 
-        foreach (var e in parsedEvents)
+    static void TrackStructuredSessionEventUnsafe(string dataDir, HarvestedEvent harvestedEvent)
+    {
+        if (string.IsNullOrWhiteSpace(harvestedEvent.SessionId))
+            return;
+
+        var data = harvestedEvent.Data is JsonElement element
+            ? element.Clone()
+            : JsonSerializer.SerializeToElement(harvestedEvent.Data, EventJsonOptions);
+        if (!ActiveSessionEvents.TryGetValue(harvestedEvent.SessionId, out var events))
         {
-            if (string.IsNullOrWhiteSpace(e.SessionId)) continue;
-            if (!sessionsMap.TryGetValue(e.SessionId, out var s))
+            events = new();
+            ActiveSessionEvents[harvestedEvent.SessionId] = events;
+        }
+
+        events.Add((harvestedEvent.Timestamp, harvestedEvent.Event, harvestedEvent.SessionId, harvestedEvent.Sequence, harvestedEvent.ChannelId, harvestedEvent.ExchangeId, data));
+        if (harvestedEvent.Event == "session_end")
+        {
+            PersistStructuredSessionsUnsafe(dataDir, new[] { BuildStructuredSession(harvestedEvent.SessionId, events) }, replaceExisting: false);
+            ActiveSessionEvents.Remove(harvestedEvent.SessionId);
+        }
+    }
+
+    static void FlushActiveStructuredSessionsUnsafe(string dataDir)
+    {
+        if (ActiveSessionEvents.Count == 0)
+            return;
+
+        var sessions = ActiveSessionEvents
+            .Select(pair => BuildStructuredSession(pair.Key, pair.Value))
+            .ToList();
+        PersistStructuredSessionsUnsafe(dataDir, sessions, replaceExisting: false);
+    }
+
+    static SessionDebrief BuildStructuredSession(string sessionId, List<(DateTime Timestamp, string Event, string SessionId, long Sequence, string? ChannelId, string? ExchangeId, JsonElement Data)> events)
+    {
+        var ordered = events.OrderBy(e => e.Timestamp).ThenBy(e => e.Sequence).ToList();
+        var session = new SessionDebrief { SessionId = sessionId };
+
+        foreach (var e in ordered)
+        {
+            session.Timeline.Add(new SessionTimelineRecord
             {
-                s = new SessionDebrief { SessionId = e.SessionId };
-                sessionsMap[e.SessionId] = s;
-            }
+                Timestamp = e.Timestamp,
+                Event = e.Event,
+                Sequence = e.Sequence,
+                ChannelId = e.ChannelId,
+                ExchangeId = e.ExchangeId,
+                Data = e.Data.ValueKind == JsonValueKind.Undefined ? new { } : e.Data
+            });
 
             if (e.Data.ValueKind == JsonValueKind.Object)
             {
-                if (s.RemoteEndpoint == "unknown" && e.Data.TryGetProperty("RemoteEndpoint", out var ep) && !string.IsNullOrWhiteSpace(ep.GetString()))
+                var endpoint = JsonString(e.Data, "RemoteEndpoint");
+                if (session.RemoteEndpoint == "unknown" && !string.IsNullOrWhiteSpace(endpoint))
                 {
-                    s.RemoteEndpoint = ep.GetString()!;
-                    s.RemoteIp = Program.GetRemoteAttemptKey(s.RemoteEndpoint);
+                    session.RemoteEndpoint = endpoint;
+                    session.RemoteIp = Program.GetRemoteAttemptKey(endpoint);
                 }
-                if (s.Username == "unknown" && e.Data.TryGetProperty("Username", out var u) && !string.IsNullOrWhiteSpace(u.GetString()))
-                    s.Username = u.GetString()!;
-                if (s.ClientVersion == "unknown" && e.Data.TryGetProperty("ClientVersion", out var cv) && !string.IsNullOrWhiteSpace(cv.GetString()))
-                    s.ClientVersion = cv.GetString()!;
-                if (string.IsNullOrEmpty(s.SshBanner) && e.Data.TryGetProperty("SshBanner", out var sb) && !string.IsNullOrWhiteSpace(sb.GetString()))
-                    s.SshBanner = sb.GetString()!;
+
+                var username = JsonString(e.Data, "Username");
+                if (session.Username == "unknown" && !string.IsNullOrWhiteSpace(username))
+                    session.Username = username;
+
+                var clientVersion = JsonString(e.Data, "ClientVersion");
+                if (!string.IsNullOrWhiteSpace(clientVersion)
+                    && (session.ClientVersion == "unknown" || session.ClientVersion == "pending" && clientVersion != "pending"))
+                {
+                    session.ClientVersion = clientVersion;
+                }
+
+                var banner = JsonString(e.Data, "SshBanner");
+                if (string.IsNullOrEmpty(session.SshBanner) && !string.IsNullOrWhiteSpace(banner))
+                    session.SshBanner = banner;
             }
 
             if (e.Event == "session_start")
-                s.StartedAt = e.Timestamp;
+                session.StartedAt = e.Timestamp;
             else if (e.Event == "session_end")
             {
-                s.EndedAt = e.Timestamp;
-                if (e.Data.ValueKind == JsonValueKind.Object && e.Data.TryGetProperty("DurationSeconds", out var ds))
-                    s.DurationSeconds = Math.Round(ds.GetDouble(), 2);
+                session.EndedAt = e.Timestamp;
+                session.DurationSeconds = Math.Round(JsonDouble(e.Data, "DurationSeconds"), 2);
             }
-            else if (e.Event == "auth_attempt" && e.Data.ValueKind == JsonValueKind.Object)
+            else if (e.Event == "auth_attempt")
             {
                 var attempt = new AuthAttemptRecord
                 {
-                    Username = e.Data.TryGetProperty("Username", out var un) ? un.GetString() ?? "" : "",
-                    Password = e.Data.TryGetProperty("Password", out var pw) ? pw.GetString() ?? "" : "",
-                    Accepted = e.Data.TryGetProperty("Accepted", out var ac) && ac.GetBoolean(),
+                    Username = JsonString(e.Data, "Username"),
+                    Password = JsonString(e.Data, "Password"),
+                    AuthMethod = JsonString(e.Data, "AuthMethod"),
+                    ConnectionAttemptNumber = JsonInt(e.Data, "ConnectionAttemptNumber"),
+                    Accepted = JsonBool(e.Data, "Accepted"),
+                    AcceptanceReason = JsonString(e.Data, "AcceptanceReason"),
                     Timestamp = e.Timestamp
                 };
-                s.AuthAttempts.Add(attempt);
-                if (attempt.Accepted) s.AuthAccepted = true;
+                session.AuthAttempts.Add(attempt);
+                session.AuthAccepted |= attempt.Accepted;
             }
             else if (e.Event == "shell_session_start")
             {
-                s.ShellOpened = true;
-                if (e.Data.ValueKind == JsonValueKind.Object && e.Data.TryGetProperty("TimeToCompromiseMs", out var ttc))
-                    s.TimeToCompromiseMs = ttc.GetInt64();
-            }
-            else if (e.Event == "command_result")
-            {
-                if (!resultsBySession.TryGetValue(e.SessionId, out var rList))
-                {
-                    rList = new List<(string?, DateTime, JsonElement)>();
-                    resultsBySession[e.SessionId] = rList;
-                }
-                rList.Add((e.ExchangeId, e.Timestamp, e.Data));
+                session.ShellOpened = true;
+                var timeToCompromise = JsonLong(e.Data, "TimeToCompromiseMs");
+                if (timeToCompromise > 0 && (session.TimeToCompromiseMs == 0 || timeToCompromise < session.TimeToCompromiseMs))
+                    session.TimeToCompromiseMs = timeToCompromise;
             }
         }
 
-        // Attach commands and responses
-        foreach (var e in parsedEvents)
+        var results = ordered.Where(e => e.Event == "command_result").ToList();
+        foreach (var e in ordered.Where(e => e.Event == "command"))
         {
-            if (e.Event != "command" || string.IsNullOrWhiteSpace(e.SessionId)) continue;
-            var s = sessionsMap[e.SessionId];
-            s.CommandCount++;
-            var cmdText = e.Data.ValueKind == JsonValueKind.Object && e.Data.TryGetProperty("Command", out var cProp) ? cProp.GetString() ?? "" : "";
-            var (objective, defaultTactic, tech) = InferCommandObjective(cmdText);
-
-            var cmdRecord = new CommandExchangeRecord
+            var command = JsonString(e.Data, "Command");
+            var (objective, defaultTactic, technique) = InferCommandObjective(command);
+            var record = new CommandExchangeRecord
             {
                 Sequence = e.Sequence,
+                ChannelId = e.ChannelId,
                 ExchangeId = e.ExchangeId ?? "",
-                Command = cmdText,
+                MessageNumber = JsonInt(e.Data, "MessageNumber"),
+                ShellMessageNumber = JsonInt(e.Data, "ShellMessageNumber"),
+                Command = command,
                 Timestamp = e.Timestamp,
-                MitreTechnique = tech,
+                CommandSequenceLatencyMs = JsonNullableLong(e.Data, "CommandSequenceLatencyMs"),
+                ActorAutomationHint = JsonString(e.Data, "ActorAutomationHint", "unknown"),
+                DiscoveryDepthScore = JsonInt(e.Data, "DiscoveryDepthScore"),
+                PersistenceVector = JsonString(e.Data, "PersistenceVector", "none"),
+                PayloadUrls = JsonStrings(e.Data, "PayloadUrls"),
+                EgressTargets = JsonStrings(e.Data, "EgressTargets"),
+                TunnelingIntent = JsonString(e.Data, "TunnelingIntent", "none"),
+                PersonaBreakoutAttempt = JsonBool(e.Data, "PersonaBreakoutAttempt"),
+                ReconnaissanceProbe = JsonString(e.Data, "ReconnaissanceProbe", "none"),
+                SemanticComplexity = JsonInt(e.Data, "SemanticComplexity"),
+                AssetValuePerceptionScore = JsonInt(e.Data, "AssetValuePerceptionScore"),
+                MitreAttackTechniques = JsonStrings(e.Data, "MitreAttackTechniques"),
+                MitreTechnique = technique,
                 InferredObjective = objective
             };
 
-            // Mitre tactics
-            if (e.Data.ValueKind == JsonValueKind.Object && e.Data.TryGetProperty("MitreAttackTechniques", out var mTechs) && mTechs.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var t in mTechs.EnumerateArray())
-                {
-                    var tStr = t.GetString();
-                    if (!string.IsNullOrWhiteSpace(tStr))
-                    {
-                        cmdRecord.MitreTactics.Add(tStr);
-                        if (!s.TacticsObserved.Contains(tStr)) s.TacticsObserved.Add(tStr);
-                    }
-                }
-            }
-            if (cmdRecord.MitreTactics.Count == 0)
-            {
-                cmdRecord.MitreTactics.Add(defaultTactic);
-                if (!s.TacticsObserved.Contains(defaultTactic)) s.TacticsObserved.Add(defaultTactic);
-            }
+            if (record.MitreAttackTechniques.Count == 0)
+                record.MitreAttackTechniques.Add(defaultTactic);
+            foreach (var tactic in record.MitreAttackTechniques)
+                if (!session.TacticsObserved.Contains(tactic)) session.TacticsObserved.Add(tactic);
+            foreach (var url in record.PayloadUrls)
+                if (!session.PayloadUrls.Contains(url)) session.PayloadUrls.Add(url);
+            if (record.PersistenceVector != "none" && !session.PersistenceVectors.Contains(record.PersistenceVector))
+                session.PersistenceVectors.Add(record.PersistenceVector);
 
-            if (e.Data.ValueKind == JsonValueKind.Object)
+            var resultIndex = results.FindIndex(result => !string.IsNullOrEmpty(e.ExchangeId) && result.ExchangeId == e.ExchangeId);
+            if (resultIndex < 0 && string.IsNullOrEmpty(e.ExchangeId))
             {
-                if (e.Data.TryGetProperty("PayloadUrls", out var pUrls) && pUrls.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var u in pUrls.EnumerateArray())
-                    {
-                        var uStr = u.GetString();
-                        if (!string.IsNullOrWhiteSpace(uStr) && !s.PayloadUrls.Contains(uStr)) s.PayloadUrls.Add(uStr);
-                    }
-                }
-                if (e.Data.TryGetProperty("PersistenceVector", out var pv) && pv.GetString() is string pvStr && pvStr != "none" && !s.PersistenceVectors.Contains(pvStr))
-                    s.PersistenceVectors.Add(pvStr);
+                var messageNumber = record.MessageNumber;
+                resultIndex = results.FindIndex(result => result.ChannelId == e.ChannelId
+                    && messageNumber > 0
+                    && JsonInt(result.Data, "MessageNumber") == messageNumber);
             }
-
-            // Find matching response
-            if (resultsBySession.TryGetValue(e.SessionId, out var rList) && rList.Count > 0)
+            if (resultIndex >= 0)
             {
-                var idx = rList.FindIndex(r => !string.IsNullOrEmpty(e.ExchangeId) && r.ExchangeId == e.ExchangeId);
-                if (idx < 0) idx = 0;
-                var matched = rList[idx];
-                rList.RemoveAt(idx);
-
-                if (matched.Data.ValueKind == JsonValueKind.Object)
-                {
-                    if (matched.Data.TryGetProperty("Response", out var rProp))
-                        cmdRecord.Response = rProp.GetString() ?? "";
-                    if (matched.Data.TryGetProperty("ResponseDurationMs", out var rdProp))
-                        cmdRecord.ResponseDurationMs = rdProp.GetInt64();
-                    if (matched.Data.TryGetProperty("FailedCommand", out var fcProp))
-                        cmdRecord.FailedCommand = fcProp.GetBoolean();
-                    if (matched.Data.TryGetProperty("LlmModel", out var lmProp))
-                        cmdRecord.LlmModel = lmProp.GetString();
-                    if (matched.Data.TryGetProperty("ResponseSource", out var rsProp))
-                        cmdRecord.ResponseSource = rsProp.GetString();
-                }
+                var result = results[resultIndex];
+                results.RemoveAt(resultIndex);
+                record.HasResponse = true;
+                record.ResponseTimestamp = result.Timestamp;
+                record.Response = JsonString(result.Data, "Response");
+                record.ResponseDurationMs = JsonLong(result.Data, "ResponseDurationMs");
+                record.PromptTokens = JsonInt(result.Data, "PromptTokens");
+                record.CompletionTokens = JsonInt(result.Data, "CompletionTokens");
+                record.BlockedOperation = JsonBool(result.Data, "BlockedOperation");
+                record.FailedCommand = JsonBool(result.Data, "FailedCommand");
+                record.LlmModel = JsonString(result.Data, "LlmModel");
+                record.ResponseSource = JsonString(result.Data, "ResponseSource");
+                record.HallucinationFeedback = JsonBool(result.Data, "HallucinationFeedback");
+                record.StandardErrorRatio = JsonDouble(result.Data, "StandardErrorRatio");
+                record.SemanticDrift = JsonInt(result.Data, "SemanticDrift");
+                record.TuringMultiplier = JsonDouble(result.Data, "TuringMultiplier");
             }
 
-            s.Commands.Add(cmdRecord);
+            session.Commands.Add(record);
         }
 
-        // Calculate risk score and sort
-        foreach (var s in sessionsMap.Values)
-        {
-            s.RiskScore = s.Commands.Count * 2
-                + s.TacticsObserved.Count * 10
-                + s.PayloadUrls.Count * 20
-                + s.PersistenceVectors.Count * 15
-                + (s.AuthAccepted ? 10 : 0);
-        }
-
-        var sortedSessions = sessionsMap.Values
-            .OrderByDescending(s => s.StartedAt ?? s.EndedAt ?? DateTime.MinValue)
-            .ToList();
-
-        var sessionsPath = Path.Combine(dataDir, "sessions.json");
-        File.WriteAllText(sessionsPath, JsonSerializer.Serialize(sortedSessions, new JsonSerializerOptions { WriteIndented = true }));
+        session.CommandCount = session.Commands.Count;
+        session.RiskScore = session.Commands.Count * 2
+            + session.TacticsObserved.Count * 10
+            + session.PayloadUrls.Count * 20
+            + session.PersistenceVectors.Count * 15
+            + (session.AuthAccepted ? 10 : 0);
+        return session;
     }
+
+    static void PersistStructuredSessionsUnsafe(string dataDir, IEnumerable<SessionDebrief> sessions, bool replaceExisting)
+    {
+        Directory.CreateDirectory(dataDir);
+        var sessionsPath = Path.Combine(dataDir, "sessions.json");
+        var merged = new Dictionary<string, SessionDebrief>(StringComparer.Ordinal);
+        if (!replaceExisting && File.Exists(sessionsPath))
+        {
+            try
+            {
+                foreach (var session in JsonSerializer.Deserialize<List<SessionDebrief>>(File.ReadAllText(sessionsPath)) ?? new())
+                    if (!string.IsNullOrWhiteSpace(session.SessionId)) merged[session.SessionId] = session;
+            }
+            catch (JsonException)
+            {
+            }
+        }
+
+        foreach (var session in sessions)
+            if (!string.IsNullOrWhiteSpace(session.SessionId)) merged[session.SessionId] = session;
+
+        var retained = merged.Values
+            .OrderByDescending(session => session.StartedAt ?? session.EndedAt ?? DateTime.MinValue)
+            .Take(MaxStructuredSessions)
+            .ToList();
+        var tempPath = sessionsPath + ".tmp";
+        File.WriteAllText(tempPath, JsonSerializer.Serialize(retained, new JsonSerializerOptions { WriteIndented = true }));
+        File.Move(tempPath, sessionsPath, overwrite: true);
+    }
+
+    static string JsonString(JsonElement data, string propertyName, string fallback = "")
+        => data.ValueKind == JsonValueKind.Object
+            && data.TryGetProperty(propertyName, out var value)
+            && value.ValueKind == JsonValueKind.String
+            ? value.GetString() ?? fallback
+            : fallback;
+
+    static int JsonInt(JsonElement data, string propertyName)
+        => data.ValueKind == JsonValueKind.Object
+            && data.TryGetProperty(propertyName, out var value)
+            && value.TryGetInt32(out var result)
+            ? result
+            : 0;
+
+    static long JsonLong(JsonElement data, string propertyName)
+        => data.ValueKind == JsonValueKind.Object
+            && data.TryGetProperty(propertyName, out var value)
+            && value.TryGetInt64(out var result)
+            ? result
+            : 0;
+
+    static long? JsonNullableLong(JsonElement data, string propertyName)
+        => data.ValueKind == JsonValueKind.Object
+            && data.TryGetProperty(propertyName, out var value)
+            && value.TryGetInt64(out var result)
+            ? result
+            : null;
+
+    static double JsonDouble(JsonElement data, string propertyName)
+        => data.ValueKind == JsonValueKind.Object
+            && data.TryGetProperty(propertyName, out var value)
+            && value.TryGetDouble(out var result)
+            ? result
+            : 0;
+
+    static bool JsonBool(JsonElement data, string propertyName)
+        => data.ValueKind == JsonValueKind.Object
+            && data.TryGetProperty(propertyName, out var value)
+            && value.ValueKind is JsonValueKind.True or JsonValueKind.False
+            && value.GetBoolean();
+
+    static List<string> JsonStrings(JsonElement data, string propertyName)
+        => data.ValueKind == JsonValueKind.Object
+            && data.TryGetProperty(propertyName, out var value)
+            && value.ValueKind == JsonValueKind.Array
+            ? value.EnumerateArray().Where(item => item.ValueKind == JsonValueKind.String).Select(item => item.GetString()).Where(item => !string.IsNullOrWhiteSpace(item)).Select(item => item!).ToList()
+            : new();
 
     internal static void MergeThreatIntelFiles(string targetPath, string snapshotPath)
     {
@@ -3571,6 +3761,20 @@ static class Logger
                 else
                 {
                     MergeThreatIntelFiles(targetIntelPath, snapshotIntelPath);
+                }
+            }
+
+            var snapshotSessionsPath = Path.Combine(snapshotDataDir, "sessions.json");
+            if (File.Exists(snapshotSessionsPath))
+            {
+                try
+                {
+                    var snapshotSessions = JsonSerializer.Deserialize<List<SessionDebrief>>(File.ReadAllText(snapshotSessionsPath)) ?? new();
+                    PersistStructuredSessionsUnsafe(dataDir, snapshotSessions, replaceExisting: false);
+                }
+                catch (JsonException ex)
+                {
+                    LogMsg($"Warning: Failed to merge sessions.json: {ex.Message}");
                 }
             }
 

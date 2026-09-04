@@ -23,6 +23,7 @@ services:
       - MAX_SESSIONS=${MAX_SESSIONS:-50}
       - SESSION_IDLE_TIMEOUT_SECONDS=${SESSION_IDLE_TIMEOUT_SECONDS:-300}
       - DATA_PUSH_INTERVAL_SECONDS=${DATA_PUSH_INTERVAL_SECONDS:-300}
+      - STRUCTURED_SESSION_LIMIT=${STRUCTURED_SESSION_LIMIT:-2000}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
       - GITHUB_USER=${GITHUB_USER:-}
@@ -40,7 +41,7 @@ services:
         bind:
           propagation: rprivate
           create_host_path: false
-      - frontend-data:/app/frontend
+      - frontend-publication-data:/home/test/app/frontend
 
 volumes:
-  frontend-data:
+  frontend-publication-data:
