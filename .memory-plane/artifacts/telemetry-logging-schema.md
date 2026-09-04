@@ -65,8 +65,26 @@ Events for a session receive monotonically increasing sequence numbers. Sequence
 - In this schema, `Data` objects are kept lean to minimize log bloat. Top-level envelope properties (`Timestamp`, `Sequence`, `SessionId`, `ExchangeId`) are normalized by the frontend parser in `frontend-main/index.html` into `model.commands` and `model.results` entries.
 - To protect newly accumulated records across container lifecycles, publication snapshot restoration (`RestorePublicationSnapshot`) reconciles and appends JSONL lines rather than replacing directory contents, and the startup preparation step synchronizes the remote data branch before the SSH server begins accepting external traffic.
 
+## Tiered Threat Intelligence and Session Publication Architecture
+
+1. **Curated Threat Intelligence (`data/threat_intel.json`)**:
+   - Curated by C# runtime whenever `auth_attempt`, `session_start`, or `command` events occur.
+   - Preserves all historically harvested credentials (453+ usernames, 916+ passwords), unique scanner source IPs (288+ IPs), and frequent attacker commands across resets.
+   - Synchronized additively via `MergeThreatIntelFiles` so threat intelligence is never lost.
+
+2. **Recalculated Baseline Summaries (`data/events_summary.json` and `global_stats.json`)**:
+   - Automatically recalculated on each publication push directly from the active `events.jsonl` stream.
+   - Guarantees that stream event counts, command tallies, and engagement durations remain 100% accurate and aligned with the active post-reset stream.
+
+3. **Structured Debriefable Sessions (`data/sessions.json`)**:
+   - Pre-assembled on each push from `events.jsonl` into self-contained session records.
+   - Each session contains timestamps, duration, client banner, authentication attempts, sequence-ordered command exchanges with replies, inferred tactical objectives, MITRE ATT&CK techniques, and computed risk scores.
+   - Allows instant querying, analyst debriefing, and UI rendering without client-side event reconstruction.
+
 ## Dashboard Assumptions
 
-- `frontend-main/index.html` reads `global_stats.json`, `data/events_summary.json`, and `data/events.jsonl` from the published data branch.
+- `frontend-main/index.html` reads `global_stats.json`, `data/events_summary.json`, `data/threat_intel.json`, `data/sessions.json`, and `data/events.jsonl` from the published data branch.
+- The Overview tab displays a dedicated "Top Attacker Commands & Tactical Objectives" component, classifying top observed commands with inferred threat objectives and MITRE techniques.
+- The Credentials and Geography tabs consume `threat_intel.json` to present the complete, preserved threat intelligence dataset.
 - When processing `command` and `command_result` events, the frontend unpacks envelope fields (`Timestamp`, `Sequence`, `ExchangeId`, `SessionId`) together with payload data to maintain full fidelity for timeline sorting, session pair correlation, and exchange metadata rendering.
 - The dashboard retains compatibility fallback paths for older `harvest.jsonl` and `harvest_summary.json` files.

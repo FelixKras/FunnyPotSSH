@@ -1405,6 +1405,66 @@ public class HarvestSummary
     public Dictionary<string, int> TopPasswords { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
 
+public class ThreatIntel
+{
+    public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
+    public int TotalUniqueUsernames { get; set; }
+    public int TotalUniquePasswords { get; set; }
+    public int TotalUniqueSourceIps { get; set; }
+    public int TotalUniqueCommands { get; set; }
+    public Dictionary<string, int> Usernames { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, int> Passwords { get; set; } = new(StringComparer.Ordinal);
+    public Dictionary<string, int> SourceIps { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, int> FrequentCommands { get; set; } = new(StringComparer.Ordinal);
+}
+
+public class SessionDebrief
+{
+    public string SessionId { get; set; } = "";
+    public DateTime? StartedAt { get; set; }
+    public DateTime? EndedAt { get; set; }
+    public double DurationSeconds { get; set; }
+    public string RemoteEndpoint { get; set; } = "unknown";
+    public string RemoteIp { get; set; } = "unknown";
+    public string Username { get; set; } = "unknown";
+    public string ClientVersion { get; set; } = "unknown";
+    public string SshBanner { get; set; } = "";
+    public bool AuthAccepted { get; set; }
+    public List<AuthAttemptRecord> AuthAttempts { get; set; } = new();
+    public bool ShellOpened { get; set; }
+    public long TimeToCompromiseMs { get; set; }
+    public int CommandCount { get; set; }
+    public List<CommandExchangeRecord> Commands { get; set; } = new();
+    public List<string> TacticsObserved { get; set; } = new();
+    public List<string> PayloadUrls { get; set; } = new();
+    public List<string> PersistenceVectors { get; set; } = new();
+    public double RiskScore { get; set; }
+}
+
+public class AuthAttemptRecord
+{
+    public string Username { get; set; } = "";
+    public string Password { get; set; } = "";
+    public bool Accepted { get; set; }
+    public DateTime? Timestamp { get; set; }
+}
+
+public class CommandExchangeRecord
+{
+    public long Sequence { get; set; }
+    public string ExchangeId { get; set; } = "";
+    public string Command { get; set; } = "";
+    public DateTime? Timestamp { get; set; }
+    public string Response { get; set; } = "";
+    public long ResponseDurationMs { get; set; }
+    public bool FailedCommand { get; set; }
+    public string? LlmModel { get; set; }
+    public string? ResponseSource { get; set; }
+    public List<string> MitreTactics { get; set; } = new();
+    public string MitreTechnique { get; set; } = "";
+    public string InferredObjective { get; set; } = "";
+}
+
 public class DhsCommandAnalysis
 {
     public int DiscoveryDepthScore { get; set; }
@@ -2621,6 +2681,7 @@ static class Logger
 
         AppendJsonLine(Path.Combine(staticDataDir, "events.jsonl"), json);
         UpdateHarvestSummaryUnsafe(staticDataDir, eventType, data);
+        UpdateThreatIntelUnsafe(staticDataDir, eventType, data);
     }
 
     private static void AppendJsonLine(string path, string json)
@@ -2655,6 +2716,63 @@ static class Logger
         ApplyHarvestSummaryEvent(summary, eventType, data, DateTime.UtcNow);
 
         File.WriteAllText(summaryPath, JsonSerializer.Serialize(summary, new JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    static void UpdateThreatIntelUnsafe(string staticDataDir, string eventType, object data)
+    {
+        var threatIntelPath = Path.Combine(staticDataDir, "threat_intel.json");
+        ThreatIntel intel = new();
+
+        if (File.Exists(threatIntelPath))
+        {
+            try
+            {
+                var existing = File.ReadAllText(threatIntelPath);
+                intel = JsonSerializer.Deserialize<ThreatIntel>(existing) ?? new();
+            }
+            catch (Exception ex)
+            {
+                LogMsg($"Warning: Failed to deserialize threat_intel.json: {ex.Message}");
+            }
+        }
+
+        ApplyThreatIntelEvent(intel, eventType, data, DateTime.UtcNow);
+        File.WriteAllText(threatIntelPath, JsonSerializer.Serialize(intel, new JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    internal static void ApplyThreatIntelEvent(ThreatIntel intel, string eventType, object data, DateTime timestamp)
+    {
+        intel.LastUpdated = timestamp;
+
+        if (eventType == "auth_attempt" && data is AuthAttemptLogEntry authAttempt)
+        {
+            if (!string.IsNullOrWhiteSpace(authAttempt.Username))
+                intel.Usernames[authAttempt.Username] = intel.Usernames.GetValueOrDefault(authAttempt.Username) + 1;
+
+            if (!string.IsNullOrEmpty(authAttempt.Password))
+                intel.Passwords[authAttempt.Password] = intel.Passwords.GetValueOrDefault(authAttempt.Password) + 1;
+        }
+
+        var remoteIp = TryGetRemoteIp(data);
+        if (!string.IsNullOrWhiteSpace(remoteIp) && remoteIp != "unknown")
+        {
+            intel.SourceIps[remoteIp] = intel.SourceIps.GetValueOrDefault(remoteIp) + 1;
+        }
+
+        if (eventType == "command")
+        {
+            var cmd = (data as CommandLogEntry)?.Command ?? (data.GetType().GetProperty("Command")?.GetValue(data) as string);
+            if (!string.IsNullOrWhiteSpace(cmd))
+            {
+                var trimmed = cmd.Trim();
+                intel.FrequentCommands[trimmed] = intel.FrequentCommands.GetValueOrDefault(trimmed) + 1;
+            }
+        }
+
+        intel.TotalUniqueUsernames = intel.Usernames.Count;
+        intel.TotalUniquePasswords = intel.Passwords.Count;
+        intel.TotalUniqueSourceIps = intel.SourceIps.Count;
+        intel.TotalUniqueCommands = intel.FrequentCommands.Count;
     }
 
     internal static void ApplyHarvestSummaryEvent(HarvestSummary summary, string eventType, object data, DateTime timestamp)
@@ -2859,6 +2977,7 @@ static class Logger
 
                 using var repo = new Repository(repoPath);
                 RemoveLegacyTelemetryFiles(repoPath);
+                RecalculatePublicationData(repoPath, sessionId);
                 EnsureValidPublicationJson(repoPath, sessionId);
 
                 if (File.Exists(statsFile))
@@ -2918,6 +3037,7 @@ static class Logger
 
                 using var repo = new Repository(repoPath);
                 RemoveLegacyTelemetryFiles(repoPath);
+                RecalculatePublicationData(repoPath, "startup");
                 EnsureValidPublicationJson(repoPath, "startup");
 
                 LogMsg($"Static dashboard repository prepared on {dataBranch} branch.");
@@ -2958,6 +3078,359 @@ static class Logger
             var summary = new HarvestSummary { LastUpdated = DateTime.UtcNow };
             File.WriteAllText(summaryPath, JsonSerializer.Serialize(summary, new JsonSerializerOptions { WriteIndented = true }));
             LogMsg("Reinitialized invalid events_summary.json.", sessionId);
+        }
+
+        var threatIntelPath = Path.Combine(dataDir, "threat_intel.json");
+        if (!IsValidJson<ThreatIntel>(threatIntelPath))
+        {
+            var intel = new ThreatIntel { LastUpdated = DateTime.UtcNow };
+            File.WriteAllText(threatIntelPath, JsonSerializer.Serialize(intel, new JsonSerializerOptions { WriteIndented = true }));
+            LogMsg("Reinitialized invalid threat_intel.json.", sessionId);
+        }
+
+        var sessionsPath = Path.Combine(dataDir, "sessions.json");
+        if (!IsValidJson<List<SessionDebrief>>(sessionsPath))
+        {
+            File.WriteAllText(sessionsPath, "[]");
+            LogMsg("Reinitialized invalid sessions.json.", sessionId);
+        }
+    }
+
+    public static (string Objective, string Tactic, string Technique) InferCommandObjective(string? command)
+    {
+        var c = (command ?? "").Trim().ToLowerInvariant();
+        if (c.StartsWith("id") || c.StartsWith("whoami") || c.StartsWith("w ") || c.StartsWith("logname"))
+            return ("Identify current user privileges, groups, and security context", "Discovery", "T1033 System Owner/User Discovery");
+        if (c.StartsWith("uname"))
+            return ("Determine Linux kernel version, OS release, and CPU architecture", "Discovery", "T1082 System Information Discovery");
+        if (c.Contains("passwd") || c.Contains("shadow"))
+            return ("Enumerate local user accounts, service accounts, and login shells", "Credential Access", "T1087.001 Local Accounts");
+        if (c.Contains("cpuinfo") || c.Contains("meminfo") || c.Contains("version") || c.Contains("issue") || c.Contains("release") || c.StartsWith("lscpu") || c.StartsWith("free"))
+            return ("Profile host hardware capabilities, RAM, and distribution baseline", "Discovery", "T1082 System Information Discovery");
+        if (c.StartsWith("ps") || c.StartsWith("top") || c.StartsWith("htop"))
+            return ("Inspect running processes, background services, and security monitors", "Discovery", "T1057 Process Discovery");
+        if (c.StartsWith("netstat") || c.StartsWith("ss ") || c.StartsWith("lsof"))
+            return ("Identify listening network services, open ports, and active connections", "Discovery", "T1049 System Network Connections");
+        if (c.StartsWith("ip a") || c.StartsWith("ifconfig") || c.StartsWith("route") || c.StartsWith("ip r"))
+            return ("Map local network interfaces, subnets, and default gateway routing", "Discovery", "T1016 System Network Configuration");
+        if (c.Contains("curl") || c.Contains("wget") || c.Contains("tftp") || c.Contains("ftp") || c.Contains("fetch") || c.Contains("scp"))
+            return ("Download external payload, staging script, or crypto-mining binary", "Command and Control", "T1105 Ingress Tool Transfer");
+        if (c.Contains("chmod"))
+            return ("Grant execution permissions to staged dropped binaries or scripts", "Defense Evasion", "T1222 File Permission Modification");
+        if (c.Contains("crontab") || c.Contains("/etc/cron"))
+            return ("Inspect or establish recurring persistence via scheduled cron jobs", "Persistence", "T1053.003 Scheduled Task/Job: Cron");
+        if (c.Contains(".ssh/authorized_keys") || c.Contains("ssh-copy-id"))
+            return ("Plant attacker public SSH key for permanent backdoor authentication", "Persistence", "T1098.004 SSH Authorized Keys");
+        if (c.StartsWith("ls") || c.StartsWith("dir") || c.StartsWith("find") || c.StartsWith("locate"))
+            return ("Enumerate directories, discover sensitive files, and check permissions", "Discovery", "T1083 File and Directory Discovery");
+        if (c.Contains("history"))
+            return ("Search bash history for previously executed commands and credentials", "Credential Access", "T1552.003 Bash History");
+        if (c.StartsWith("iptables") || c.StartsWith("ufw") || c.StartsWith("firewall-cmd"))
+            return ("Check host firewall filtering rules and inbound/outbound restrictions", "Discovery", "T1562.004 Impair Defenses");
+        if (c.StartsWith("df") || c.StartsWith("du") || c.StartsWith("mount") || c.StartsWith("lsblk"))
+            return ("Inspect mounted filesystems, disk utilization, and storage partitions", "Discovery", "T1082 System Information Discovery");
+        if (c.StartsWith("uptime"))
+            return ("Measure system uptime and evaluate host stability and administrator activity", "Discovery", "T1082 System Information Discovery");
+        if (c.StartsWith("which") || c.StartsWith("whereis"))
+            return ("Verify availability of administrative tools, compilers, and interpreters", "Discovery", "T1082 System Information Discovery");
+        if (c.StartsWith("exit") || c.StartsWith("quit") || c.StartsWith("logout"))
+            return ("Gracefully terminate interactive session after objective attempt", "Defense Evasion", "T1070 Indicator Removal");
+
+        return ("Interactive shell command execution and environment probing", "Execution", "T1059.004 Unix Shell");
+    }
+
+    internal static void RecalculatePublicationData(string repoPath, string sessionId)
+    {
+        var dataDir = Path.Combine(repoPath, "data");
+        var eventsPath = Path.Combine(dataDir, "events.jsonl");
+        if (!File.Exists(eventsPath))
+            return;
+
+        var lines = File.ReadAllLines(eventsPath);
+        var parsedEvents = new List<(DateTime Timestamp, string Event, string SessionId, long Sequence, string? ChannelId, string? ExchangeId, JsonElement Data)>();
+        foreach (var line in lines)
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            try
+            {
+                using var doc = JsonDocument.Parse(line);
+                var root = doc.RootElement;
+                var ts = root.TryGetProperty("Timestamp", out var tProp) && tProp.TryGetDateTime(out var dt) ? dt : DateTime.UtcNow;
+                var ev = root.TryGetProperty("Event", out var eProp) ? eProp.GetString() ?? "" : "";
+                var sid = root.TryGetProperty("SessionId", out var sProp) ? sProp.GetString() ?? "" : "";
+                var seq = root.TryGetProperty("Sequence", out var seqProp) && seqProp.TryGetInt64(out var seqVal) ? seqVal : 0;
+                var ch = root.TryGetProperty("ChannelId", out var chProp) ? chProp.GetString() : null;
+                var ex = root.TryGetProperty("ExchangeId", out var exProp) ? exProp.GetString() : null;
+                var data = root.TryGetProperty("Data", out var dProp) ? dProp.Clone() : default;
+                parsedEvents.Add((ts, ev, sid, seq, ch, ex, data));
+            }
+            catch { }
+        }
+
+        // 1. Recalculate events_summary.json
+        var summaryPath = Path.Combine(dataDir, "events_summary.json");
+        var summary = new HarvestSummary
+        {
+            LastUpdated = DateTime.UtcNow,
+            TotalEvents = parsedEvents.Count
+        };
+        foreach (var e in parsedEvents)
+        {
+            summary.EventCounts[e.Event] = summary.EventCounts.GetValueOrDefault(e.Event) + 1;
+            if (e.Event == "shell_session_start")
+                summary.TotalShells++;
+            if (e.Event == "auth_attempt")
+            {
+                summary.TotalScanAttempts++;
+                if (e.Data.ValueKind == JsonValueKind.Object)
+                {
+                    if (e.Data.TryGetProperty("Username", out var u) && !string.IsNullOrWhiteSpace(u.GetString()))
+                        summary.TopUsernames[u.GetString()!] = summary.TopUsernames.GetValueOrDefault(u.GetString()!) + 1;
+                    if (e.Data.TryGetProperty("Password", out var p) && !string.IsNullOrEmpty(p.GetString()))
+                        summary.TopPasswords[p.GetString()!] = summary.TopPasswords.GetValueOrDefault(p.GetString()!) + 1;
+                }
+            }
+            if (e.Data.ValueKind == JsonValueKind.Object && e.Data.TryGetProperty("RemoteEndpoint", out var ep))
+            {
+                var ip = Program.GetRemoteAttemptKey(ep.GetString() ?? "");
+                if (!string.IsNullOrWhiteSpace(ip) && ip != "unknown")
+                    summary.ScansByIp[ip] = summary.ScansByIp.GetValueOrDefault(ip) + 1;
+            }
+        }
+        summary.UniqueScanIps = summary.ScansByIp.Count;
+        File.WriteAllText(summaryPath, JsonSerializer.Serialize(summary, new JsonSerializerOptions { WriteIndented = true }));
+
+        // 2. Recalculate global_stats.json
+        var statsPath = Path.Combine(repoPath, "global_stats.json");
+        var stats = new GlobalStats
+        {
+            LastUpdated = DateTime.UtcNow,
+            TotalSessions = parsedEvents.Select(e => e.SessionId).Where(s => !string.IsNullOrEmpty(s)).Distinct().Count(),
+            TotalCommands = parsedEvents.Count(e => e.Event == "command")
+        };
+        long totalDurationMs = 0;
+        int completedSessions = 0;
+        foreach (var e in parsedEvents)
+        {
+            if (e.Event == "session_end" && e.Data.ValueKind == JsonValueKind.Object && e.Data.TryGetProperty("DurationSeconds", out var dSec))
+            {
+                totalDurationMs += (long)(dSec.GetDouble() * 1000);
+                completedSessions++;
+            }
+            if (e.Data.ValueKind == JsonValueKind.Object)
+            {
+                if (e.Data.TryGetProperty("Username", out var u) && !string.IsNullOrWhiteSpace(u.GetString()) && u.GetString() != "unknown")
+                    stats.TopUsers[u.GetString()!] = stats.TopUsers.GetValueOrDefault(u.GetString()!) + 1;
+                if (e.Data.TryGetProperty("SshBanner", out var b) && !string.IsNullOrWhiteSpace(b.GetString()))
+                    stats.SessionsByBanner[b.GetString()!] = stats.SessionsByBanner.GetValueOrDefault(b.GetString()!) + 1;
+                if (e.Event == "command" && e.Data.TryGetProperty("MitreAttackTechniques", out var mTechs) && mTechs.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var tech in mTechs.EnumerateArray())
+                    {
+                        var tStr = tech.GetString();
+                        if (!string.IsNullOrWhiteSpace(tStr))
+                            stats.MitreTechniqueDistribution[tStr] = stats.MitreTechniqueDistribution.GetValueOrDefault(tStr) + 1;
+                    }
+                }
+            }
+        }
+        stats.TotalDurationMs = totalDurationMs;
+        stats.MeanEngagementSeconds = completedSessions == 0 ? 0 : Math.Round(totalDurationMs / 1000.0 / completedSessions, 2);
+        File.WriteAllText(statsPath, JsonSerializer.Serialize(stats, new JsonSerializerOptions { WriteIndented = true }));
+
+        // 3. Generate structured sessions.json
+        GenerateStructuredSessions(dataDir, parsedEvents);
+    }
+
+    internal static void GenerateStructuredSessions(string dataDir, List<(DateTime Timestamp, string Event, string SessionId, long Sequence, string? ChannelId, string? ExchangeId, JsonElement Data)> parsedEvents)
+    {
+        var sessionsMap = new Dictionary<string, SessionDebrief>(StringComparer.Ordinal);
+        var resultsBySession = new Dictionary<string, List<(string? ExchangeId, DateTime Timestamp, JsonElement Data)>>(StringComparer.Ordinal);
+
+        foreach (var e in parsedEvents)
+        {
+            if (string.IsNullOrWhiteSpace(e.SessionId)) continue;
+            if (!sessionsMap.TryGetValue(e.SessionId, out var s))
+            {
+                s = new SessionDebrief { SessionId = e.SessionId };
+                sessionsMap[e.SessionId] = s;
+            }
+
+            if (e.Data.ValueKind == JsonValueKind.Object)
+            {
+                if (s.RemoteEndpoint == "unknown" && e.Data.TryGetProperty("RemoteEndpoint", out var ep) && !string.IsNullOrWhiteSpace(ep.GetString()))
+                {
+                    s.RemoteEndpoint = ep.GetString()!;
+                    s.RemoteIp = Program.GetRemoteAttemptKey(s.RemoteEndpoint);
+                }
+                if (s.Username == "unknown" && e.Data.TryGetProperty("Username", out var u) && !string.IsNullOrWhiteSpace(u.GetString()))
+                    s.Username = u.GetString()!;
+                if (s.ClientVersion == "unknown" && e.Data.TryGetProperty("ClientVersion", out var cv) && !string.IsNullOrWhiteSpace(cv.GetString()))
+                    s.ClientVersion = cv.GetString()!;
+                if (string.IsNullOrEmpty(s.SshBanner) && e.Data.TryGetProperty("SshBanner", out var sb) && !string.IsNullOrWhiteSpace(sb.GetString()))
+                    s.SshBanner = sb.GetString()!;
+            }
+
+            if (e.Event == "session_start")
+                s.StartedAt = e.Timestamp;
+            else if (e.Event == "session_end")
+            {
+                s.EndedAt = e.Timestamp;
+                if (e.Data.ValueKind == JsonValueKind.Object && e.Data.TryGetProperty("DurationSeconds", out var ds))
+                    s.DurationSeconds = Math.Round(ds.GetDouble(), 2);
+            }
+            else if (e.Event == "auth_attempt" && e.Data.ValueKind == JsonValueKind.Object)
+            {
+                var attempt = new AuthAttemptRecord
+                {
+                    Username = e.Data.TryGetProperty("Username", out var un) ? un.GetString() ?? "" : "",
+                    Password = e.Data.TryGetProperty("Password", out var pw) ? pw.GetString() ?? "" : "",
+                    Accepted = e.Data.TryGetProperty("Accepted", out var ac) && ac.GetBoolean(),
+                    Timestamp = e.Timestamp
+                };
+                s.AuthAttempts.Add(attempt);
+                if (attempt.Accepted) s.AuthAccepted = true;
+            }
+            else if (e.Event == "shell_session_start")
+            {
+                s.ShellOpened = true;
+                if (e.Data.ValueKind == JsonValueKind.Object && e.Data.TryGetProperty("TimeToCompromiseMs", out var ttc))
+                    s.TimeToCompromiseMs = ttc.GetInt64();
+            }
+            else if (e.Event == "command_result")
+            {
+                if (!resultsBySession.TryGetValue(e.SessionId, out var rList))
+                {
+                    rList = new List<(string?, DateTime, JsonElement)>();
+                    resultsBySession[e.SessionId] = rList;
+                }
+                rList.Add((e.ExchangeId, e.Timestamp, e.Data));
+            }
+        }
+
+        // Attach commands and responses
+        foreach (var e in parsedEvents)
+        {
+            if (e.Event != "command" || string.IsNullOrWhiteSpace(e.SessionId)) continue;
+            var s = sessionsMap[e.SessionId];
+            s.CommandCount++;
+            var cmdText = e.Data.ValueKind == JsonValueKind.Object && e.Data.TryGetProperty("Command", out var cProp) ? cProp.GetString() ?? "" : "";
+            var (objective, defaultTactic, tech) = InferCommandObjective(cmdText);
+
+            var cmdRecord = new CommandExchangeRecord
+            {
+                Sequence = e.Sequence,
+                ExchangeId = e.ExchangeId ?? "",
+                Command = cmdText,
+                Timestamp = e.Timestamp,
+                MitreTechnique = tech,
+                InferredObjective = objective
+            };
+
+            // Mitre tactics
+            if (e.Data.ValueKind == JsonValueKind.Object && e.Data.TryGetProperty("MitreAttackTechniques", out var mTechs) && mTechs.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var t in mTechs.EnumerateArray())
+                {
+                    var tStr = t.GetString();
+                    if (!string.IsNullOrWhiteSpace(tStr))
+                    {
+                        cmdRecord.MitreTactics.Add(tStr);
+                        if (!s.TacticsObserved.Contains(tStr)) s.TacticsObserved.Add(tStr);
+                    }
+                }
+            }
+            if (cmdRecord.MitreTactics.Count == 0)
+            {
+                cmdRecord.MitreTactics.Add(defaultTactic);
+                if (!s.TacticsObserved.Contains(defaultTactic)) s.TacticsObserved.Add(defaultTactic);
+            }
+
+            if (e.Data.ValueKind == JsonValueKind.Object)
+            {
+                if (e.Data.TryGetProperty("PayloadUrls", out var pUrls) && pUrls.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var u in pUrls.EnumerateArray())
+                    {
+                        var uStr = u.GetString();
+                        if (!string.IsNullOrWhiteSpace(uStr) && !s.PayloadUrls.Contains(uStr)) s.PayloadUrls.Add(uStr);
+                    }
+                }
+                if (e.Data.TryGetProperty("PersistenceVector", out var pv) && pv.GetString() is string pvStr && pvStr != "none" && !s.PersistenceVectors.Contains(pvStr))
+                    s.PersistenceVectors.Add(pvStr);
+            }
+
+            // Find matching response
+            if (resultsBySession.TryGetValue(e.SessionId, out var rList) && rList.Count > 0)
+            {
+                var idx = rList.FindIndex(r => !string.IsNullOrEmpty(e.ExchangeId) && r.ExchangeId == e.ExchangeId);
+                if (idx < 0) idx = 0;
+                var matched = rList[idx];
+                rList.RemoveAt(idx);
+
+                if (matched.Data.ValueKind == JsonValueKind.Object)
+                {
+                    if (matched.Data.TryGetProperty("Response", out var rProp))
+                        cmdRecord.Response = rProp.GetString() ?? "";
+                    if (matched.Data.TryGetProperty("ResponseDurationMs", out var rdProp))
+                        cmdRecord.ResponseDurationMs = rdProp.GetInt64();
+                    if (matched.Data.TryGetProperty("FailedCommand", out var fcProp))
+                        cmdRecord.FailedCommand = fcProp.GetBoolean();
+                    if (matched.Data.TryGetProperty("LlmModel", out var lmProp))
+                        cmdRecord.LlmModel = lmProp.GetString();
+                    if (matched.Data.TryGetProperty("ResponseSource", out var rsProp))
+                        cmdRecord.ResponseSource = rsProp.GetString();
+                }
+            }
+
+            s.Commands.Add(cmdRecord);
+        }
+
+        // Calculate risk score and sort
+        foreach (var s in sessionsMap.Values)
+        {
+            s.RiskScore = s.Commands.Count * 2
+                + s.TacticsObserved.Count * 10
+                + s.PayloadUrls.Count * 20
+                + s.PersistenceVectors.Count * 15
+                + (s.AuthAccepted ? 10 : 0);
+        }
+
+        var sortedSessions = sessionsMap.Values
+            .OrderByDescending(s => s.StartedAt ?? s.EndedAt ?? DateTime.MinValue)
+            .ToList();
+
+        var sessionsPath = Path.Combine(dataDir, "sessions.json");
+        File.WriteAllText(sessionsPath, JsonSerializer.Serialize(sortedSessions, new JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    internal static void MergeThreatIntelFiles(string targetPath, string snapshotPath)
+    {
+        try
+        {
+            var targetIntel = JsonSerializer.Deserialize<ThreatIntel>(File.ReadAllText(targetPath)) ?? new();
+            var snapIntel = JsonSerializer.Deserialize<ThreatIntel>(File.ReadAllText(snapshotPath)) ?? new();
+
+            foreach (var (user, count) in snapIntel.Usernames)
+                targetIntel.Usernames[user] = Math.Max(targetIntel.Usernames.GetValueOrDefault(user), count);
+            foreach (var (pass, count) in snapIntel.Passwords)
+                targetIntel.Passwords[pass] = Math.Max(targetIntel.Passwords.GetValueOrDefault(pass), count);
+            foreach (var (ip, count) in snapIntel.SourceIps)
+                targetIntel.SourceIps[ip] = Math.Max(targetIntel.SourceIps.GetValueOrDefault(ip), count);
+            foreach (var (cmd, count) in snapIntel.FrequentCommands)
+                targetIntel.FrequentCommands[cmd] = Math.Max(targetIntel.FrequentCommands.GetValueOrDefault(cmd), count);
+
+            targetIntel.TotalUniqueUsernames = targetIntel.Usernames.Count;
+            targetIntel.TotalUniquePasswords = targetIntel.Passwords.Count;
+            targetIntel.TotalUniqueSourceIps = targetIntel.SourceIps.Count;
+            targetIntel.TotalUniqueCommands = targetIntel.FrequentCommands.Count;
+            targetIntel.LastUpdated = DateTime.UtcNow;
+
+            File.WriteAllText(targetPath, JsonSerializer.Serialize(targetIntel, new JsonSerializerOptions { WriteIndented = true }));
+        }
+        catch (Exception ex)
+        {
+            LogMsg($"Warning: Failed to merge threat_intel.json: {ex.Message}");
         }
     }
 
@@ -3087,10 +3560,24 @@ static class Logger
                 }
             }
 
+            var targetIntelPath = Path.Combine(dataDir, "threat_intel.json");
+            var snapshotIntelPath = Path.Combine(snapshotDataDir, "threat_intel.json");
+            if (File.Exists(snapshotIntelPath))
+            {
+                if (!File.Exists(targetIntelPath))
+                {
+                    File.Copy(snapshotIntelPath, targetIntelPath);
+                }
+                else
+                {
+                    MergeThreatIntelFiles(targetIntelPath, snapshotIntelPath);
+                }
+            }
+
             foreach (var file in Directory.EnumerateFiles(snapshotDataDir))
             {
                 var fileName = Path.GetFileName(file);
-                if (fileName is "events.jsonl" or "events_summary.json")
+                if (fileName is "events.jsonl" or "events_summary.json" or "threat_intel.json" or "sessions.json")
                     continue;
                 File.Copy(file, Path.Combine(dataDir, fileName), overwrite: true);
             }

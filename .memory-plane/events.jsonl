@@ -5,3 +5,5 @@
 {"event": "initialized", "project": "", "ts": "2026-09-04T05:06:00.145765Z"}
 {"actor": "opencode", "event": "proposed", "id": "mp-20260904-c3f850abf1", "path": ".memory-plane/artifacts/telemetry-schema-modernization-and-clean-baseline-reset-50abf1.md", "ts": "2026-09-04T05:06:27.649412Z"}
 {"auto": true, "event": "approved", "id": "mp-20260904-c3f850abf1", "path": ".memory-plane/artifacts/telemetry-schema-modernization-and-clean-baseline-reset-50abf1.md", "reviewer": "opencode", "ts": "2026-09-04T05:06:27.649560Z"}
+{"actor": "opencode", "event": "proposed", "id": "mp-20260904-3d30f75c0e", "path": ".memory-plane/artifacts/tiered-threat-intelligence-and-session-publication-architecture-f75c0e.md", "ts": "2026-09-04T12:19:25.155428Z"}
+{"auto": true, "event": "approved", "id": "mp-20260904-3d30f75c0e", "path": ".memory-plane/artifacts/tiered-threat-intelligence-and-session-publication-architecture-f75c0e.md", "reviewer": "opencode", "ts": "2026-09-04T12:19:25.156573Z"}
