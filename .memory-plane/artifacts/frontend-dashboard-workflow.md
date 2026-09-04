@@ -23,11 +23,12 @@ FunnyPot separates dashboard UI from published telemetry data. Runtime writes da
 
 - `Logger.LogHarvestUnsafe` writes publishable telemetry to `${AppDir}/frontend/data/events.jsonl`.
 - `Logger.UpdateThreatIntelUnsafe` maintains persistent harvested intelligence in `${AppDir}/frontend/data/threat_intel.json`.
-- `Logger.RecalculatePublicationData` recalculates on each push:
+- `Logger.UpdateActiveSessionTimelineUnsafe` maintains in-memory active session timelines and emits bounded structured debriefs (`${AppDir}/frontend/data/sessions.json`, max 2,000 sessions configured via `STRUCTURED_SESSION_LIMIT`).
+- Summary and stats are maintained incrementally:
   - `${AppDir}/frontend/data/events_summary.json` (exact active stream event tallies)
   - `${AppDir}/frontend/global_stats.json` (exact active stream metrics)
-  - `${AppDir}/frontend/data/sessions.json` (pre-assembled, timed, queryable session debriefs with inferred tactical objectives and MITRE techniques)
-- `Logger.PushToGit` stages `global_stats.json` and `data/`, commits with a session-specific message, and pushes to the configured data branch.
+  - `${AppDir}/frontend/data/sessions.json` (bounded, pre-assembled, timed, queryable session debriefs with inferred tactical objectives, command latency, and MITRE techniques)
+- `Logger.PushToGit` stages `global_stats.json` and `data/`, commits with a session-specific message, and pushes to the configured data branch. A local snapshot safeguards against race conditions with concurrent telemetry writes during git fetch/checkout.
 
 ## Publication Repository Setup
 
@@ -35,15 +36,15 @@ FunnyPot separates dashboard UI from published telemetry data. Runtime writes da
 - If `frontend` is not a Git repository, it initializes one.
 - If origin is missing, it derives a remote from `STATIC_SITE_REMOTE_URL`, `GITHUB_REMOTE_URL`, `GITHUB_REPOSITORY`, or `GITHUB_REPO` plus `GITHUB_USER`.
 - It fetches and checks out the configured data branch when available, otherwise creates the branch locally.
-- It removes legacy telemetry files, recalculates publication summaries, and reinitializes invalid `global_stats.json`, `events_summary.json`, `threat_intel.json`, or `sessions.json`.
+- To avoid unbounded startup delays on long-running deployments, full stream replay on startup is disabled; one-time manual recalculation can be invoked via `--rebuild-publication-data`.
 
 ## Dashboard UI
 
 - `frontend-main/index.html` is a static dashboard titled `FunnyPot SSH Intelligence Dashboard`.
 - It fetches from `https://raw.githubusercontent.com/FelixKras/FunnyPot.ai/data` with cache-busting timestamps.
 - Initial load concurrently fetches `global_stats.json`, `data/events_summary.json`, `data/threat_intel.json`, and `data/sessions.json`.
-- If `data/sessions.json` is available, session models map directly from pre-assembled debriefs, synthesizing full chronological timelines (`session_start`, `auth_attempt`, `shell_session_start`, `command`, `command_result`, `session_end`) with defensive property fallbacks.
-- Detailed background hydration parses `data/events.jsonl` with fallback to legacy `harvest.jsonl`.
+- Browser-side `events.jsonl` hydration has been removed to prevent client-side memory exhaustion and payload bloat; session models map directly from pre-assembled debriefs in `data/sessions.json`.
+- If `data/sessions.json` is available, session models map directly from pre-assembled debriefs, synthesizing full chronological timelines (`session_start`, `auth_attempt`, `shell_session_start`, `command`, `command_result`, `session_end`) with defensive property fallbacks and precomputed `publishedRiskScore`.
 - Tabs include Overview, Credentials, Geography, and Attacker Exchange.
 - The Overview tab features a dedicated **Top Attacker Commands & Tactical Objectives** component, classifying observed commands with inferred strategic goals (e.g., privilege identification, kernel reconnaissance, payload ingress, cron persistence) and MITRE ATT&CK tags.
 - Credentials and Geography tabs consume `threat_intel.json` to present the complete historical threat intelligence dataset (usernames, passwords, scanner source IPs) across resets.

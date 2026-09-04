@@ -77,14 +77,14 @@ Events for a session receive monotonically increasing sequence numbers. Sequence
    - Guarantees that stream event counts, command tallies, and engagement durations remain 100% accurate and aligned with the active post-reset stream.
 
 3. **Structured Debriefable Sessions (`data/sessions.json`)**:
-   - Pre-assembled on each push from `events.jsonl` into self-contained session records.
-   - Each session contains timestamps, duration, client banner, authentication attempts, sequence-ordered command exchanges with replies, inferred tactical objectives, MITRE ATT&CK techniques, and computed risk scores.
+   - Maintained incrementally in-memory as events arrive and persisted on `shell_session_end` / `session_end`.
+   - Bounded to the most recent 2,000 sessions (configurable via `STRUCTURED_SESSION_LIMIT`) to prevent unbounded file size growth.
+   - Each session contains timestamps, duration, client banner, client version, authentication attempts, sequence-ordered command exchanges with replies, inferred tactical objectives, MITRE ATT&CK techniques, and computed risk scores (`publishedRiskScore`).
    - Allows instant querying, analyst debriefing, and UI rendering without client-side event reconstruction.
 
 ## Dashboard Assumptions
 
-- `frontend-main/index.html` reads `global_stats.json`, `data/events_summary.json`, `data/threat_intel.json`, `data/sessions.json`, and `data/events.jsonl` from the published data branch.
+- `frontend-main/index.html` reads `global_stats.json`, `data/events_summary.json`, `data/threat_intel.json`, and `data/sessions.json` from the published data branch. It no longer fetches or hydrates raw `events.jsonl` in the browser.
 - The Overview tab displays a dedicated "Top Attacker Commands & Tactical Objectives" component, classifying top observed commands with inferred threat objectives and MITRE techniques.
 - The Credentials and Geography tabs consume `threat_intel.json` to present the complete, preserved threat intelligence dataset.
-- When processing `command` and `command_result` events, the frontend unpacks envelope fields (`Timestamp`, `Sequence`, `ExchangeId`, `SessionId`) together with payload data to maintain full fidelity for timeline sorting, session pair correlation, and exchange metadata rendering.
-- The dashboard retains compatibility fallback paths for older `harvest.jsonl` and `harvest_summary.json` files.
+- When processing command exchanges, the frontend unpacks structured debrief fields (`Timestamp`, `Sequence`, `ExchangeId`, `SessionId`, `CommandSequenceLatencyMs`, `ActorAutomationHint`, `ResponseDurationMs`) to maintain full fidelity for timeline sorting, session pair correlation, and exchange metadata rendering.
