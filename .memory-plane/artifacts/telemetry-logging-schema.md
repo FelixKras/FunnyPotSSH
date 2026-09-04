@@ -59,7 +59,14 @@ FunnyPot emits structured JSONL telemetry through `Logger.LogYaml`. Despite the 
 
 Events for a session receive monotonically increasing sequence numbers. Sequence state is released when `session_end` is queued or written. Derived command analytics remain available to the in-process summary path and are not repeated in each raw event.
 
+## 2026-09-01 Baseline Reset and Schema Transition
+
+- On 2026-09-01, the telemetry stream was deliberately reset to establish a clean baseline under the new per-session sequence schema (`SessionId`, `Sequence`, `ExchangeId`, `Data`).
+- In this schema, `Data` objects are kept lean to minimize log bloat. Top-level envelope properties (`Timestamp`, `Sequence`, `SessionId`, `ExchangeId`) are normalized by the frontend parser in `frontend-main/index.html` into `model.commands` and `model.results` entries.
+- To protect newly accumulated records across container lifecycles, publication snapshot restoration (`RestorePublicationSnapshot`) reconciles and appends JSONL lines rather than replacing directory contents, and the startup preparation step synchronizes the remote data branch before the SSH server begins accepting external traffic.
+
 ## Dashboard Assumptions
 
 - `frontend-main/index.html` reads `global_stats.json`, `data/events_summary.json`, and `data/events.jsonl` from the published data branch.
+- When processing `command` and `command_result` events, the frontend unpacks envelope fields (`Timestamp`, `Sequence`, `ExchangeId`, `SessionId`) together with payload data to maintain full fidelity for timeline sorting, session pair correlation, and exchange metadata rendering.
 - The dashboard retains compatibility fallback paths for older `harvest.jsonl` and `harvest_summary.json` files.

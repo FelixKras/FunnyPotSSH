@@ -804,6 +804,82 @@ public class TelemetryWriteQueueTests
     }
 
     [Fact]
+    public void CreateHarvestedEvent_IncludesCommandDetailsAndExchangeId()
+    {
+        var sessionId = $"test-{Guid.NewGuid():N}";
+        var exchangeId = $"ex-{Guid.NewGuid():N}";
+        var timestamp = DateTime.SpecifyKind(new DateTime(2026, 1, 2, 3, 4, 5), DateTimeKind.Utc);
+        var cmdEvent = Logger.CreateHarvestedEvent("command", new CommandLogEntry
+        {
+            Timestamp = timestamp,
+            SessionKey = sessionId,
+            ExchangeId = exchangeId,
+            RemoteEndpoint = "203.0.113.5:22",
+            Username = "root",
+            MessageNumber = 1,
+            ShellMessageNumber = 1,
+            Command = "uname -a"
+        });
+        var resultEvent = Logger.CreateHarvestedEvent("command_result", new CommandResultLogEntry
+        {
+            Timestamp = timestamp,
+            SessionKey = sessionId,
+            ExchangeId = exchangeId,
+            RemoteEndpoint = "203.0.113.5:22",
+            Username = "root",
+            MessageNumber = 1,
+            ShellMessageNumber = 1,
+            Command = "uname -a",
+            Response = "Linux funnypot 5.4.0"
+        });
+
+        try
+        {
+            Assert.Equal(exchangeId, cmdEvent.ExchangeId);
+            Assert.Equal(exchangeId, resultEvent.ExchangeId);
+            var cmdJson = System.Text.Json.JsonSerializer.Serialize(cmdEvent);
+            Assert.Contains("\"Command\":\"uname -a\"", cmdJson);
+            var resultJson = System.Text.Json.JsonSerializer.Serialize(resultEvent);
+            Assert.Contains("\"Command\":\"uname -a\"", resultJson);
+            Assert.Contains("\"Response\":\"Linux funnypot 5.4.0\"", resultJson);
+        }
+        finally
+        {
+            Logger.ResetSessionEventSequenceForTest(sessionId);
+        }
+    }
+
+    [Fact]
+    public void RestorePublicationSnapshot_MergesEventsWithoutDeletingHistory()
+    {
+        var tempRepo = Path.Combine(Path.GetTempPath(), $"fp-test-repo-{Guid.NewGuid():N}");
+        var tempSnapshot = Path.Combine(Path.GetTempPath(), $"fp-test-snap-{Guid.NewGuid():N}");
+        try
+        {
+            var repoData = Path.Combine(tempRepo, "data");
+            var snapData = Path.Combine(tempSnapshot, "data");
+            Directory.CreateDirectory(repoData);
+            Directory.CreateDirectory(snapData);
+
+            File.WriteAllLines(Path.Combine(repoData, "events.jsonl"), new[] { "{\"Event\":\"session_start\",\"id\":\"1\"}", "{\"Event\":\"command\",\"id\":\"2\"}" });
+            File.WriteAllLines(Path.Combine(snapData, "events.jsonl"), new[] { "{\"Event\":\"command\",\"id\":\"2\"}", "{\"Event\":\"session_end\",\"id\":\"3\"}" });
+
+            Logger.RestorePublicationSnapshot(tempRepo, (tempSnapshot, HasStats: false, HasData: true));
+
+            var mergedLines = File.ReadAllLines(Path.Combine(repoData, "events.jsonl"));
+            Assert.Equal(3, mergedLines.Length);
+            Assert.Contains("{\"Event\":\"session_start\",\"id\":\"1\"}", mergedLines);
+            Assert.Contains("{\"Event\":\"command\",\"id\":\"2\"}", mergedLines);
+            Assert.Contains("{\"Event\":\"session_end\",\"id\":\"3\"}", mergedLines);
+        }
+        finally
+        {
+            if (Directory.Exists(tempRepo)) Directory.Delete(tempRepo, true);
+            if (Directory.Exists(tempSnapshot)) Directory.Delete(tempSnapshot, true);
+        }
+    }
+
+    [Fact]
     public void TryEnqueue_ProcessesWritesBeforeDispose()
     {
         using var queue = new TelemetryWriteQueue();

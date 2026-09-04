@@ -237,7 +237,14 @@ class Program
             }
         });
 
-        Task.Run(Logger.PreparePublicationRepository);
+        try
+        {
+            Logger.PreparePublicationRepository();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogMsg($"Warning: Static dashboard repository preparation failed: {ex.Message}");
+        }
 
         var initialBanner = BannerPool.Count > 0 ? BannerPool[0] : SshBanner;
         _currentBanner = initialBanner;
@@ -2513,7 +2520,19 @@ static class Logger
                 command.Username,
                 command.MessageNumber,
                 command.ShellMessageNumber,
-                command.Command
+                command.Command,
+                command.CommandSequenceLatencyMs,
+                ActorAutomationHint = NullIfEmpty(command.ActorAutomationHint),
+                DiscoveryDepthScore = command.DiscoveryDepthScore > 0 ? command.DiscoveryDepthScore : (double?)null,
+                PersistenceVector = command.PersistenceVector != "none" ? command.PersistenceVector : null,
+                PayloadUrls = command.PayloadUrls.Count > 0 ? command.PayloadUrls : null,
+                EgressTargets = command.EgressTargets.Count > 0 ? command.EgressTargets : null,
+                TunnelingIntent = command.TunnelingIntent != "none" ? command.TunnelingIntent : null,
+                PersonaBreakoutAttempt = command.PersonaBreakoutAttempt ? true : (bool?)null,
+                ReconnaissanceProbe = command.ReconnaissanceProbe != "none" ? command.ReconnaissanceProbe : null,
+                SemanticComplexity = command.SemanticComplexity > 0 ? command.SemanticComplexity : (double?)null,
+                AssetValuePerceptionScore = command.AssetValuePerceptionScore > 0 ? command.AssetValuePerceptionScore : (double?)null,
+                MitreAttackTechniques = command.MitreAttackTechniques.Count > 0 ? command.MitreAttackTechniques : null
             },
             CommandResultLogEntry result => new
             {
@@ -2521,6 +2540,7 @@ static class Logger
                 result.Username,
                 result.MessageNumber,
                 result.ShellMessageNumber,
+                result.Command,
                 result.Response,
                 LlmModel = NullIfEmpty(result.LlmModel),
                 ResponseSource = NullIfEmpty(result.ResponseSource),
@@ -2991,17 +3011,89 @@ static class Logger
         return (snapshotPath, hasStats, hasData);
     }
 
-    static void RestorePublicationSnapshot(string repoPath, (string Path, bool HasStats, bool HasData) snapshot)
+    internal static void RestorePublicationSnapshot(string repoPath, (string Path, bool HasStats, bool HasData) snapshot)
     {
         if (snapshot.HasStats)
-            File.Copy(Path.Combine(snapshot.Path, "global_stats.json"), Path.Combine(repoPath, "global_stats.json"), overwrite: true);
+        {
+            var targetStats = Path.Combine(repoPath, "global_stats.json");
+            var snapshotStats = Path.Combine(snapshot.Path, "global_stats.json");
+            if (!File.Exists(targetStats))
+            {
+                File.Copy(snapshotStats, targetStats, overwrite: true);
+            }
+            else
+            {
+                try
+                {
+                    var targetStatsObj = JsonSerializer.Deserialize<GlobalStats>(File.ReadAllText(targetStats));
+                    var snapshotStatsObj = JsonSerializer.Deserialize<GlobalStats>(File.ReadAllText(snapshotStats));
+                    if (snapshotStatsObj is not null && (targetStatsObj is null || snapshotStatsObj.TotalCommands >= targetStatsObj.TotalCommands || snapshotStatsObj.LastUpdated >= targetStatsObj.LastUpdated))
+                        File.Copy(snapshotStats, targetStats, overwrite: true);
+                }
+                catch
+                {
+                    File.Copy(snapshotStats, targetStats, overwrite: true);
+                }
+            }
+        }
 
         if (snapshot.HasData)
         {
             var dataDir = Path.Combine(repoPath, "data");
-            if (Directory.Exists(dataDir))
-                Directory.Delete(dataDir, recursive: true);
-            CopyDirectory(Path.Combine(snapshot.Path, "data"), dataDir);
+            var snapshotDataDir = Path.Combine(snapshot.Path, "data");
+            Directory.CreateDirectory(dataDir);
+
+            var targetEventsPath = Path.Combine(dataDir, "events.jsonl");
+            var snapshotEventsPath = Path.Combine(snapshotDataDir, "events.jsonl");
+            if (File.Exists(snapshotEventsPath))
+            {
+                if (!File.Exists(targetEventsPath))
+                {
+                    File.Copy(snapshotEventsPath, targetEventsPath);
+                }
+                else
+                {
+                    var existingLines = new HashSet<string>(File.ReadLines(targetEventsPath));
+                    using var writer = File.AppendText(targetEventsPath);
+                    foreach (var line in File.ReadLines(snapshotEventsPath))
+                    {
+                        if (!string.IsNullOrWhiteSpace(line) && existingLines.Add(line))
+                            writer.WriteLine(line);
+                    }
+                }
+            }
+
+            var targetSummaryPath = Path.Combine(dataDir, "events_summary.json");
+            var snapshotSummaryPath = Path.Combine(snapshotDataDir, "events_summary.json");
+            if (File.Exists(snapshotSummaryPath))
+            {
+                if (!File.Exists(targetSummaryPath))
+                {
+                    File.Copy(snapshotSummaryPath, targetSummaryPath);
+                }
+                else
+                {
+                    try
+                    {
+                        var targetSummary = JsonSerializer.Deserialize<HarvestSummary>(File.ReadAllText(targetSummaryPath));
+                        var snapshotSummary = JsonSerializer.Deserialize<HarvestSummary>(File.ReadAllText(snapshotSummaryPath));
+                        if (snapshotSummary is not null && (targetSummary is null || snapshotSummary.TotalEvents >= targetSummary.TotalEvents))
+                            File.Copy(snapshotSummaryPath, targetSummaryPath, overwrite: true);
+                    }
+                    catch
+                    {
+                        File.Copy(snapshotSummaryPath, targetSummaryPath, overwrite: true);
+                    }
+                }
+            }
+
+            foreach (var file in Directory.EnumerateFiles(snapshotDataDir))
+            {
+                var fileName = Path.GetFileName(file);
+                if (fileName is "events.jsonl" or "events_summary.json")
+                    continue;
+                File.Copy(file, Path.Combine(dataDir, fileName), overwrite: true);
+            }
         }
     }
 

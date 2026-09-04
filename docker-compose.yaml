@@ -31,6 +31,8 @@ services:
       - SSH_BANNER_ROTATION_INTERVAL=${SSH_BANNER_ROTATION_INTERVAL:-300}
     volumes:
       - command-responses:/var/lib/funnypot
+      - frontend-data:/app/frontend
 
 volumes:
   command-responses:
+  frontend-data:
