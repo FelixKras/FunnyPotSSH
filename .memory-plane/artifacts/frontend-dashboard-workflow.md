@@ -22,25 +22,31 @@ FunnyPot separates dashboard UI from published telemetry data. Runtime writes da
 ## Runtime Publication Data
 
 - `Logger.LogHarvestUnsafe` writes publishable telemetry to `${AppDir}/frontend/data/events.jsonl`.
-- `Logger.UpdateHarvestSummaryUnsafe` writes `${AppDir}/frontend/data/events_summary.json`.
-- `Logger.UpdateGlobalStats` writes `${AppDir}/frontend/global_stats.json`.
+- `Logger.UpdateThreatIntelUnsafe` maintains persistent harvested intelligence in `${AppDir}/frontend/data/threat_intel.json`.
+- `Logger.RecalculatePublicationData` recalculates on each push:
+  - `${AppDir}/frontend/data/events_summary.json` (exact active stream event tallies)
+  - `${AppDir}/frontend/global_stats.json` (exact active stream metrics)
+  - `${AppDir}/frontend/data/sessions.json` (pre-assembled, timed, queryable session debriefs with inferred tactical objectives and MITRE techniques)
 - `Logger.PushToGit` stages `global_stats.json` and `data/`, commits with a session-specific message, and pushes to the configured data branch.
 
 ## Publication Repository Setup
 
-- `Logger.PreparePublicationRepository` runs at startup in the background.
+- `Logger.PreparePublicationRepository` runs at startup synchronously prior to starting the SSH listener.
 - If `frontend` is not a Git repository, it initializes one.
 - If origin is missing, it derives a remote from `STATIC_SITE_REMOTE_URL`, `GITHUB_REMOTE_URL`, `GITHUB_REPOSITORY`, or `GITHUB_REPO` plus `GITHUB_USER`.
 - It fetches and checks out the configured data branch when available, otherwise creates the branch locally.
-- It removes legacy telemetry files and reinitializes invalid `global_stats.json` or `events_summary.json`.
+- It removes legacy telemetry files, recalculates publication summaries, and reinitializes invalid `global_stats.json`, `events_summary.json`, `threat_intel.json`, or `sessions.json`.
 
 ## Dashboard UI
 
 - `frontend-main/index.html` is a static dashboard titled `FunnyPot SSH Intelligence Dashboard`.
-- It fetches from `https://raw.githubusercontent.com/FelixKras/FunnyPot.ai/data`.
-- It first loads `global_stats.json` and `data/events_summary.json`, then hydrates detailed views from `data/events.jsonl`.
-- It falls back to legacy `data/harvest_summary.json` and `data/harvest.jsonl` if the newer files are unavailable.
+- It fetches from `https://raw.githubusercontent.com/FelixKras/FunnyPot.ai/data` with cache-busting timestamps.
+- Initial load concurrently fetches `global_stats.json`, `data/events_summary.json`, `data/threat_intel.json`, and `data/sessions.json`.
+- If `data/sessions.json` is available, session models map directly from pre-assembled debriefs, synthesizing full chronological timelines (`session_start`, `auth_attempt`, `shell_session_start`, `command`, `command_result`, `session_end`) with defensive property fallbacks.
+- Detailed background hydration parses `data/events.jsonl` with fallback to legacy `harvest.jsonl`.
 - Tabs include Overview, Credentials, Geography, and Attacker Exchange.
+- The Overview tab features a dedicated **Top Attacker Commands & Tactical Objectives** component, classifying observed commands with inferred strategic goals (e.g., privilege identification, kernel reconnaissance, payload ingress, cron persistence) and MITRE ATT&CK tags.
+- Credentials and Geography tabs consume `threat_intel.json` to present the complete historical threat intelligence dataset (usernames, passwords, scanner source IPs) across resets.
 - It renders command/result exchanges, MITRE tactics, banners, source IPs, credentials, uploads, high-risk signals, and freshness status through the overview and exchange HUD views.
 - Attacker Exchange is a HUD-style exchange matrix showing all command-bearing sessions and matched command/response pairs. It provides derived command volume, reply coverage, risk load, tooling signals, peak UTC activity, behavior summaries, normalized search across commands/responses and session metadata, behavior/engagement/risk filters, and sorting by recency, commands, transcript length, duration, risk, type, or remote endpoint.
 - Session views derive timing-based interaction profiles from time-to-first-command, per-command attacker response latency, rapid-reply share, and cadence variability. Profiles are labeled script-like, agent-like, human-like, mixed/uncertain, or insufficient-data and are explicitly estimates rather than verified identities.
