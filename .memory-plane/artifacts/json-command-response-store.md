@@ -35,12 +35,16 @@ The project owner established a cache-first/LLM-only response architecture to pr
 - Input rejection and SCP/SFTP protocol control remain explicit non-shell-answer exceptions.
 - Redis, SQL, NoSQL, telemetry reconstruction, hardcoded built-in answers, frequent-command rules, local response fallbacks, and LLM rate-limit fallback responses are not part of response selection.
 
-## Persistence
+## Persistence and Host Bind Mount
 
-- Docker uses the named volume `command-responses` mounted at `/var/lib/funnypot`.
-- `COMMAND_RESPONSE_PATH` points to `/var/lib/funnypot/command_responses.json` in Compose.
-- The image seeds a new volume from the reviewed JSON dictionary; learned entries survive container recreation.
-- Runtime updates write a same-directory temporary file, flush it, then atomically replace the active JSON file.
+- The command dictionary is consolidated in the git-tracked file `FunnyPot/data/command_responses.json`.
+- In Compose, `./FunnyPot/data` is bind-mounted directly to `/var/lib/funnypot` using `bind.propagation: rprivate` and `create_host_path: false`.
+- Security and egress containment:
+  - The bind mount is strictly scoped to the isolated data subdirectory containing only JSON dictionary files; the parent source code, binaries, and system paths are never exposed.
+  - The container drops all Linux capabilities (`cap_drop: ALL`) and enforces `no-new-privileges:true`.
+  - The container service user runs as non-root `UID=1000:GID=1000` matching host file ownership, preventing privilege escalations while allowing atomic temporary file replacements (`File.Move`).
+  - Honeypot attackers are restricted to in-memory `FakeFileSystem` and have zero access or awareness of `/var/lib/funnypot`.
+- Runtime updates write to a same-directory temporary file, flush it, and atomically replace `command_responses.json` directly in the repository directory, making learned commands immediately tracked in git.
 
 ## Migration
 

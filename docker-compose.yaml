@@ -1,6 +1,10 @@
 services:
   funnypot:
-    build: .
+    build:
+      context: .
+      args:
+        USER_UID: 1000
+        USER_GID: 1000
     container_name: funnypot-container
     ports:
       - "${SSH_PORT:-22722}:${SSH_PORT:-22722}"
@@ -30,9 +34,13 @@ services:
       - SSH_BANNERS=${SSH_BANNERS:-SSH-2.0-OmegaBlack_Classified_Server_v1.0,SSH-2.0-dropbear_2020.80,SSH-2.0-OpenSSH_6.6.1,SSH-2.0-OpenSSH_7.2p2 Ubuntu,SSH-2.0-OpenSSH_for_Windows_8.1}
       - SSH_BANNER_ROTATION_INTERVAL=${SSH_BANNER_ROTATION_INTERVAL:-300}
     volumes:
-      - command-responses:/var/lib/funnypot
+      - type: bind
+        source: ./FunnyPot/data
+        target: /var/lib/funnypot
+        bind:
+          propagation: rprivate
+          create_host_path: false
       - frontend-data:/app/frontend
 
 volumes:
-  command-responses:
   frontend-data:

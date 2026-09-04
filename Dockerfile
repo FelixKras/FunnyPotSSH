@@ -14,15 +14,17 @@ RUN dotnet publish "FunnyPot.csproj" -c Release -o /app/publish /p:UseAppHost=fa
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/runtime:8.0 AS final
 ARG USERNAME=test
+ARG USER_UID=1000
+ARG USER_GID=1000
 ENV SSH_USER=$USERNAME
 ENV SSH_PASSWORD=test
 
 # Install git for LibGit2Sharp native dependencies
 RUN apt-get update && apt-get install -y git libgit2-dev && rm -rf /var/lib/apt/lists/*
 
-# Drop all capabilities for the container
-RUN groupadd $USERNAME && \
-    useradd -m -g $USERNAME -s /bin/bash $USERNAME && \
+# Drop all capabilities for the container and match host UID/GID
+RUN groupadd -g ${USER_GID} $USERNAME && \
+    useradd -u ${USER_UID} -m -g $USERNAME -s /bin/bash $USERNAME && \
     mkdir -p /home/$USERNAME/app && \
     mkdir -p /var/log/funnypot /var/lib/funnypot
 
