@@ -44,8 +44,6 @@ internal sealed class CommandResponseStore
         {
             if (string.IsNullOrEmpty(command) || entry is null)
                 throw new InvalidDataException($"Command response dictionary contains an invalid entry: {path}");
-            if (IsModelFailure(entry.Response))
-                continue;
             entries.Add(command, entry);
         }
 
@@ -62,6 +60,7 @@ internal sealed class CommandResponseStore
         if (string.IsNullOrEmpty(command)
             || string.IsNullOrWhiteSpace(llmModel)
             || IsModelFailure(response)
+            || IsIncompleteSudoFallback(command, response)
             || response.Contains("]<]", StringComparison.Ordinal)
             || response.Contains("<|", StringComparison.Ordinal)
             || response.Contains("---TRUNCATED---", StringComparison.OrdinalIgnoreCase))
@@ -136,5 +135,19 @@ internal sealed class CommandResponseStore
         return normalized.StartsWith("Sorry, I can't", StringComparison.OrdinalIgnoreCase)
             || normalized.StartsWith("I'm sorry, but I can't", StringComparison.OrdinalIgnoreCase)
             || normalized.StartsWith("I cannot simulate executing", StringComparison.OrdinalIgnoreCase);
+    }
+
+    internal static bool IsIncompleteSudoFallback(string command, string response)
+    {
+        return IsSudoNprocFallbackCommand(command) &&
+            (response.Contains("sudo: a password is required", StringComparison.OrdinalIgnoreCase) ||
+             response.Contains("sudo: 3 incorrect password attempts", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool IsSudoNprocFallbackCommand(string command)
+    {
+        return command.Contains("sudo -S", StringComparison.Ordinal) &&
+            command.Contains("||", StringComparison.Ordinal) &&
+            command.Contains("nproc", StringComparison.Ordinal);
     }
 }

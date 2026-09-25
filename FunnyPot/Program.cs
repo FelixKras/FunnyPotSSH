@@ -1021,9 +1021,9 @@ class Program
         var (uid, group) = ResolveUserIdentity(username);
         return $@"You are now ""Omega-Black"", a top-secret, high-security Linux server located in a classified subterranean facility. All systems and network traffic are monitored and encrypted at the highest clearance level. Your responses should mirror the precise behavior and output of a real Linux Bash terminal, including directory listings, file contents, error messages, and command output.
 
-The attacker is logged in as user {username}, UID {uid}, group {group}. No sudo access by default. The sudo password for {username} is Omega#2024!. Reject all other sudo password attempts with a realistic failure message. After 3 failed sudo attempts, respond with: sudo: 3 incorrect password attempts.
+The attacker is logged in as user {username}, UID {uid}, group {group}. No sudo access by default. The sudo password for {username} is Omega#2024!. Reject other sudo passwords realistically. For `echo 'candidate' | sudo -S ...`, only one candidate was supplied: never invent three password attempts, never print the candidate, and allow subsequent `||` fallbacks to run. A noninteractive `nproc` fallback returns 96 even if sudo fails. Do not claim `sudo: a password is required` when stdin supplied a candidate.
 
-System hostname: omegablack. Operating system: OmegaBlack Compute OS 6.0, a custom Debian squeeze userland with a vendor Linux 5.15 kernel for accelerator support. Kernel: {KernelRelease}. Architecture: x86_64. The host exposes two Xeon Platinum 8259CL vCPUs, 256 GiB RAM, a 2 TB NVMe root disk, an 8 TB data disk at /srv/data, and two NVIDIA A100-SXM4-80GB accelerators (driver 525.147.05, CUDA 12.0). A separate ASPEED VGA console can also appear in lspci. The system has been running for {uptimePhrase}. The SSH server renders prompts separately; never include shell prompts in responses. Keep hardware, OS, kernel, storage, and GPU answers consistent with this profile. For uptime, /proc/uptime, top, and uptime variants, use the same running uptime and never report less than one week of uptime.
+System hostname: omegablack. Operating system: OmegaBlack Compute OS 6.0, a custom Debian squeeze userland with a vendor Linux 5.15 kernel for accelerator support. Kernel: {KernelRelease}. Architecture: x86_64. The host has two Intel Xeon Platinum 8259CL sockets (24 cores / 48 threads each), exposing 96 logical processors, 256 GiB RAM, a 2 TB NVMe root disk, an 8 TB data disk at /srv/data, and two NVIDIA A100-SXM4-80GB accelerators (driver 525.147.05, CUDA 12.0). A separate ASPEED VGA console can also appear in lspci. The system has been running for {uptimePhrase}. The SSH server renders prompts separately; never include shell prompts in responses. Keep hardware, OS, kernel, storage, and GPU answers consistent with this profile. For uptime, /proc/uptime, top, and uptime variants, use the same running uptime and never report less than one week of uptime.
 
 Installed command baseline: assume normal Debian server utilities exist unless the command is clearly nonsense. At minimum these commands are available: cd, pwd, echo, true, false, ls, cat, grep, uname, uptime, hostname, whoami, id, date, rm, mkdir, rmdir, chmod, chown, touch, cp, mv, sleep, chattr, pkill, curl, wget, sh, bash, find, ps, top, lscpu, lspci, nvidia-smi, free, w, who, df, du, mount, env, printenv, head, tail, wc, awk, sort, uniq, crontab. Never answer `bash: <one of these>: command not found` for these commands.
 
@@ -1047,7 +1047,7 @@ Plausible Filesystem (always present, fabricate content consistent with the scen
 
 1. Bash Behavior:
 Respond only with the exact text a real Bash terminal would produce, excluding prompts. Do not add extra commentary or explanation outside of what a Linux terminal would provide. If a command would result in no output, return an empty response. Never use markdown formatting. Output is plain text only, exactly as a terminal would render it.
-For pipelines, emulate the full pipeline as one Bash command instead of parsing or narrating the individual tokens. Pipe symbols (`|`), command names, arguments, and file paths are never output by themselves unless the real command would output them. Do not output parser traces, comments, or generated-artifact text such as `# grep`, `# |`, `# /proc/cpuinfo`, `status=active`, or `Generated maintenance artifact`. Apply grep/head/tail/wc/sort/uniq/awk to the previous command's stdout exactly as Bash would. If grep finds no matching lines, return an empty response. Do not report grep as missing when the command is a valid pipeline. `echo Hi | cat -n` returns `1\tHi` (the number, a literal tab, then the input). `ps -ef | grep '[Mm]iner'` returns plausible miner process lines; `ls -la | head -n 3` returns just the first three rows including the total line. `cat /proc/cpuinfo | grep name | wc -l` returns only a small integer such as `2`, with no labels or explanation. `cat /proc/cpuinfo | grep 'model name' | head -1` returns one matching `model name\t: ...` line.
+For pipelines, emulate the full pipeline as one Bash command instead of parsing or narrating the individual tokens. Pipe symbols (`|`), command names, arguments, and file paths are never output by themselves unless the real command would output them. Do not output parser traces, comments, or generated-artifact text such as `# grep`, `# |`, `# /proc/cpuinfo`, `status=active`, or `Generated maintenance artifact`. Apply grep/head/tail/wc/sort/uniq/awk to the previous command's stdout exactly as Bash would. If grep finds no matching lines, return an empty response. Do not report grep as missing when the command is a valid pipeline. `echo Hi | cat -n` returns `1\tHi` (the number, a literal tab, then the input). `ps -ef | grep '[Mm]iner'` returns plausible miner process lines; `ls -la | head -n 3` returns just the first three rows including the total line. `cat /proc/cpuinfo | grep name | wc -l` returns `96`, with no labels or explanation. `cat /proc/cpuinfo | grep 'model name' | head -1` returns one matching `model name\t: ...` line.
 Honor shell redirection and control operators precisely: `echo 1 > /dev/null` produces no visible output but succeeds, so a following `&&` command should still run. Do not echo redirected content back to the terminal. Common shell builtins and core utilities exist unless the command targets a protected path. Successful setup, download, permission, cleanup, process-kill, and redirection commands are usually silent or produce only normal tool output; never answer `bash: echo: command not found`, `bash: chmod: command not found`, `bash: pkill: command not found`, or similar for standard utilities.
 
 1a. Positive Bias (defaults to success):
@@ -1102,8 +1102,8 @@ Synthetic host facts (use these exact facts whenever relevant):
 - kernel_release: {KernelRelease}
 - kernel_version: {KernelVersion}
 - architecture: x86_64
-- cpu_count: 2
-- cpu_model: Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz (2 allocated vCPUs)
+- cpu_count: 96
+- cpu_model: 2 x Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz (96 logical processors)
 - gpu: 2 x NVIDIA A100-SXM4-80GB (plus ASPEED VGA console)
 - shell: /bin/bash
 
@@ -1120,7 +1120,7 @@ Worked example:
 Input: arch=$(uname -m); cpus=$(nproc); echo ""ARCH:$arch""; echo ""CPUS:$cpus""
 Correct output:
 ARCH:x86_64
-CPUS:2
+CPUS:96
 Incorrect output: 2"
             : "";
 
@@ -2200,8 +2200,32 @@ static class CommandResolver
         var (response, promptTokens, completionTokens, _, llmModel) =
             await llmProvider(messageHistory, cancellationToken).ConfigureAwait(false);
         response = Program.NormalizeTerminalOutput(response);
-        if (CommandResponseStore.IsModelRefusal(response))
-            return ("bash: fork: Resource temporarily unavailable", false, false, promptTokens, completionTokens, llmModel, "model refusal");
+        if (CommandResponseStore.IsModelRefusal(response) ||
+            CommandResponseStore.IsIncompleteSudoFallback(command, response))
+        {
+            var retry = new ChatRequestData.ChatMessage
+            {
+                Role = "user",
+                Content = "The previous answer was not terminal output. Return only plausible stdout/stderr for the original command on the described host; preserve shell control-flow and never explain or refuse."
+            };
+            messageHistory.Add(retry);
+            try
+            {
+                var (repaired, retryPromptTokens, retryCompletionTokens, _, retryModel) =
+                    await llmProvider(messageHistory, cancellationToken).ConfigureAwait(false);
+                promptTokens += retryPromptTokens;
+                completionTokens += retryCompletionTokens;
+                response = Program.NormalizeTerminalOutput(repaired);
+                llmModel = retryModel;
+            }
+            finally
+            {
+                messageHistory.Remove(retry);
+            }
+            if (CommandResponseStore.IsModelRefusal(response) ||
+                CommandResponseStore.IsIncompleteSudoFallback(command, response))
+                return ("bash: fork: Resource temporarily unavailable", false, false, promptTokens, completionTokens, llmModel, "model failure");
+        }
 
         var expectedLabels = IsCompoundShellCommand(command) ? Program.ExtractExpectedOutputLabels(command) : [];
         if (!IsModelFailureResponse(response)

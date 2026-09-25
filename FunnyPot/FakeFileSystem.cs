@@ -324,7 +324,7 @@ class FakeFileSystem
         if (path == "/proc/uptime") return SyntheticHostClock.FormatProcUptime();
         if (path == "/proc/version") return Program.KernelProcVersion;
         if (path == "/proc/loadavg") return "0.42 0.31 0.27 1/234 5678";
-        if (path == "/proc/meminfo") return "MemTotal:        8077312 kB\nMemFree:         3246080 kB\nMemAvailable:    5202944 kB\nBuffers:          234496 kB\nCached:          2363392 kB";
+        if (path == "/proc/meminfo") return "MemTotal:      268435456 kB\nMemFree:       201326592 kB\nMemAvailable:  235929600 kB\nBuffers:        1048576 kB\nCached:        33554432 kB";
 
         var name = FileName(path);
         if (name.EndsWith(".log", StringComparison.OrdinalIgnoreCase))

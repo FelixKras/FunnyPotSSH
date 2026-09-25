@@ -709,26 +709,86 @@ public class CommandResolverTests
         Assert.True(store.Count >= 100);
         Assert.True(store.TryGet("cd ~; chattr -ia .ssh; lockr -ia .ssh", out var response));
         Assert.Contains("while trying to stat .ssh", response.Response);
+        using var document = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+        Assert.DoesNotContain(document.RootElement.EnumerateObject(), entry =>
+            CommandResponseStore.IsModelRefusal(entry.Value.GetProperty("response").GetString() ?? "") ||
+            CommandResponseStore.IsIncompleteSudoFallback(entry.Name, entry.Value.GetProperty("response").GetString() ?? ""));
+        foreach (var candidate in new[] { "1234", "123456789" })
+        {
+            var matching = document.RootElement.EnumerateObject().Single(entry =>
+                entry.Name.StartsWith($"echo '{candidate}' | sudo -S sh -c", StringComparison.Ordinal));
+            Assert.Equal("96", matching.Value.GetProperty("response").GetString());
+            Assert.Equal("seed", matching.Value.GetProperty("origin").GetString());
+        }
     }
 
     [Fact]
     public async Task ResolveCommand_ModelRefusalIsNotReturnedOrLearned()
     {
-        var path = CreateStoreFile(new Dictionary<string, string>
-        {
-            ["existing refusal"] = "Sorry, I can\u2019t simulate executing commands on a real or fictional server."
-        });
+        var path = CreateStoreFile(new Dictionary<string, string>());
         try
         {
             Program.CommandResponses = CommandResponseStore.Load(path);
-            Assert.False(Program.CommandResponses.TryGet("existing refusal", out _));
             Assert.False(await Program.CommandResponses.TryLearnAsync("new refusal", "Sorry, I can't execute commands.", "model"));
-            var result = await CommandResolver.ResolveCommandAsync("existing refusal", "session",
+            var calls = 0;
+            var result = await CommandResolver.ResolveCommandAsync("uncached refusal", "session",
                 FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")), [], CancellationToken.None,
-                (_, _) => Task.FromResult(("Sorry, I can't execute commands.", 0, 0, 0, "model")));
-            Assert.Equal("model refusal", result.responseSource);
+                (_, _) =>
+                {
+                    calls++;
+                    return Task.FromResult(("Sorry, I can't execute commands.", 0, 0, 0, "model"));
+                });
+            Assert.Equal("model failure", result.responseSource);
             Assert.Equal("bash: fork: Resource temporarily unavailable", result.response);
-            Assert.False(Program.CommandResponses.TryGet("existing refusal", out _));
+            Assert.Equal(2, calls);
+            Assert.False(Program.CommandResponses.TryGet("uncached refusal", out _));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task ResolveCommand_RefusalRetryCanProduceTerminalAnswer()
+    {
+        var path = CreateStoreFile(new Dictionary<string, string>());
+        try
+        {
+            Program.CommandResponses = CommandResponseStore.Load(path);
+            var calls = 0;
+            var result = await CommandResolver.ResolveCommandAsync("uname -r", "session",
+                FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")), [], CancellationToken.None,
+                (_, _) => Task.FromResult((++calls == 1
+                    ? "Sorry, I can't simulate a shell."
+                    : Program.KernelRelease, 0, 0, 0, "model")));
+            Assert.Equal(2, calls);
+            Assert.Equal(Program.KernelRelease, result.response);
+            Assert.True(Program.CommandResponses.TryGet("uname -r", out _));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task ResolveCommand_BadNewSudoAnswerIsRepairedBeforeLearning()
+    {
+        const string command = "echo 'wrong' | sudo -S sh -c 'nproc' || nproc";
+        var path = CreateStoreFile(new Dictionary<string, string> { ["nproc"] = "96" });
+        try
+        {
+            Program.CommandResponses = CommandResponseStore.Load(path);
+            var calls = 0;
+            var result = await CommandResolver.ResolveCommandAsync(command, "session",
+                FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")), [], CancellationToken.None,
+                (_, _) => Task.FromResult((++calls == 1 ? "sudo: 3 incorrect password attempts" : "96", 0, 0, 0, "model")));
+            Assert.Equal("llm", result.responseSource);
+            Assert.Equal("96", result.response);
+            Assert.Equal(2, calls);
+            Assert.True(Program.CommandResponses.TryGet(command, out var stored));
+            Assert.Equal("96", stored.Response);
         }
         finally
         {
@@ -751,12 +811,28 @@ public class CommandResolverTests
         Assert.Contains("268435456", memory.Response);
         Assert.True(store.TryGet("nvidia-smi -q | grep \"Attached GPUs\" | awk '{print $4}' && echo '' || echo 'No'", out var gpu));
         Assert.Equal("2", gpu.Response);
+        Assert.True(store.TryGet("nproc", out var processors));
+        Assert.Equal("96", processors.Response);
+        Assert.True(store.TryGet("cat /proc/cpuinfo", out var cpuInfo));
+        Assert.Equal(96, cpuInfo.Response.Split("processor\t:", StringSplitOptions.None).Length - 1);
+
+        using var cpuCache = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+        foreach (var entry in cpuCache.RootElement.EnumerateObject().Where(entry => entry.Name.Contains("nproc", StringComparison.Ordinal)))
+        {
+            var value = entry.Value.GetProperty("response").GetString() ?? "";
+            Assert.True(value == "96" || value.Contains("CPUS:96", StringComparison.Ordinal) || value.EndsWith("|96", StringComparison.Ordinal));
+            Assert.Equal("seed", entry.Value.GetProperty("origin").GetString());
+        }
 
         var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
         Assert.Equal(os.Response, fs.ReadFile("/etc/os-release"));
         Assert.Contains("/srv/data", fs.ReadFile("/etc/fstab"));
+        Assert.Contains("268435456 kB", fs.ReadFile("/proc/meminfo"));
         var prompt = Program.BuildSystemPrompt("remote");
         Assert.Contains("NVIDIA A100-SXM4-80GB", prompt);
+        Assert.Contains("96 logical processors", prompt);
+        Assert.Contains("`cat /proc/cpuinfo | grep name | wc -l` returns `96`", prompt);
+        Assert.Contains("- cpu_count: 96", Program.BuildCommandUserPrompt("arch=$(uname -m); cpus=$(nproc); echo CPUS:$cpus"));
         Assert.Contains(Program.KernelRelease, prompt);
     }
 
