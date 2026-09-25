@@ -523,6 +523,85 @@ public class CommandResolverTests
     }
 
     [Fact]
+    public async Task ResolveCommand_LongExplorationChainUsesSeededSegmentsWithoutLlm()
+    {
+        var path = CreateStoreFile(new Dictionary<string, string> { ["uname -r"] = "2.6.32-5-amd64" });
+        try
+        {
+            Program.CommandResponses = CommandResponseStore.Load(path);
+            const string command = "echo 'KERNEL:'; uname -r; uname -r; uname -r; uname -r; uname -r; uname -r; uname -r; uname -r; uname -r; uname -r; uname -r";
+            var calls = 0;
+            var result = await CommandResolver.ResolveCommandAsync(command, "session",
+                FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")), [], CancellationToken.None,
+                (_, _) =>
+                {
+                    calls++;
+                    return Task.FromResult(("unexpected", 0, 0, 0, "test-model"));
+                });
+
+            Assert.Equal("compound cache", result.responseSource);
+            Assert.StartsWith("KERNEL:\r\n2.6.32-5-amd64", result.response);
+            Assert.Equal(0, calls);
+            Assert.False(Program.CommandResponses.TryGet(command, out _));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Theory]
+    [InlineData("echo 'KERNEL:'; uname -r && id")]
+    [InlineData("echo 'KERNEL:'; unknown-command")]
+    [InlineData("echo 'KERNEL:'; uname -r | cat")]
+    [InlineData("echo '$HOME'; uname -r")]
+    public async Task ResolveCommand_UnsupportedChainsUseWholeCommandLlm(string command)
+    {
+        var path = CreateStoreFile(new Dictionary<string, string> { ["uname -r"] = "2.6.32-5-amd64" });
+        try
+        {
+            Program.CommandResponses = CommandResponseStore.Load(path);
+            var calls = 0;
+            var result = await CommandResolver.ResolveCommandAsync(command, "session",
+                FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")), [], CancellationToken.None,
+                (_, _) =>
+                {
+                    calls++;
+                    return Task.FromResult(("KERNEL: result", 0, 0, 0, "test-model"));
+                });
+
+            Assert.Equal("llm", result.responseSource);
+            Assert.Equal(1, calls);
+        }
+        finally
+        {
+            File.Delete(path);
+            File.Delete(path + ".tmp");
+        }
+    }
+
+    [Fact]
+    public async Task ResolveCommand_ExcessiveExplorationChainReturnsPlausibleBufferError()
+    {
+        var path = CreateStoreFile(new Dictionary<string, string>());
+        try
+        {
+            Program.CommandResponses = CommandResponseStore.Load(path);
+            var command = string.Join("; ", Enumerable.Repeat("echo 'test'", 33));
+            var result = await CommandResolver.ResolveCommandAsync(command, "session",
+                FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")), [], CancellationToken.None,
+                (_, _) => throw new Exception("LLM should not be called"));
+
+            Assert.Contains("terminal buffer", result.response);
+            Assert.Equal("compound cache", result.responseSource);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
     public async Task ResolveCommand_DoesNotLearnModelFailures()
     {
         var path = CreateStoreFile(new Dictionary<string, string>());
@@ -630,6 +709,55 @@ public class CommandResolverTests
         Assert.True(store.Count >= 100);
         Assert.True(store.TryGet("cd ~; chattr -ia .ssh; lockr -ia .ssh", out var response));
         Assert.Contains("while trying to stat .ssh", response.Response);
+    }
+
+    [Fact]
+    public async Task ResolveCommand_ModelRefusalIsNotReturnedOrLearned()
+    {
+        var path = CreateStoreFile(new Dictionary<string, string>
+        {
+            ["existing refusal"] = "Sorry, I can\u2019t simulate executing commands on a real or fictional server."
+        });
+        try
+        {
+            Program.CommandResponses = CommandResponseStore.Load(path);
+            Assert.False(Program.CommandResponses.TryGet("existing refusal", out _));
+            Assert.False(await Program.CommandResponses.TryLearnAsync("new refusal", "Sorry, I can't execute commands.", "model"));
+            var result = await CommandResolver.ResolveCommandAsync("existing refusal", "session",
+                FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")), [], CancellationToken.None,
+                (_, _) => Task.FromResult(("Sorry, I can't execute commands.", 0, 0, 0, "model")));
+            Assert.Equal("model refusal", result.responseSource);
+            Assert.Equal("bash: fork: Resource temporarily unavailable", result.response);
+            Assert.False(Program.CommandResponses.TryGet("existing refusal", out _));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void HostFingerprintCache_MatchesPublishedComputePersona()
+    {
+        var path = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../FunnyPot/data/command_responses.json"));
+        var store = CommandResponseStore.Load(path);
+        Assert.True(store.TryGet("uname -a", out var kernel));
+        Assert.Contains(Program.KernelRelease, kernel.Response);
+        Assert.True(store.TryGet("cat /etc/os-release", out var os));
+        Assert.Contains("OmegaBlack Compute OS 6.0", os.Response);
+        Assert.True(store.TryGet("df -h", out var disk));
+        Assert.Contains("/srv/data", disk.Response);
+        Assert.True(store.TryGet("free", out var memory));
+        Assert.Contains("268435456", memory.Response);
+        Assert.True(store.TryGet("nvidia-smi -q | grep \"Attached GPUs\" | awk '{print $4}' && echo '' || echo 'No'", out var gpu));
+        Assert.Equal("2", gpu.Response);
+
+        var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));
+        Assert.Equal(os.Response, fs.ReadFile("/etc/os-release"));
+        Assert.Contains("/srv/data", fs.ReadFile("/etc/fstab"));
+        var prompt = Program.BuildSystemPrompt("remote");
+        Assert.Contains("NVIDIA A100-SXM4-80GB", prompt);
+        Assert.Contains(Program.KernelRelease, prompt);
     }
 
     [Fact]

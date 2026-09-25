@@ -6,6 +6,8 @@ scope: project
 status: approved-by-request
 created_at: 2026-07-12
 author: Forge
+updated_at: 2026-09-25
+reviewer: Kilo
 source_refs:
   - FunnyPot/Program.cs
   - FunnyPot/AppConfiguration.cs
@@ -49,8 +51,8 @@ FunnyPot is a Docker-hosted SSH honeypot. The runtime accepts SSH connections, r
 
 - External SSH traffic enters through the Docker-published SSH port, default `22722`.
 - LLM traffic uses OpenRouter through the configured API base URL and chat endpoint.
-- Runtime telemetry is local JSONL and JSON under `/var/log/funnypot` and `frontend/data`.
-- Dashboard publication uses a Git repository under the app `frontend` directory and pushes to the configured data branch.
+- Runtime telemetry is local JSONL and JSON under `/var/log/funnypot` and the app's `frontend/data`; in Compose the latter is overlaid by the `frontend-publication-data` named volume rather than host `frontend/data`.
+- Dashboard publication uses the Git repository at `/home/test/app/frontend` in that volume and pushes to the configured data branch.
 - The static UI lives separately in `frontend-main/index.html` and consumes retained data from the published data branch.
 
 ## Operational Notes

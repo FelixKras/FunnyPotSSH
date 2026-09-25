@@ -3,7 +3,8 @@ id: mp-20260904-3d30f75c0e
 kind: decision
 title: Tiered Threat Intelligence and Session Publication Architecture
 scope: project
-status: approved
+status: superseded
+superseded_by: mp-20260925-e60e0c5c5f
 created_at: 2026-09-04T12:19:25.148055Z
 author: opencode
 confidence: 1.0

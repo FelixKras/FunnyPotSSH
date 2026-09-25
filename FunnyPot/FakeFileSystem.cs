@@ -216,11 +216,11 @@ class FakeFileSystem
         _files["/etc/hosts"] = "127.0.0.1   localhost\n127.0.1.1   omegablack";
         _files["/etc/hostname"] = "omegablack";
         _files["/etc/resolv.conf"] = "nameserver 8.8.8.8\nnameserver 8.8.4.4";
-        _files["/etc/os-release"] = "PRETTY_NAME=\"Debian GNU/Linux 6.0.10 (squeeze)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"6.0.10\"\nVERSION=\"6.0.10 (squeeze)\"\nID=debian";
+        _files["/etc/os-release"] = "PRETTY_NAME=\"OmegaBlack Compute OS 6.0 (squeeze)\"\nNAME=\"OmegaBlack Compute OS\"\nVERSION_ID=\"6.0\"\nVERSION=\"6.0 (squeeze)\"\nID=omegablack\nID_LIKE=debian";
         _files["/etc/debian_version"] = "6.0.10";
-        _files["/etc/issue"] = "Debian GNU/Linux 6 \\n \\l";
+        _files["/etc/issue"] = "OmegaBlack Compute OS 6.0 \\n \\l";
         _files["/etc/motd"] = "Warning: This is a classified system. All activity is monitored.\n";
-        _files["/etc/fstab"] = "# /etc/fstab: static file system information.\nproc  /proc  proc  defaults  0  0\nUUID=ab12cd34-ef56-7890-abcd-ef1234567890  /  ext4  errors=remount-ro  0  1";
+        _files["/etc/fstab"] = "# /etc/fstab: static file system information.\nproc  /proc  proc  defaults  0  0\nUUID=ab12cd34-ef56-7890-abcd-ef1234567890  /  ext4  errors=remount-ro  0  1\nUUID=cd34ef56-7890-abcd-ef12-34567890abcd  /srv/data  ext4  defaults  0  2";
         _files["/etc/sudoers"] = "Defaults        env_reset\nroot    ALL=(ALL:ALL) ALL\n%sudo   ALL=(ALL:ALL) ALL";
         _files["/etc/profile"] = "# /etc/profile: system-wide .profile file\nif [ \"$PS1\" ]; then\n  if [ \"$BASH\" ]; then\n    PS1='\\u@\\h:\\w\\$ '\n  fi\nfi\numask 022";
         _files["/etc/environment"] = "PATH=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"";

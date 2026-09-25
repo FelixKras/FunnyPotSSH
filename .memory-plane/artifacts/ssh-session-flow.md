@@ -6,6 +6,8 @@ scope: project
 status: approved-by-request
 created_at: 2026-07-12
 author: Forge
+updated_at: 2026-09-25
+reviewer: Kilo
 source_refs:
   - FunnyPot/Program.cs
   - FunnyPot.Tests/UnitTests.cs
@@ -28,7 +30,7 @@ FunnyPot models an SSH honeypot session as a connection session plus one or more
 - Password authentication succeeds when the attacker uses configured `SSH_USER` and `SSH_PASSWORD`, or when failed attempts reach `PASSWORD_HARVEST_ATTEMPT`.
 - Non-password auth methods are logged but rejected.
 - Every password attempt is logged once as `auth_attempt`; the event envelope carries the connection `SessionId` and per-session `Sequence`.
-- Auth telemetry includes username, password for password auth, method, connection attempt number, acceptance status, and acceptance reason.
+- Auth telemetry includes username, password for password auth, method, cumulative attempt number for the normalized remote IP, acceptance status, and acceptance reason.
 
 ## Shell And Exec Flow
 
@@ -50,4 +52,4 @@ FunnyPot models an SSH honeypot session as a connection session plus one or more
 
 ## Verified Behaviors
 
-- Unit tests cover remote endpoint normalization, input validation, command worker ordering, built-in command behavior, static response classification, LLM routing for complex commands, and shell prompt constraints.
+- Unit tests cover input validation, command worker ordering, exact response-store hits and misses, model response handling, and shell prompt constraints. They do not establish live end-to-end SSH or OpenRouter behavior.

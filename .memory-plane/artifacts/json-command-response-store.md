@@ -6,6 +6,8 @@ scope: project
 status: approved-by-request
 created_at: 2026-08-06
 author: OpenCode
+updated_at: 2026-09-25
+reviewer: Kilo
 supersedes:
   - mp-artifact-cached-response-quality-session-2026-07-16
 source_refs:
@@ -33,7 +35,7 @@ The project owner established a cache-first/LLM-only response architecture to pr
 - API and network failures are returned but not learned.
 - Compound-command repair remains an LLM operation; only structurally complete output is learned.
 - Input rejection and SCP/SFTP protocol control remain explicit non-shell-answer exceptions.
-- Redis, SQL, NoSQL, telemetry reconstruction, hardcoded built-in answers, frequent-command rules, local response fallbacks, and LLM rate-limit fallback responses are not part of response selection.
+- Redis, SQL, NoSQL, telemetry reconstruction, general built-in shell answers, frequent-command rules, and LLM rate-limit fallback responses are not part of response selection. The bounded exploration-chain exception below composes only reviewed seed answers.
 
 ## Persistence and Host Bind Mount
 
@@ -56,3 +58,13 @@ The project owner established a cache-first/LLM-only response architecture to pr
 
 - Tests cover exact matching, empty responses, durable learning, concurrent updates, cache-hit LLM bypass, miss learning, failure non-learning, compound repair, SCP protocol handling, and seed-file validity.
 - A live uncached `uname -r` SSH command was answered by `openai/gpt-5.6-luna`, persisted with `origin: llm`, served unchanged on the next request, and remained present after forced container recreation.
+
+## Bounded Exploration Chain Exception (2026-09-25)
+
+At the owner's request, whole-command exact lookup still runs first, but an uncached semicolon chain can concatenate reviewed `seed` responses for stable, state-independent exploration probes and literal quoted `echo` labels. It never invokes a model for individual segments and never learns the composed answer. Pipes, conditionals, substitution, redirects, unbalanced quotes, dynamic paths, and unknown commands fall back to the existing whole-command LLM route. Chains over 32 commands return a terminal-buffer error instead of attempting a large deterministic simulation. This is a narrow exception to the earlier no-local-response rule, not a general shell interpreter (`FunnyPot/Program.cs:2191-2310`, `FunnyPot.Tests/UnitTests.cs:525-603`).
+
+## Frequency-Guided Persona Review (2026-09-25)
+
+The retained event stream between 2026-09-24 20:39 and 2026-09-25 06:20 UTC contained 171 paired cache hits. An exact host-fingerprinting script accounted for 57; the remaining most common keys were password-bearing variants of one `sudo`/CPU-count probe (2-4 hits per variant). This short, rotation-limited window is not a lifetime ranking. The fingerprint output and neighboring OS, kernel, GPU, memory, and disk probes were reviewed against a custom OmegaBlack Debian-derived appliance profile with a vendor 5.15 kernel, Xeon Platinum vCPUs, A100 accelerators, 256 GiB memory, and NVMe storage. Password-bearing keys and raw attacker data are deliberately not recorded in this artifact. Older learned entries elsewhere in the dictionary may still contradict this profile; review them before treating the entire cache as coherent (`FunnyPot/data/command_responses.json`, `FunnyPot/Program.cs`, `FunnyPot/FakeFileSystem.cs`, `/var/log/funnypot/events.jsonl` in the running container).
+
+Some historical learned entries are model refusals, including a refusal to simulate commands. `CommandResponseStore.Load` now excludes refusals from runtime lookup, `TryLearnAsync` rejects new ones, and `CommandResolver` substitutes a transient shell failure for a fresh refusal. The raw historical cache file retains those entries until a later clean rewrite; they are not valid operational cache hits (`FunnyPot/CommandResponseStore.cs`, `FunnyPot/Program.cs`, `FunnyPot.Tests/UnitTests.cs`).

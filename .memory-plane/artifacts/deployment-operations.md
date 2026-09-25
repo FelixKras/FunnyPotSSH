@@ -5,14 +5,16 @@ title: Deployment And Operations
 scope: project
 status: approved-by-request
 created_at: 2026-07-12
-updated_at: 2026-08-06
+updated_at: 2026-09-25
 author: Forge
+reviewer: Kilo
 source_refs:
   - docs/DEPLOY.md
   - docker-compose.yaml
   - run-docker.sh
   - scripts/deploy.sh
   - FunnyPot/Program.cs
+  - Dockerfile
 ---
 
 # Deployment And Operations
@@ -27,7 +29,8 @@ FunnyPot runs as a single Docker Compose service named `funnypot`, with containe
 - Container security settings include `no-new-privileges:true` and dropping all capabilities.
 - Runtime log directory inside the container is `/var/log/funnypot`.
 - Application directory inside the container is `/home/test/app`.
-- Learned command responses persist in the `command-responses` named volume mounted at `/var/lib/funnypot`.
+- Learned command responses persist in a bind mount from `./FunnyPot/data` to `/var/lib/funnypot`; this includes the working-tree `command_responses.json`. The named `frontend-publication-data` volume overlays `/home/test/app/frontend` and retains the running publisher's Git repository and dashboard data across container recreation. Host `frontend/data` is not the live volume.
+- Docker probes a loopback-only HTTP endpoint at `127.0.0.1:22723/health` via `dotnet FunnyPot.dll --healthcheck`; it does not connect to SSH, consume a session slot, or publish the health port. Readiness is false during SSH listener replacement and shutdown.
 
 ## Deployment Paths
 
@@ -39,6 +42,7 @@ FunnyPot runs as a single Docker Compose service named `funnypot`, with containe
 
 - `scripts/deploy.sh` resolves the repo root, chooses Docker Compose v2 or v1, checks for unfinished merge or rebase state, commits and pushes changed `frontend-main` and `frontend` submodules when present, commits and pushes parent repository changes when present, then rebuilds and starts Compose.
 - Because it can commit and push, inspect working tree state before using it when manual control is needed.
+- Its host `frontend` submodule push is distinct from the container's runtime publication from the named volume.
 
 ## Local Run Script
 
@@ -50,6 +54,8 @@ FunnyPot runs as a single Docker Compose service named `funnypot`, with containe
 
 - Use `docker ps -a` rather than host `ps` to identify the running instance.
 - Health should eventually report `healthy` for `funnypot-container`.
+- `docker exec funnypot-container dotnet FunnyPot.dll --healthcheck` returns zero only when the loopback endpoint reports SSH ready; a failed startup or listener replacement reports nonzero.
+- After editing the bind-mounted cache JSON, recreate the running container before another cache miss can cause its in-memory dictionary to overwrite host-side edits. A code build alone does not reload the cache.
 - The SSH banner can be checked with a short TCP read from localhost port `22722`.
 - During cold start, check `/proc/1/net/tcp` inside the container for a listening row ending in hex port `58D2`.
 
@@ -62,5 +68,5 @@ FunnyPot runs as a single Docker Compose service named `funnypot`, with containe
 ## Known Operational Pitfalls
 
 - A fresh image can take 2-3 minutes before the SSH port binds.
-- Early healthcheck connection refusals are expected during cold start.
+- The loopback readiness endpoint is unavailable until SSH starts; Docker may report `starting` during cold start without creating SSH telemetry.
 - Prompt regressions can make the honeypot respond with meta-question fallback text for real commands; this is a prompt/runtime regression, not a Docker issue.

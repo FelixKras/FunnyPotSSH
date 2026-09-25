@@ -45,6 +45,6 @@ USER $USERNAME
 
 EXPOSE 22722
 
-HEALTHCHECK --interval=30s --timeout=10s CMD /bin/sh -c 'timeout 2s bash -c "</dev/tcp/localhost/${SSH_PORT:-22722}"' || exit 1
+HEALTHCHECK --interval=30s --timeout=10s CMD ["dotnet", "FunnyPot.dll", "--healthcheck"]
 
 CMD ["dotnet", "FunnyPot.dll"]

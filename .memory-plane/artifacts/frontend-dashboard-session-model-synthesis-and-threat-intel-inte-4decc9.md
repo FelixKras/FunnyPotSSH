@@ -3,7 +3,8 @@ id: mp-20260904-19e04decc9
 kind: procedure
 title: Frontend Dashboard Session Model Synthesis and Threat Intel Integration
 scope: project
-status: approved
+status: superseded
+superseded_by: mp-20260925-010138a951
 created_at: 2026-09-04T13:32:10.753868Z
 author: opencode
 confidence: 1.0

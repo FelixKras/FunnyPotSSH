@@ -44,6 +44,8 @@ internal sealed class CommandResponseStore
         {
             if (string.IsNullOrEmpty(command) || entry is null)
                 throw new InvalidDataException($"Command response dictionary contains an invalid entry: {path}");
+            if (IsModelFailure(entry.Response))
+                continue;
             entries.Add(command, entry);
         }
 
@@ -124,6 +126,15 @@ internal sealed class CommandResponseStore
     private static bool IsModelFailure(string response)
     {
         return response.StartsWith("[api error]", StringComparison.OrdinalIgnoreCase)
-            || response.StartsWith("[network error]", StringComparison.OrdinalIgnoreCase);
+            || response.StartsWith("[network error]", StringComparison.OrdinalIgnoreCase)
+            || IsModelRefusal(response);
+    }
+
+    internal static bool IsModelRefusal(string response)
+    {
+        var normalized = response.TrimStart().Replace('\u2019', '\'');
+        return normalized.StartsWith("Sorry, I can't", StringComparison.OrdinalIgnoreCase)
+            || normalized.StartsWith("I'm sorry, but I can't", StringComparison.OrdinalIgnoreCase)
+            || normalized.StartsWith("I cannot simulate executing", StringComparison.OrdinalIgnoreCase);
     }
 }

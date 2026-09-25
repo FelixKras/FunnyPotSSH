@@ -134,7 +134,9 @@ Short sessions for initialization or continuation.
 | `sunny-mountain` | 11/06 | 2 | New session | Session initialization |
 | `mighty-lagoon` | 30/06 | 2 | Forge reconnection greeting | Reconnection |
 
-## Key Technical Decisions
+## Historical Technical Decisions
+
+These choices describe the indexed development conversations, not necessarily current runtime defaults. For current model configuration see `config/app-config.yaml` and `docker-compose.yaml`.
 
 ### Architecture
 - **Single-file god class**: `Program.cs` (~3700 lines) with LLM, SSH, telemetry, and command resolution

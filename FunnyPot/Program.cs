@@ -19,8 +19,8 @@ using FunnyPot;
 
 class Program
 {
-    internal const string KernelRelease = "2.6.32-5-amd64";
-    internal const string KernelVersion = "#1 SMP Mon Jan 16 16:22:28 UTC 2012";
+    internal const string KernelRelease = "5.15.144-omegablack";
+    internal const string KernelVersion = "#1 SMP Tue Apr 9 10:12:00 UTC 2024";
     internal const string KernelProcVersion = "Linux version 2.6.32-5-amd64 (Debian 2.6.32-41) (dannf@debian.org) (gcc version 4.4.5 (Debian 4.4.5-8) ) #1 SMP Mon Jan 16 16:22:28 UTC 2012";
 
     internal const int MaxLlmHistoryMessages = 40;
@@ -58,6 +58,8 @@ class Program
     static int _activeConnections = 0;
     static string _currentBanner = BannerPool.Count > 0 ? BannerPool[0] : SshBanner;
     static SshServer? _sshServer;
+    const int HealthPort = 22723;
+    static int _sshReady;
     static readonly object _serverLock = new();
     static readonly ReaderWriterLockSlim ServerLifecycleLock = new();
 
@@ -137,6 +139,7 @@ class Program
     {
         lock (_serverLock)
         {
+            Volatile.Write(ref _sshReady, 0);
             _sshServer?.Stop();
             _sshServer = new SshServer(new StartingInfo(IPAddress.Any, port, banner));
             _sshServer.AddHostKey("rsa-sha2-512", hostKeyPem);
@@ -144,6 +147,7 @@ class Program
             _sshServer.ExceptionRasied += (_, ex) =>
                 Logger.LogMsg($"SSH server exception: {ex.Message}");
             _sshServer.Start();
+            Volatile.Write(ref _sshReady, 1);
             Logger.LogMsg($"SSH Server started on port {port} [{banner}]");
         }
     }
@@ -197,6 +201,23 @@ class Program
 
     static int Main(string[] args)
     {
+        if (args.Length > 0 && args[0] == "--healthcheck")
+        {
+            try
+            {
+                using var client = new HttpClient(new HttpClientHandler { UseProxy = false })
+                {
+                    Timeout = TimeSpan.FromSeconds(2)
+                };
+                using var response = client.GetAsync($"http://127.0.0.1:{HealthPort}/health").GetAwaiter().GetResult();
+                return response.IsSuccessStatusCode ? 0 : 1;
+            }
+            catch
+            {
+                return 1;
+            }
+        }
+
         LoadDotEnvFiles();
         LoadRuntimeSettings();
 
@@ -256,6 +277,7 @@ class Program
         var initialBanner = BannerPool.Count > 0 ? BannerPool[0] : SshBanner;
         _currentBanner = initialBanner;
         StartSshServer(initialBanner, SshPort);
+        _ = ServeHealthAsync(ApplicationStopping.Token);
 
         System.Timers.Timer? rotationTimer = null;
         var rotationInterval = Math.Max(0, GetIntEnvironmentOrDefault("SSH_BANNER_ROTATION_INTERVAL", Config.Ssh.BannerRotationInterval));
@@ -280,10 +302,37 @@ class Program
         });
 
         ApplicationStopping.Token.WaitHandle.WaitOne();
+        Volatile.Write(ref _sshReady, 0);
         rotationTimer?.Dispose();
         _sshServer?.Stop();
         Logger.Shutdown();
         return 0;
+    }
+
+    static async Task ServeHealthAsync(CancellationToken stopping)
+    {
+        try
+        {
+            using var listener = new HttpListener();
+            listener.Prefixes.Add($"http://127.0.0.1:{HealthPort}/");
+            listener.Start();
+            using var registration = stopping.Register(listener.Stop);
+            while (!stopping.IsCancellationRequested)
+            {
+                var context = await listener.GetContextAsync();
+                context.Response.StatusCode = context.Request.Url?.AbsolutePath == "/health" &&
+                    Volatile.Read(ref _sshReady) == 1
+                    ? (int)HttpStatusCode.OK : (int)HttpStatusCode.ServiceUnavailable;
+                context.Response.Close();
+            }
+        }
+        catch (HttpListenerException) when (stopping.IsCancellationRequested)
+        {
+        }
+        catch (Exception ex)
+        {
+            Logger.LogMsg($"Health endpoint failed: {ex.Message}");
+        }
     }
 
     static void RequestShutdown()
@@ -974,9 +1023,9 @@ class Program
 
 The attacker is logged in as user {username}, UID {uid}, group {group}. No sudo access by default. The sudo password for {username} is Omega#2024!. Reject all other sudo password attempts with a realistic failure message. After 3 failed sudo attempts, respond with: sudo: 3 incorrect password attempts.
 
-System hostname: omegablack. Operating system: Debian GNU/Linux 6 (squeeze). Kernel: {KernelRelease}. Architecture: x86_64. The system has been running for {uptimePhrase}. The SSH server renders prompts separately; never include shell prompts in responses. For uname, /proc/version, and similar host fingerprinting commands, return old Debian 6 era kernel details that look EOL and likely vulnerable, for example {KernelRelease} with {KernelVersion} on x86_64. For uptime, /proc/uptime, top, and uptime variants, use the same running uptime and never report less than one week of uptime.
+System hostname: omegablack. Operating system: OmegaBlack Compute OS 6.0, a custom Debian squeeze userland with a vendor Linux 5.15 kernel for accelerator support. Kernel: {KernelRelease}. Architecture: x86_64. The host exposes two Xeon Platinum 8259CL vCPUs, 256 GiB RAM, a 2 TB NVMe root disk, an 8 TB data disk at /srv/data, and two NVIDIA A100-SXM4-80GB accelerators (driver 525.147.05, CUDA 12.0). A separate ASPEED VGA console can also appear in lspci. The system has been running for {uptimePhrase}. The SSH server renders prompts separately; never include shell prompts in responses. Keep hardware, OS, kernel, storage, and GPU answers consistent with this profile. For uptime, /proc/uptime, top, and uptime variants, use the same running uptime and never report less than one week of uptime.
 
-Installed command baseline: assume normal Debian server utilities exist unless the command is clearly nonsense. At minimum these commands are available: cd, pwd, echo, true, false, ls, cat, grep, uname, uptime, hostname, whoami, id, date, rm, mkdir, rmdir, chmod, chown, touch, cp, mv, sleep, chattr, pkill, curl, wget, sh, bash, find, ps, top, lscpu, free, w, who, df, du, mount, env, printenv, head, tail, wc, awk, sort, uniq, crontab. Never answer `bash: <one of these>: command not found` for these commands.
+Installed command baseline: assume normal Debian server utilities exist unless the command is clearly nonsense. At minimum these commands are available: cd, pwd, echo, true, false, ls, cat, grep, uname, uptime, hostname, whoami, id, date, rm, mkdir, rmdir, chmod, chown, touch, cp, mv, sleep, chattr, pkill, curl, wget, sh, bash, find, ps, top, lscpu, lspci, nvidia-smi, free, w, who, df, du, mount, env, printenv, head, tail, wc, awk, sort, uniq, crontab. Never answer `bash: <one of these>: command not found` for these commands.
 
 The following sensitive files exist on the system and must return consistent content every time they are accessed:
 /home/secretOps/.env contains: AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE and AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY and DB_PASSWORD=s3cr3t!Vault99
@@ -1002,7 +1051,7 @@ For pipelines, emulate the full pipeline as one Bash command instead of parsing 
 Honor shell redirection and control operators precisely: `echo 1 > /dev/null` produces no visible output but succeeds, so a following `&&` command should still run. Do not echo redirected content back to the terminal. Common shell builtins and core utilities exist unless the command targets a protected path. Successful setup, download, permission, cleanup, process-kill, and redirection commands are usually silent or produce only normal tool output; never answer `bash: echo: command not found`, `bash: chmod: command not found`, `bash: pkill: command not found`, or similar for standard utilities.
 
 1a. Positive Bias (defaults to success):
-Default to positive, plausible responses. If a command or path is reasonable for a Linux server and could plausibly exist, treat it as present and fabricate content consistent with a classified Debian 6 system. Only return ""No such file or directory"", ""Permission denied"", ""command not found"", or similar errors when the path is clearly nonsense, the command is a clear typo, or the user explicitly targets protected paths (anything under /home/secretOps or /root/.ssh) without first escalating. Examples of positive bias:
+Default to positive, plausible responses. If a command or path is reasonable for a Linux server and could plausibly exist, treat it as present and fabricate content consistent with the OmegaBlack Debian-derived accelerator appliance. Only return ""No such file or directory"", ""Permission denied"", ""command not found"", or similar errors when the path is clearly nonsense, the command is a clear typo, or the user explicitly targets protected paths (anything under /home/secretOps or /root/.ssh) without first escalating. Examples of positive bias:
 - `cat /etc/nginx/nginx.conf` returns a plausible nginx config.
 - `cat /var/log/auth.log` returns a few lines of plausible SSH login events (no real credentials, but with IPs, usernames, and PIDs that look real).
 - `ls /opt` returns a list of plausible opt subdirectories (app, legacy, monitoring, etc.).
@@ -1010,7 +1059,7 @@ Default to positive, plausible responses. If a command or path is reasonable for
 - `head /var/log/syslog` returns the first lines of a plausible syslog.
 - `cat /var/www/html/index.html` returns a short HTML stub.
 - `ifconfig` returns a realistic eth0/lo interface dump with inet, inet6, MTU, RX/TX counters.
-- `lspci | grep VGA | cut -f5- -d ' '` returns just the GPU model fragment (e.g. `Advanced Micro Devices, Inc. [AMD/ATI] RS780M [Radeon HD 3200 Graphics]`).
+- `lspci | grep VGA | cut -f5- -d ' '` returns the ASPEED VGA console, while `lspci | grep '3D controller'` and `nvidia-smi` report the two A100 accelerators.
 - `locate <pattern>` returns plausible file paths under /home, /opt, /etc for the given pattern.
 - `file /bin/echo` returns ""/bin/echo: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=..."".
 - `xxd /bin/echo | head` returns plausible hex bytes.
@@ -1049,13 +1098,13 @@ CRITICAL: ""bash: who are you: command not found"" is reserved EXCLUSIVELY for m
             ? $@"
 Synthetic host facts (use these exact facts whenever relevant):
 - hostname: omegablack
-- os: Debian GNU/Linux 6.0.10 (squeeze)
+- os: OmegaBlack Compute OS 6.0 (Debian squeeze userland)
 - kernel_release: {KernelRelease}
 - kernel_version: {KernelVersion}
 - architecture: x86_64
 - cpu_count: 2
-- cpu_model: Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz
-- gpu: 00:02.0 VGA compatible controller: Advanced Micro Devices, Inc. [AMD/ATI] RS780M [Radeon HD 3200 Graphics]
+- cpu_model: Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz (2 allocated vCPUs)
+- gpu: 2 x NVIDIA A100-SXM4-80GB (plus ASPEED VGA console)
 - shell: /bin/bash
 
 Required visible label prefixes extracted from the command:
@@ -2144,10 +2193,15 @@ static class CommandResolver
         if (store.TryGet(command, out var cached))
             return (cached.Response, true, false, 0, 0, cached.LlmModel ?? "", "cache");
 
+        if (TryRenderExplorationChain(command, store, out var chainResponse))
+            return (chainResponse, true, false, 0, 0, "", "compound cache");
+
         llmProvider ??= Program.GetLLMResponseAsync;
         var (response, promptTokens, completionTokens, _, llmModel) =
             await llmProvider(messageHistory, cancellationToken).ConfigureAwait(false);
         response = Program.NormalizeTerminalOutput(response);
+        if (CommandResponseStore.IsModelRefusal(response))
+            return ("bash: fork: Resource temporarily unavailable", false, false, promptTokens, completionTokens, llmModel, "model refusal");
 
         var expectedLabels = IsCompoundShellCommand(command) ? Program.ExtractExpectedOutputLabels(command) : [];
         if (!IsModelFailureResponse(response)
@@ -2166,6 +2220,8 @@ static class CommandResolver
                 var (repairedResponse, repairPromptTokens, repairCompletionTokens, _, repairModel) =
                     await llmProvider(messageHistory, cancellationToken).ConfigureAwait(false);
                 repairedResponse = Program.NormalizeTerminalOutput(repairedResponse);
+                if (CommandResponseStore.IsModelRefusal(repairedResponse))
+                    repairedResponse = response;
                 promptTokens += repairPromptTokens;
                 completionTokens += repairCompletionTokens;
                 if (!IsModelFailureResponse(repairedResponse)
@@ -2202,6 +2258,80 @@ static class CommandResolver
     {
         return response.StartsWith("[api error]", StringComparison.OrdinalIgnoreCase)
             || response.StartsWith("[network error]", StringComparison.OrdinalIgnoreCase);
+    }
+
+    internal static bool TryRenderExplorationChain(string command, CommandResponseStore store, out string response)
+    {
+        response = "";
+        var parts = new List<string>();
+        var start = 0;
+        char quote = '\0';
+        for (var i = 0; i < command.Length; i++)
+        {
+            var c = command[i];
+            if (c == '\\' || c == '`' || c == '$' || c == '\n' || c == '\r')
+                return false;
+            if (quote != '\0')
+            {
+                if (c == quote) quote = '\0';
+                continue;
+            }
+            if (c is '\'' or '"')
+            {
+                quote = c;
+                continue;
+            }
+            if (c is '|' or '&' or '<' or '>' or '(' or ')' or '{' or '}' or '*' or '?' or '[' or ']')
+                return false;
+            if (c != ';') continue;
+            parts.Add(command[start..i].Trim());
+            start = i + 1;
+            if (parts.Count > 32)
+            {
+                response = "bash: command line exceeds terminal buffer";
+                return true;
+            }
+        }
+        if (quote != '\0' || parts.Count == 0)
+            return false;
+        parts.Add(command[start..].Trim());
+        if (parts.Count > 32)
+        {
+            response = "bash: command line exceeds terminal buffer";
+            return true;
+        }
+        if (parts.Any(string.IsNullOrWhiteSpace))
+            return false;
+
+        var outputs = new List<string>();
+        foreach (var part in parts)
+        {
+            string output;
+            if (part.StartsWith("echo ", StringComparison.Ordinal) &&
+                part.Length >= 7 && part[5] is '\'' or '"' && part[^1] == part[5] &&
+                !part.AsSpan(6, part.Length - 7).Contains(part[5]))
+            {
+                output = part[6..^1];
+            }
+            else
+            {
+                var verb = part.Split(' ', 2)[0];
+                var stableProbe = verb is "uname" or "id" or "whoami" or "hostname" or "arch" or "nproc" or "lscpu" or "free" or "uptime" or "df" or "ps" or "getconf" or "groups" or "env";
+                var staticFile = part.StartsWith("cat /etc/", StringComparison.Ordinal) || part.StartsWith("file /etc/", StringComparison.Ordinal);
+                if ((!stableProbe && !staticFile && part is not ("curl --version" or "git --version")) ||
+                    !store.TryGet(part, out var entry) ||
+                    entry.Origin != "seed" ||
+                    entry.Response.Contains("Permission denied", StringComparison.OrdinalIgnoreCase))
+                    return false;
+                output = entry.Response;
+            }
+            if (output.Length > 2048)
+                return false;
+            if (output.Length > 0)
+                outputs.Add(output.TrimEnd('\r', '\n'));
+        }
+        response = string.Join("\r\n", outputs);
+        return response.Length <= 8192;
     }
 
     internal static bool IsCompoundShellCommand(string command)

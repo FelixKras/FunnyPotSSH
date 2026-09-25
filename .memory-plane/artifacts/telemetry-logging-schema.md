@@ -6,6 +6,8 @@ scope: project
 status: approved-by-request
 created_at: 2026-07-12
 author: Forge
+updated_at: 2026-09-25
+reviewer: Kilo
 source_refs:
   - FunnyPot/Program.cs
   - FunnyPot/TelemetryWriteQueue.cs
@@ -48,7 +50,7 @@ FunnyPot emits structured JSONL telemetry through `Logger.LogYaml`. Despite the 
 
 ## Event Data Shapes
 
-- `AuthAttemptLogEntry`: remote endpoint, username, auth method, password for password auth, connection attempt number, accepted flag, and acceptance reason.
+- `AuthAttemptLogEntry`: remote endpoint, username, auth method, password for password auth, cumulative attempt number for the normalized remote IP (subject to process restart or bounded-key eviction), accepted flag, and acceptance reason.
 - `SessionLogEntry`: timestamp, connection and shell IDs, endpoint, username, client version, banner, event, duration, and time-to-compromise.
 - `CommandLogEntry`: message numbers, endpoint, username, exchange ID, command, latency, automation hint, derived DHS analytics, and MITRE tactics.
 - `CommandResultLogEntry`: command response, LLM model, response source, failed-command flag, response duration, hallucination feedback, standard-error ratio, semantic drift, and Turing multiplier.
@@ -73,11 +75,11 @@ Events for a session receive monotonically increasing sequence numbers. Sequence
    - Synchronized additively via `MergeThreatIntelFiles` so threat intelligence is never lost.
 
 2. **Recalculated Baseline Summaries (`data/events_summary.json` and `global_stats.json`)**:
-   - Automatically recalculated on each publication push directly from the active `events.jsonl` stream.
-   - Guarantees that stream event counts, command tallies, and engagement durations remain 100% accurate and aligned with the active post-reset stream.
+   - Maintained incrementally during event processing; `PushToGit` snapshots and publishes without a full stream recalculation. The separate `--rebuild-publication-data` command performs a full replay.
+   - Do not assume exact alignment after stream size rotation, interrupted writes, or partial recovery; compare/rebuild explicitly when auditing totals.
 
 3. **Structured Debriefable Sessions (`data/sessions.json`)**:
-   - Maintained incrementally in-memory as events arrive and persisted on `shell_session_end` / `session_end`.
+   - Maintained incrementally in-memory as events arrive and persisted on `session_end`, with an additional flush of active sessions at publication. `shell_session_end` alone does not persist the debrief.
    - Bounded to the most recent 2,000 sessions (configurable via `STRUCTURED_SESSION_LIMIT`) to prevent unbounded file size growth.
    - Each session contains timestamps, duration, client banner, client version, authentication attempts, sequence-ordered command exchanges with replies, inferred tactical objectives, MITRE ATT&CK techniques, and computed risk scores (`publishedRiskScore`).
    - Allows instant querying, analyst debriefing, and UI rendering without client-side event reconstruction.
