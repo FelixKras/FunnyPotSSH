@@ -52,6 +52,10 @@ internal static class CommandCanonicalizer
         @"(?<=\bsleep\s+)(?<val>\d{2,6})\b",
         RegexOptions.Compiled);
 
+    private static readonly Regex HeadBytesRegex = new(
+        @"(?<=\bhead\s+-c\s+)(?<val>\d{4,12})\b",
+        RegexOptions.Compiled);
+
     private static readonly Regex Base64BlobRegex = new(
         @"(?<=\s)(?<val>[A-Za-z0-9+/]{40,}={0,2})(?=\s|[;""'&|)]|$)",
         RegexOptions.Compiled);
@@ -151,6 +155,12 @@ internal static class CommandCanonicalizer
         {
             var val = match.Groups["val"].Value;
             return GetOrAddPlaceholder("SLEEP_SEC", val);
+        });
+
+        working = HeadBytesRegex.Replace(working, match =>
+        {
+            var val = match.Groups["val"].Value;
+            return GetOrAddPlaceholder("HEAD_BYTES", val);
         });
 
         working = Base64BlobRegex.Replace(working, match =>

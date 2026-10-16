@@ -715,10 +715,10 @@ public class CommandResolverTests
             CommandResponseStore.IsIncompleteSudoFallback(entry.Name, entry.Value.GetProperty("response").GetString() ?? ""));
         foreach (var candidate in new[] { "1234", "123456789" })
         {
-            var matching = document.RootElement.EnumerateObject().Single(entry =>
-                entry.Name.StartsWith($"echo '{candidate}' | sudo -S sh -c", StringComparison.Ordinal));
-            Assert.Equal("96", matching.Value.GetProperty("response").GetString());
-            Assert.Equal("seed", matching.Value.GetProperty("origin").GetString());
+            var probe = $"echo '{candidate}' | sudo -S sh -c 'nproc 2>/dev/null || /usr/bin/nproc 2>/dev/null || busybox nproc 2>/dev/null || grep -c '\\''^processor'\\'' /proc/cpuinfo 2>/dev/null' || echo '{candidate}' | sudo -S nproc 2>/dev/null || /usr/bin/nproc 2>/dev/null || busybox nproc 2>/dev/null || grep -c '^processor' /proc/cpuinfo 2>/dev/null || sh -c 'nproc 2>/dev/null || /usr/bin/nproc 2>/dev/null || busybox nproc 2>/dev/null || grep -c '\\''^processor'\\'' /proc/cpuinfo 2>/dev/null' || nproc 2>/dev/null || /usr/bin/nproc 2>/dev/null || busybox nproc 2>/dev/null || grep -c '^processor' /proc/cpuinfo 2>/dev/null";
+            Assert.True(store.TryGet(probe, out var matching));
+            Assert.Equal("96", matching.Response);
+            Assert.Equal("seed", matching.Origin);
         }
     }
 
