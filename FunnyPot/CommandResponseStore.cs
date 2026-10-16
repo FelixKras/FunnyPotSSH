@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace FunnyPot;
 
@@ -8,6 +9,207 @@ internal sealed class CommandResponseEntry
     public string Origin { get; init; } = "seed";
     public string? LlmModel { get; init; }
     public DateTimeOffset? UpdatedAtUtc { get; init; }
+}
+
+internal static class CommandCanonicalizer
+{
+    private const string RealSudoPassword = "Omega#2024!";
+
+    // Order matters: replace compound/longer structures before smaller tokens.
+    private static readonly Regex SudoEchoPasswordRegex = new(
+        @"(?<=\becho\s+(?:-[neE]+\s+)?)(?<quote>['""])(?<val>[^'""\r\n]{1,64})\k<quote>(?=\s*\|\s*sudo\s+-S\b)",
+        RegexOptions.Compiled);
+
+    private static readonly Regex PasswdPrintfThreeRegex = new(
+        @"(?<=\bprintf\s+['""]%s\\n%s\\n%s\\n['""]\s+)(?<q1>['""])(?<old>[^'""\r\n]{1,64})\k<q1>\s+(?<q2>['""])(?<new1>[^'""\r\n]{1,64})\k<q2>\s+(?<q3>['""])(?<new2>[^'""\r\n]{1,64})\k<q3>(?=\s*\|\s*(?:sudo\s+|/usr/bin/)?passwd\b)",
+        RegexOptions.Compiled);
+
+    private static readonly Regex PasswdPrintfTwoRegex = new(
+        @"(?<=\bprintf\s+['""]%s\\n%s\\n['""]\s+)(?<q1>['""])(?<new1>[^'""\r\n]{1,64})\k<q1>\s+(?<q2>['""])(?<new2>[^'""\r\n]{1,64})\k<q2>(?=\s*\|\s*(?:sudo\s+|/usr/bin/)?passwd\b)",
+        RegexOptions.Compiled);
+
+    private static readonly Regex UrlEndpointRegex = new(
+        @"(?<=(?:https?|ftp|tftp)://)(?<host>(?:\d{1,3}\.){3}\d{1,3}|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(?::(?<port>\d{1,5}))?",
+        RegexOptions.Compiled);
+
+    private static readonly Regex DevTcpRegex = new(
+        @"(?<=/dev/tcp/)(?<host>(?:\d{1,3}\.){3}\d{1,3}|[a-zA-Z0-9.-]+)/(?<port>\d{1,5})\b",
+        RegexOptions.Compiled);
+
+    private static readonly Regex TempRandomFileRegex = new(
+        @"(?<=(?:/tmp|/var/tmp|/dev/shm)/)(?<name>[A-Za-z0-9_.-]{6,32})\b",
+        RegexOptions.Compiled);
+
+    private static readonly Regex CanaryEchoRegex = new(
+        @"(?<=\becho\s+)(?<val>[A-Za-z0-9]{8,20})(?=\s*(?:&&|;|\||>|\r|\n|$))",
+        RegexOptions.Compiled);
+
+    private static readonly Regex CanaryRedirectRegex = new(
+        @"(?<=>\s*)(?<val>[A-Za-z0-9]{8,20})(?=\s*(?:&&|;|\||&|\r|\n|$))",
+        RegexOptions.Compiled);
+
+    private static readonly Regex SleepSecondsRegex = new(
+        @"(?<=\bsleep\s+)(?<val>\d{2,6})\b",
+        RegexOptions.Compiled);
+
+    private static readonly Regex Base64BlobRegex = new(
+        @"(?<=\s)(?<val>[A-Za-z0-9+/]{40,}={0,2})(?=\s|[;""'&|)]|$)",
+        RegexOptions.Compiled);
+
+    public static bool TryCanonicalize(string command, out string canonicalCommand, out Dictionary<string, string> parameters)
+    {
+        var map = new Dictionary<string, string>(StringComparer.Ordinal);
+        var reverseMap = new Dictionary<string, string>(StringComparer.Ordinal);
+        var counters = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        string GetOrAddPlaceholder(string category, string rawValue)
+        {
+            var key = $"{category}:{rawValue}";
+            if (reverseMap.TryGetValue(key, out var existing))
+                return existing;
+
+            var index = counters.GetValueOrDefault(category) + 1;
+            counters[category] = index;
+            var placeholder = $"{{{{{category}_{index}}}}}";
+            reverseMap[key] = placeholder;
+            map[placeholder] = rawValue;
+            return placeholder;
+        }
+
+        var working = command;
+
+        working = SudoEchoPasswordRegex.Replace(working, match =>
+        {
+            var quote = match.Groups["quote"].Value;
+            var val = match.Groups["val"].Value;
+            if (string.Equals(val, RealSudoPassword, StringComparison.Ordinal))
+                return match.Value;
+            return $"{quote}{GetOrAddPlaceholder("SUDO_PASS", val)}{quote}";
+        });
+
+        working = PasswdPrintfThreeRegex.Replace(working, match =>
+        {
+            var q1 = match.Groups["q1"].Value;
+            var q2 = match.Groups["q2"].Value;
+            var q3 = match.Groups["q3"].Value;
+            var oldPass = GetOrAddPlaceholder("PASS_CAND", match.Groups["old"].Value);
+            var newPass1 = GetOrAddPlaceholder("PASS_NEW", match.Groups["new1"].Value);
+            var newPass2 = GetOrAddPlaceholder("PASS_NEW", match.Groups["new2"].Value);
+            return $"{q1}{oldPass}{q1} {q2}{newPass1}{q2} {q3}{newPass2}{q3}";
+        });
+
+        working = PasswdPrintfTwoRegex.Replace(working, match =>
+        {
+            var q1 = match.Groups["q1"].Value;
+            var q2 = match.Groups["q2"].Value;
+            var newPass1 = GetOrAddPlaceholder("PASS_NEW", match.Groups["new1"].Value);
+            var newPass2 = GetOrAddPlaceholder("PASS_NEW", match.Groups["new2"].Value);
+            return $"{q1}{newPass1}{q1} {q2}{newPass2}{q2}";
+        });
+
+        working = UrlEndpointRegex.Replace(working, match =>
+        {
+            var host = GetOrAddPlaceholder("HOST", match.Groups["host"].Value);
+            if (!match.Groups["port"].Success)
+                return host;
+            var port = GetOrAddPlaceholder("PORT", match.Groups["port"].Value);
+            return $"{host}:{port}";
+        });
+
+        working = DevTcpRegex.Replace(working, match =>
+        {
+            var host = GetOrAddPlaceholder("HOST", match.Groups["host"].Value);
+            var port = GetOrAddPlaceholder("PORT", match.Groups["port"].Value);
+            return $"{host}/{port}";
+        });
+
+        working = TempRandomFileRegex.Replace(working, match =>
+        {
+            var name = match.Groups["name"].Value;
+            if (!LooksLikeRandomToken(name))
+                return match.Value;
+            return GetOrAddPlaceholder("TMP_FILE", name);
+        });
+
+        working = CanaryEchoRegex.Replace(working, match =>
+        {
+            var val = match.Groups["val"].Value;
+            if (!LooksLikeRandomToken(val))
+                return match.Value;
+            return GetOrAddPlaceholder("CANARY", val);
+        });
+
+        working = CanaryRedirectRegex.Replace(working, match =>
+        {
+            var val = match.Groups["val"].Value;
+            if (!LooksLikeRandomToken(val))
+                return match.Value;
+            return GetOrAddPlaceholder("CANARY_FILE", val);
+        });
+
+        working = SleepSecondsRegex.Replace(working, match =>
+        {
+            var val = match.Groups["val"].Value;
+            return GetOrAddPlaceholder("SLEEP_SEC", val);
+        });
+
+        working = Base64BlobRegex.Replace(working, match =>
+        {
+            var val = match.Groups["val"].Value;
+            return GetOrAddPlaceholder("B64_BLOB", val);
+        });
+
+        canonicalCommand = working;
+        parameters = map;
+        return map.Count > 0 && !string.Equals(command, working, StringComparison.Ordinal);
+    }
+
+    public static string TemplatizeResponse(string response, IReadOnlyDictionary<string, string> parameters)
+    {
+        if (string.IsNullOrEmpty(response) || parameters.Count == 0)
+            return response;
+
+        var result = response;
+        foreach (var (placeholder, rawValue) in parameters.OrderByDescending(pair => pair.Value.Length))
+        {
+            if (rawValue.Length >= 3)
+                result = result.Replace(rawValue, placeholder, StringComparison.Ordinal);
+        }
+
+        return result;
+    }
+
+    public static string HydrateResponse(string templateResponse, IReadOnlyDictionary<string, string> parameters)
+    {
+        if (string.IsNullOrEmpty(templateResponse) || parameters.Count == 0)
+            return templateResponse;
+
+        var result = templateResponse;
+        foreach (var (placeholder, rawValue) in parameters)
+            result = result.Replace(placeholder, rawValue, StringComparison.Ordinal);
+
+        return result;
+    }
+
+    private static bool LooksLikeRandomToken(string token)
+    {
+        if (token.Length < 6)
+            return false;
+        if (token is "vmware-dragon" or "passwd" or "passwd_link" or "passwd.bak" or "shadow" or "testfile" or "testdir" or "nohup.out")
+            return false;
+
+        bool hasDigit = false;
+        bool hasUpper = false;
+        bool hasLower = false;
+        foreach (var c in token)
+        {
+            if (char.IsDigit(c)) hasDigit = true;
+            else if (char.IsUpper(c)) hasUpper = true;
+            else if (char.IsLower(c)) hasLower = true;
+        }
+
+        return (hasDigit && (hasUpper || hasLower)) || (hasUpper && hasLower && token.Length >= 8);
+    }
 }
 
 internal sealed class CommandResponseStore
@@ -22,11 +224,16 @@ internal sealed class CommandResponseStore
     private readonly string _path;
     private readonly SemaphoreSlim _writeGate = new(1, 1);
     private Dictionary<string, CommandResponseEntry> _entries;
+    private Dictionary<string, CommandResponseEntry> _canonicalTemplates;
 
-    private CommandResponseStore(string path, Dictionary<string, CommandResponseEntry> entries)
+    private CommandResponseStore(
+        string path,
+        Dictionary<string, CommandResponseEntry> entries,
+        Dictionary<string, CommandResponseEntry> canonicalTemplates)
     {
         _path = path;
         _entries = entries;
+        _canonicalTemplates = canonicalTemplates;
     }
 
     public int Count => Volatile.Read(ref _entries).Count;
@@ -47,12 +254,67 @@ internal sealed class CommandResponseStore
             entries.Add(command, entry);
         }
 
-        return new CommandResponseStore(path, entries);
+        var canonicalTemplates = BuildCanonicalTemplateIndex(entries);
+        return new CommandResponseStore(path, entries, canonicalTemplates);
+    }
+
+    private static Dictionary<string, CommandResponseEntry> BuildCanonicalTemplateIndex(Dictionary<string, CommandResponseEntry> entries)
+    {
+        var templates = new Dictionary<string, CommandResponseEntry>(StringComparer.Ordinal);
+        foreach (var (command, entry) in entries)
+        {
+            if (!CommandCanonicalizer.TryCanonicalize(command, out var canonical, out var parameters))
+                continue;
+
+            var templatized = new CommandResponseEntry
+            {
+                Response = CommandCanonicalizer.TemplatizeResponse(entry.Response, parameters),
+                Origin = entry.Origin,
+                LlmModel = entry.LlmModel,
+                UpdatedAtUtc = entry.UpdatedAtUtc
+            };
+
+            if (!templates.TryGetValue(canonical, out var existing) || entry.Origin == "seed" && existing.Origin != "seed")
+                templates[canonical] = templatized;
+        }
+
+        return templates;
     }
 
     public bool TryGet(string command, out CommandResponseEntry entry)
     {
-        return Volatile.Read(ref _entries).TryGetValue(command, out entry!);
+        if (Volatile.Read(ref _entries).TryGetValue(command, out entry!))
+            return true;
+
+        if (CommandCanonicalizer.TryCanonicalize(command, out var canonical, out var parameters))
+        {
+            if (Volatile.Read(ref _entries).TryGetValue(canonical, out var directTemplate))
+            {
+                entry = new CommandResponseEntry
+                {
+                    Response = CommandCanonicalizer.HydrateResponse(directTemplate.Response, parameters),
+                    Origin = directTemplate.Origin,
+                    LlmModel = directTemplate.LlmModel,
+                    UpdatedAtUtc = directTemplate.UpdatedAtUtc
+                };
+                return true;
+            }
+
+            if (Volatile.Read(ref _canonicalTemplates).TryGetValue(canonical, out var indexedTemplate))
+            {
+                entry = new CommandResponseEntry
+                {
+                    Response = CommandCanonicalizer.HydrateResponse(indexedTemplate.Response, parameters),
+                    Origin = indexedTemplate.Origin,
+                    LlmModel = indexedTemplate.LlmModel,
+                    UpdatedAtUtc = indexedTemplate.UpdatedAtUtc
+                };
+                return true;
+            }
+        }
+
+        entry = null!;
+        return false;
     }
 
     public async Task<bool> TryLearnAsync(string command, string response, string llmModel, CancellationToken cancellationToken = default)
@@ -68,26 +330,44 @@ internal sealed class CommandResponseStore
             return false;
         }
 
+        var storeKey = command;
+        var storeResponse = response;
+        if (CommandCanonicalizer.TryCanonicalize(command, out var canonical, out var parameters))
+        {
+            storeKey = canonical;
+            storeResponse = CommandCanonicalizer.TemplatizeResponse(response, parameters);
+        }
+
         await _writeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             var current = Volatile.Read(ref _entries);
-            if (current.ContainsKey(command))
+            if (current.ContainsKey(command) || current.ContainsKey(storeKey))
                 return false;
+
+            var newEntry = new CommandResponseEntry
+            {
+                Response = storeResponse,
+                Origin = "llm",
+                LlmModel = llmModel,
+                UpdatedAtUtc = DateTimeOffset.UtcNow
+            };
 
             var next = new Dictionary<string, CommandResponseEntry>(current, StringComparer.Ordinal)
             {
-                [command] = new CommandResponseEntry
-                {
-                    Response = response,
-                    Origin = "llm",
-                    LlmModel = llmModel,
-                    UpdatedAtUtc = DateTimeOffset.UtcNow
-                }
+                [storeKey] = newEntry
             };
 
             await PersistAsync(next, cancellationToken).ConfigureAwait(false);
             Volatile.Write(ref _entries, next);
+            if (!string.Equals(storeKey, command, StringComparison.Ordinal))
+            {
+                var nextTemplates = new Dictionary<string, CommandResponseEntry>(Volatile.Read(ref _canonicalTemplates), StringComparer.Ordinal)
+                {
+                    [storeKey] = newEntry
+                };
+                Volatile.Write(ref _canonicalTemplates, nextTemplates);
+            }
             return true;
         }
         finally

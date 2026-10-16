@@ -6,7 +6,7 @@ scope: project
 status: approved-by-request
 created_at: 2026-08-06
 author: OpenCode
-updated_at: 2026-09-25
+updated_at: 2026-10-16
 reviewer: Kilo
 supersedes:
   - mp-artifact-cached-response-quality-session-2026-07-16
@@ -72,3 +72,9 @@ Some historical learned entries were model refusals, including a refusal to simu
 The deleted `sudo` entries no longer claim a password was absent after stdin supplied one, or invent three attempts for one candidate. These exact commands now miss and go to the LLM. The model prompt forbids phantom three-attempt failures and requires preserving `||` control flow; a fresh incomplete result receives one corrective retry and is not learned. This is not a general sudo interpreter; the next response is model-dependent until a valid one is learned (`FunnyPot/CommandResponseStore.cs`, `FunnyPot/Program.cs`, `FunnyPot.Tests/UnitTests.cs`).
 
 At the owner's request on 2026-09-25, all 66 retained CPU-count-only `nproc` probes were edited to return `96`; another 99 CPU-only exact keys previously deleted for bad responses were restored from the committed dictionary with curated `96` answers. These 165 entries are stored, not intercepted at runtime, and report `origin: seed` rather than attributing the edited answer to an old model. Three compound hardware-fingerprint entries report 96 logical processors; `/proc/cpuinfo` and two direct processor-count probes were aligned. The persona is a dual-socket Xeon Platinum 8259CL host with 48 threads per socket; the prompt instructs the LLM to return 96 for future uncached `nproc` probes, although new LLM output remains probabilistic. Cache keys containing attacker-supplied password candidates are not reproduced in memory artifacts (`FunnyPot/data/command_responses.json`, `FunnyPot/Program.cs`, `FunnyPot/FakeFileSystem.cs`, `FunnyPot.Tests/UnitTests.cs`).
+
+## Canonical Template Matching and Segmented Compound Resolution (2026-10-16)
+
+- `CommandCanonicalizer` normalizes single-token variants in compound commands (such as `echo '<pass>' | sudo -S`, `printf ... | passwd`, URL/IP:port endpoints, `/dev/tcp/<host>/<port>`, random `/tmp|/var/tmp|/dev/shm` filenames, random echo canary tokens, sleep durations, and base64 blobs) into indexed placeholders (`{{SUDO_PASS_1}}`, `{{TMP_FILE_1}}`, `{{HOST_1}}`, `{{CANARY_1}}`, etc.).
+- `CommandResponseStore` builds an in-memory canonical template index on load and hydrates matched responses with the attacker's concrete values on lookup. Newly learned LLM responses for canonicalizable commands are stored in canonical template form so future single-token variants hit the cache without calling OpenRouter.
+- `CommandResolver.TryResolveCompoundChainAsync` splits compound chains across `;`, `&&`, `||`, `&`, and newlines while respecting quotes and subshells, evaluates `&&`/`||` control-flow short-circuiting, strips `/dev/null` redirections (`>/dev/null`, `2>/dev/null`), tracks `VAR=$(...)` assignments across steps in any order, and resolves individual sub-commands from cache/built-ins before falling back to per-step LLM learning (`compound cache` / `compound hybrid`).

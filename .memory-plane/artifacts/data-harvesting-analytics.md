@@ -5,7 +5,9 @@ title: Data Harvesting And Analytics
 scope: project
 status: approved-by-request
 created_at: 2026-07-12
+updated_at: 2026-10-16
 author: Forge
+reviewer: Kilo
 source_refs:
   - FunnyPot/Program.cs
   - FunnyPot.Tests/UnitTests.cs
@@ -34,8 +36,9 @@ FunnyPot derives attacker-behavior telemetry at command time and records both ra
 ## Session Analytics
 
 - `ShellSessionAnalytics` tracks total commands, failed commands, first and last semantic complexity, MITRE technique counts, standard-error ratio, semantic drift, and Turing multiplier.
-- `CommandSequenceLatencyMs` measures delay between command completion and next command start.
-- Latency under 50 ms is labeled `automation` in command telemetry.
+- `CommandSequenceLatencyMs` measures delay between command completion (or shell open for the first command) and next command start, keyed and cleaned up by shell `sessionId`.
+- `SetupShell` captures SSH input delivery metrics (`DeliveryChannel`, `InputChunkCount`, `InputTypingDurationMs`, `InputBackspaceCount`).
+- `DataHarvester.ClassifyExchangeInteraction` combines delivery channel (`exec` vs `pty`), packet chunking, keystroke typing duration, backspace edits, inter-command latency, operator chaining, and output-dependent follow-up tokens to classify exchanges into `scripted`, `automation`, `hands_on_keyboard`, `automated_paste`, or `llm_harness`.
 - `TimeToCompromiseMs` is logged when a shell or exec channel opens.
 
 ## Payload Metadata Capture

@@ -876,6 +876,221 @@ public class CommandResolverTests
         Assert.Equal(12, totalTokens);
     }
 
+    [Fact]
+    public async Task ResolveCommand_CanonicalTemplateHitHydratesChangedTokensWithoutCallingLlm()
+    {
+        var path = CreateStoreFile(new Dictionary<string, string>
+        {
+            ["echo XMFpxdSkJf && cd /tmp; echo bGUis6OuDN > PaqKinutXw && sleep 114 &"] = "XMFpxdSkJf",
+            ["head -c 1458464 > /tmp/GiXvs1egbe"] = "head: missing operand after ‘/tmp/GiXvs1egbe’\r\nTry ‘head --help’ for more information."
+        });
+        try
+        {
+            Program.CommandResponses = CommandResponseStore.Load(path);
+            var calls = 0;
+
+            var canaryResult = await CommandResolver.ResolveCommandAsync(
+                "echo Z9kLmP4xQw && cd /tmp; echo rT8vBn2mKl > Qw9ErTyUiO && sleep 345 &",
+                "session",
+                FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")),
+                [],
+                CancellationToken.None,
+                (_, _) =>
+                {
+                    calls++;
+                    return Task.FromResult(("unexpected", 1, 1, 2, "test-model"));
+                });
+
+            var headResult = await CommandResolver.ResolveCommandAsync(
+                "head -c 1458464 > /tmp/NewTmp9876",
+                "session",
+                FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")),
+                [],
+                CancellationToken.None,
+                (_, _) =>
+                {
+                    calls++;
+                    return Task.FromResult(("unexpected", 1, 1, 2, "test-model"));
+                });
+
+            Assert.Equal("Z9kLmP4xQw", canaryResult.response);
+            Assert.Equal("cache", canaryResult.responseSource);
+            Assert.Contains("/tmp/NewTmp9876", headResult.response);
+            Assert.Equal("cache", headResult.responseSource);
+            Assert.Equal(0, calls);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task ResolveCommand_CompoundChainInDifferentOrderUsesStepCacheWithoutLlm()
+    {
+        var path = CreateStoreFile(new Dictionary<string, string>
+        {
+            ["uname -s"] = "Linux",
+            ["id"] = "uid=1001(remote) gid=1001(users) groups=1001(users)",
+            ["nproc"] = "96",
+            ["hostname"] = "omegablack"
+        });
+        try
+        {
+            Program.CommandResponses = CommandResponseStore.Load(path);
+            var calls = 0;
+
+            var firstOrder = await CommandResolver.ResolveCommandAsync(
+                "uname -s && id && nproc && hostname",
+                "session",
+                FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")),
+                [],
+                CancellationToken.None,
+                (_, _) => { calls++; return Task.FromResult(("unexpected", 1, 1, 2, "test-model")); });
+
+            var reordered = await CommandResolver.ResolveCommandAsync(
+                "hostname && nproc && uname -s && id",
+                "session",
+                FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")),
+                [],
+                CancellationToken.None,
+                (_, _) => { calls++; return Task.FromResult(("unexpected", 1, 1, 2, "test-model")); });
+
+            Assert.Equal("Linux\r\nuid=1001(remote) gid=1001(users) groups=1001(users)\r\n96\r\nomegablack", firstOrder.response);
+            Assert.Equal("compound cache", firstOrder.responseSource);
+            Assert.Equal("omegablack\r\n96\r\nLinux\r\nuid=1001(remote) gid=1001(users) groups=1001(users)", reordered.response);
+            Assert.Equal("compound cache", reordered.responseSource);
+            Assert.Equal(0, calls);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task ResolveCommand_CompoundOrAndShortCircuitAndVariableExpansionWorkInAnyOrder()
+    {
+        var path = CreateStoreFile(new Dictionary<string, string>
+        {
+            ["uname -m"] = "x86_64",
+            ["nproc"] = "96"
+        });
+        try
+        {
+            Program.CommandResponses = CommandResponseStore.Load(path);
+            var calls = 0;
+
+            const string chain = "echo 'badpass' | sudo -S sh -c 'nproc 2>/dev/null' 2>/dev/null || cpus=$(/usr/bin/nproc 2>/dev/null || busybox nproc 2>/dev/null); arch=$(/bin/uname -m 2>/dev/null); false && echo 'NEVER'; echo \"CPUS:$cpus\"; echo \"ARCH:$arch\"";
+            var result = await CommandResolver.ResolveCommandAsync(
+                chain,
+                "session",
+                FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")),
+                [],
+                CancellationToken.None,
+                (_, _) => { calls++; return Task.FromResult(("unexpected", 1, 1, 2, "test-model")); });
+
+            Assert.Equal("CPUS:96\r\nARCH:x86_64", result.response);
+            Assert.Equal("compound cache", result.responseSource);
+            Assert.Equal(0, calls);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task ResolveCommand_LongHybridChainResolvesOnlyUncachedStepViaLlmAndCachesItForReorderedReuse()
+    {
+        var path = CreateStoreFile(new Dictionary<string, string>
+        {
+            ["uname -s"] = "Linux",
+            ["nproc"] = "96",
+            ["hostname"] = "omegablack",
+            ["whoami"] = "remote"
+        });
+        try
+        {
+            Program.CommandResponses = CommandResponseStore.Load(path);
+            var calls = 0;
+
+            var first = await CommandResolver.ResolveCommandAsync(
+                "uname -s; nproc; custom_probe --check; hostname; whoami",
+                "session",
+                FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")),
+                [new ChatRequestData.ChatMessage { Role = "system", Content = "sys" }],
+                CancellationToken.None,
+                (_, _) =>
+                {
+                    calls++;
+                    return Task.FromResult(("probe-ok", 5, 2, 7, "step-model"));
+                });
+
+            Assert.Equal("Linux\r\n96\r\nprobe-ok\r\nomegablack\r\nremote", first.response);
+            Assert.Equal("compound hybrid", first.responseSource);
+            Assert.Equal(1, calls);
+            Assert.True(Program.CommandResponses.TryGet("custom_probe --check", out var learnedStep));
+            Assert.Equal("probe-ok", learnedStep.Response);
+
+            var reordered = await CommandResolver.ResolveCommandAsync(
+                "whoami && custom_probe --check && nproc && uname -s",
+                "session",
+                FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N")),
+                [new ChatRequestData.ChatMessage { Role = "system", Content = "sys" }],
+                CancellationToken.None,
+                (_, _) =>
+                {
+                    calls++;
+                    return Task.FromResult(("unexpected", 5, 2, 7, "step-model"));
+                });
+
+            Assert.Equal("remote\r\nprobe-ok\r\n96\r\nLinux", reordered.response);
+            Assert.Equal("compound cache", reordered.responseSource);
+            Assert.Equal(1, calls);
+        }
+        finally
+        {
+            File.Delete(path);
+            File.Delete(path + ".tmp");
+        }
+    }
+
+    [Fact]
+    public void ClassifyExchangeInteraction_DistinguishesScriptedFromHandsOnKeyboardAndPaste()
+    {
+        var execClassification = DataHarvester.ClassifyExchangeInteraction(
+            "uname -a",
+            commandSequenceLatencyMs: 120,
+            new CommandDeliveryMetrics { DeliveryChannel = "exec", ChunkCount = 1, TypingDurationMs = 0, BackspaceCount = 0 });
+        Assert.Equal("scripted", execClassification);
+
+        var botChainClassification = DataHarvester.ClassifyExchangeInteraction(
+            "echo '123456' | sudo -S nproc 2>/dev/null || /usr/bin/nproc 2>/dev/null || busybox nproc 2>/dev/null",
+            commandSequenceLatencyMs: 180,
+            new CommandDeliveryMetrics { DeliveryChannel = "pty", ChunkCount = 1, TypingDurationMs = 2, BackspaceCount = 0 });
+        Assert.Equal("scripted", botChainClassification);
+
+        var humanTypedClassification = DataHarvester.ClassifyExchangeInteraction(
+            "ls -la /home/remote",
+            commandSequenceLatencyMs: 3400,
+            new CommandDeliveryMetrics { DeliveryChannel = "pty", ChunkCount = 14, TypingDurationMs = 1850, BackspaceCount = 1 });
+        Assert.Equal("hands_on_keyboard", humanTypedClassification);
+
+        var pasteClassification = DataHarvester.ClassifyExchangeInteraction(
+            "export PATH=/usr/local/bin:$PATH; uname -a && id && lscpu | grep 'Model name'",
+            commandSequenceLatencyMs: 4200,
+            new CommandDeliveryMetrics { DeliveryChannel = "pty", ChunkCount = 1, TypingDurationMs = 0, BackspaceCount = 0 });
+        Assert.Equal("automated_paste", pasteClassification);
+
+        var harnessClassification = DataHarvester.ClassifyExchangeInteraction(
+            "cat /home/secretOps/mission_brief.txt && ls -la /home/secretOps",
+            commandSequenceLatencyMs: 2100,
+            new CommandDeliveryMetrics { DeliveryChannel = "pty", ChunkCount = 1, TypingDurationMs = 5, BackspaceCount = 0 },
+            previousResponse: "drwxr-xr-x 2 secretOps secretOps 4096 mission_brief.txt");
+        Assert.Equal("llm_harness", harnessClassification);
+    }
+
     private static string CreateStoreFile(IReadOnlyDictionary<string, string> responses)
     {
         var path = Path.Combine(Path.GetTempPath(), $"funnypot-responses-{Guid.NewGuid():N}.json");

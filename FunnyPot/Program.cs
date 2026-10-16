@@ -558,6 +558,7 @@ class Program
             var username = args.AttachedUserauthArgs?.Username ?? "remote";
             var channel = args.Channel;
             var sessionId = Guid.NewGuid().ToString();
+            var shellOpenedAt = DateTime.UtcNow;
             var commandCount = 0;
             var blockedOps = 0;
             long totalPromptTokens = 0;
@@ -570,7 +571,7 @@ class Program
             var llmCts = CancellationTokenSource.CreateLinkedTokenSource(ApplicationStopping.Token);
             var shellAnalytics = ShellAnalyticsBySession.GetOrAdd(sessionId, _ => new ShellSessionAnalytics
             {
-                SessionStartedAt = DateTime.UtcNow
+                SessionStartedAt = shellOpenedAt
             });
 
             var fakeFs = FakeFileSystem.GetOrCreate(sessionId);
@@ -578,7 +579,7 @@ class Program
             Logger.LogMsg($"Shell session {sessionId} started for {username} from {remoteEndpoint}");
             Logger.LogYaml("shell_session_start", new SessionLogEntry
             {
-                Timestamp = DateTime.UtcNow,
+                Timestamp = shellOpenedAt,
                 SessionKey = connectionSessionKey,
                 ShellSessionId = sessionId,
                 RemoteEndpoint = remoteEndpoint,
@@ -586,10 +587,15 @@ class Program
                 ClientVersion = args.AttachedUserauthArgs?.Session?.ClientVersion ?? "unknown",
                 SshBanner = sshBanner,
                 Event = isInteractiveShell ? "ShellOpened" : "ExecOpened",
-                DurationSeconds = (DateTime.UtcNow - connectionStartedAt).TotalSeconds,
-                TimeToCompromiseMs = (long)(DateTime.UtcNow - connectionStartedAt).TotalMilliseconds
+                DurationSeconds = (shellOpenedAt - connectionStartedAt).TotalSeconds,
+                TimeToCompromiseMs = (long)(shellOpenedAt - connectionStartedAt).TotalMilliseconds
             });
             var pendingInput = "";
+            DateTime? pendingLineFirstByteAt = null;
+            DateTime? pendingLineLastByteAt = null;
+            var pendingLineChunkCount = 0;
+            var pendingLineBackspaceCount = 0;
+            var previousResponseText = "";
             var shellClosed = 0;
             var shellFinalized = 0;
             var idleTimer = new System.Timers.Timer(SessionIdleTimeoutSecs * 1000) { AutoReset = false };
@@ -655,6 +661,7 @@ class Program
                 });
                 Logger.UpdateGlobalStats(username, commandCount, blockedOps, (int)totalPromptTokens, (int)totalCompletionTokens, sessionDurationMs, shellAnalytics, sshBanner);
                 ShellAnalyticsBySession.TryRemove(sessionId, out ShellSessionAnalytics? _);
+                LastCommandEndedAt.TryRemove(sessionId, out DateTime _);
                 FakeFileSystem.Remove(sessionId);
                 commandWorker?.Dispose();
                 gitPushTask = Task.Run(() => Logger.PushToGit(sessionId));
@@ -738,7 +745,7 @@ class Program
                 });
             }
 
-            void ProcessLine(string line)
+            void ProcessLine(string line, CommandDeliveryMetrics? delivery = null)
             {
                 if (Volatile.Read(ref shellClosed) != 0)
                     return;
@@ -783,7 +790,19 @@ class Program
 
                 long? commandSequenceLatencyMs = LastCommandEndedAt.TryGetValue(sessionId, out var previousEndedAt)
                     ? (long)(commandStartedAt - previousEndedAt).TotalMilliseconds
-                    : null;
+                    : (long)(commandStartedAt - shellOpenedAt).TotalMilliseconds;
+                var deliveryMetrics = delivery ?? new CommandDeliveryMetrics
+                {
+                    DeliveryChannel = isInteractiveShell ? "pty" : "exec",
+                    ChunkCount = 1,
+                    TypingDurationMs = 0,
+                    BackspaceCount = 0
+                };
+                var automationHint = DataHarvester.ClassifyExchangeInteraction(
+                    line,
+                    commandSequenceLatencyMs,
+                    deliveryMetrics,
+                    previousResponseText);
                 var exchangeId = $"{connectionSessionKey}:{exchangeNumber:D6}";
 
                 Logger.LogYaml("command", new CommandLogEntry
@@ -799,7 +818,11 @@ class Program
                     MessageNumber = exchangeNumber,
                     ShellMessageNumber = commandCount,
                     CommandSequenceLatencyMs = commandSequenceLatencyMs,
-                    ActorAutomationHint = commandSequenceLatencyMs is < 50 ? "automation" : "unknown",
+                    ActorAutomationHint = automationHint,
+                    DeliveryChannel = deliveryMetrics.DeliveryChannel,
+                    InputTypingDurationMs = deliveryMetrics.TypingDurationMs,
+                    InputChunkCount = deliveryMetrics.ChunkCount,
+                    InputBackspaceCount = deliveryMetrics.BackspaceCount,
                     DiscoveryDepthScore = commandAnalysis.DiscoveryDepthScore,
                     PersistenceVector = commandAnalysis.PersistenceVector,
                     PayloadUrls = commandAnalysis.PayloadUrls,
@@ -853,6 +876,7 @@ class Program
 
                     stopwatch.Stop();
                     LastCommandEndedAt[sessionId] = DateTime.UtcNow;
+                    previousResponseText = response;
 
                     processingStage = "updating conversation history";
                     if (string.IsNullOrEmpty(response))
@@ -953,7 +977,11 @@ class Program
                     return;
                 }
 
-                foreach (var c in Encoding.UTF8.GetString(data))
+                var packetText = Encoding.UTF8.GetString(data);
+                var packetNow = DateTime.UtcNow;
+                var countedChunkForPendingLine = false;
+
+                foreach (var c in packetText)
                 {
                     if (Volatile.Read(ref shellClosed) != 0)
                         return;
@@ -962,14 +990,38 @@ class Program
                     {
                         TrySendData(Encoding.UTF8.GetBytes("\r\n"));
                         var line = pendingInput;
+                        var typingMs = pendingLineFirstByteAt.HasValue && pendingLineLastByteAt.HasValue
+                            ? Math.Max(0, (long)(pendingLineLastByteAt.Value - pendingLineFirstByteAt.Value).TotalMilliseconds)
+                            : 0;
+                        var delivery = new CommandDeliveryMetrics
+                        {
+                            DeliveryChannel = isInteractiveShell ? "pty" : "exec",
+                            ChunkCount = Math.Max(1, pendingLineChunkCount),
+                            TypingDurationMs = typingMs,
+                            BackspaceCount = pendingLineBackspaceCount
+                        };
                         pendingInput = "";
-                        if (!commandWorker.TryPost(() => ProcessLine(line)))
+                        pendingLineFirstByteAt = null;
+                        pendingLineLastByteAt = null;
+                        pendingLineChunkCount = 0;
+                        pendingLineBackspaceCount = 0;
+                        countedChunkForPendingLine = false;
+                        if (!commandWorker.TryPost(() => ProcessLine(line, delivery)))
                             CloseShell("CommandWorkerStopped");
                         continue;
                     }
 
+                    if (!countedChunkForPendingLine)
+                    {
+                        pendingLineChunkCount++;
+                        countedChunkForPendingLine = true;
+                    }
+                    pendingLineFirstByteAt ??= packetNow;
+                    pendingLineLastByteAt = packetNow;
+
                     if (c == '\b' || c == '\u007f')
                     {
+                        pendingLineBackspaceCount++;
                         if (pendingInput.Length == 0) continue;
                         pendingInput = pendingInput[..^1];
                         TrySendData(Encoding.UTF8.GetBytes("\b \b"));
@@ -1010,7 +1062,13 @@ class Program
             ResetIdle();
             if (isInteractiveShell)
                 SendPrompt();
-            else if (scpUploadSession is null && !commandWorker.TryPost(() => ProcessLine(args.CommandText ?? "")))
+            else if (scpUploadSession is null && !commandWorker.TryPost(() => ProcessLine(args.CommandText ?? "", new CommandDeliveryMetrics
+            {
+                DeliveryChannel = "exec",
+                ChunkCount = 1,
+                TypingDurationMs = 0,
+                BackspaceCount = 0
+            })))
                 CloseShell("CommandWorkerStopped");
         };
     }
@@ -1374,6 +1432,14 @@ public class SessionLogEntry
     public long TimeToCompromiseMs { get; set; }
 }
 
+public sealed record CommandDeliveryMetrics
+{
+    public string DeliveryChannel { get; init; } = "pty";
+    public int ChunkCount { get; init; } = 1;
+    public long TypingDurationMs { get; init; }
+    public int BackspaceCount { get; init; }
+}
+
 public class CommandLogEntry
 {
     [JsonPropertyName("MessageNumber")]
@@ -1389,6 +1455,10 @@ public class CommandLogEntry
     public string Command { get; set; } = "";
     public long? CommandSequenceLatencyMs { get; set; }
     public string ActorAutomationHint { get; set; } = "unknown";
+    public string? DeliveryChannel { get; set; }
+    public long? InputTypingDurationMs { get; set; }
+    public int? InputChunkCount { get; set; }
+    public int? InputBackspaceCount { get; set; }
     public int DiscoveryDepthScore { get; set; }
     public string PersistenceVector { get; set; } = "none";
     public List<string> PayloadUrls { get; set; } = new();
@@ -1538,6 +1608,14 @@ public class CommandExchangeRecord
     public DateTime? Timestamp { get; set; }
     public long? CommandSequenceLatencyMs { get; set; }
     public string ActorAutomationHint { get; set; } = "unknown";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? DeliveryChannel { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public long? InputTypingDurationMs { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? InputChunkCount { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? InputBackspaceCount { get; set; }
     public int DiscoveryDepthScore { get; set; }
     public string PersistenceVector { get; set; } = "none";
     public List<string> PayloadUrls { get; set; } = new();
@@ -2196,6 +2274,19 @@ static class CommandResolver
         if (TryRenderExplorationChain(command, store, out var chainResponse))
             return (chainResponse, true, false, 0, 0, "", "compound cache");
 
+        var compoundResult = await TryResolveCompoundChainAsync(command, sessionId, fs, store, messageHistory, cancellationToken, llmProvider).ConfigureAwait(false);
+        if (compoundResult.resolved)
+        {
+            return (
+                compoundResult.response,
+                compoundResult.promptTokens == 0 && compoundResult.completionTokens == 0,
+                false,
+                compoundResult.promptTokens,
+                compoundResult.completionTokens,
+                compoundResult.llmModel,
+                compoundResult.responseSource);
+        }
+
         llmProvider ??= Program.GetLLMResponseAsync;
         var (response, promptTokens, completionTokens, _, llmModel) =
             await llmProvider(messageHistory, cancellationToken).ConfigureAwait(false);
@@ -2385,6 +2476,706 @@ static class CommandResolver
                 return true;
         }
         return false;
+    }
+
+    internal sealed record CompoundSegment(string PrecedingOperator, string CommandText, bool RunInBackground);
+
+    internal static bool TrySplitCompoundSegments(string command, out List<CompoundSegment> segments)
+    {
+        segments = [];
+        if (string.IsNullOrWhiteSpace(command))
+            return false;
+
+        var inSingleQuote = false;
+        var inDoubleQuote = false;
+        var parenDepth = 0;
+        var braceDepth = 0;
+        var start = 0;
+        var precedingOp = "";
+
+        for (var i = 0; i < command.Length; i++)
+        {
+            var c = command[i];
+            if (c == '\\' && !inSingleQuote)
+            {
+                if (i + 1 < command.Length && command[i + 1] == '\n')
+                {
+                    i++;
+                    continue;
+                }
+                i++;
+                continue;
+            }
+
+            if (c == '`' && !inSingleQuote)
+                return false;
+
+            if (c == '\'' && !inDoubleQuote)
+            {
+                inSingleQuote = !inSingleQuote;
+                continue;
+            }
+
+            if (c == '"' && !inSingleQuote)
+            {
+                inDoubleQuote = !inDoubleQuote;
+                continue;
+            }
+
+            if (inSingleQuote || inDoubleQuote)
+                continue;
+
+            if (c == '(') { parenDepth++; continue; }
+            if (c == ')') { if (parenDepth == 0) return false; parenDepth--; continue; }
+            if (c == '{') { braceDepth++; continue; }
+            if (c == '}') { if (braceDepth == 0) return false; braceDepth--; continue; }
+
+            if (parenDepth > 0 || braceDepth > 0)
+                continue;
+
+            if ((c == '&' || c == '|') && i + 1 < command.Length && command[i + 1] == c)
+            {
+                var op = c == '&' ? "&&" : "||";
+                var part = command[start..i].Trim();
+                if (string.IsNullOrEmpty(part))
+                    return false;
+                segments.Add(new CompoundSegment(precedingOp, part, false));
+                precedingOp = op;
+                i++;
+                start = i + 1;
+                continue;
+            }
+
+            if (c is ';' or '\n')
+            {
+                var part = command[start..i].Trim();
+                if (!string.IsNullOrEmpty(part))
+                {
+                    segments.Add(new CompoundSegment(precedingOp, part, false));
+                    precedingOp = ";";
+                }
+                start = i + 1;
+                continue;
+            }
+
+            if (c == '&')
+            {
+                // Skip file descriptor redirections such as 2>&1, >&6, <&6, &>
+                var prev = i > 0 ? command[i - 1] : '\0';
+                var next = i + 1 < command.Length ? command[i + 1] : '\0';
+                if (prev is '>' or '<' || next == '>')
+                    continue;
+
+                var part = command[start..i].Trim();
+                if (string.IsNullOrEmpty(part))
+                    return false;
+                segments.Add(new CompoundSegment(precedingOp, part, true));
+                precedingOp = "&";
+                start = i + 1;
+                continue;
+            }
+        }
+
+        if (inSingleQuote || inDoubleQuote || parenDepth != 0 || braceDepth != 0)
+            return false;
+
+        var trailing = command[start..].Trim();
+        if (!string.IsNullOrEmpty(trailing))
+            segments.Add(new CompoundSegment(precedingOp, trailing, false));
+
+        if (segments.Count < 2 || segments.Count > 64)
+            return false;
+
+        // Avoid splitting multi-line control blocks (if/then/fi, for/do/done, while/do/done, case/esac)
+        foreach (var seg in segments)
+        {
+            if (Regex.IsMatch(seg.CommandText, @"^(?:if|then|else|elif|fi|for|while|until|do|done|case|esac)\b"))
+                return false;
+        }
+
+        return true;
+    }
+
+    internal static async Task<(bool resolved, string response, int promptTokens, int completionTokens, string llmModel, string responseSource)> TryResolveCompoundChainAsync(
+        string command,
+        string sessionId,
+        FakeFileSystem fs,
+        CommandResponseStore store,
+        List<ChatRequestData.ChatMessage> messageHistory,
+        CancellationToken cancellationToken,
+        Func<List<ChatRequestData.ChatMessage>, CancellationToken, Task<(string response, int promptTokens, int completionTokens, int totalTokens, string model)>>? llmProvider)
+    {
+        if (!TrySplitCompoundSegments(command, out var segments))
+            return (false, "", 0, 0, "", "");
+
+        var variables = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["HOME"] = "/home/remote",
+            ["USER"] = "remote",
+            ["LOGNAME"] = "remote",
+            ["HOSTNAME"] = "omegablack",
+            ["SHELL"] = "/bin/bash",
+            ["PATH"] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        };
+
+        var planned = new List<(CompoundSegment Segment, string CleanStep, bool SuppressStdout, bool SuppressStderr, string? VarAssignName, string? SubCommand)>();
+        var knownHits = 0;
+
+        foreach (var segment in segments)
+        {
+            var (cleanStep, suppressStdout, suppressStderr) = StripRedirections(segment.CommandText);
+            if (ContainsUnsupportedConstruct(cleanStep))
+                return (false, "", 0, 0, "", "");
+
+            if (TryParseVariableAssignment(cleanStep, out var varName, out var subCommand))
+            {
+                planned.Add((segment, cleanStep, suppressStdout, suppressStderr, varName, subCommand));
+                if (subCommand is null)
+                {
+                    var eqIdx = cleanStep.IndexOf('=');
+                    variables[varName] = eqIdx >= 0 ? UnquoteLiteral(cleanStep[(eqIdx + 1)..].Trim()) : "";
+                    knownHits++;
+                }
+                else if (CanResolveStepWithoutLlm(subCommand, store, fs, variables))
+                {
+                    knownHits++;
+                    variables[varName] = "";
+                }
+                continue;
+            }
+
+            planned.Add((segment, cleanStep, suppressStdout, suppressStderr, null, null));
+            if (segment.RunInBackground || CanResolveStepWithoutLlm(segment.CommandText, store, fs, variables) || CanResolveStepWithoutLlm(cleanStep, store, fs, variables))
+                knownHits++;
+        }
+
+        // For short chains (< 4 steps) where not all steps can be resolved from cache/built-ins,
+        // keep whole-command LLM resolution unless all steps resolve locally/from cache.
+        var allResolvedWithoutLlm = knownHits == planned.Count;
+        if (!allResolvedWithoutLlm && (planned.Count < 4 || knownHits * 2 < planned.Count))
+            return (false, "", 0, 0, "", "");
+
+        // Reset variables map for actual execution pass
+        variables.Clear();
+        variables["HOME"] = "/home/remote";
+        variables["USER"] = "remote";
+        variables["LOGNAME"] = "remote";
+        variables["HOSTNAME"] = "omegablack";
+        variables["SHELL"] = "/bin/bash";
+        variables["PATH"] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
+
+        var outputs = new List<string>();
+        var lastExitSuccess = true;
+        var totalPromptTokens = 0;
+        var totalCompletionTokens = 0;
+        var lastModel = "";
+        var usedLlm = false;
+
+        foreach (var item in planned)
+        {
+            if (item.Segment.PrecedingOperator == "&&" && !lastExitSuccess)
+                continue;
+            if (item.Segment.PrecedingOperator == "||" && lastExitSuccess)
+                continue;
+
+            if (item.VarAssignName is not null)
+            {
+                if (item.SubCommand is null)
+                {
+                    var expandedAssign = ExpandShellVariables(item.CleanStep, variables);
+                    if (expandedAssign.Contains('$'))
+                        return (false, "", 0, 0, "", "");
+                    var eqIdx = expandedAssign.IndexOf('=');
+                    var rawVal = eqIdx >= 0 ? UnquoteLiteral(expandedAssign[(eqIdx + 1)..].Trim()) : "";
+                    variables[item.VarAssignName] = rawVal;
+                    lastExitSuccess = true;
+                    continue;
+                }
+
+                var expandedSub = ExpandShellVariables(item.SubCommand, variables);
+                if (expandedSub.Contains('$'))
+                    return (false, "", 0, 0, "", "");
+
+                var subResult = await ResolveSingleStepAsync(
+                    expandedSub,
+                    expandedSub,
+                    sessionId,
+                    fs,
+                    store,
+                    messageHistory,
+                    cancellationToken,
+                    llmProvider).ConfigureAwait(false);
+                if (!subResult.resolved)
+                    return (false, "", 0, 0, "", "");
+
+                totalPromptTokens += subResult.promptTokens;
+                totalCompletionTokens += subResult.completionTokens;
+                if (!string.IsNullOrEmpty(subResult.llmModel))
+                    lastModel = subResult.llmModel;
+                usedLlm |= subResult.usedLlm;
+
+                variables[item.VarAssignName] = subResult.output.Replace("\r\n", "\n").TrimEnd('\r', '\n');
+                lastExitSuccess = subResult.exitSuccess;
+                continue;
+            }
+
+            var expandedStep = ExpandShellVariables(item.CleanStep, variables);
+            if (expandedStep.Contains('$'))
+                return (false, "", 0, 0, "", "");
+
+            if (item.Segment.RunInBackground)
+            {
+                if (expandedStep.StartsWith("nohup ", StringComparison.Ordinal) && !item.SuppressStderr && !item.SuppressStdout)
+                    outputs.Add("nohup: ignoring input and appending output to 'nohup.out'");
+                lastExitSuccess = true;
+                continue;
+            }
+
+            var stepResult = await ResolveSingleStepAsync(
+                expandedStep,
+                item.Segment.CommandText,
+                sessionId,
+                fs,
+                store,
+                messageHistory,
+                cancellationToken,
+                llmProvider).ConfigureAwait(false);
+            if (!stepResult.resolved)
+                return (false, "", 0, 0, "", "");
+
+            totalPromptTokens += stepResult.promptTokens;
+            totalCompletionTokens += stepResult.completionTokens;
+            if (!string.IsNullOrEmpty(stepResult.llmModel))
+                lastModel = stepResult.llmModel;
+            usedLlm |= stepResult.usedLlm;
+            lastExitSuccess = stepResult.exitSuccess;
+
+            var visibleOutput = FilterVisibleStepOutput(stepResult.output, stepResult.exitSuccess, item.SuppressStdout, item.SuppressStderr);
+            if (!string.IsNullOrEmpty(visibleOutput))
+                outputs.Add(visibleOutput.TrimEnd('\r', '\n'));
+        }
+
+        var combined = string.Join("\r\n", outputs);
+        var source = usedLlm ? "compound hybrid" : "compound cache";
+        return (true, combined, totalPromptTokens, totalCompletionTokens, lastModel, source);
+    }
+
+    private static string FilterVisibleStepOutput(string output, bool exitSuccess, bool suppressStdout, bool suppressStderr)
+    {
+        if (string.IsNullOrEmpty(output))
+            return "";
+        if (suppressStdout && suppressStderr)
+            return "";
+
+        var isError = !exitSuccess || DataHarvester.IsFailureResponse(output);
+        if (isError && suppressStderr)
+            return "";
+        if (!isError && suppressStdout)
+            return "";
+
+        return output;
+    }
+
+    private static (string cleanStep, bool suppressStdout, bool suppressStderr) StripRedirections(string step)
+    {
+        var suppressStdout = false;
+        var suppressStderr = false;
+        var working = step.Trim();
+
+        if (Regex.IsMatch(working, @"(?:&>\s*/dev/null|>\s*/dev/null\s+2>&1|2>&1\s+>\s*/dev/null)"))
+        {
+            suppressStdout = true;
+            suppressStderr = true;
+            working = Regex.Replace(working, @"\s*(?:&>\s*/dev/null|>\s*/dev/null\s+2>&1|2>&1\s+>\s*/dev/null)\s*", " ").Trim();
+        }
+        if (Regex.IsMatch(working, @"(?<![0-9])2>\s*/dev/null\b"))
+        {
+            suppressStderr = true;
+            working = Regex.Replace(working, @"\s*(?<![0-9])2>\s*/dev/null\b\s*", " ").Trim();
+        }
+        if (Regex.IsMatch(working, @"(?<![0-9&>])1?>\s*/dev/null\b"))
+        {
+            suppressStdout = true;
+            working = Regex.Replace(working, @"\s*(?<![0-9&>])1?>\s*/dev/null\b\s*", " ").Trim();
+        }
+
+        return (working, suppressStdout, suppressStderr);
+    }
+
+    private static bool ContainsUnsupportedConstruct(string step)
+    {
+        // Reject file redirections (other than /dev/null already stripped) or subshells unless the exact step is cached.
+        var inSingle = false;
+        var inDouble = false;
+        for (var i = 0; i < step.Length; i++)
+        {
+            var c = step[i];
+            if (c == '\\' && !inSingle) { i++; continue; }
+            if (c == '\'' && !inDouble) { inSingle = !inSingle; continue; }
+            if (c == '"' && !inSingle) { inDouble = !inDouble; continue; }
+            if (inSingle || inDouble) continue;
+            if (c is '>' or '<')
+                return true;
+        }
+        return false;
+    }
+
+    private static bool TryParseVariableAssignment(string step, out string varName, out string? subCommand)
+    {
+        varName = "";
+        subCommand = null;
+
+        var stripped = step;
+        if (stripped.StartsWith("export ", StringComparison.Ordinal))
+            stripped = stripped["export ".Length..].TrimStart();
+
+        var match = Regex.Match(stripped, @"^(?<name>[A-Za-z_][A-Za-z0-9_]*)=(?<rhs>.+)$", RegexOptions.Singleline);
+        if (!match.Success)
+            return false;
+
+        varName = match.Groups["name"].Value;
+        var rhs = match.Groups["rhs"].Value.Trim();
+        if (rhs.StartsWith("$(", StringComparison.Ordinal) && rhs.EndsWith(')'))
+        {
+            var inner = rhs[2..^1].Trim();
+            if (!inner.Contains("$("))
+            {
+                subCommand = inner;
+                return true;
+            }
+            return false;
+        }
+
+        if (!rhs.Contains('$') && !rhs.Contains('`') && !rhs.Contains(' '))
+            return true;
+
+        if ((rhs.StartsWith('"') && rhs.EndsWith('"') || rhs.StartsWith('\'') && rhs.EndsWith('\'')) && !rhs.Contains("$("))
+            return true;
+
+        return false;
+    }
+
+    private static string ExpandShellVariables(string text, IReadOnlyDictionary<string, string> variables)
+    {
+        if (!text.Contains('$'))
+            return text;
+
+        var sb = new StringBuilder(text.Length);
+        var inSingleQuote = false;
+        for (var i = 0; i < text.Length; i++)
+        {
+            var c = text[i];
+            if (c == '\'' && (i == 0 || text[i - 1] != '\\'))
+            {
+                inSingleQuote = !inSingleQuote;
+                sb.Append(c);
+                continue;
+            }
+
+            if (!inSingleQuote && c == '$' && i + 1 < text.Length)
+            {
+                if (text[i + 1] == '{')
+                {
+                    var close = text.IndexOf('}', i + 2);
+                    if (close > i + 2)
+                    {
+                        var name = text[(i + 2)..close];
+                        if (Regex.IsMatch(name, @"^[A-Za-z_][A-Za-z0-9_]*$") && variables.TryGetValue(name, out var val))
+                        {
+                            sb.Append(val);
+                            i = close;
+                            continue;
+                        }
+                    }
+                }
+                else if (char.IsLetter(text[i + 1]) || text[i + 1] == '_')
+                {
+                    var end = i + 2;
+                    while (end < text.Length && (char.IsLetterOrDigit(text[end]) || text[end] == '_'))
+                        end++;
+                    var name = text[(i + 1)..end];
+                    if (variables.TryGetValue(name, out var val))
+                    {
+                        sb.Append(val);
+                        i = end - 1;
+                        continue;
+                    }
+                }
+            }
+
+            sb.Append(c);
+        }
+
+        return sb.ToString();
+    }
+
+    private static bool CanResolveStepWithoutLlm(string step, CommandResponseStore store, FakeFileSystem fs, IReadOnlyDictionary<string, string> variables)
+    {
+        var expanded = ExpandShellVariables(step, variables);
+        var (cleanExpanded, _, _) = StripRedirections(expanded);
+        if (store.TryGet(expanded, out _) || store.TryGet(cleanExpanded, out _) || store.TryGet(step, out _))
+            return true;
+
+        var normalized = NormalizeBinaryPathPrefix(cleanExpanded);
+        if (store.TryGet(normalized, out _))
+            return true;
+
+        if (TryEvaluateLocalShellStep(expanded, fs, store, out _, out _)
+            || TryEvaluateLocalShellStep(cleanExpanded, fs, store, out _, out _))
+            return true;
+
+        if (TrySplitCompoundSegments(cleanExpanded, out var subSegments))
+        {
+            return subSegments.Any(s => CanResolveStepWithoutLlm(s.CommandText, store, fs, variables));
+        }
+
+        return false;
+    }
+
+    private static async Task<(bool resolved, string output, bool exitSuccess, int promptTokens, int completionTokens, string llmModel, bool usedLlm)> ResolveSingleStepAsync(
+        string step,
+        string rawStepWithRedirections,
+        string sessionId,
+        FakeFileSystem fs,
+        CommandResponseStore store,
+        List<ChatRequestData.ChatMessage> messageHistory,
+        CancellationToken cancellationToken,
+        Func<List<ChatRequestData.ChatMessage>, CancellationToken, Task<(string response, int promptTokens, int completionTokens, int totalTokens, string model)>>? llmProvider)
+    {
+        // If the step itself is a nested || or && chain (e.g. inside $(...)), resolve recursively.
+        if (TrySplitCompoundSegments(step, out _))
+        {
+            var nested = await TryResolveCompoundChainAsync(step, sessionId, fs, store, messageHistory, cancellationToken, llmProvider).ConfigureAwait(false);
+            if (nested.resolved)
+            {
+                var nestedExit = !DataHarvester.IsFailureResponse(nested.response);
+                return (true, nested.response, nestedExit, nested.promptTokens, nested.completionTokens, nested.llmModel, nested.promptTokens > 0 || nested.completionTokens > 0);
+            }
+        }
+
+        if (TryEvaluateLocalShellStep(rawStepWithRedirections, fs, store, out var rawLocalOutput, out var rawLocalSuccess)
+            || TryEvaluateLocalShellStep(step, fs, store, out rawLocalOutput, out rawLocalSuccess))
+        {
+            return (true, rawLocalOutput, rawLocalSuccess, 0, 0, "", false);
+        }
+
+        if (store.TryGet(step, out var cached))
+            return (true, cached.Response, !IsStepFailure(step, cached.Response), 0, 0, cached.LlmModel ?? "", false);
+
+        var normalized = NormalizeBinaryPathPrefix(step);
+        if (!string.Equals(normalized, step, StringComparison.Ordinal) && store.TryGet(normalized, out var normCached))
+            return (true, normCached.Response, !IsStepFailure(normalized, normCached.Response), 0, 0, normCached.LlmModel ?? "", false);
+
+        // Do not decompose pipes to unknown commands unless we explicitly ask LLM for this single step.
+        llmProvider ??= Program.GetLLMResponseAsync;
+        var stepUserMsg = new ChatRequestData.ChatMessage { Role = "user", Content = Program.BuildCommandUserPrompt(step) };
+        var stepHistory = new List<ChatRequestData.ChatMessage>(messageHistory.Count + 1);
+        if (messageHistory.Count > 0)
+            stepHistory.Add(messageHistory[0]); // system prompt
+        stepHistory.Add(stepUserMsg);
+
+        var (llmResp, pTokens, cTokens, _, llmModel) = await llmProvider(stepHistory, cancellationToken).ConfigureAwait(false);
+        llmResp = Program.NormalizeTerminalOutput(llmResp);
+        if (IsModelFailureResponse(llmResp) || CommandResponseStore.IsModelRefusal(llmResp))
+            return (false, "", false, pTokens, cTokens, llmModel, true);
+
+        try
+        {
+            await store.TryLearnAsync(step, llmResp, llmModel, CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogMsg($"Failed to persist learned step response for session {sessionId}: {ex.Message}");
+        }
+
+        return (true, llmResp, !IsStepFailure(step, llmResp), pTokens, cTokens, llmModel, true);
+    }
+
+    private static string NormalizeBinaryPathPrefix(string step)
+    {
+        var trimmed = step.Trim();
+        if (trimmed.StartsWith("busybox ", StringComparison.Ordinal))
+            trimmed = trimmed["busybox ".Length..].TrimStart();
+        if (trimmed.StartsWith("/usr/local/bin/", StringComparison.Ordinal))
+            trimmed = trimmed["/usr/local/bin/".Length..];
+        else if (trimmed.StartsWith("/usr/bin/", StringComparison.Ordinal))
+            trimmed = trimmed["/usr/bin/".Length..];
+        else if (trimmed.StartsWith("/bin/./", StringComparison.Ordinal))
+            trimmed = trimmed["/bin/./".Length..];
+        else if (trimmed.StartsWith("/bin/", StringComparison.Ordinal))
+            trimmed = trimmed["/bin/".Length..];
+        else if (trimmed.StartsWith("/sbin/", StringComparison.Ordinal))
+            trimmed = trimmed["/sbin/".Length..];
+        else if (trimmed.StartsWith("/usr/sbin/", StringComparison.Ordinal))
+            trimmed = trimmed["/usr/sbin/".Length..];
+        return trimmed;
+    }
+
+    private static bool IsStepFailure(string step, string output)
+    {
+        var norm = NormalizeBinaryPathPrefix(step);
+        if (norm == "false")
+            return true;
+        if (DataHarvester.IsFailureResponse(output))
+            return true;
+        if (output.Contains("Sorry, try again.", StringComparison.OrdinalIgnoreCase)
+            || output.Contains("incorrect password", StringComparison.OrdinalIgnoreCase)
+            || output.Contains("Authentication token manipulation error", StringComparison.OrdinalIgnoreCase)
+            || output.Contains("Connection refused", StringComparison.OrdinalIgnoreCase)
+            || output.Contains("Couldn't connect to server", StringComparison.OrdinalIgnoreCase)
+            || output.Contains("Network is unreachable", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private static bool TryEvaluateLocalShellStep(string step, FakeFileSystem fs, CommandResponseStore store, out string output, out bool exitSuccess)
+    {
+        output = "";
+        exitSuccess = true;
+        var trimmed = step.Trim();
+
+        // Handle "echo '<pass>' | sudo -S ..." when stderr is redirected to /dev/null or when escalating with the valid password
+        var sudoMatch = Regex.Match(trimmed, @"^echo\s+(?:-[neE]+\s+)?(?<q>['""]?)(?<pass>[^'""|]+)\k<q>\s*\|\s*sudo\s+-S\s+(?<rest>.+)$");
+        if (sudoMatch.Success)
+        {
+            var pass = sudoMatch.Groups["pass"].Value;
+            var rest = sudoMatch.Groups["rest"].Value.Trim();
+            if (!string.Equals(pass, "Omega#2024!", StringComparison.Ordinal))
+            {
+                // Only evaluate failed sudo locally if stderr is suppressed (2>/dev/null) as part of a fallback chain.
+                if (!step.Contains("2>/dev/null", StringComparison.Ordinal))
+                    return false;
+                output = "";
+                exitSuccess = false;
+                return true;
+            }
+
+            if (rest.StartsWith("sh -c ", StringComparison.Ordinal) || rest.StartsWith("bash -c ", StringComparison.Ordinal))
+            {
+                var cmdIdx = rest.IndexOf("-c ", StringComparison.Ordinal) + 3;
+                rest = UnquoteLiteral(rest[cmdIdx..].Trim());
+            }
+
+            if (store.TryGet(rest, out var sudoCached))
+            {
+                output = sudoCached.Response;
+                exitSuccess = !IsStepFailure(rest, output);
+                return true;
+            }
+        }
+
+        // Handle "sh -c '...'" or "bash -c '...'" when the inner command is cached or a simple fallback
+        var shMatch = Regex.Match(trimmed, @"^(?:/bin/)?(?:sh|bash)\s+-c\s+(?<inner>.+)$");
+        if (shMatch.Success)
+        {
+            var inner = UnquoteLiteral(shMatch.Groups["inner"].Value.Trim()).Replace("'\\''", "'");
+            var (innerClean, supOut, supErr) = StripRedirections(inner);
+            if (store.TryGet(innerClean, out var innerCached))
+            {
+                output = FilterVisibleStepOutput(innerCached.Response, !IsStepFailure(innerClean, innerCached.Response), supOut, supErr);
+                exitSuccess = !IsStepFailure(innerClean, innerCached.Response);
+                return true;
+            }
+            if (innerClean.Contains("nproc", StringComparison.Ordinal) && innerClean.Contains("||", StringComparison.Ordinal))
+            {
+                output = supOut ? "" : "96";
+                exitSuccess = true;
+                return true;
+            }
+        }
+
+        var normalized = NormalizeBinaryPathPrefix(trimmed);
+
+        if (normalized is "true" or ":" or "reset" or "history -c")
+            return true;
+
+        if (normalized == "false")
+        {
+            exitSuccess = false;
+            return true;
+        }
+
+        if (normalized == "pwd")
+        {
+            output = fs.CurrentDirectory;
+            return true;
+        }
+
+        if (normalized == "cd" || normalized == "cd ~")
+        {
+            fs.ChangeDirectory("/home/remote");
+            return true;
+        }
+
+        if (normalized.StartsWith("cd ", StringComparison.Ordinal))
+        {
+            var target = UnquoteLiteral(normalized[3..].Trim());
+            var resolved = fs.ResolvePath(target);
+            if (resolved.StartsWith("/root", StringComparison.Ordinal) || resolved.StartsWith("/home/secretOps", StringComparison.Ordinal))
+            {
+                output = $"bash: cd: {target}: Permission denied";
+                exitSuccess = false;
+                return true;
+            }
+            fs.ChangeDirectory(target);
+            return true;
+        }
+
+        if (Regex.IsMatch(normalized, @"^(?:export|unset|umask)\b") && !normalized.Contains("$("))
+            return true;
+
+        if (Regex.IsMatch(normalized, @"^sleep\s+\d+(?:\.\d+)?$"))
+            return true;
+
+        if (normalized == "echo" || normalized == "echo -e")
+            return true;
+
+        if (normalized.StartsWith("echo ", StringComparison.Ordinal) && !normalized.Contains('|') && !normalized.Contains('$') && !normalized.Contains('`'))
+        {
+            var arg = normalized[5..].Trim();
+            var noNewline = false;
+            if (arg.StartsWith("-n ", StringComparison.Ordinal))
+            {
+                noNewline = true;
+                arg = arg[3..].Trim();
+            }
+            else if (arg.StartsWith("-e ", StringComparison.Ordinal))
+            {
+                arg = arg[3..].Trim();
+            }
+            var literal = UnquoteLiteral(arg);
+            output = noNewline ? literal : literal;
+            return true;
+        }
+
+        if (normalized == "cat /proc/uptime")
+        {
+            output = SyntheticHostClock.FormatProcUptime();
+            return true;
+        }
+
+        if (normalized is "grep -c '^processor' /proc/cpuinfo" or "grep -c \"^processor\" /proc/cpuinfo" or "grep -c ^processor /proc/cpuinfo")
+        {
+            output = "96";
+            return true;
+        }
+
+        if (Regex.IsMatch(normalized, @"^rm\s+-[rf]+\s+(?:/tmp/|/var/tmp/|/dev/shm/|\.bash_history|~/\.bash_history)[^\s;|&]*$"))
+            return true;
+
+        if (Regex.IsMatch(normalized, @"^(?:chmod|touch)\s+(?:\+[xX]|[0-7]{3,4}\s+)?(?:/tmp/|/var/tmp/|/dev/shm/)[^\s;|&]+$"))
+            return true;
+
+        return false;
+    }
+
+    private static string UnquoteLiteral(string value)
+    {
+        if (value.Length >= 2 && (value[0] == '\'' && value[^1] == '\'' || value[0] == '"' && value[^1] == '"'))
+            return value[1..^1];
+        return value;
     }
 }
 
@@ -2651,6 +3442,93 @@ static class DataHarvester
         return targets.Distinct().ToList();
     }
 
+    public static string ClassifyExchangeInteraction(
+        string command,
+        long? commandSequenceLatencyMs,
+        CommandDeliveryMetrics? delivery = null,
+        string? previousResponse = null)
+    {
+        var trimmed = (command ?? "").Trim();
+        if (string.IsNullOrEmpty(trimmed))
+            return "unknown";
+
+        var channel = delivery?.DeliveryChannel ?? "pty";
+        var chunks = delivery?.ChunkCount ?? 1;
+        var typingMs = delivery?.TypingDurationMs ?? 0;
+        var backspaces = delivery?.BackspaceCount ?? 0;
+
+        // Non-interactive exec channel is always scripted/automated.
+        if (string.Equals(channel, "exec", StringComparison.OrdinalIgnoreCase))
+            return "scripted";
+
+        // Very rapid submission (< 120ms since shell open or previous command completion) with single chunk is automation.
+        if (commandSequenceLatencyMs is >= 0 and < 50 && chunks <= 1 && backspaces == 0)
+            return "automation";
+
+        var unquoted = Regex.Replace(trimmed, @"'[^']*'|""(?:\\.|[^""\\])*""", "");
+        var chainOperators = Regex.Matches(unquoted, @"&&|\|\||(?<!\|)\|(?!\|)|;(?!;)|\r?\n").Count;
+        var hasBotTemplate = trimmed.Contains("sudo -S", StringComparison.Ordinal)
+            || trimmed.Contains("/dev/tcp/", StringComparison.Ordinal)
+            || trimmed.Contains("nohup ", StringComparison.Ordinal)
+            || trimmed.Contains("busybox ", StringComparison.Ordinal)
+            || trimmed.Contains("chattr ", StringComparison.Ordinal)
+            || trimmed.Contains("2>/dev/null", StringComparison.Ordinal);
+
+        var referencesPreviousOutput = false;
+        if (!string.IsNullOrWhiteSpace(previousResponse))
+        {
+            var prevTokens = Regex.Matches(previousResponse, @"\b[a-zA-Z][\w.-]{5,}\b")
+                .Select(m => m.Value)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(60);
+            foreach (var token in prevTokens)
+            {
+                if (Regex.IsMatch(token, @"^(?:command|output|error|failed|success|permission|denied|unknown|directory|omegablack|remote)$", RegexOptions.IgnoreCase))
+                    continue;
+                if (trimmed.Contains(token, StringComparison.OrdinalIgnoreCase))
+                {
+                    referencesPreviousOutput = true;
+                    break;
+                }
+            }
+        }
+
+        // Multi-chunk typing with realistic inter-keystroke duration or backspaces = hands-on-keyboard.
+        if (backspaces > 0 || (chunks >= 3 && typingMs >= 250))
+            return "hands_on_keyboard";
+
+        // Large or multi-operator command arriving in 1 packet with ~0ms typing duration:
+        if (chunks <= 1 && typingMs <= 25 && backspaces == 0)
+        {
+            if (commandSequenceLatencyMs is >= 0 and <= 350 && (trimmed.Length >= 12 || chainOperators >= 1 || hasBotTemplate))
+                return "scripted";
+
+            if (chainOperators >= 3 || (hasBotTemplate && trimmed.Length >= 40))
+            {
+                if (commandSequenceLatencyMs is >= 1200)
+                    return referencesPreviousOutput ? "llm_harness" : "automated_paste";
+                return "scripted";
+            }
+
+            if (referencesPreviousOutput && commandSequenceLatencyMs is >= 400 and <= 30000)
+                return "llm_harness";
+
+            if (trimmed.Length >= 35 && commandSequenceLatencyMs is >= 1000)
+                return "automated_paste";
+        }
+
+        if (commandSequenceLatencyMs is >= 1000 and <= 60000 && chainOperators <= 1 && !hasBotTemplate)
+        {
+            if (chunks >= 2 || typingMs >= 120 || trimmed.Length <= 24)
+                return "hands_on_keyboard";
+        }
+
+        if (commandSequenceLatencyMs is >= 0 and < 200 && chunks <= 1)
+            return "scripted";
+
+        return "unknown";
+    }
+
 }
 
 static class Logger
@@ -2791,6 +3669,10 @@ static class Logger
                 command.Command,
                 command.CommandSequenceLatencyMs,
                 ActorAutomationHint = NullIfEmpty(command.ActorAutomationHint),
+                DeliveryChannel = NullIfEmpty(command.DeliveryChannel),
+                InputTypingDurationMs = command.InputTypingDurationMs > 0 ? command.InputTypingDurationMs : null,
+                InputChunkCount = command.InputChunkCount > 1 ? command.InputChunkCount : null,
+                InputBackspaceCount = command.InputBackspaceCount > 0 ? command.InputBackspaceCount : null,
                 DiscoveryDepthScore = command.DiscoveryDepthScore > 0 ? command.DiscoveryDepthScore : (double?)null,
                 PersistenceVector = command.PersistenceVector != "none" ? command.PersistenceVector : null,
                 PayloadUrls = command.PayloadUrls.Count > 0 ? command.PayloadUrls : null,
@@ -3608,6 +4490,10 @@ static class Logger
                 Timestamp = e.Timestamp,
                 CommandSequenceLatencyMs = JsonNullableLong(e.Data, "CommandSequenceLatencyMs"),
                 ActorAutomationHint = JsonString(e.Data, "ActorAutomationHint", "unknown"),
+                DeliveryChannel = NullIfEmpty(JsonString(e.Data, "DeliveryChannel")),
+                InputTypingDurationMs = JsonNullableLong(e.Data, "InputTypingDurationMs"),
+                InputChunkCount = e.Data.ValueKind == JsonValueKind.Object && e.Data.TryGetProperty("InputChunkCount", out var icc) && icc.TryGetInt32(out var iccVal) ? iccVal : null,
+                InputBackspaceCount = e.Data.ValueKind == JsonValueKind.Object && e.Data.TryGetProperty("InputBackspaceCount", out var ibc) && ibc.TryGetInt32(out var ibcVal) ? ibcVal : null,
                 DiscoveryDepthScore = JsonInt(e.Data, "DiscoveryDepthScore"),
                 PersistenceVector = JsonString(e.Data, "PersistenceVector", "none"),
                 PayloadUrls = JsonStrings(e.Data, "PayloadUrls"),
