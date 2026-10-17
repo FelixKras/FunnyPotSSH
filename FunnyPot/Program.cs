@@ -1550,6 +1550,38 @@ public class ThreatIntel
     public Dictionary<string, int> FrequentCommands { get; set; } = new(StringComparer.Ordinal);
 }
 
+public class SessionAiEnhancement
+{
+    public string Tag { get; set; } = "ai_enriched_qwen3.8";
+    public string Model { get; set; } = "Huihui-Qwen3.8-27B";
+    public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
+    public string InteractionVerdict { get; set; } = "";
+    public double Confidence { get; set; }
+    public string PlaybookName { get; set; } = "";
+    public string SequenceNarrative { get; set; } = "";
+    public string BiometricEvidence { get; set; } = "";
+}
+
+public class CommandStepBreakdown
+{
+    public string Op { get; set; } = "";
+    public string Status { get; set; } = "";
+    public string Cmd { get; set; } = "";
+    public string Explain { get; set; } = "";
+    public bool Skipped { get; set; }
+}
+
+public class CommandAiEnhancement
+{
+    public string Tag { get; set; } = "ai_enriched_qwen3.8";
+    public string Model { get; set; } = "Huihui-Qwen3.8-27B";
+    public string? CanonicalTemplate { get; set; }
+    public string ArcSummary { get; set; } = "";
+    public string ChainExplanation { get; set; } = "";
+    public string DeceptionNote { get; set; } = "";
+    public List<CommandStepBreakdown> Steps { get; set; } = new();
+}
+
 public class SessionDebrief
 {
     public string SessionId { get; set; } = "";
@@ -1572,6 +1604,8 @@ public class SessionDebrief
     public List<string> PayloadUrls { get; set; } = new();
     public List<string> PersistenceVectors { get; set; } = new();
     public double RiskScore { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public SessionAiEnhancement? AiEnhancement { get; set; }
 }
 
 public class AuthAttemptRecord
@@ -1642,6 +1676,8 @@ public class CommandExchangeRecord
     public List<string> MitreAttackTechniques { get; set; } = new();
     public string MitreTechnique { get; set; } = "";
     public string InferredObjective { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public CommandAiEnhancement? AiEnhancement { get; set; }
 }
 
 public class DhsCommandAnalysis
@@ -3866,6 +3902,8 @@ static class Logger
             if (!string.IsNullOrWhiteSpace(cmd))
             {
                 var trimmed = cmd.Trim();
+                if (CommandCanonicalizer.TryCanonicalize(trimmed, out var canonical, out _))
+                    trimmed = canonical;
                 intel.FrequentCommands[trimmed] = intel.FrequentCommands.GetValueOrDefault(trimmed) + 1;
             }
         }
@@ -4212,14 +4250,22 @@ static class Logger
     public static (string Objective, string Tactic, string Technique) InferCommandObjective(string? command)
     {
         var c = (command ?? "").Trim().ToLowerInvariant();
+        if (c.Contains("sudo -s") && c.Contains("nproc"))
+            return ("Attempt sudo password escalation with multi-binary CPU core count fallback", "Privilege Escalation", "T1548.003 Sudo and Sudo Caching");
+        if (c.Contains("nvidia-smi") || c.Contains("rocm-smi") || (c.Contains("lspci") && c.Contains("vga")))
+            return ("Enumerate GPU compute accelerators and VRAM for workload or mining suitability", "Discovery", "T1082 System Information Discovery");
+        if (c.StartsWith("export path=") || c.StartsWith("path="))
+            return ("Normalize shell PATH environment before automated reconnaissance or dropper execution", "Execution", "T1059.004 Unix Shell");
+        if (c.Contains("/dev/tcp/") || (c.Contains("nohup") && (c.Contains("curl") || c.Contains("wget"))))
+            return ("Stage and launch detached background malware loader via HTTP or raw TCP socket", "Command and Control", "T1105 Ingress Tool Transfer");
         if (c.StartsWith("id") || c.StartsWith("whoami") || c.StartsWith("w ") || c.StartsWith("logname"))
             return ("Identify current user privileges, groups, and security context", "Discovery", "T1033 System Owner/User Discovery");
-        if (c.StartsWith("uname"))
+        if (c.StartsWith("uname") || c.StartsWith("/bin/./uname") || c.StartsWith("/bin/uname"))
             return ("Determine Linux kernel version, OS release, and CPU architecture", "Discovery", "T1082 System Information Discovery");
         if (c.Contains("passwd") || c.Contains("shadow"))
-            return ("Enumerate local user accounts, service accounts, and login shells", "Credential Access", "T1087.001 Local Accounts");
-        if (c.Contains("cpuinfo") || c.Contains("meminfo") || c.Contains("version") || c.Contains("issue") || c.Contains("release") || c.StartsWith("lscpu") || c.StartsWith("free"))
-            return ("Profile host hardware capabilities, RAM, and distribution baseline", "Discovery", "T1082 System Information Discovery");
+            return ("Enumerate or rotate local user account credentials", "Credential Access", "T1087.001 Local Accounts");
+        if (c.Contains("cpuinfo") || c.Contains("meminfo") || c.Contains("version") || c.Contains("issue") || c.Contains("release") || c.Contains("lscpu") || c.StartsWith("free") || c.StartsWith("nproc"))
+            return ("Profile host hardware capabilities, CPU cores, RAM, and distribution baseline", "Discovery", "T1082 System Information Discovery");
         if (c.StartsWith("ps") || c.StartsWith("top") || c.StartsWith("htop"))
             return ("Inspect running processes, background services, and security monitors", "Discovery", "T1057 Process Discovery");
         if (c.StartsWith("netstat") || c.StartsWith("ss ") || c.StartsWith("lsof"))
@@ -4475,10 +4521,39 @@ static class Logger
         }
 
         var results = ordered.Where(e => e.Event == "command_result").ToList();
+        var shellOpenedAt = ordered.FirstOrDefault(e => e.Event == "shell_session_start").Timestamp;
+        var isExecChannel = ordered.Any(e => e.Event == "shell_session_start" && string.Equals(JsonString(e.Data, "State"), "ExecOpened", StringComparison.OrdinalIgnoreCase));
+        DateTime? previousEndedAt = shellOpenedAt != default ? shellOpenedAt : session.StartedAt;
+        string? previousResp = null;
+
         foreach (var e in ordered.Where(e => e.Event == "command"))
         {
             var command = JsonString(e.Data, "Command");
             var (objective, defaultTactic, technique) = InferCommandObjective(command);
+            var recordedLatency = JsonNullableLong(e.Data, "CommandSequenceLatencyMs");
+            if (recordedLatency is null && previousEndedAt.HasValue && e.Timestamp >= previousEndedAt.Value)
+                recordedLatency = (long)(e.Timestamp - previousEndedAt.Value).TotalMilliseconds;
+
+            var deliveryChannel = NullIfEmpty(JsonString(e.Data, "DeliveryChannel")) ?? (isExecChannel ? "exec" : "pty");
+            var typingMs = JsonNullableLong(e.Data, "InputTypingDurationMs");
+            var chunkCount = e.Data.ValueKind == JsonValueKind.Object && e.Data.TryGetProperty("InputChunkCount", out var icc) && icc.TryGetInt32(out var iccVal) ? (int?)iccVal : null;
+            var backspaceCount = e.Data.ValueKind == JsonValueKind.Object && e.Data.TryGetProperty("InputBackspaceCount", out var ibc) && ibc.TryGetInt32(out var ibcVal) ? (int?)ibcVal : null;
+            var recordedHint = JsonString(e.Data, "ActorAutomationHint", "unknown");
+            if (string.IsNullOrWhiteSpace(recordedHint) || recordedHint == "unknown")
+            {
+                recordedHint = DataHarvester.ClassifyExchangeInteraction(
+                    command,
+                    recordedLatency,
+                    new CommandDeliveryMetrics
+                    {
+                        DeliveryChannel = deliveryChannel,
+                        ChunkCount = chunkCount ?? 1,
+                        TypingDurationMs = typingMs ?? 0,
+                        BackspaceCount = backspaceCount ?? 0
+                    },
+                    previousResp);
+            }
+
             var record = new CommandExchangeRecord
             {
                 Sequence = e.Sequence,
@@ -4488,12 +4563,12 @@ static class Logger
                 ShellMessageNumber = JsonInt(e.Data, "ShellMessageNumber"),
                 Command = command,
                 Timestamp = e.Timestamp,
-                CommandSequenceLatencyMs = JsonNullableLong(e.Data, "CommandSequenceLatencyMs"),
-                ActorAutomationHint = JsonString(e.Data, "ActorAutomationHint", "unknown"),
-                DeliveryChannel = NullIfEmpty(JsonString(e.Data, "DeliveryChannel")),
-                InputTypingDurationMs = JsonNullableLong(e.Data, "InputTypingDurationMs"),
-                InputChunkCount = e.Data.ValueKind == JsonValueKind.Object && e.Data.TryGetProperty("InputChunkCount", out var icc) && icc.TryGetInt32(out var iccVal) ? iccVal : null,
-                InputBackspaceCount = e.Data.ValueKind == JsonValueKind.Object && e.Data.TryGetProperty("InputBackspaceCount", out var ibc) && ibc.TryGetInt32(out var ibcVal) ? ibcVal : null,
+                CommandSequenceLatencyMs = recordedLatency,
+                ActorAutomationHint = recordedHint,
+                DeliveryChannel = deliveryChannel,
+                InputTypingDurationMs = typingMs,
+                InputChunkCount = chunkCount,
+                InputBackspaceCount = backspaceCount,
                 DiscoveryDepthScore = JsonInt(e.Data, "DiscoveryDepthScore"),
                 PersistenceVector = JsonString(e.Data, "PersistenceVector", "none"),
                 PayloadUrls = JsonStrings(e.Data, "PayloadUrls"),
@@ -4543,6 +4618,12 @@ static class Logger
                 record.StandardErrorRatio = JsonDouble(result.Data, "StandardErrorRatio");
                 record.SemanticDrift = JsonInt(result.Data, "SemanticDrift");
                 record.TuringMultiplier = JsonDouble(result.Data, "TuringMultiplier");
+                previousEndedAt = result.Timestamp;
+                previousResp = record.Response;
+            }
+            else
+            {
+                previousEndedAt = e.Timestamp;
             }
 
             session.Commands.Add(record);
@@ -4575,11 +4656,24 @@ static class Logger
         }
 
         foreach (var session in sessions)
-            if (!string.IsNullOrWhiteSpace(session.SessionId)) merged[session.SessionId] = session;
+        {
+            if (string.IsNullOrWhiteSpace(session.SessionId))
+                continue;
+            if (merged.TryGetValue(session.SessionId, out var existing))
+            {
+                session.AiEnhancement ??= existing.AiEnhancement;
+                for (var i = 0; i < Math.Min(session.Commands.Count, existing.Commands.Count); i++)
+                    session.Commands[i].AiEnhancement ??= existing.Commands[i].AiEnhancement;
+            }
+            merged[session.SessionId] = session;
+        }
 
+        // Retain all command-bearing sessions first (up to MaxStructuredSessions), then fill remaining slots with newest non-command sessions.
         var retained = merged.Values
-            .OrderByDescending(session => session.StartedAt ?? session.EndedAt ?? DateTime.MinValue)
+            .OrderByDescending(session => session.CommandCount > 0 ? 1 : 0)
+            .ThenByDescending(session => session.StartedAt ?? session.EndedAt ?? DateTime.MinValue)
             .Take(MaxStructuredSessions)
+            .OrderByDescending(session => session.StartedAt ?? session.EndedAt ?? DateTime.MinValue)
             .ToList();
         var tempPath = sessionsPath + ".tmp";
         File.WriteAllText(tempPath, JsonSerializer.Serialize(retained, new JsonSerializerOptions { WriteIndented = true }));

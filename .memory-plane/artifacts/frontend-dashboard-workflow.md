@@ -5,7 +5,7 @@ title: Frontend Static Dashboard Workflow
 scope: project
 status: approved-by-request
 created_at: 2026-07-12
-updated_at: 2026-09-25
+updated_at: 2026-10-17
 author: Forge
 reviewer: Kilo
 source_refs:
@@ -56,6 +56,13 @@ FunnyPot separates dashboard UI from published telemetry data. Runtime writes in
 - Shell Opens and Shell Closes remain separate lifecycle counters so operators can detect active channels or missing end telemetry. The overview no longer promotes blocked-operation, text-command, or upload-count/byte totals as headline metrics; detailed upload events remain available within session evidence.
 - The Overview tab opens with a marketing-oriented project introduction and a local animated attack-flow visualization (`frontend-main/assets/funnypot-attack-flow.gif`) showing the path from SSH probe through synthetic shell interaction to retained threat intelligence. Its synthetic-shell stage includes a smiling “mischief bot” injecting playful chaos into the terminal to communicate FunnyPot's deliberate attacker-confusion element.
 - The Attacker Exchange HUD includes a dark Mercator-projection SVG world map with labeled origin countries, hover-brightened country markers, and an ocean-placed honeypot anchor. Coordinates come from the existing IP geolocation fallback chain; unresolved sources remain unplotted rather than being assigned fabricated locations. GPU/miner reconnaissance is classified as `GPU prospector` and is available as a behavior filter and map signal. Other dashboard spotlight sections continue to rank sessions by risk and command volume.
+- Below the Exchange HUD, the **Turing Biometric Telemetry Deck** renders command-bearing sessions with:
+  - Campaign deduplication toggle (`Group identical bot playbook clusters`) collapsing identical canonical playbooks.
+  - Session biometric verdict & 6-cell telemetry vitals (Source/Geography, SSH Client/TTC, Keystroke Biometrics, Think-Time Cadence, Cache & Token Economy, Threat/MITRE Stack).
+  - Whole-Sequence Playbook Explainer (`SequenceNarrative` + clickable Step #1..#N Playbook Arc cards).
+  - Interactive Biometric Cadence Oscilloscope SVG waveform where clicking any pulse node or transcript row updates the dual deep-dive spotlight.
+  - Per-command plain-English Chain Explainer, step-by-step compound execution breakdown (`START`, `|| OR`, `&& AND`, `; SEQ` with short-circuit indicators), Deception Engine Explainer, and extracted template placeholders/IOCs.
+- AI-generated enrichments on `SessionDebrief` and `CommandExchangeRecord` are stored inside an optional `AiEnhancement` object tagged with `"Tag": "ai_enriched_qwen3.8"` so raw telemetry fields remain untouched. `PersistStructuredSessionsUnsafe` prioritizes retaining command-bearing sessions (`CommandCount > 0`) ahead of zero-command scanner probes and preserves existing `AiEnhancement` blocks across merges.
 - Credentials displays the top 50 usernames and passwords by observed frequency.
 
 ## Failure Modes
