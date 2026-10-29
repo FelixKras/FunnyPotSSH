@@ -74,10 +74,89 @@ A row with `local_address` ending in `:58D2` (hex for 22722) in state
 `0A` (TCP_LISTEN) means the SSH server is bound and the deploy is
 working. Anything else and the app is still starting up.
 
+## Optional Kilo / ChatGPT provider
+
+The default remains OpenRouter. Set `LLM_PROVIDER=kilo` to route cache misses
+through Kilo's authenticated provider instead; no OpenRouter key is needed and
+there is no automatic cross-provider fallback. `KILO_MODEL` defaults to
+`openai/gpt-6.1-terra` (separate from the OpenRouter `LLM_MODEL`).
+
+Run a **dedicated** Kilo server as the host user already logged into ChatGPT
+through Kilo. Use an empty directory, not this repository or your normal agent
+workspace, and install the supplied text-only agent configuration there:
+
+```bash
+mkdir -p /tmp/funnypot-kilo
+cp config/kilo/kilo.json /tmp/funnypot-kilo/kilo.json
+cd /tmp/funnypot-kilo
+~/.kilo/bin/kilo serve --pure --hostname 127.0.0.1 --port 4197
+```
+
+For a host-run FunnyPot process, use `KILO_BASE_URL=http://127.0.0.1:4197`.
+For Docker, Compose supplies `http://host.docker.internal:4197`, but a server
+bound to loopback is not reachable from a bridge container. Bind Kilo to a
+host interface reachable by that container, restrict port 4197 with the host
+firewall to the Docker bridge, and set the same strong `KILO_SERVER_PASSWORD`
+on both Kilo and FunnyPot. Never expose the Kilo control API publicly. Basic
+authentication is supported, with `KILO_SERVER_USERNAME=kilo` by default;
+the password can also be mounted at `/run/secrets/kilo_server_password`
+(preferred over a container environment variable).
+Use HTTPS if traffic crosses an untrusted network. Do not mount Kilo's auth
+store into the honeypot container.
+
+`KILO_DIRECTORY` is an absolute path **on the Kilo server host**, defaulting to
+`/tmp/funnypot-kilo`; `KILO_AGENT` defaults to `funnypot-terminal`. Keep the
+dedicated directory/config available across restarts (use a persistent path
+instead of `/tmp` for production). Run Kilo under a service manager for
+unattended operation. `--pure` disables external plugins; use a dedicated
+Kilo config without MCP servers or other integrations for this service.
+
+Each call creates a fresh session with all permissions denied and tools
+disabled, sends the existing FunnyPot conversation as text data, then aborts
+and deletes the session. The adapter limits concurrent requests (default 2,
+`llm.kilo.max-concurrent-requests`), applies `llm.timeout-seconds` including
+queue time, and rejects tool, failed, and incomplete responses rather than
+learning them. Kilo cleanup failures are logged. Subscription quotas and
+Kilo's own model output limits still apply; OpenRouter's `max-tokens` setting
+is not forwarded to Kilo. Kilo may retain operational logs even after sessions
+are deleted. Existing cache hits do not call either provider.
+
 ## Response dictionary
 
+### Current host deployment (2026-10-29)
+
+- Kilo runs as the enabled user service `funnypot-kilo.service`, with user
+  lingering enabled so the service can start without an interactive login.
+- Its isolated agent config and password live under
+  `/home/felix/.local/share/funnypot-kilo/`. The password is not tracked in Git.
+- The endpoint binds only `172.18.0.1:4197` on the existing Docker bridge,
+  not loopback or a public/LAN interface. If the Compose network gateway
+  changes, update the service launcher and local override together.
+- The ignored `docker-compose.override.yaml` selects `LLM_PROVIDER=kilo`,
+  `KILO_MODEL=openai/gpt-6.1-terra`, and mounts the server password as a
+  Docker secret. Normal `docker compose up -d` retains these local settings.
+- The pre-deploy image is tagged `funnypot:pre-kilo-20261029`; the response
+  dictionary backup is `backups/pre-kilo-command-responses-20261029.tar.gz`.
+- Deployment used direct Compose commands rather than `scripts/deploy.sh`
+  because that script also commits and pushes changes. Git publication is
+  handled separately, excluding credentials and host-local configuration.
+
+To roll back the application image and provider without deleting data:
+
+```bash
+docker image tag funnypot:pre-kilo-20261029 funnypot-funnypot:latest
+LLM_PROVIDER=openrouter docker compose -f docker-compose.yaml up -d --no-build funnypot
+```
+
+The explicit Compose file excludes the local Kilo override for this rollback;
+subsequent plain Compose commands will select Kilo again unless the override
+is removed or changed. Do not restore the response backup unless necessary,
+as that discards commands learned since deployment.
+
+### Persistence
+
 - Exact cached commands are loaded from `/var/lib/funnypot/command_responses.json` before the SSH listener starts.
-- Successful OpenRouter responses are added to this file atomically at runtime.
+- Successful responses from the selected LLM provider are added to this file atomically at runtime.
 - The `command-responses` named volume preserves learned responses across container rebuilds and recreation.
 - `docker compose down -v` deletes the learned dictionary and causes the next deployment to initialize it from the image seed.
 

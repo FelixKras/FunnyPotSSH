@@ -21,6 +21,13 @@ ssh:
   
 # LLM Configuration
 llm:
+  provider: "openrouter" # Set LLM_PROVIDER=kilo to use the subscription-backed adapter
+  kilo:
+    base-url: "http://127.0.0.1:4197"
+    model: "openai/gpt-6.1-terra"
+    agent: "funnypot-terminal"
+    directory: "/tmp/funnypot-kilo"
+    max-concurrent-requests: 2
   delay-ms: 500
   model: "openai/gpt-5.6-luna"
   fallback-models:

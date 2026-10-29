@@ -70,11 +70,22 @@ namespace FunnyPot
 
     public class LlmConfig
     {
+        public string Provider { get; set; } = "openrouter";
+        public KiloConfig Kilo { get; set; } = new();
         public int DelayMs { get; set; } = 500;
         public string Model { get; set; } = "openai/gpt-5.6-luna";
         public List<string> FallbackModels { get; set; } = new() { "nvidia/nemotron-3-super-120b-a12b:free" };
         public int MaxTokens { get; set; } = 2000;
         public int TimeoutSeconds { get; set; } = 30;
+    }
+
+    public class KiloConfig
+    {
+        public string BaseUrl { get; set; } = "http://127.0.0.1:4197";
+        public string Model { get; set; } = "openai/gpt-6.1-terra";
+        public string Agent { get; set; } = "funnypot-terminal";
+        public string Directory { get; set; } = "/tmp/funnypot-kilo";
+        public int MaxConcurrentRequests { get; set; } = 2;
     }
 
     public class LoggingConfig

@@ -17,6 +17,17 @@ source_refs:
 
 # LLM Response Flow
 
+## Provider update (2026-10-29)
+
+The OpenRouter-only statements below describe the original provider path.
+`LLM_PROVIDER=kilo` now selects the optional text-only Kilo adapter; production
+uses `openai/gpt-6.1-terra` through the host user's Kilo authentication. The
+tracked default remains OpenRouter. Cache lookup, normalization, repair, and
+successful-response persistence are shared. Kilo sessions deny all permissions,
+disable tools, and are aborted/deleted after each call. See
+`kilo-subscription-adapter-2026-10-29.md` for implementation, verified production
+state, security boundaries, and source references.
+
 FunnyPot uses one exact-command JSON dictionary before OpenRouter. This artifact's former layered static, telemetry-cache, built-in, and fallback flow was superseded by `mp-artifact-json-command-response-store` on 2026-08-06.
 
 ## Prompt Construction

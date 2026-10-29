@@ -7,4 +7,5 @@
 bin/
 obj/
 backups/
+docker-compose.override.yaml
 *.db

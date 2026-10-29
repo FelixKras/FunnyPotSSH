@@ -246,6 +246,11 @@ class Program
 
         Task.Run(async () =>
         {
+            if (!LlmProvider.Equals("openrouter", StringComparison.OrdinalIgnoreCase))
+            {
+                Logger.LogMsg($"LLM provider: {LlmProvider}; OpenRouter startup check skipped.");
+                return;
+            }
             try
             {
                 using var cts = CancellationTokenSource.CreateLinkedTokenSource(ApplicationStopping.Token);
@@ -1259,10 +1264,19 @@ Re-evaluate every assignment, command substitution, pipeline, and final echo/pri
         return response.Replace("\n", "\r\n");
     }
 
+    internal static string LlmProvider => Environment.GetEnvironmentVariable("LLM_PROVIDER") ?? Config.Llm.Provider;
+    static readonly HttpClient KiloHttpClient = new() { Timeout = Timeout.InfiniteTimeSpan };
+    static readonly Lazy<KiloLlmAdapter> KiloAdapter = new(() => new KiloLlmAdapter(KiloHttpClient, Config.Llm.Kilo));
+
     internal static async Task<(string response, int promptTokens, int completionTokens, int totalTokens, string model)> GetLLMResponseAsync(
         List<ChatRequestData.ChatMessage> history,
         CancellationToken cancellationToken)
     {
+        if (LlmProvider.Equals("kilo", StringComparison.OrdinalIgnoreCase))
+            return await KiloAdapter.Value.GetResponseAsync(history, Config.Llm.TimeoutSeconds, cancellationToken).ConfigureAwait(false);
+        if (!LlmProvider.Equals("openrouter", StringComparison.OrdinalIgnoreCase))
+            return ("[api error] Unknown LLM provider", 0, 0, 0, "");
+
         string apiUrl = BuildApiUrl(Config.Api.OpenRouter.BaseUrl, Config.Api.OpenRouter.ChatEndpoint);
         string? apiKey = GetSecretOrEnvironment("OPENROUTER_API_KEY");
         if (string.IsNullOrWhiteSpace(apiKey))

@@ -1,3 +1,6 @@
 .env
 .git/
 venv/
+.secrets/
+backups/
+docker-compose.override.yaml
