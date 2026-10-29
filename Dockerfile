@@ -18,15 +18,22 @@ ARG USER_UID=1000
 ARG USER_GID=1000
 ENV SSH_USER=$USERNAME
 ENV SSH_PASSWORD=test
+ENV FUNNYPOT_RUN_USER=$USERNAME
 
 # Install git for LibGit2Sharp native dependencies
-RUN apt-get update && apt-get install -y git libgit2-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends git libgit2-dev python3 && rm -rf /var/lib/apt/lists/*
 
 # Drop all capabilities for the container and match host UID/GID
 RUN groupadd -g ${USER_GID} $USERNAME && \
     useradd -u ${USER_UID} -m -g $USERNAME -s /bin/bash $USERNAME && \
     mkdir -p /home/$USERNAME/app && \
     mkdir -p /var/log/funnypot /var/lib/funnypot
+
+# The optional in-container bridge has a different UID from the SSH application.
+RUN useradd -u 20001 -g ${USER_GID} -M -s /usr/sbin/nologin subscription-bridge && \
+    mkdir -p /opt/subscription-bridge /run/host-subscription && \
+    chmod 700 /run/host-subscription
+COPY subscription-bridge/bridge.py subscription-bridge/supervise.py subscription-bridge/healthcheck.py /opt/subscription-bridge/
 
 WORKDIR /home/$USERNAME/app
 COPY --from=publish /app/publish .

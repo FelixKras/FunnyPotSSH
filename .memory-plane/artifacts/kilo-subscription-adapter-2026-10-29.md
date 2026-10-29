@@ -27,6 +27,12 @@ automatic fallback to OpenRouter occurs in Kilo mode, and its startup check
 is skipped. Existing response caching and terminal normalization remain in
 place.
 
+**Superseded in production later on 2026-10-29:** the user requested a minimal
+Docker bridge rather than the full Kilo server. The adapter remains available,
+but production now uses `subscription-bridge`, and `funnypot-kilo.service` is
+stopped/disabled. See `subscription-bridge-2026-10-29.md` for current topology,
+credential isolation, lifecycle, verification, and residual risks.
+
 Each request creates a fresh session with wildcard-deny permissions, uses the
 dedicated text-only agent and disabled tools, supplies FunnyPot history as a
 JSON transcript, and aborts/deletes the session in cleanup. Timeouts include

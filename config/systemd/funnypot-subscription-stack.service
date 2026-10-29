@@ -1,0 +1,16 @@
+[Unit]
+Description=Restore FunnyPot bridge stack after credential tmpfs initialization
+Requires=funnypot-subscription-token.service
+After=funnypot-subscription-token.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+WorkingDirectory=%h/Opencode/FunnyPot
+ExecStart=/usr/bin/docker compose up -d --no-build
+Restart=on-failure
+RestartSec=15
+TimeoutStartSec=180
+
+[Install]
+WantedBy=default.target

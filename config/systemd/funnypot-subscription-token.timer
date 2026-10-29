@@ -1,0 +1,11 @@
+[Unit]
+Description=Keep FunnyPot access-only subscription credential current
+
+[Timer]
+OnBootSec=15
+OnUnitActiveSec=60
+AccuracySec=5
+Unit=funnypot-subscription-token.service
+
+[Install]
+WantedBy=timers.target

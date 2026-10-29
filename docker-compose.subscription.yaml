@@ -1,0 +1,32 @@
+# Opt-in single-container bridge: compose -f docker-compose.yaml -f docker-compose.subscription.yaml up -d --build
+services:
+  funnypot:
+    # Only the small supervisor is root. It launches both network-facing processes
+    # as different nonroot UIDs with zero effective/permitted capabilities.
+    user: "0:0"
+    command: ["python3", "-I", "-B", "/opt/subscription-bridge/supervise.py"]
+    cap_add: [CHOWN, DAC_OVERRIDE, SETUID, SETGID, KILL]
+    pids_limit: 256
+    stop_grace_period: 30s
+    ulimits:
+      core: 0
+    environment:
+      LLM_PROVIDER: subscription-bridge
+      SUBSCRIPTION_BRIDGE_SOCKET: /run/funnypot-subscription/socket/bridge.sock
+    volumes:
+      - type: bind
+        source: ${SUBSCRIPTION_ACCESS_DIRECTORY:-/run/user/1000/funnypot-subscription/access}
+        # Parent is root-owned 0700, so the app UID cannot traverse this mount,
+        # even though the host file itself is owned by UID 1000.
+        target: /run/host-subscription/access
+        read_only: true
+        bind:
+          create_host_path: false
+    tmpfs:
+      - /run/funnypot-subscription:rw,noexec,nosuid,nodev,size=2m,mode=0755
+    healthcheck:
+      # Never load the app-owned DLL as root for health checks.
+      test: ["CMD", "python3", "-I", "-B", "/opt/subscription-bridge/healthcheck.py"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

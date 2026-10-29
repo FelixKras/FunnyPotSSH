@@ -20,8 +20,10 @@ source_refs:
 ## Provider update (2026-10-29)
 
 The OpenRouter-only statements below describe the original provider path.
+Current production uses the minimal `subscription-bridge` provider described in
+`subscription-bridge-2026-10-29.md`; the full Kilo service is no longer running.
 `LLM_PROVIDER=kilo` now selects the optional text-only Kilo adapter; production
-uses `openai/gpt-6.1-terra` through the host user's Kilo authentication. The
+initially used `openai/gpt-6.1-terra` through the host user's Kilo authentication. The
 tracked default remains OpenRouter. Cache lookup, normalization, repair, and
 successful-response persistence are shared. Kilo sessions deny all permissions,
 disable tools, and are aborted/deleted after each call. See

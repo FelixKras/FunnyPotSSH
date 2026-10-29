@@ -221,6 +221,17 @@ class Program
         LoadDotEnvFiles();
         LoadRuntimeSettings();
 
+        if (args.Length > 0 && args[0] == "--subscription-bridge-check")
+        {
+            var result = SubscriptionBridgeAdapter.GetResponseAsync(new()
+            {
+                new() { Role = "system", Content = "Simulate terminal output only." },
+                new() { Role = "user", Content = "uname -s" }
+            }, 45, CancellationToken.None).GetAwaiter().GetResult();
+            Console.WriteLine($"Model: {result.model}; output: {result.response}");
+            return result.response.Trim() == "Linux" ? 0 : 1;
+        }
+
         if (args.Length > 0 && args[0].Equals("--autoresearch", StringComparison.OrdinalIgnoreCase))
         {
             var config = args.Length > 1 ? AppConfiguration.Load(args[1]) : Config;
@@ -1272,6 +1283,8 @@ Re-evaluate every assignment, command substitution, pipeline, and final echo/pri
         List<ChatRequestData.ChatMessage> history,
         CancellationToken cancellationToken)
     {
+        if (LlmProvider.Equals("subscription-bridge", StringComparison.OrdinalIgnoreCase))
+            return await SubscriptionBridgeAdapter.GetResponseAsync(history, Config.Llm.TimeoutSeconds, cancellationToken).ConfigureAwait(false);
         if (LlmProvider.Equals("kilo", StringComparison.OrdinalIgnoreCase))
             return await KiloAdapter.Value.GetResponseAsync(history, Config.Llm.TimeoutSeconds, cancellationToken).ConfigureAwait(false);
         if (!LlmProvider.Equals("openrouter", StringComparison.OrdinalIgnoreCase))

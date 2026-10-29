@@ -1,0 +1,11 @@
+[Unit]
+Description=Export access-only OpenAI subscription credential for FunnyPot
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 -I %h/Opencode/FunnyPot/scripts/export-subscription-token.py --output %t/funnypot-subscription/access/access.json
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+LimitCORE=0
+TimeoutStartSec=45

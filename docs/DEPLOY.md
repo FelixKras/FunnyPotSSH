@@ -74,7 +74,118 @@ A row with `local_address` ending in `:58D2` (hex for 22722) in state
 `0A` (TCP_LISTEN) means the SSH server is bound and the deploy is
 working. Anything else and the app is still starting up.
 
-## Optional Kilo / ChatGPT provider
+## Minimal subscription bridge (current production)
+
+Production now uses `LLM_PROVIDER=subscription-bridge`, replacing the full Kilo
+server with a small Python-standard-library transport **inside the same
+`funnypot-container`**, alongside the SSH application. There is no sidecar.
+The Kilo provider below remains an optional fallback architecture,
+not the active production path.
+
+```text
+One container: [ SSH app UID 1000 -- Unix socket --> bridge UID 20001 ] --> ChatGPT
+                                                    ^
+                          bridge-private credential copy (container tmpfs)
+                                                    ^
+                  root supervisor <-- protected read-only host access-token mount
+                                                    ^
+                         host exporter timer / existing Kilo OAuth login
+```
+
+The bridge fixes the upstream URL to
+`https://chatgpt.com/backend-api/codex/responses` and the model to
+`gpt-6.1-terra`. It translates text messages into Responses API input, disables
+tools and storage, parses completed SSE responses, and returns text and usage.
+It accepts no endpoint, headers, tools, or arbitrary provider options from the
+honeypot. It does not run agents, execute commands, or maintain sessions.
+
+### Credential protection
+
+- The long-lived refresh token and other providers' credentials remain in the
+  host user's existing Kilo auth store, never mounted into the container.
+- A host-only exporter selects the OpenAI OAuth entry, refreshing it when
+  necessary, and writes **only access token, expiry, and account ID** into a
+  mode-0600 file in a mode-0700 directory under `/run/user/1000/` (tmpfs).
+- The export directory is mounted read-only under `/run/host-subscription/`,
+  whose parent is root-owned mode 0700. The honeypot UID cannot traverse it,
+  even though the host-exported file is owned by UID 1000.
+- A root-owned PID 1 supervisor copies only access/expiry/account ID into
+  bridge-owned, mode-0700 tmpfs storage every 30 seconds. The credential file
+  is mode 0600. The app cannot read either the source or private copy.
+- The app runs as UID 1000; the bridge as UID 20001. Both have zero effective
+  and permitted capabilities and no-new-privileges. Only the small supervisor
+  retains CHOWN, DAC_OVERRIDE, SETUID, SETGID, and KILL for credential copying,
+  UID separation, and signal forwarding. Core dumps are disabled.
+- The socket directory is bridge-owned/group-readable, not app-writable; only
+  the socket itself is group-writable for connection. No bridge TCP port exists.
+  There are no secrets in images, environment variables, arguments, or logs.
+- Health checks use a root-owned Python probe, **not an app-owned DLL executed
+  as root**. Run manual .NET commands with `docker exec --user test`.
+- HTTPS verification is enabled and redirects/proxy-environment routing are
+  rejected for credential-bearing upstream requests.
+- **Access tokens are not necessarily short-lived:** the actual issuer expiry
+  observed during setup was about eight days. Exporting them every minute does
+  not shorten or revoke them. A bridge compromise could steal the current access
+  token until expiry/revocation; host/Docker administrators can also access it.
+  Tmpfs can be swapped unless the host's swap configuration prevents this.
+
+The single-container design uses Unix-user/file-permission isolation rather than
+separate container boundaries. A container-root compromise can access the access
+token. The refresh token remains outside the container even in that case.
+
+The exporter updates the existing Kilo auth store after an OAuth refresh to
+retain rotated refresh tokens. It locks competing exporter instances, checks
+for concurrent changes, and preserves other providers. Kilo does not honor that
+lock: simultaneous refreshes are a residual race, not a guaranteed-safe shared
+refresh protocol. A separately authorized account/login is preferable for strict
+credential independence. Refresh failure fails closed; it never falls back to
+OpenRouter or exports a refresh token to Docker.
+
+### Setup and lifecycle
+
+For this host (UID/GID 1000; adjust Compose paths/users and units for another host):
+
+```bash
+python3 -B scripts/export-subscription-token.py \
+  --output /run/user/1000/funnypot-subscription/access/access.json
+cp config/systemd/funnypot-subscription-token.{service,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now funnypot-subscription-token.timer
+docker compose -f docker-compose.yaml -f docker-compose.subscription.yaml up -d --build --remove-orphans
+```
+
+The host-local ignored `docker-compose.override.yaml` selects this same topology,
+so ordinary `docker compose` commands use the bridge in production. The
+`funnypot-subscription-token.timer` exports every minute; its oneshot service is
+normally `inactive (dead)` after a successful run. The enabled
+`funnypot-subscription-stack.service` first invokes the exporter and then starts
+the stack, recreating tmpfs credentials before container startup after reboot.
+The supplied user units assume the repository is at `~/Opencode/FunnyPot`.
+User lingering is enabled on this host. Production's former
+`funnypot-kilo.service` is disabled/stopped; other Kilo services are unaffected.
+
+Verification:
+
+```bash
+python3 -B -m unittest discover -s subscription-bridge
+dotnet test FunnyPot.sln --no-restore
+docker compose ps
+docker exec funnypot-container python3 -I -B /opt/subscription-bridge/healthcheck.py
+docker exec --user test funnypot-container dotnet FunnyPot.dll --subscription-bridge-check
+systemctl --user list-timers funnypot-subscription-token.timer
+```
+
+The model check makes a real, uncached `uname -s` request through the actual
+.NET Unix-socket client and returns a nonzero status unless it gets `Linux`.
+The original Kilo-based application image is preserved as
+`funnypot:pre-minimal-bridge-20261029`. Switching back requires restoring the
+Kilo-specific local override and restarting the old host service; do not simply
+run the old image against the new bridge socket configuration.
+The immediately preceding two-container image is retained as
+`funnypot:pre-single-container-20261029`. Its sidecar and obsolete socket volume
+were removed; data/publication mounts were preserved.
+
+## Optional full Kilo / ChatGPT provider (legacy)
 
 The default remains OpenRouter. Set `LLM_PROVIDER=kilo` to route cache misses
 through Kilo's authenticated provider instead; no OpenRouter key is needed and
@@ -123,7 +234,7 @@ are deleted. Existing cache hits do not call either provider.
 
 ## Response dictionary
 
-### Current host deployment (2026-10-29)
+### Earlier Kilo host deployment (superseded on 2026-10-29)
 
 - Kilo runs as the enabled user service `funnypot-kilo.service`, with user
   lingering enabled so the service can start without an interactive login.

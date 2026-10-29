@@ -34,10 +34,13 @@ FunnyPot runs as a single Docker Compose service named `funnypot`, with containe
 
 ## Deployment Paths
 
-- The 2026-10-29 production deployment uses the Kilo/Terra adapter through an
-  enabled user service and an ignored local Compose override, retaining both
-  persistent data mounts. See `kilo-subscription-adapter-2026-10-29.md` and
-  `docs/DEPLOY.md` for the host setup, verification evidence, and rollback.
+- The current 2026-10-29 production deployment uses a minimal Docker
+  subscription bridge inside the same FunnyPot container over a Unix socket,
+  with distinct nonroot UIDs and a minimal privileged supervisor, a host-only access-token
+  exporter timer, and an ignored local Compose override. Both persistent data
+  mounts remain. The full Kilo server used earlier that day is disabled/stopped.
+  See `subscription-bridge-2026-10-29.md` and `docs/DEPLOY.md` for current
+  credential boundaries, host setup, verification, and recovery.
 
 - Canonical path: `scripts/deploy.sh`.
 - Local manual path: `run-docker.sh`.

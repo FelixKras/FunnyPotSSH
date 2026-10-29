@@ -9,3 +9,4 @@ obj/
 backups/
 docker-compose.override.yaml
 *.db
+__pycache__/
