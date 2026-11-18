@@ -20,6 +20,94 @@ process table, to find the running instance.
 | App dir inside container | `/home/test/app/` |
 | Response store | `/var/lib/funnypot/command_responses.json` on the `command-responses` named volume |
 
+## Simulated Ollama / OpenAI honeypot
+
+The same application listens on container TCP **11434**, published by Compose
+on host TCP **11433**. Forward router TCP port 11434 to this host's TCP port 11433.
+No password or API key is required; Authorization headers are ignored and are
+not recorded. This is a local simulation, **not** a proxy to the real LLM or
+subscription bridge: prompts cannot spend tokens or select an upstream provider.
+Completion replies use local keyword rules and a canned fallback.
+
+Supported discovery: `GET /`, `/api/version`, `/api/tags`, `/api/ps`, `/v1/models`,
+and `POST /api/show`. Supported completions: `POST /api/chat`, `/api/generate`,
+`/v1/chat/completions`, `/v1/completions`. Ollama supports JSON and NDJSON
+(streaming defaults on); OpenAI supports JSON and SSE (`stream: true`). This is
+a minimal compatibility surface, not a full Ollama implementation. Model pulls,
+embeddings and tools are not implemented. Both Content-Length and HTTP/1.1
+`Transfer-Encoding: chunked` request bodies are supported; chunked prompts are
+decoded before JSON parsing and capture. Other transfer codings and ambiguous
+Content-Length plus Transfer-Encoding requests are rejected.
+
+Abuse limits (charged per TCP connection, including discovery and incomplete
+requests): **12 per source IP per minute**, **120 globally per minute**,
+**16 concurrent requests**, **10-second total connection timeout**, **8 KiB
+headers**, and **16 KiB request bodies**. Limits use a fixed one-minute window.
+For chunked requests the body limit applies to decoded bytes, with at most 1,024
+nonempty chunks, 1 KiB metadata lines, and 8 KiB total chunk framing/trailers.
+Chunk extensions are ignored and trailer values are not recorded. Partial bodies
+received before disconnect, timeout, or malformed framing are retained in capture.
+Excess connections receive a best-effort HTTP 429 and are closed immediately;
+every request uses `Connection: close`. Source IP comes from the actual TCP peer,
+never spoofable forwarding headers.
+
+Each accepted TCP connection, request body/prompt, status, timeout/error, and
+throttle rejection is captured independently from SSH logs in JSONL. Connection
+and request records share an `id`. In Compose the file persists on the host at
+`FunnyPot/data/ollama/ollama-connections.jsonl` (container:
+`/var/lib/funnypot/ollama/ollama-connections.jsonl`). Files rotate at 10 MiB with
+ten archives; older captures expire. Raw captures are ignored by Git and Docker
+build context. Back them up separately if longer retention is required.
+
+A separate **`data/ollama.json`** is generated in the publication repository and
+staged/pushed to the configured `data` branch by `Logger.PushToGit`. It retains
+the latest **1,000 connections**, correlating TCP peers with requests, status,
+user agent, errors, and locally simulated completion replies. Public request
+bodies are capped at **4,096 characters** with a truncation flag. Authorization
+headers are never included. Prompts and source endpoints in this dedicated
+dataset are public just like the existing SSH telemetry.
+
+The dashboard's **Ollama / OpenAI** tab loads this file separately from SSH data,
+with retained-window counters, search, outcome filters, pagination, and paired
+attacker-input / honeypot-response inspector cards styled like the SSH exchange.
+JSON messages are shown by conversation role, with model/streaming metadata and
+expandable raw evidence. Missing bodies distinguish discovery, throttle and
+incomplete/error cases. Overview also displays separate API counters (connections,
+source IPs, successful requests, completion replies, throttles, errors, pending
+outcomes and zero upstream tokens); these are not added to SSH totals. A missing
+file does not prevent the SSH dashboard loading and shows unavailable API counts
+rather than falsely reporting zero traffic.
+One shared publication timer runs every `DATA_PUSH_INTERVAL_SECONDS` (default
+**3600 seconds / one hour**) for both SSH and API telemetry, even if the API
+listener is disabled. Session/shell endings and incoming events never bypass this
+schedule. Local capture continues immediately; dashboard freshness can lag by up
+to an hour. Startup recovery can publish pending data once after a restart; routine
+publication creates at most one commit per hour, and only when files changed.
+Public export and snapshot restoration omit requests with missing or unparseable peers.
+Snapshot restoration merges by connection ID and latest update rather
+than overwriting remote records. Raw logs recover local records across restarts;
+the publication file remains bounded and is not a lifetime archive.
+
+Environment overrides:
+
+- `OLLAMA_HONEYPOT_ENABLED=false` disables the listener.
+- `OLLAMA_HONEYPOT_HOST_PORT` changes the published host port (default `11433`).
+- `OLLAMA_HONEYPOT_PORT` changes the container listener port (default `11434`).
+- `OLLAMA_HONEYPOT_PER_IP_PER_MINUTE` (default `12`).
+- `OLLAMA_HONEYPOT_GLOBAL_PER_MINUTE` (default `120`).
+- `OLLAMA_HONEYPOT_LOG_PATH` changes the capture file when running outside Compose;
+  Compose explicitly selects the persistent path above.
+
+Deploy without invoking auto-commit/push deployment helpers:
+
+```bash
+docker compose up -d --build funnypot
+curl http://127.0.0.1:11433/api/tags
+curl http://127.0.0.1:11433/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"llama3.2:latest","messages":[{"role":"user","content":"Hi"}],"stream":false}'
+```
+
 ## Deploy paths
 
 In order of preference:

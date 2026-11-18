@@ -43,6 +43,7 @@ class Program
     static int SshPort = Config.Ssh.Port;
     internal static string LogDir = Config.Logging.LogDir;
     internal static readonly string AppDir = AppDomain.CurrentDomain.BaseDirectory;
+    internal static string OllamaCapturePath => Environment.GetEnvironmentVariable("OLLAMA_HONEYPOT_LOG_PATH") ?? Path.Combine(LogDir, "ollama-connections.jsonl");
     internal static CommandResponseStore? CommandResponses { get; set; }
 
     static readonly ConcurrentDictionary<string, int> AuthAttempts = new(StringComparer.OrdinalIgnoreCase);
@@ -284,6 +285,9 @@ class Program
         try
         {
             Logger.PreparePublicationRepository();
+            // Recover pending telemetry before accepting new sessions. In particular,
+            // a quiet honeypot must not leave a recovered publication backlog stranded.
+            Logger.PushToGit("startup-recovery");
         }
         catch (Exception ex)
         {
@@ -294,6 +298,26 @@ class Program
         _currentBanner = initialBanner;
         StartSshServer(initialBanner, SshPort);
         _ = ServeHealthAsync(ApplicationStopping.Token);
+
+        using var ollama = Environment.GetEnvironmentVariable("OLLAMA_HONEYPOT_ENABLED") == "false" ? null :
+            new OllamaHoneypot(GetIntEnvironmentOrDefault("OLLAMA_HONEYPOT_PORT", 11434),
+                OllamaCapturePath,
+                GetIntEnvironmentOrDefault("OLLAMA_HONEYPOT_PER_IP_PER_MINUTE", 12),
+                GetIntEnvironmentOrDefault("OLLAMA_HONEYPOT_GLOBAL_PER_MINUTE", 120));
+        var ollamaTask = ollama?.RunAsync(ApplicationStopping.Token);
+        if (ollama != null)
+            Logger.LogMsg($"Simulated Ollama/OpenAI API listening on {ollama.Port}; local replies only.");
+        var publicationInterval = TimeSpan.FromSeconds(Math.Max(1,
+            GetIntEnvironmentOrDefault("DATA_PUSH_INTERVAL_SECONDS", Config.Git.DataPushIntervalSeconds)));
+        Logger.LogMsg($"Shared SSH/Ollama publication interval: {publicationInterval.TotalSeconds}s; session endings do not trigger Git pushes.");
+        var publicationTask = PublishPeriodicallyAsync(publicationInterval,
+            () => Logger.PushToGit("scheduled-publication"), ApplicationStopping.Token);
+        if (ollamaTask != null)
+            _ = ollamaTask.ContinueWith(failed =>
+            {
+                Logger.LogMsg($"Ollama honeypot failed: {failed.Exception?.GetBaseException().Message}");
+                RequestShutdown();
+            }, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
 
         System.Timers.Timer? rotationTimer = null;
         var rotationInterval = Math.Max(0, GetIntEnvironmentOrDefault("SSH_BANNER_ROTATION_INTERVAL", Config.Ssh.BannerRotationInterval));
@@ -321,8 +345,21 @@ class Program
         Volatile.Write(ref _sshReady, 0);
         rotationTimer?.Dispose();
         _sshServer?.Stop();
+        ollamaTask?.GetAwaiter().GetResult();
+        publicationTask.GetAwaiter().GetResult();
         Logger.Shutdown();
         return 0;
+    }
+
+    internal static async Task PublishPeriodicallyAsync(TimeSpan interval, Action publish, CancellationToken stopping)
+    {
+        using var timer = new PeriodicTimer(interval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(stopping))
+                await Task.Run(publish, stopping);
+        }
+        catch (OperationCanceledException) when (stopping.IsCancellationRequested) { }
     }
 
     static async Task ServeHealthAsync(CancellationToken stopping)
@@ -617,7 +654,6 @@ class Program
             var idleTimer = new System.Timers.Timer(SessionIdleTimeoutSecs * 1000) { AutoReset = false };
             SessionCommandWorker? commandWorker = null;
             SCPUploadSession? scpUploadSession = null;
-            Task? gitPushTask = null;
             idleTimer.Elapsed += (_, _) => CloseShell("IdleTimeout", "\r\nConnection closed due to inactivity.\r\n");
             void ResetIdle() { idleTimer.Stop(); idleTimer.Start(); }
 
@@ -680,7 +716,6 @@ class Program
                 LastCommandEndedAt.TryRemove(sessionId, out DateTime _);
                 FakeFileSystem.Remove(sessionId);
                 commandWorker?.Dispose();
-                gitPushTask = Task.Run(() => Logger.PushToGit(sessionId));
             }
 
             void CloseShell(string reason, string? message = null)
@@ -695,21 +730,7 @@ class Program
                 FinalizeShell(reason);
             }
 
-            void AwaitGitPushAndDispose()
-            {
-                try
-                {
-                    gitPushTask?.Wait(GitPushTimeout);
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogMsg($"[Session {sessionId}] Git push wait failed: {ex.Message}");
-                }
-                finally
-                {
-                    llmCts.Dispose();
-                }
-            }
+            void DisposeLlmCancellation() => llmCts.Dispose();
 
             static bool IsExitCommand(string line)
             {
@@ -1056,7 +1077,7 @@ class Program
 
                 Interlocked.Exchange(ref shellClosed, 1);
                 FinalizeShell("CloseReceived");
-                AwaitGitPushAndDispose();
+                DisposeLlmCancellation();
             };
 
             channel.EofReceived += (_, _) =>
@@ -1066,13 +1087,13 @@ class Program
 
                 Interlocked.Exchange(ref shellClosed, 1);
                 FinalizeShell("EofReceived");
-                AwaitGitPushAndDispose();
+                DisposeLlmCancellation();
             };
 
             idleTimer.Elapsed += (_, _) =>
             {
                 CloseShell("IdleTimeout", "\r\nConnection closed due to inactivity.\r\n");
-                AwaitGitPushAndDispose();
+                DisposeLlmCancellation();
             };
 
             ResetIdle();
@@ -3599,7 +3620,6 @@ static class Logger
     private static readonly object _lock = new();
     private static readonly object _metricLock = new();
     private static readonly object _statsLock = new();
-    private static readonly object _pushLock = new();
     private static readonly TelemetryWriteQueue TelemetryWriter = new();
     private static readonly ConcurrentDictionary<string, long> SessionEventSequences = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, List<(DateTime Timestamp, string Event, string SessionId, long Sequence, string? ChannelId, string? ExchangeId, JsonElement Data)>> ActiveSessionEvents = new(StringComparer.Ordinal);
@@ -3608,8 +3628,6 @@ static class Logger
         WriteIndented = false,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
-    private static DateTime _lastDataPushRequestedAt = DateTime.MinValue;
-    private static readonly TimeSpan DataPushInterval = TimeSpan.FromSeconds(Math.Max(1, Program.GetIntEnvironmentOrDefault("DATA_PUSH_INTERVAL_SECONDS", Program.RuntimeConfig.Git.DataPushIntervalSeconds)));
     private static readonly long MaxTelemetryFileBytes = Math.Max(1024, Program.GetIntEnvironmentOrDefault("TELEMETRY_MAX_BYTES", 50 * 1024 * 1024));
     private static readonly int MaxStructuredSessions = Math.Max(1, Program.GetIntEnvironmentOrDefault("STRUCTURED_SESSION_LIMIT", 2_000));
     private const int MaxSummaryEntries = 1_000;
@@ -3635,7 +3653,6 @@ static class Logger
             try
             {
                 LogHarvestUnsafe(eventType, data, telemetryEvent);
-                RequestDataPush(string.IsNullOrWhiteSpace(sessionKey) ? eventType : sessionKey, force: IsPublicationBoundaryEvent(eventType));
             }
             catch (Exception ex)
             {
@@ -3790,30 +3807,6 @@ static class Logger
     }
 
     static string? NullIfEmpty(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
-
-    static bool IsPublicationBoundaryEvent(string eventType)
-    {
-        return eventType is "shell_session_end" or "session_end";
-    }
-
-    internal static bool ShouldRequestDataPush(DateTime now, DateTime lastRequestedAt, TimeSpan interval, bool force)
-    {
-        return force || lastRequestedAt == DateTime.MinValue || now - lastRequestedAt >= interval;
-    }
-
-    static void RequestDataPush(string sessionId, bool force = false)
-    {
-        var now = DateTime.UtcNow;
-        lock (_pushLock)
-        {
-            if (!ShouldRequestDataPush(now, _lastDataPushRequestedAt, DataPushInterval, force))
-                return;
-
-            _lastDataPushRequestedAt = now;
-        }
-
-        Task.Run(() => PushToGit(sessionId));
-    }
 
     static bool IsPrivateEndpoint(object data)
     {
@@ -4108,6 +4101,9 @@ static class Logger
         }
     }
 
+    internal static string PublicationPushRefSpec(string localBranch, string dataBranch) =>
+        $"refs/heads/{localBranch}:refs/heads/{dataBranch}";
+
     public static void PushToGit(string sessionId)
     {
         lock (_lock)
@@ -4148,6 +4144,7 @@ static class Logger
                 using var repo = new Repository(repoPath);
                 RemoveLegacyTelemetryFiles(repoPath);
                 EnsureValidPublicationJson(repoPath, sessionId);
+                OllamaPublication.Export(Program.OllamaCapturePath, Path.Combine(dataDir, "ollama.json"));
 
                 if (File.Exists(statsFile))
                     Commands.Stage(repo, "global_stats.json");
@@ -4164,7 +4161,7 @@ static class Logger
                 repo.Commit($"Add session data for {sessionId}", author, author);
 
                 repo.Network.Push(repo.Network.Remotes["origin"],
-                    $@"+refs/heads/{repo.Head.FriendlyName}:refs/heads/{dataBranch}",
+                    PublicationPushRefSpec(repo.Head.FriendlyName, dataBranch),
                     new PushOptions
                     {
                         CredentialsProvider = (_, _, _) =>
@@ -4939,10 +4936,14 @@ static class Logger
                 }
             }
 
+            var snapshotOllama = Path.Combine(snapshotDataDir, "ollama.json");
+            if (File.Exists(snapshotOllama))
+                OllamaPublication.MergeFiles(Path.Combine(dataDir, "ollama.json"), snapshotOllama);
+
             foreach (var file in Directory.EnumerateFiles(snapshotDataDir))
             {
                 var fileName = Path.GetFileName(file);
-                if (fileName is "events.jsonl" or "events_summary.json" or "threat_intel.json" or "sessions.json")
+                if (fileName is "events.jsonl" or "events_summary.json" or "threat_intel.json" or "sessions.json" or "ollama.json")
                     continue;
                 File.Copy(file, Path.Combine(dataDir, fileName), overwrite: true);
             }

@@ -50,7 +50,7 @@ RUN rm -rf /home/$USERNAME/app/frontend/.git && \
 
 USER $USERNAME
 
-EXPOSE 22722
+EXPOSE 22722 11434
 
 HEALTHCHECK --interval=30s --timeout=10s CMD ["dotnet", "FunnyPot.dll", "--healthcheck"]
 

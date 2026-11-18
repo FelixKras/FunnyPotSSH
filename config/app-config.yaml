@@ -54,6 +54,7 @@ api:
     
 # Git Integration
 git:
+  data-push-interval-seconds: 3600
   data-branch: "data"
   user: ""  # Set via GITHUB_USER env var or secrets
   token: ""  # Set via GITHUB_TOKEN env var or secrets

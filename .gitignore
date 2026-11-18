@@ -10,3 +10,4 @@ backups/
 docker-compose.override.yaml
 *.db
 __pycache__/
+FunnyPot/data/ollama/

@@ -117,7 +117,7 @@ namespace FunnyPot
         public string DataBranch { get; set; } = "data";
         public string User { get; set; } = "";
         public string Token { get; set; } = "";
-        public int DataPushIntervalSeconds { get; set; } = 300;
+        public int DataPushIntervalSeconds { get; set; } = 3600;
     }
 
     public class CommandResponsesConfig

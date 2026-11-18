@@ -4,3 +4,4 @@ venv/
 .secrets/
 backups/
 docker-compose.override.yaml
+FunnyPot/data/ollama/

@@ -291,23 +291,42 @@ public class LoggerTests
     }
 
     [Fact]
-    public void ShouldRequestDataPush_AllowsInitialAndElapsedRequests()
+    public async Task PublicationTimer_WaitsForIntervalBeforePublishingAndStopsOnCancellation()
     {
-        var now = DateTime.UtcNow;
-        var interval = TimeSpan.FromMinutes(5);
-
-        Assert.True(Logger.ShouldRequestDataPush(now, DateTime.MinValue, interval, force: false));
-        Assert.True(Logger.ShouldRequestDataPush(now, now.AddMinutes(-6), interval, force: false));
+        using var stopping = new CancellationTokenSource();
+        var published = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var calls = 0;
+        var task = Program.PublishPeriodicallyAsync(TimeSpan.FromMilliseconds(100), () =>
+        {
+            Interlocked.Increment(ref calls);
+            published.TrySetResult();
+        }, stopping.Token);
+        Assert.Equal(0, Volatile.Read(ref calls));
+        await published.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        stopping.Cancel();
+        await task;
+        var count = Volatile.Read(ref calls);
+        await Task.Delay(150);
+        Assert.Equal(count, Volatile.Read(ref calls));
     }
 
     [Fact]
-    public void ShouldRequestDataPush_DebouncesNonBoundaryEvents()
+    public void PublicationPush_UsesNormalRefSpecWithoutHistoryRewriting()
     {
-        var now = DateTime.UtcNow;
-        var interval = TimeSpan.FromMinutes(5);
+        Assert.Equal("refs/heads/data:refs/heads/data", Logger.PublicationPushRefSpec("data", "data"));
+        Assert.Equal("refs/heads/local:refs/heads/published", Logger.PublicationPushRefSpec("local", "published"));
+    }
 
-        Assert.False(Logger.ShouldRequestDataPush(now, now.AddMinutes(-1), interval, force: false));
-        Assert.True(Logger.ShouldRequestDataPush(now, now.AddMinutes(-1), interval, force: true));
+    [Fact]
+    public async Task PublicationTimer_HourlyDefaultAndCancellationBeforeFirstTick()
+    {
+        Assert.Equal(3600, new AppConfiguration().Git.DataPushIntervalSeconds);
+        using var stopping = new CancellationTokenSource();
+        var calls = 0;
+        var task = Program.PublishPeriodicallyAsync(TimeSpan.FromHours(1), () => calls++, stopping.Token);
+        stopping.Cancel();
+        await task;
+        Assert.Equal(0, calls);
     }
 
     [Fact]
