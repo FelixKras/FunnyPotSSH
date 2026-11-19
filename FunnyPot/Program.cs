@@ -2497,32 +2497,39 @@ static class SCPUploadHandler
                 var status = isOversized
                     ? (bytesToSave.Length > 0 ? "too_large_saved" : "too_large")
                     : isRejected
-                        ? "rejected_saved"
+                        ? (bytesToSave.Length > 0 ? "rejected_saved" : "rejected")
                         : "captured";
                 var eventType = isRejected ? "scp_upload_rejected" : "scp_upload_captured";
 
-                var uploadRoot = GetUploadDir();
-                var sessionPrefix = effectiveSessionKey[..Math.Min(8, effectiveSessionKey.Length)];
-                var sessionDir = Path.Combine(uploadRoot, string.IsNullOrWhiteSpace(sessionPrefix) ? "unknown" : sessionPrefix);
-                Directory.CreateDirectory(sessionDir);
+                var destPath = "";
+                var metadataPath = "";
+                var sha256 = "";
+                var analysis = new BinaryUploadAnalysis { FileFormat = "empty", MimeType = "application/x-empty", Summary = "No binary payload transferred" };
 
-                var rawFileName = string.IsNullOrWhiteSpace(filename) ? "upload.bin" : Path.GetFileName(filename.Trim());
-                if (string.IsNullOrWhiteSpace(rawFileName))
-                    rawFileName = "upload.bin";
-                var safeName = Regex.Replace(rawFileName, @"[^a-zA-Z0-9._-]", "_");
-                var timestamp = now.ToString("yyyyMMddHHmmss");
-                var destPath = Path.Combine(sessionDir, $"{timestamp}_{safeName}");
-                var collision = 1;
-                while (File.Exists(destPath))
+                if (bytesToSave.Length > 0)
                 {
-                    destPath = Path.Combine(sessionDir, $"{timestamp}_{collision++}_{safeName}");
+                    var uploadRoot = GetUploadDir();
+                    var sessionPrefix = effectiveSessionKey[..Math.Min(8, effectiveSessionKey.Length)];
+                    var sessionDir = Path.Combine(uploadRoot, string.IsNullOrWhiteSpace(sessionPrefix) ? "unknown" : sessionPrefix);
+                    Directory.CreateDirectory(sessionDir);
+
+                    var rawFileName = string.IsNullOrWhiteSpace(filename) ? "upload.bin" : Path.GetFileName(filename.Trim());
+                    if (string.IsNullOrWhiteSpace(rawFileName))
+                        rawFileName = "upload.bin";
+                    var safeName = Regex.Replace(rawFileName, @"[^a-zA-Z0-9._-]", "_");
+                    var timestamp = now.ToString("yyyyMMddHHmmss");
+                    destPath = Path.Combine(sessionDir, $"{timestamp}_{safeName}");
+                    var collision = 1;
+                    while (File.Exists(destPath))
+                    {
+                        destPath = Path.Combine(sessionDir, $"{timestamp}_{collision++}_{safeName}");
+                    }
+
+                    File.WriteAllBytes(destPath, bytesToSave);
+                    sha256 = Convert.ToHexString(SHA256.HashData(bytesToSave)).ToLowerInvariant();
+                    analysis = BinaryPayloadAnalyzer.Analyze(bytesToSave, filename);
+                    metadataPath = destPath + ".meta.json";
                 }
-
-                File.WriteAllBytes(destPath, bytesToSave);
-
-                var sha256 = Convert.ToHexString(SHA256.HashData(bytesToSave)).ToLowerInvariant();
-                var analysis = BinaryPayloadAnalyzer.Analyze(bytesToSave, filename);
-                var metadataPath = destPath + ".meta.json";
 
                 var metadata = new BinaryUploadMetadataRecord
                 {
@@ -2552,7 +2559,8 @@ static class SCPUploadHandler
                     Analysis = analysis
                 };
 
-                File.WriteAllText(metadataPath, JsonSerializer.Serialize(metadata, MetadataJsonOptions));
+                if (!string.IsNullOrEmpty(metadataPath))
+                    File.WriteAllText(metadataPath, JsonSerializer.Serialize(metadata, MetadataJsonOptions));
                 AppendBinaryUploadPublicationRecord(metadata);
 
                 Logger.LogYaml(eventType, new SCPUploadLogEntry
