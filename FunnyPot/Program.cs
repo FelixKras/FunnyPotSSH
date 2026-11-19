@@ -5491,6 +5491,7 @@ static class Logger
                 using var repo = new Repository(repoPath);
                 RemoveLegacyTelemetryFiles(repoPath);
                 EnsureValidPublicationJson(repoPath, "startup");
+                BackfillBinariesFromEventsIfEmpty(repoPath);
 
                 LogMsg($"Static dashboard repository prepared on {dataBranch} branch.");
             }
@@ -5552,6 +5553,84 @@ static class Logger
         {
             File.WriteAllText(binariesPath, "[]");
             LogMsg("Reinitialized invalid binaries.json.", sessionId);
+        }
+    }
+
+    static void BackfillBinariesFromEventsIfEmpty(string repoPath)
+    {
+        try
+        {
+            var dataDir = Path.Combine(repoPath, "data");
+            var binariesPath = Path.Combine(dataDir, "binaries.json");
+            var eventsPath = Path.Combine(dataDir, "events.jsonl");
+            if (!File.Exists(eventsPath))
+                return;
+
+            var existing = SCPUploadHandler.ReadBinaryUploadsFile(binariesPath);
+            if (existing.Any(r => r.Analysis is not null && !string.IsNullOrWhiteSpace(r.Analysis.FileFormat) && r.Analysis.FileFormat != "unknown"))
+                return;
+
+            var parsedEvents = new List<(DateTime Timestamp, string Event, string SessionId, long Sequence, string? ChannelId, string? ExchangeId, JsonElement Data)>();
+            foreach (var line in File.ReadLines(eventsPath))
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                try
+                {
+                    using var doc = JsonDocument.Parse(line);
+                    var root = doc.RootElement;
+                    var ev = root.TryGetProperty("Event", out var eProp) ? eProp.GetString() ?? "" : "";
+                    if (ev is not ("scp_upload_captured" or "scp_upload_rejected" or "payload_capture" or "command" or "session_start"))
+                        continue;
+                    var ts = root.TryGetProperty("Timestamp", out var tProp) && tProp.TryGetDateTime(out var dt) ? dt : DateTime.UtcNow;
+                    var sid = root.TryGetProperty("SessionId", out var sProp) ? sProp.GetString() ?? "" : "";
+                    var seq = root.TryGetProperty("Sequence", out var seqProp) && seqProp.TryGetInt64(out var seqVal) ? seqVal : 0;
+                    var ch = root.TryGetProperty("ChannelId", out var chProp) ? chProp.GetString() : null;
+                    var ex = root.TryGetProperty("ExchangeId", out var exProp) ? exProp.GetString() : null;
+                    var data = root.TryGetProperty("Data", out var dProp) ? dProp.Clone() : default;
+                    parsedEvents.Add((ts, ev, sid, seq, ch, ex, data));
+                }
+                catch { }
+            }
+
+            GenerateBinaryUploadsIndex(dataDir, parsedEvents);
+
+            // If historical payload_capture URLs exist in events.jsonl that were never saved to /var/log/funnypot/uploads yet,
+            // trigger a one-time sanitized background fetch for the latest occurrence of each unique URL.
+            var missingUrls = parsedEvents
+                .Where(e => e.Event == "payload_capture" && e.Data.ValueKind == JsonValueKind.Object && string.IsNullOrWhiteSpace(JsonString(e.Data, "Path")))
+                .GroupBy(e => JsonString(e.Data, "Url"), StringComparer.OrdinalIgnoreCase)
+                .Where(g => !string.IsNullOrWhiteSpace(g.Key))
+                .Select(g => g.OrderByDescending(x => x.Timestamp).First())
+                .Take(5)
+                .ToList();
+
+            foreach (var item in missingUrls)
+            {
+                var rawUrl = JsonString(item.Data, "Url");
+                if (!DataHarvester.TrySanitizePayloadDownloadTarget(rawUrl, out var sanitizedUri, out var sanitizedFileName))
+                    continue;
+                var sessionEvents = parsedEvents.Where(e => e.SessionId == item.SessionId).ToList();
+                var user = sessionEvents.Select(e => JsonString(e.Data, "Username")).FirstOrDefault(u => !string.IsNullOrWhiteSpace(u)) ?? "unknown";
+                var clientVer = sessionEvents.Select(e => JsonString(e.Data, "ClientVersion")).FirstOrDefault(c => !string.IsNullOrWhiteSpace(c) && c != "pending") ?? "unknown";
+                var banner = sessionEvents.Select(e => JsonString(e.Data, "SshBanner")).FirstOrDefault(b => !string.IsNullOrWhiteSpace(b)) ?? "";
+                var endpoint = JsonString(item.Data, "RemoteEndpoint", "unknown");
+                var ctx = new BinaryUploadContext(
+                    SessionKey: item.SessionId,
+                    ShellSessionId: item.ChannelId ?? "",
+                    RemoteEndpoint: endpoint,
+                    RemoteIp: Program.GetRemoteAttemptKey(endpoint),
+                    Username: user,
+                    ClientVersion: clientVer,
+                    SshBanner: banner,
+                    DeliveryChannel: "exec",
+                    CommandText: sanitizedUri.AbsoluteUri,
+                    ExchangeId: item.ExchangeId ?? "");
+                _ = Task.Run(() => DataHarvester.CapturePayloadMetadataAsync(sanitizedUri, sanitizedFileName, item.SessionId, item.ChannelId ?? "", endpoint, ctx));
+            }
+        }
+        catch (Exception ex)
+        {
+            LogMsg($"Warning: Historical binary backfill failed: {ex.Message}");
         }
     }
 

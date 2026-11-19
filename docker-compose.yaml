@@ -57,6 +57,8 @@ services:
           propagation: rprivate
           create_host_path: false
       - frontend-publication-data:/home/test/app/frontend
+      - funnypot-quarantine-logs:/var/log/funnypot
 
 volumes:
   frontend-publication-data:
+  funnypot-quarantine-logs:
