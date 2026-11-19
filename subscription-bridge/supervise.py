@@ -23,6 +23,19 @@ SOCKET_DIR = RUNTIME / "socket"
 stopping = False
 
 
+def application_environment(app, inherited=None):
+    # Changing UID/GID in Popen does not update the inherited root environment.
+    # libgit2 consults HOME/XDG config paths even when Git credentials are valid.
+    env = dict(os.environ if inherited is None else inherited)
+    home = app.pw_dir
+    env.update(HOME=home, USER=app.pw_name, LOGNAME=app.pw_name, SHELL=app.pw_shell,
+               DOTNET_CLI_HOME=home, XDG_CONFIG_HOME=home + "/.config",
+               XDG_CACHE_HOME=home + "/.cache", XDG_DATA_HOME=home + "/.local/share",
+               XDG_STATE_HOME=home + "/.local/state")
+    env.pop("XDG_RUNTIME_DIR", None)  # Do not inherit a root-only runtime directory.
+    return env
+
+
 def private_directory(path, uid, gid, mode):
     path.mkdir(exist_ok=True)
     if path.is_symlink():
@@ -141,9 +154,12 @@ def run():
                 time.sleep(0.1)
         else:
             raise RuntimeError("Bridge startup timed out")
-        children.append(subprocess.Popen(["dotnet", "FunnyPot.dll"], user=app.pw_uid,
-            group=app.pw_gid, extra_groups=[], start_new_session=True))
-        print("FunnyPot and subscription bridge running as separate nonroot users", flush=True)
+        if os.environ.get("FUNNYPOT_MAINTENANCE") != "1":
+            children.append(subprocess.Popen(["dotnet", "FunnyPot.dll"], user=app.pw_uid,
+                group=app.pw_gid, extra_groups=[], env=application_environment(app), start_new_session=True))
+            print("FunnyPot and subscription bridge running as separate nonroot users", flush=True)
+        else:
+            print("Maintenance mode: bridge running; SSH listener disabled", flush=True)
         next_copy = time.monotonic() + 30
         while not stopping:
             reap(children)

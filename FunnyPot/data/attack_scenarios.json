@@ -1,0 +1,327 @@
+[
+  {
+    "id": "discovery",
+    "title": "Host discovery",
+    "synthetic": true,
+    "llmModel": "openai/gpt-6.1-terra",
+    "generatedAt": "2026-10-29T08:12:44.5657488\u002B00:00",
+    "turns": [
+      {
+        "command": "whoami",
+        "response": "remote",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "id",
+        "response": "uid=1001(remote) gid=100(users) groups=100(users)",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "hostname",
+        "response": "omegablack",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "uname -a",
+        "response": "Linux omegablack 5.15.144-omegablack #1 SMP x86_64 GNU/Linux",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "cat /etc/os-release",
+        "response": "PRETTY_NAME=\u0022OmegaBlack Compute OS 6.0 (squeeze)\u0022\nNAME=\u0022OmegaBlack Compute OS\u0022\nVERSION_ID=\u00226.0\u0022\nVERSION=\u00226.0 (squeeze)\u0022\nID=omegablack\nID_LIKE=debian",
+        "llmModel": "openai/gpt-6.1-terra"
+      }
+    ]
+  },
+  {
+    "id": "miner-recon",
+    "title": "CPU and GPU miner reconnaissance",
+    "synthetic": true,
+    "llmModel": "openai/gpt-6.1-terra",
+    "generatedAt": "2026-10-29T08:13:14.5362128\u002B00:00",
+    "turns": [
+      {
+        "command": "lscpu",
+        "response": "Architecture:            x86_64\r\nCPU op-mode(s):          32-bit, 64-bit\r\nByte Order:              Little Endian\r\nAddress sizes:           46 bits physical, 48 bits virtual\r\nCPU(s):                  96\r\nOn-line CPU(s) list:     0-95\r\nThread(s) per core:      2\r\nCore(s) per socket:      24\r\nSocket(s):               2\r\nNUMA node(s):            2\r\nVendor ID:               GenuineIntel\r\nCPU family:              6\r\nModel:                   85\r\nModel name:              Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz\r\nStepping:                7\r\nCPU MHz:                 2500.000\r\nCPU max MHz:             3400.0000\r\nCPU min MHz:             1200.0000\r\nBogoMIPS:                5000.00\r\nVirtualization:          VT-x\r\nL1d cache:               1.5 MiB\r\nL1i cache:               1.5 MiB\r\nL2 cache:                48 MiB\r\nL3 cache:                71.5 MiB\r\nNUMA node0 CPU(s):       0-23,48-71\r\nNUMA node1 CPU(s):       24-47,72-95",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "nvidia-smi",
+        "response": "\u002B-----------------------------------------------------------------------------\u002B\r\n| NVIDIA-SMI 525.147.05   Driver Version: 525.147.05   CUDA Version: 12.0     |\r\n|-------------------------------\u002B----------------------\u002B----------------------\u002B\r\n| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |\r\n| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |\r\n|                               |                      |               MIG M. |\r\n|===============================\u002B======================\u002B======================|\r\n|   0  NVIDIA A100-SXM4... Off  | 00000000:3B:00.0 Off |                    0 |\r\n| N/A   35C    P0    75W / 400W |      0MiB / 81920MiB |      0%      Default |\r\n|                               |                      |             Disabled |\r\n\u002B-------------------------------\u002B----------------------\u002B----------------------\u002B\r\n|   1  NVIDIA A100-SXM4... Off  | 00000000:AF:00.0 Off |                    0 |\r\n| N/A   34C    P0    72W / 400W |      0MiB / 81920MiB |      0%      Default |\r\n|                               |                      |             Disabled |\r\n\u002B-------------------------------\u002B----------------------\u002B----------------------\u002B\r\n                                                                               \r\n\u002B-----------------------------------------------------------------------------\u002B\r\n| Processes:                                                                  |\r\n|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |\r\n|        ID   ID                                                   Usage      |\r\n|=============================================================================|\r\n|  No running processes found                                                 |\r\n\u002B-----------------------------------------------------------------------------\u002B",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "ps -ef | grep \u0027[Mm]iner\u0027",
+        "response": "remote    18427     1  2 08:14 ?        00:05:32 /tmp/.cache/xmrig --config=/tmp/.cache/miner.json",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "top -bn1 | head -n 15",
+        "response": "top - 12:45:00 up 40 days,  2:43,  1 user,  load average: 2.12, 1.98, 1.85\r\nTasks: 412 total,   2 running, 410 sleeping,   0 stopped,   0 zombie\r\n%Cpu(s):  4.2 us,  1.1 sy,  0.0 ni, 94.5 id,  0.1 wa,  0.0 hi,  0.1 si,  0.0 st\r\nMiB Mem : 262144.0 total, 167936.0 free,  49152.0 used,  45056.0 buff/cache\r\nMiB Swap:   8192.0 total,   8192.0 free,      0.0 used. 206848.0 avail Mem\r\n\r\n    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME\u002B COMMAND\r\n  18427 remote    20   0  512000  45000   8000 S   2.0   0.0   5:32.00 xmrig\r\n   1124 root      20   0  980000  65000  12000 S   1.0   0.0  38:14.32 containerd\r\n   1352 root      20   0  234000  18000   9000 S   0.3   0.0   7:22.15 sshd\r\n      1 root      20   0  168000  12000   8000 S   0.0   0.0   2:19.45 systemd",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "free -h",
+        "response": "              total        used        free      shared  buff/cache   available\r\nMem:          256Gi        48Gi       164Gi       1.0Gi        44Gi       202Gi\r\nSwap:         8.0Gi          0B       8.0Gi",
+        "llmModel": "openai/gpt-6.1-terra"
+      }
+    ]
+  },
+  {
+    "id": "sudo-fallback",
+    "title": "Privilege check with fallback",
+    "synthetic": true,
+    "llmModel": "openai/gpt-6.1-terra",
+    "generatedAt": "2026-10-29T08:13:25.7124408\u002B00:00",
+    "turns": [
+      {
+        "command": "id",
+        "response": "uid=1001(remote) gid=100(users) groups=100(users)",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "echo \u0027synthetic-password\u0027 | sudo -S -v || true",
+        "response": "[sudo] password for remote: Sorry, try again.\r\n[sudo] password for remote: \r\nsudo: no password was provided\r\nsudo: 1 incorrect password attempt",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "sudo -n nproc 2\u003E/dev/null || nproc",
+        "response": "96",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "whoami",
+        "response": "remote",
+        "llmModel": "openai/gpt-6.1-terra"
+      }
+    ]
+  },
+  {
+    "id": "staging",
+    "title": "Inert payload staging",
+    "synthetic": true,
+    "llmModel": "openai/gpt-6.1-terra",
+    "generatedAt": "2026-10-29T08:13:35.7299096\u002B00:00",
+    "turns": [
+      {
+        "command": "mkdir -p /tmp/simulation-stage",
+        "response": "",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "printf \u0027%s\\n\u0027 \u0027inert simulation artifact\u0027 \u003E /tmp/simulation-stage/payload.txt",
+        "response": "",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "chmod 600 /tmp/simulation-stage/payload.txt",
+        "response": "",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "ls -l /tmp/simulation-stage",
+        "response": "total 4\r\n-rw------- 1 remote users 26 Jun 10 12:00 payload.txt",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "cat /tmp/simulation-stage/payload.txt",
+        "response": "inert simulation artifact",
+        "llmModel": "openai/gpt-6.1-terra"
+      }
+    ]
+  },
+  {
+    "id": "persistence",
+    "title": "Persistence surface inspection",
+    "synthetic": true,
+    "llmModel": "openai/gpt-6.1-terra",
+    "generatedAt": "2026-10-29T08:13:54.7633859\u002B00:00",
+    "turns": [
+      {
+        "command": "crontab -l",
+        "response": "no crontab for remote",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "cat /etc/crontab",
+        "response": "# /etc/crontab: system-wide crontab\r\nSHELL=/bin/sh\r\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\r\n\r\n# m h dom mon dow user\tcommand\r\n17 *\t* * *\troot\tcd / \u0026\u0026 run-parts --report /etc/cron.hourly\r\n25 6\t* * *\troot\ttest -x /usr/sbin/anacron || ( cd / \u0026\u0026 run-parts --report /etc/cron.daily )\r\n47 6\t* * 7\troot\ttest -x /usr/sbin/anacron || ( cd / \u0026\u0026 run-parts --report /etc/cron.weekly )\r\n52 6\t1 * *\troot\ttest -x /usr/sbin/anacron || ( cd / \u0026\u0026 run-parts --report /etc/cron.monthly )",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "ls -la /etc/cron.d",
+        "response": "total 20\r\ndrwxr-xr-x  2 root root 4096 Jan 15 10:12 .\r\ndrwxr-xr-x 98 root root 4096 Feb 20 08:30 ..\r\n-rw-r--r--  1 root root  102 Jan 15 10:12 .placeholder\r\n-rw-r--r--  1 root root  712 Sep  3  2023 php\r\n-rw-r--r--  1 root root  201 Oct 12  2023 sysstat",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "ls -la /etc/init.d",
+        "response": "total 72\r\ndrwxr-xr-x  2 root root 4096 Jan 15 10:12 .\r\ndrwxr-xr-x 98 root root 4096 Feb 20 08:30 ..\r\n-rw-r--r--  1 root root 2427 Jan 10  2024 README\r\n-rwxr-xr-x  1 root root 3187 Jan 10  2024 cron\r\n-rwxr-xr-x  1 root root 5428 Jan 10  2024 dbus\r\n-rwxr-xr-x  1 root root 3912 Jan 10  2024 fail2ban\r\n-rwxr-xr-x  1 root root 2467 Jan 10  2024 networking\r\n-rwxr-xr-x  1 root root 4891 Jan 10  2024 nginx\r\n-rwxr-xr-x  1 root root 3562 Jan 10  2024 procps\r\n-rwxr-xr-x  1 root root 2864 Jan 10  2024 rsyslog\r\n-rwxr-xr-x  1 root root 4123 Jan 10  2024 ssh\r\n-rwxr-xr-x  1 root root 3048 Jan 10  2024 sysstat",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "cat /etc/rc.local",
+        "response": "#!/bin/sh -e\r\n#\r\n# rc.local\r\n#\r\n# This script is executed at the end of each multiuser runlevel.\r\n\r\nexit 0",
+        "llmModel": "openai/gpt-6.1-terra"
+      }
+    ]
+  },
+  {
+    "id": "credentials",
+    "title": "Credential file discovery",
+    "synthetic": true,
+    "llmModel": "openai/gpt-6.1-terra",
+    "generatedAt": "2026-10-29T08:14:08.3366812\u002B00:00",
+    "turns": [
+      {
+        "command": "find /home/remote -name credentials -o -name \u0027.env\u0027",
+        "response": "/home/remote/.aws/credentials",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "find /opt/app -name \u0027*.json\u0027 -o -name \u0027.env\u0027",
+        "response": "/opt/app/secrets.json\r\n/opt/app/.env",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "ls -la /home/remote/.aws",
+        "response": "total 12\r\ndrwx------  2 remote users 4096 Feb  8 10:12 .\r\ndrwxr-xr-x 19 remote users 4096 Feb  8 10:12 ..\r\n-rw-------  1 remote users  116 Feb  8 10:12 credentials",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "ls -la /opt/app",
+        "response": "total 36\r\ndrwxr-xr-x 5 root root 4096 Feb  8 10:10 .\r\ndrwxr-xr-x 9 root root 4096 Feb  8 10:00 ..\r\n-rw-r--r-- 1 root root  132 Feb  8 10:10 .env\r\ndrwxr-xr-x 2 root root 4096 Feb  8 10:10 bin\r\n-rw-r--r-- 1 root root  214 Feb  8 10:10 config.yml\r\ndrwxr-xr-x 2 root root 4096 Feb  8 10:10 data\r\ndrwxr-xr-x 2 root root 4096 Feb  8 10:10 logs\r\n-rw-r--r-- 1 root root  176 Feb  8 10:10 secrets.json",
+        "llmModel": "openai/gpt-6.1-terra"
+      }
+    ]
+  },
+  {
+    "id": "network",
+    "title": "Network discovery",
+    "synthetic": true,
+    "llmModel": "openai/gpt-6.1-terra",
+    "generatedAt": "2026-10-29T08:14:23.671804\u002B00:00",
+    "turns": [
+      {
+        "command": "hostname -I",
+        "response": "192.168.1.100",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "cat /etc/hosts",
+        "response": "127.0.0.1\tlocalhost\r\n127.0.1.1\tomegablack\r\n\r\n::1\tip6-localhost ip6-loopback\r\nfe00::0\tip6-localnet\r\nff00::0\tip6-mcastprefix\r\nff02::1\tip6-allnodes\r\nff02::2\tip6-allrouters",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "cat /etc/resolv.conf",
+        "response": "nameserver 192.168.1.1\r\nnameserver 8.8.8.8",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "ip addr show",
+        "response": "1: lo: \u003CLOOPBACK,UP,LOWER_UP\u003E mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000\r\n    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00\r\n    inet 127.0.0.1/8 scope host lo\r\n       valid_lft forever preferred_lft forever\r\n    inet6 ::1/128 scope host\r\n       valid_lft forever preferred_lft forever\r\n2: eth0: \u003CBROADCAST,MULTICAST,UP,LOWER_UP\u003E mtu 1500 qdisc mq state UP group default qlen 1000\r\n    link/ether 00:1b:21:4e:83:10 brd ff:ff:ff:ff:ff:ff\r\n    inet 192.168.1.100/24 brd 192.168.1.255 scope global eth0\r\n       valid_lft forever preferred_lft forever\r\n    inet6 fe80::21b:21ff:fe4e:8310/64 scope link\r\n       valid_lft forever preferred_lft forever",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "ip route show",
+        "response": "default via 192.168.1.1 dev eth0\r\n192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.100",
+        "llmModel": "openai/gpt-6.1-terra"
+      }
+    ]
+  },
+  {
+    "id": "defense-evasion",
+    "title": "Defense visibility inspection",
+    "synthetic": true,
+    "llmModel": "openai/gpt-6.1-terra",
+    "generatedAt": "2026-10-29T08:14:42.548716\u002B00:00",
+    "turns": [
+      {
+        "command": "ps -ef | grep \u0027[f]ail2ban\u0027",
+        "response": "root        1123       1  0 Apr  1 ?        00:12:34 /usr/bin/python3 /usr/bin/fail2ban-server -xf start",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "ls -la /var/log",
+        "response": "total 3240\r\ndrwxr-xr-x 12 root   root     4096 May 11 12:00 .\r\ndrwxr-xr-x 12 root   root     4096 Apr  1 09:00 ..\r\ndrwxr-xr-x  2 root   root     4096 May  1 00:00 apache2\r\ndrwxr-xr-x  2 root   root     4096 May  1 00:00 apt\r\n-rw-r-----  1 root   adm    148672 May 11 12:00 auth.log\r\n-rw-rw----  1 root   utmp       0 May  1 00:00 btmp\r\n-rw-r-----  1 root   adm     24832 May 11 11:59 cron.log\r\n-rw-r-----  1 root   adm     36241 May 11 11:57 daemon.log\r\n-rw-r--r--  1 root   root    48217 May  9 15:32 dpkg.log\r\n-rw-r--r--  1 root   root    18429 May 11 11:48 fail2ban.log\r\n-rw-r-----  1 root   adm    103429 May 11 11:58 kern.log\r\n-rw-rw-r--  1 root   utmp  292292 May 11 11:45 lastlog\r\n-rw-r-----  1 root   adm     63420 May 11 11:58 messages\r\ndrwxr-xr-x  2 mysql  adm      4096 May  1 00:00 mysql\r\ndrwxr-xr-x  2 root   adm      4096 May  1 00:00 nginx\r\ndrwxr-xr-x  2 redis  adm      4096 May  1 00:00 redis\r\n-rw-r-----  1 root   adm    428192 May 11 12:00 syslog\r\n-rw-r-----  1 root   adm     14272 May 11 11:50 user.log\r\n-rw-rw-r--  1 root   utmp  137856 May 11 11:45 wtmp",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "tail -n 10 /var/log/auth.log",
+        "response": "May 11 11:20:01 omegablack CRON[24183]: pam_unix(cron:session): session opened for user root by (uid=0)\r\nMay 11 11:20:01 omegablack CRON[24183]: pam_unix(cron:session): session closed for user root\r\nMay 11 11:32:14 omegablack sshd[24401]: Connection closed by 192.0.2.42 port 53810 [preauth]\r\nMay 11 11:40:01 omegablack CRON[24512]: pam_unix(cron:session): session opened for user root by (uid=0)\r\nMay 11 11:40:01 omegablack CRON[24512]: pam_unix(cron:session): session closed for user root\r\nMay 11 11:44:58 omegablack sshd[24608]: Accepted publickey for remote from 192.0.2.25 port 49312 ssh2\r\nMay 11 11:44:58 omegablack sshd[24608]: pam_unix(sshd:session): session opened for user remote by (uid=0)\r\nMay 11 11:51:32 omegablack sshd[24722]: Failed password for invalid user admin from 198.51.100.34 port 41386 ssh2\r\nMay 11 11:51:34 omegablack sshd[24722]: Connection closed by invalid user admin 198.51.100.34 port 41386 [preauth]\r\nMay 11 12:00:01 omegablack CRON[24813]: pam_unix(cron:session): session opened for user root by (uid=0)",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "cat /etc/ssh/sshd_config | grep -E \u0027^(PermitRootLogin|PasswordAuthentication)\u0027",
+        "response": "PermitRootLogin no\r\nPasswordAuthentication yes",
+        "llmModel": "openai/gpt-6.1-terra"
+      }
+    ]
+  },
+  {
+    "id": "fingerprints",
+    "title": "Compound system fingerprints",
+    "synthetic": true,
+    "llmModel": "openai/gpt-6.1-terra",
+    "generatedAt": "2026-10-29T08:14:55.6616961\u002B00:00",
+    "turns": [
+      {
+        "command": "uname -a; hostname; id",
+        "response": "Linux omegablack 5.15.144-omegablack #1 SMP Tue Apr 9 10:12:00 UTC 2024 x86_64 GNU/Linux\r\nomegablack\r\nuid=1001(remote) gid=100(users) groups=100(users)",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "lscpu | grep \u0027Model name\u0027",
+        "response": "Model name:                      Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "cat /proc/cpuinfo | grep name | wc -l",
+        "response": "96",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "lspci | grep \u00273D controller\u0027",
+        "response": "3b:00.0 3D controller: NVIDIA Corporation GA100 [A100 SXM4 80GB] (rev a1)\r\naf:00.0 3D controller: NVIDIA Corporation GA100 [A100 SXM4 80GB] (rev a1)",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "df -h | grep -E \u0027Filesystem|/srv/data|/$\u0027",
+        "response": "Filesystem      Size  Used Avail Use% Mounted on\r\n/dev/nvme0n1p2  1.8T  324G  1.4T  19% /\r\n/dev/sda1       7.3T  2.1T  4.9T  31% /srv/data",
+        "llmModel": "openai/gpt-6.1-terra"
+      }
+    ]
+  },
+  {
+    "id": "filesystem",
+    "title": "Filesystem exploration",
+    "synthetic": true,
+    "llmModel": "openai/gpt-6.1-terra",
+    "generatedAt": "2026-10-29T08:15:10.2183398\u002B00:00",
+    "turns": [
+      {
+        "command": "pwd",
+        "response": "/home/remote",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "ls -la /opt",
+        "response": "total 92\r\ndrwxr-xr-x 23 root root 4096 May  8 09:12 .\r\ndrwxr-xr-x 22 root root 4096 May  8 09:10 ..\r\ndrwxr-xr-x  5 root root 4096 May  8 09:12 ansible\r\ndrwxr-xr-x  5 root root 4096 May  8 09:12 app\r\n-rwxr-xr-x  1 root root 1482 May  8 09:12 deploy.sh\r\ndrwxr-xr-x  3 root root 4096 May  8 09:12 docker\r\ndrwxr-xr-x  3 root root 4096 May  8 09:12 elasticsearch\r\ndrwxr-xr-x  3 root root 4096 May  8 09:12 grafana\r\ndrwxr-xr-x  3 root root 4096 May  8 09:12 jenkins\r\ndrwxr-xr-x  3 root root 4096 May  8 09:12 kibana\r\ndrwxr-xr-x  3 root root 4096 May  8 09:12 kubernetes\r\ndrwxr-xr-x  3 root root 4096 May  8 09:12 legacy\r\ndrwxr-xr-x  3 root root 4096 May  8 09:12 monitoring\r\ndrwxr-xr-x  3 root root 4096 May  8 09:12 nomad\r\ndrwxr-xr-x  3 root root 4096 May  8 09:12 prometheus\r\n-rw-r--r--  1 root root  864 May  8 09:12 README.md\r\ndrwxr-xr-x  3 root root 4096 May  8 09:12 scripts\r\ndrwxr-xr-x  3 root root 4096 May  8 09:12 terraform\r\ndrwxr-xr-x  3 root root 4096 May  8 09:12 third-party\r\ndrwxr-xr-x  3 root root 4096 May  8 09:12 vault\r\ndrwxr-xr-x  3 root root 4096 May  8 09:12 vendor",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "ls -la /srv",
+        "response": "total 52\r\ndrwxr-xr-x 13 root root 4096 May  8 09:10 .\r\ndrwxr-xr-x 22 root root 4096 May  8 09:10 ..\r\ndrwxr-xr-x  2 root root 4096 May  8 09:10 backup\r\ndrwxr-xr-x  5 root root 4096 May  8 09:10 data\r\ndrwxr-xr-x  2 root root 4096 May  8 09:10 ftp\r\ndrwxr-xr-x  2 root root 4096 May  8 09:10 git\r\ndrwxr-xr-x  2 root root 4096 May  8 09:10 logs\r\ndrwxr-xr-x  2 root root 4096 May  8 09:10 mail\r\ndrwxr-xr-x  2 root root 4096 May  8 09:10 nfs\r\ndrwxr-xr-x  2 root root 4096 May  8 09:10 samba\r\ndrwxr-xr-x  2 root root 4096 May  8 09:10 svn\r\ndrwxr-xr-x  3 root root 4096 May  8 09:10 www",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "find /usr/local -maxdepth 2 -type d",
+        "response": "/usr/local\r\n/usr/local/bin\r\n/usr/local/sbin\r\n/usr/local/lib\r\n/usr/local/share\r\n/usr/local/etc\r\n/usr/local/src\r\n/usr/local/include\r\n/usr/local/man",
+        "llmModel": "openai/gpt-6.1-terra"
+      },
+      {
+        "command": "du -sh /srv/data",
+        "response": "2.4T\t/srv/data",
+        "llmModel": "openai/gpt-6.1-terra"
+      }
+    ]
+  }
+]

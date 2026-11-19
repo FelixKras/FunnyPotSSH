@@ -5,7 +5,7 @@ title: Frontend Static Dashboard Workflow
 scope: project
 status: approved-by-request
 created_at: 2026-07-12
-updated_at: 2026-10-17
+updated_at: 2026-10-29
 author: Forge
 reviewer: Kilo
 source_refs:
@@ -14,6 +14,8 @@ source_refs:
   - docs/docker-secrets.md
   - docs/data-harvesting-requirements.md
   - scripts/deploy.sh
+  - subscription-bridge/supervise.py
+  - .memory-plane/artifacts/publication-home-environment-incident-2026-10-29.md
 ---
 
 # Frontend Static Dashboard Workflow
@@ -43,10 +45,11 @@ FunnyPot separates dashboard UI from published telemetry data. Runtime writes in
 
 - `frontend-main/index.html` is a static dashboard titled `FunnyPot SSH Intelligence Dashboard`.
 - It fetches from `https://raw.githubusercontent.com/FelixKras/FunnyPot.ai/data` with cache-busting timestamps.
-- Initial load concurrently fetches `global_stats.json`, `data/events_summary.json`, `data/threat_intel.json`, and `data/sessions.json`.
+- Initial load concurrently fetches `global_stats.json`, `data/events_summary.json`, `data/threat_intel.json`, `data/sessions.json`, `data/ollama.json`, and `data/binaries.json`.
 - Browser-side `events.jsonl` hydration has been removed to prevent client-side memory exhaustion and payload bloat; session models map directly from pre-assembled debriefs in `data/sessions.json`.
 - If `data/sessions.json` is available, session models map directly from pre-assembled debriefs. When a prebuilt timeline is absent, the UI synthesizes start, authentication, command, result, and end events, but not shell lifecycle events; timelines can be partial.
-- Tabs include Overview, Credentials, Geography, and Attacker Exchange.
+- Tabs include Overview, Credentials, Geography, Attacker Exchange, Caught Binaries, and Ollama / OpenAI.
+- The **Caught Binaries** tab (`data-tab="binaries"`) displays all quarantined binary uploads (accepted SCP uploads, rejected oversized or malformed SCP transfers, rejected inline SSH/PTY/exec binary drops, decoded inline Base64/hex payloads, and fetched URL payloads) from `data/binaries.json` and session upload events, including summary KPIs, format/architecture/source/indicator breakdown charts, multi-faceted search/filtering, and full per-binary static analysis cards (ELF/script/archive header inspection, Shannon entropy, magic bytes, suspicious behavioral indicators, extracted URLs/IPs, printable strings, and one-click jump to the originating session in Attacker Exchange).
 - The Overview tab features a dedicated **Top Attacker Commands & Tactical Objectives** component, classifying observed commands with inferred strategic goals (e.g., privilege identification, kernel reconnaissance, payload ingress, cron persistence) and MITRE ATT&CK tags.
 - Credentials and Geography tabs consume `threat_intel.json` to present the complete historical threat intelligence dataset (usernames, passwords, scanner source IPs) across resets.
 - It renders command/result exchanges, MITRE tactics, banners, source IPs, credentials, uploads, high-risk signals, and freshness status through the overview and exchange HUD views.
@@ -67,6 +70,14 @@ FunnyPot separates dashboard UI from published telemetry data. Runtime writes in
 
 ## Failure Modes
 
+- A nonroot app launched by a root supervisor must get its own HOME/XDG paths,
+  not only a new UID/GID. The 2026-10-29 incident left HOME=/root and caused
+  `failed to stat '/root/.gitconfig'` while collection/health stayed normal.
+  Explicit child environment setup fixed it; all pending records were recovered.
+  Verify the actual process environment and public data branch, not `docker exec`
+  defaults or container health alone. See the linked incident artifact.
+- Startup now attempts backlog publication before opening SSH. Publication uses
+  normal push refspecs rather than forced history updates.
 - Publication is skipped when `GITHUB_TOKEN` or `GITHUB_USER` is missing.
 - Publication fails if no static dashboard remote can be configured.
 - Invalid publication JSON is reinitialized before commit.

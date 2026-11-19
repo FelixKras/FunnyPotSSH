@@ -106,6 +106,15 @@ The previous two-container app image is also tagged
 
 ## Verification
 
+**Verification gap and subsequent fix:** the initial single-container checks
+below did not verify Git publication under the actual supervised app process.
+It inherited HOME=/root despite running as UID 1000, so collection worked but
+dashboard updates failed. Explicit HOME/XDG/user environment setup fixed the
+regression; all pending records and subsequent automatic publication were
+verified publicly. The app/bridge UID separation and token protection remain.
+See `publication-home-environment-incident-2026-10-29.md` for the incident,
+responsibility, corrective tests, and end-to-end verification requirements.
+
 - 123 .NET tests and 17 Python tests passed, including role translation, no-tools
   enforcement, SSE failure rejection, redirect blocking, sanitized auth errors,
   token export permissions/field filtering, and mocked refresh rotation.

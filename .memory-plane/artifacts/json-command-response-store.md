@@ -23,6 +23,16 @@ source_refs:
 
 # JSON Command Response Store
 
+## Terra baseline rebuild (2026-10-29)
+
+The previous seed/learned asset contents described below were superseded by a
+fresh Terra-generated baseline: 272 entries plus a separate, explicitly synthetic
+10-scenario/47-turn corpus. Existing keys supplied coverage, not prior answers.
+The old assets and attack history were backed up before reset. See
+`terra-assets-and-history-reset-2026-10-29.md` for provenance, validation,
+maintenance lifecycle, and the published telemetry reset. Runtime cache selection
+and learning semantics remain unchanged.
+
 The project owner established a cache-first/LLM-only response architecture to prevent further growth of inadequate rule-based shell responses.
 
 ## Decision

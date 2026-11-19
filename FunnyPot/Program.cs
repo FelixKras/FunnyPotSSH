@@ -42,7 +42,7 @@ class Program
     static string SshBanner = Config.Ssh.Banner;
     static int SshPort = Config.Ssh.Port;
     internal static string LogDir = Config.Logging.LogDir;
-    internal static readonly string AppDir = AppDomain.CurrentDomain.BaseDirectory;
+    internal static string AppDir = AppDomain.CurrentDomain.BaseDirectory;
     internal static string OllamaCapturePath => Environment.GetEnvironmentVariable("OLLAMA_HONEYPOT_LOG_PATH") ?? Path.Combine(LogDir, "ollama-connections.jsonl");
     internal static CommandResponseStore? CommandResponses { get; set; }
 
@@ -221,6 +221,13 @@ class Program
 
         LoadDotEnvFiles();
         LoadRuntimeSettings();
+
+        if (args.Length == 3 && args[0] == "--rebuild-response-assets")
+            return ResponseAssetRebuilder.RunAsync(args[1], args[2]).GetAwaiter().GetResult();
+        if (args.Length == 2 && args[0] == "--reset-attack-history")
+            return ResponseAssetRebuilder.ResetHistory(args[1]);
+        if (args.Length == 2 && args[0] == "--activate-response-assets")
+            return ResponseAssetRebuilder.Activate(args[1]);
 
         if (args.Length > 0 && args[0] == "--subscription-bridge-check")
         {
@@ -644,6 +651,8 @@ class Program
                 TimeToCompromiseMs = (long)(shellOpenedAt - connectionStartedAt).TotalMilliseconds
             });
             var pendingInput = "";
+            var pendingInputBytes = new MemoryStream();
+            var pendingInputHasBinaryBytes = false;
             DateTime? pendingLineFirstByteAt = null;
             DateTime? pendingLineLastByteAt = null;
             var pendingLineChunkCount = 0;
@@ -654,6 +663,17 @@ class Program
             var idleTimer = new System.Timers.Timer(SessionIdleTimeoutSecs * 1000) { AutoReset = false };
             SessionCommandWorker? commandWorker = null;
             SCPUploadSession? scpUploadSession = null;
+            var clientVersion = args.AttachedUserauthArgs?.Session?.ClientVersion ?? "unknown";
+            var uploadContext = new BinaryUploadContext(
+                SessionKey: connectionSessionKey,
+                ShellSessionId: sessionId,
+                RemoteEndpoint: remoteEndpoint,
+                RemoteIp: GetRemoteAttemptKey(remoteEndpoint),
+                Username: username,
+                ClientVersion: clientVersion,
+                SshBanner: sshBanner,
+                DeliveryChannel: isInteractiveShell ? "pty" : "exec",
+                CommandText: args.CommandText ?? "");
             idleTimer.Elapsed += (_, _) => CloseShell("IdleTimeout", "\r\nConnection closed due to inactivity.\r\n");
             void ResetIdle() { idleTimer.Stop(); idleTimer.Start(); }
 
@@ -694,6 +714,28 @@ class Program
             {
                 if (Interlocked.Exchange(ref shellFinalized, 1) != 0)
                     return;
+
+                if (scpUploadSession is not null)
+                    scpUploadSession.FlushPending(reason);
+                else if (pendingInputHasBinaryBytes && pendingInputBytes.Length > 0)
+                {
+                    var exchangeNumber = ConnectionCommandCounts.AddOrUpdate(connectionSessionKey, 1, (_, current) => current + 1);
+                    var exchangeId = $"{connectionSessionKey}:{exchangeNumber:D6}";
+                    var inlineContext = uploadContext with
+                    {
+                        ExchangeId = exchangeId,
+                        CommandText = pendingInput
+                    };
+                    SCPUploadHandler.CaptureUpload(
+                        connectionSessionKey,
+                        $"inline_{exchangeNumber:D6}.bin",
+                        pendingInputBytes.ToArray(),
+                        inlineContext,
+                        source: $"ssh_{(isInteractiveShell ? "pty" : "exec")}_binary",
+                        rejectionReason: "Binary content not allowed");
+                    pendingInputBytes.SetLength(0);
+                    pendingInputHasBinaryBytes = false;
+                }
 
                 llmCts.Cancel();
                 idleTimer.Stop();
@@ -782,12 +824,13 @@ class Program
                 });
             }
 
-            void ProcessLine(string line, CommandDeliveryMetrics? delivery = null)
+            void ProcessLine(string line, CommandDeliveryMetrics? delivery = null, byte[]? rawBytes = null)
             {
                 if (Volatile.Read(ref shellClosed) != 0)
                     return;
 
-                if (string.IsNullOrEmpty(line))
+                var hasBinaryRawBytes = rawBytes is not null && SCPUploadHandler.ContainsBinaryBytes(rawBytes);
+                if (string.IsNullOrEmpty(line) && !hasBinaryRawBytes)
                 {
                     if (isInteractiveShell)
                         SendPrompt();
@@ -798,7 +841,7 @@ class Program
 
                 commandCount++;
 
-                if (IsExitCommand(line))
+                if (!hasBinaryRawBytes && IsExitCommand(line))
                 {
                     Logger.LogMsg($"User {username} initiated shell termination with '{line}'.");
                     CloseShell("ClientExit", "Connection to omegablack closed.\r\n");
@@ -877,12 +920,56 @@ class Program
                 {
                     processingStage = "starting payload capture";
                     foreach (var payloadUrl in commandAnalysis.PayloadUrls)
-                        _ = Task.Run(() => DataHarvester.CapturePayloadMetadataAsync(payloadUrl, connectionSessionKey, sessionId, remoteEndpoint));
+                    {
+                        var urlContext = uploadContext with
+                        {
+                            ExchangeId = exchangeId,
+                            CommandText = line
+                        };
+                        _ = Task.Run(() => DataHarvester.CapturePayloadMetadataAsync(payloadUrl, connectionSessionKey, sessionId, remoteEndpoint, urlContext));
+                    }
+
+                    if (SCPUploadHandler.TryExtractInlineEncodedPayload(line, out var inlineEncodedName, out var inlineEncodedBytes, out var encodingSource))
+                    {
+                        var encodedContext = uploadContext with
+                        {
+                            ExchangeId = exchangeId,
+                            CommandText = line
+                        };
+                        SCPUploadHandler.CaptureUpload(
+                            connectionSessionKey,
+                            inlineEncodedName,
+                            inlineEncodedBytes,
+                            encodedContext,
+                            source: encodingSource);
+                    }
 
                     processingStage = "validating input";
                     var (isValid, errorMsg) = InputValidator.Validate(line);
+                    if (isValid && hasBinaryRawBytes)
+                    {
+                        isValid = false;
+                        errorMsg = "Binary content not allowed";
+                    }
                     if (!isValid)
                     {
+                        if (errorMsg == "Binary content not allowed" || hasBinaryRawBytes || line.Contains('\0'))
+                        {
+                            var binaryBytes = rawBytes is { Length: > 0 } ? rawBytes : Encoding.UTF8.GetBytes(line);
+                            var inlineContext = uploadContext with
+                            {
+                                ExchangeId = exchangeId,
+                                CommandText = line
+                            };
+                            SCPUploadHandler.CaptureUpload(
+                                connectionSessionKey,
+                                $"inline_{exchangeNumber:D6}.bin",
+                                binaryBytes,
+                                inlineContext,
+                                source: $"ssh_{deliveryMetrics.DeliveryChannel}_binary",
+                                rejectionReason: errorMsg ?? "Binary content not allowed");
+                        }
+
                         blockedOps++;
                         TrySendData(Encoding.UTF8.GetBytes(errorMsg + " - connection terminated.\r\n"));
                         Logger.LogMsg($"[Session {sessionId}] Blocked: {line}");
@@ -994,7 +1081,7 @@ class Program
             if (isExecCommand && SCPDetector.IsSCPUpload(args.CommandText ?? ""))
             {
                 var (_, filename) = SCPDetector.ParseSCPUpload(args.CommandText ?? "");
-                scpUploadSession = new SCPUploadSession(connectionSessionKey, filename ?? "upload.bin");
+                scpUploadSession = new SCPUploadSession(connectionSessionKey, filename ?? "upload.bin", uploadContext);
                 TrySendData(new byte[] { 0 });
             }
 
@@ -1017,6 +1104,26 @@ class Program
                 var packetText = Encoding.UTF8.GetString(data);
                 var packetNow = DateTime.UtcNow;
                 var countedChunkForPendingLine = false;
+                var packetHasBinary = SCPUploadHandler.ContainsBinaryBytes(data);
+
+                for (var idx = 0; idx < data.Length; idx++)
+                {
+                    var rawByte = data[idx];
+                    if (rawByte == (byte)'\r' || rawByte == (byte)'\n')
+                        continue;
+                    if ((rawByte == (byte)'\b' || rawByte == 0x7f) && !pendingInputHasBinaryBytes)
+                    {
+                        if (pendingInputBytes.Length > 0)
+                            pendingInputBytes.SetLength(pendingInputBytes.Length - 1);
+                        continue;
+                    }
+                    if (pendingInputBytes.Length < SCPUploadHandler.MaxUploadBytes)
+                        pendingInputBytes.WriteByte(rawByte);
+                    if (rawByte == 0 || (rawByte < 32 && rawByte is not ((byte)'\t' or (byte)'\r' or (byte)'\n' or 0x1b)))
+                        pendingInputHasBinaryBytes = true;
+                }
+                if (packetHasBinary)
+                    pendingInputHasBinaryBytes = true;
 
                 foreach (var c in packetText)
                 {
@@ -1027,6 +1134,7 @@ class Program
                     {
                         TrySendData(Encoding.UTF8.GetBytes("\r\n"));
                         var line = pendingInput;
+                        var lineRawBytes = pendingInputHasBinaryBytes ? pendingInputBytes.ToArray() : null;
                         var typingMs = pendingLineFirstByteAt.HasValue && pendingLineLastByteAt.HasValue
                             ? Math.Max(0, (long)(pendingLineLastByteAt.Value - pendingLineFirstByteAt.Value).TotalMilliseconds)
                             : 0;
@@ -1038,12 +1146,14 @@ class Program
                             BackspaceCount = pendingLineBackspaceCount
                         };
                         pendingInput = "";
+                        pendingInputBytes.SetLength(0);
+                        pendingInputHasBinaryBytes = false;
                         pendingLineFirstByteAt = null;
                         pendingLineLastByteAt = null;
                         pendingLineChunkCount = 0;
                         pendingLineBackspaceCount = 0;
                         countedChunkForPendingLine = false;
-                        if (!commandWorker.TryPost(() => ProcessLine(line, delivery)))
+                        if (!commandWorker.TryPost(() => ProcessLine(line, delivery, lineRawBytes)))
                             CloseShell("CommandWorkerStopped");
                         continue;
                     }
@@ -1067,6 +1177,31 @@ class Program
 
                     pendingInput += c;
                     TrySendData(Encoding.UTF8.GetBytes(c.ToString()));
+                }
+
+                if (pendingInputHasBinaryBytes && !packetText.Contains('\n') && !packetText.Contains('\r') && pendingInputBytes.Length > 0)
+                {
+                    var line = pendingInput;
+                    var lineRawBytes = pendingInputBytes.ToArray();
+                    var typingMs = pendingLineFirstByteAt.HasValue && pendingLineLastByteAt.HasValue
+                        ? Math.Max(0, (long)(pendingLineLastByteAt.Value - pendingLineFirstByteAt.Value).TotalMilliseconds)
+                        : 0;
+                    var delivery = new CommandDeliveryMetrics
+                    {
+                        DeliveryChannel = isInteractiveShell ? "pty" : "exec",
+                        ChunkCount = Math.Max(1, pendingLineChunkCount),
+                        TypingDurationMs = typingMs,
+                        BackspaceCount = pendingLineBackspaceCount
+                    };
+                    pendingInput = "";
+                    pendingInputBytes.SetLength(0);
+                    pendingInputHasBinaryBytes = false;
+                    pendingLineFirstByteAt = null;
+                    pendingLineLastByteAt = null;
+                    pendingLineChunkCount = 0;
+                    pendingLineBackspaceCount = 0;
+                    if (!commandWorker.TryPost(() => ProcessLine(line, delivery, lineRawBytes)))
+                        CloseShell("CommandWorkerStopped");
                 }
             };
 
@@ -1550,12 +1685,16 @@ public class PayloadCaptureLogEntry
     public DateTime Timestamp { get; set; }
     public string SessionKey { get; set; } = "";
     public string ShellSessionId { get; set; } = "";
+    public string ExchangeId { get; set; } = "";
     public string RemoteEndpoint { get; set; } = "";
     public string Url { get; set; } = "";
     public string Status { get; set; } = "queued";
     public int? HttpStatusCode { get; set; }
     public long BytesCaptured { get; set; }
     public string Sha256 { get; set; } = "";
+    public string Path { get; set; } = "";
+    public string MetadataPath { get; set; } = "";
+    public BinaryUploadAnalysis? Analysis { get; set; }
     public string Error { get; set; } = "";
 }
 
@@ -1911,68 +2050,535 @@ static class SCPDetector
     }
 }
 
+public sealed record BinaryUploadContext(
+    string SessionKey,
+    string ShellSessionId = "",
+    string RemoteEndpoint = "unknown",
+    string RemoteIp = "unknown",
+    string Username = "unknown",
+    string ClientVersion = "unknown",
+    string SshBanner = "",
+    string DeliveryChannel = "exec",
+    string CommandText = "",
+    string ExchangeId = "");
+
+public sealed class BinaryUploadAnalysis
+{
+    public string FileFormat { get; set; } = "unknown";
+    public string Summary { get; set; } = "";
+    public string MimeType { get; set; } = "application/octet-stream";
+    public string? Architecture { get; set; }
+    public string? Endianness { get; set; }
+    public string? BinaryType { get; set; }
+    public string? Shebang { get; set; }
+    public double Entropy { get; set; }
+    public bool IsExecutable { get; set; }
+    public bool IsLikelyPackedOrEncrypted { get; set; }
+    public string MagicBytesHex { get; set; } = "";
+    public List<string> NotableStrings { get; set; } = new();
+    public List<string> ExtractedUrls { get; set; } = new();
+    public List<string> ExtractedIpAddresses { get; set; } = new();
+    public List<string> SuspiciousIndicators { get; set; } = new();
+}
+
+public sealed class BinaryUploadMetadataRecord
+{
+    public DateTime CapturedAtUtc { get; set; }
+    public string SessionId { get; set; } = "";
+    public string? ShellSessionId { get; set; }
+    public string? ExchangeId { get; set; }
+    public string Source { get; set; } = "scp";
+    public string Status { get; set; } = "captured";
+    public string? RejectionReason { get; set; }
+    public string RemoteEndpoint { get; set; } = "unknown";
+    public string RemoteIp { get; set; } = "unknown";
+    public string Username { get; set; } = "unknown";
+    public string ClientVersion { get; set; } = "unknown";
+    public string SshBanner { get; set; } = "";
+    public string DeliveryChannel { get; set; } = "exec";
+    public string CommandText { get; set; } = "";
+    public string? ScpHeader { get; set; }
+    public string? ScpPermissions { get; set; }
+    public string OriginalFilename { get; set; } = "";
+    public string StoredFilePath { get; set; } = "";
+    public string MetadataFilePath { get; set; } = "";
+    public long ExpectedBytes { get; set; }
+    public long CapturedBytes { get; set; }
+    public bool Truncated { get; set; }
+    public string Sha256 { get; set; } = "";
+    public BinaryUploadAnalysis Analysis { get; set; } = new();
+}
+
+static class BinaryPayloadAnalyzer
+{
+    private static readonly Regex UrlPattern = new(@"\b(?:https?|ftp|tftp|stratum\+tcp|stratum\+ssl)://[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex IpPattern = new(@"\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?::\d{1,5})?\b", RegexOptions.Compiled);
+    private static readonly (string Pattern, string Label)[] IndicatorRules =
+    {
+        ("xmrig", "crypto-miner:xmrig"),
+        ("stratum+", "crypto-miner:stratum"),
+        ("cryptonight", "crypto-miner:cryptonight"),
+        ("randomx", "crypto-miner:randomx"),
+        ("/dev/tcp/", "reverse-shell:/dev/tcp"),
+        ("/bin/sh", "shell-execution:/bin/sh"),
+        ("/bin/bash", "shell-execution:/bin/bash"),
+        ("LD_PRELOAD", "evasion:LD_PRELOAD"),
+        ("ptrace", "anti-analysis:ptrace"),
+        ("/proc/self/exe", "self-reference:/proc/self/exe"),
+        ("UPX!", "packer:UPX"),
+        ("authorized_keys", "persistence:ssh_authorized_keys"),
+        ("crontab", "persistence:crontab"),
+        ("systemctl", "persistence:systemd"),
+        ("chattr", "defense-evasion:chattr"),
+        ("wget ", "dropper:wget"),
+        ("curl ", "dropper:curl"),
+        ("busybox", "tooling:busybox"),
+        (" chmod ", "staging:chmod")
+    };
+
+    public static BinaryUploadAnalysis Analyze(byte[] data, string? filename = null)
+    {
+        data ??= Array.Empty<byte>();
+        var analysis = new BinaryUploadAnalysis
+        {
+            Entropy = Math.Round(CalculateByteEntropy(data), 3),
+            MagicBytesHex = Convert.ToHexString(data.AsSpan(0, Math.Min(16, data.Length))).ToLowerInvariant()
+        };
+
+        DetectFormat(data, filename, analysis);
+        var strings = ExtractPrintableStrings(data, minLength: 4, maxCount: 32);
+        analysis.NotableStrings = strings;
+
+        var combinedStrings = string.Join("\n", strings);
+        foreach (Match match in UrlPattern.Matches(combinedStrings))
+        {
+            var url = match.Value.TrimEnd('.', ',', ';', ')', '\'', '"');
+            if (!analysis.ExtractedUrls.Contains(url, StringComparer.OrdinalIgnoreCase))
+                analysis.ExtractedUrls.Add(url);
+        }
+
+        foreach (Match match in IpPattern.Matches(combinedStrings))
+        {
+            var ip = match.Value;
+            if (!analysis.ExtractedIpAddresses.Contains(ip, StringComparer.OrdinalIgnoreCase))
+                analysis.ExtractedIpAddresses.Add(ip);
+        }
+
+        foreach (var (pattern, label) in IndicatorRules)
+        {
+            if (combinedStrings.Contains(pattern, StringComparison.OrdinalIgnoreCase)
+                && !analysis.SuspiciousIndicators.Contains(label, StringComparer.OrdinalIgnoreCase))
+            {
+                analysis.SuspiciousIndicators.Add(label);
+            }
+        }
+
+        if (HasUpxMarker(data) && !analysis.SuspiciousIndicators.Contains("packer:UPX", StringComparer.OrdinalIgnoreCase))
+            analysis.SuspiciousIndicators.Add("packer:UPX");
+
+        analysis.IsLikelyPackedOrEncrypted = analysis.Entropy >= 7.2 || analysis.SuspiciousIndicators.Contains("packer:UPX", StringComparer.OrdinalIgnoreCase);
+
+        var summaryParts = new List<string> { analysis.FileFormat };
+        if (!string.IsNullOrWhiteSpace(analysis.Architecture))
+            summaryParts.Add(analysis.Architecture!);
+        if (!string.IsNullOrWhiteSpace(analysis.BinaryType))
+            summaryParts.Add(analysis.BinaryType!);
+        summaryParts.Add($"entropy {analysis.Entropy:0.00}");
+        if (analysis.SuspiciousIndicators.Count > 0)
+            summaryParts.Add($"indicators: {string.Join(", ", analysis.SuspiciousIndicators.Take(4))}");
+        analysis.Summary = string.Join(" | ", summaryParts);
+
+        return analysis;
+    }
+
+    private static void DetectFormat(byte[] data, string? filename, BinaryUploadAnalysis analysis)
+    {
+        if (data.Length == 0)
+        {
+            analysis.FileFormat = "empty";
+            analysis.MimeType = "application/x-empty";
+            return;
+        }
+
+        if (data.Length >= 4 && data[0] == 0x7F && data[1] == (byte)'E' && data[2] == (byte)'L' && data[3] == (byte)'F')
+        {
+            analysis.IsExecutable = true;
+            analysis.MimeType = "application/x-executable";
+            var bits = data.Length > 4 ? data[4] switch { 1 => "32-bit", 2 => "64-bit", _ => "unknown-class" } : "truncated";
+            var endian = data.Length > 5 ? data[5] switch { 1 => "LSB", 2 => "MSB", _ => "unknown-endian" } : "truncated";
+            analysis.Endianness = endian;
+            var littleEndian = data.Length <= 5 || data[5] != 2;
+
+            if (data.Length >= 20)
+            {
+                ushort eType = ReadUInt16(data, 16, littleEndian);
+                ushort eMachine = ReadUInt16(data, 18, littleEndian);
+                analysis.BinaryType = eType switch
+                {
+                    1 => "relocatable",
+                    2 => "executable",
+                    3 => "shared-object/PIE",
+                    4 => "core",
+                    _ => $"type-{eType}"
+                };
+                analysis.Architecture = eMachine switch
+                {
+                    0x03 => "x86",
+                    0x08 => "MIPS",
+                    0x14 => "PowerPC",
+                    0x15 => "PowerPC64",
+                    0x28 => "ARM",
+                    0x3E => "x86-64",
+                    0xB7 => "AArch64",
+                    0xF3 => "RISC-V",
+                    _ => $"machine-0x{eMachine:x}"
+                };
+            }
+
+            analysis.FileFormat = $"ELF {bits} {endian}";
+            return;
+        }
+
+        if (data.Length >= 2 && data[0] == (byte)'#' && data[1] == (byte)'!')
+        {
+            analysis.IsExecutable = true;
+            analysis.MimeType = "text/x-shellscript";
+            var newlineIndex = Array.IndexOf(data, (byte)'\n', 0, Math.Min(data.Length, 256));
+            var length = newlineIndex >= 0 ? newlineIndex : Math.Min(data.Length, 128);
+            var shebang = Encoding.UTF8.GetString(data, 0, length).TrimEnd('\r', '\n');
+            analysis.Shebang = shebang;
+            analysis.FileFormat = $"Script ({shebang})";
+            return;
+        }
+
+        if (data.Length >= 2 && data[0] == (byte)'M' && data[1] == (byte)'Z')
+        {
+            analysis.IsExecutable = true;
+            analysis.FileFormat = "PE/MZ executable";
+            analysis.MimeType = "application/vnd.microsoft.portable-executable";
+            return;
+        }
+
+        if (data.Length >= 4)
+        {
+            uint magic = ((uint)data[0] << 24) | ((uint)data[1] << 16) | ((uint)data[2] << 8) | data[3];
+            if (magic is 0xFEEDFACE or 0xCEFAEDFE or 0xFEEDFACF or 0xCFFAEDFE or 0xCAFEBABE)
+            {
+                analysis.IsExecutable = true;
+                analysis.FileFormat = "Mach-O binary";
+                analysis.MimeType = "application/x-mach-binary";
+                return;
+            }
+        }
+
+        if (data.Length >= 2 && data[0] == 0x1F && data[1] == 0x8B)
+        {
+            analysis.FileFormat = "gzip archive";
+            analysis.MimeType = "application/gzip";
+            return;
+        }
+
+        if (data.Length >= 3 && data[0] == (byte)'B' && data[1] == (byte)'Z' && data[2] == (byte)'h')
+        {
+            analysis.FileFormat = "bzip2 archive";
+            analysis.MimeType = "application/x-bzip2";
+            return;
+        }
+
+        if (data.Length >= 6 && data[0] == 0xFD && data[1] == (byte)'7' && data[2] == (byte)'z' && data[3] == (byte)'X' && data[4] == (byte)'Z' && data[5] == 0x00)
+        {
+            analysis.FileFormat = "xz archive";
+            analysis.MimeType = "application/x-xz";
+            return;
+        }
+
+        if (data.Length >= 4 && data[0] == 0x28 && data[1] == 0xB5 && data[2] == 0x2F && data[3] == 0xFD)
+        {
+            analysis.FileFormat = "zstd archive";
+            analysis.MimeType = "application/zstd";
+            return;
+        }
+
+        if (data.Length >= 4 && data[0] == (byte)'P' && data[1] == (byte)'K' && data[2] == 0x03 && data[3] == 0x04)
+        {
+            analysis.FileFormat = "ZIP archive";
+            analysis.MimeType = "application/zip";
+            return;
+        }
+
+        if (data.Length >= 262 && data[257] == (byte)'u' && data[258] == (byte)'s' && data[259] == (byte)'t' && data[260] == (byte)'a' && data[261] == (byte)'r')
+        {
+            analysis.FileFormat = "POSIX tar archive";
+            analysis.MimeType = "application/x-tar";
+            return;
+        }
+
+        if (data.Length >= 4 && data[0] == (byte)'%' && data[1] == (byte)'P' && data[2] == (byte)'D' && data[3] == (byte)'F')
+        {
+            analysis.FileFormat = "PDF document";
+            analysis.MimeType = "application/pdf";
+            return;
+        }
+
+        if (!SCPUploadHandler.ContainsBinaryBytes(data))
+        {
+            var textPreview = Encoding.UTF8.GetString(data, 0, Math.Min(data.Length, 512));
+            if (Regex.IsMatch(textPreview, @"\b(?:wget|curl|chmod|sh|bash|python|perl|nohup|crontab)\b", RegexOptions.IgnoreCase))
+            {
+                analysis.IsExecutable = true;
+                analysis.FileFormat = "Shell/text staging payload";
+                analysis.MimeType = "text/x-shellscript";
+                return;
+            }
+
+            analysis.FileFormat = "UTF-8/ASCII text";
+            analysis.MimeType = "text/plain";
+            return;
+        }
+
+        analysis.FileFormat = "Raw binary data";
+        analysis.MimeType = "application/octet-stream";
+    }
+
+    private static ushort ReadUInt16(byte[] data, int offset, bool littleEndian)
+    {
+        return littleEndian
+            ? (ushort)(data[offset] | (data[offset + 1] << 8))
+            : (ushort)((data[offset] << 8) | data[offset + 1]);
+    }
+
+    private static bool HasUpxMarker(byte[] data)
+    {
+        for (int i = 0; i <= data.Length - 4; i++)
+        {
+            if (data[i] == (byte)'U' && data[i + 1] == (byte)'P' && data[i + 2] == (byte)'X' && data[i + 3] == (byte)'!')
+                return true;
+        }
+        return false;
+    }
+
+    public static double CalculateByteEntropy(byte[] data)
+    {
+        if (data is null || data.Length == 0)
+            return 0;
+
+        Span<int> counts = stackalloc int[256];
+        foreach (var b in data)
+            counts[b]++;
+
+        double entropy = 0;
+        double len = data.Length;
+        for (int i = 0; i < 256; i++)
+        {
+            if (counts[i] == 0) continue;
+            var p = counts[i] / len;
+            entropy -= p * Math.Log2(p);
+        }
+        return entropy;
+    }
+
+    public static List<string> ExtractPrintableStrings(byte[] data, int minLength = 4, int maxCount = 32)
+    {
+        var results = new List<string>();
+        if (data is null || data.Length == 0)
+            return results;
+
+        var sb = new StringBuilder();
+        var scanLimit = Math.Min(data.Length, 256 * 1024);
+        for (int i = 0; i < scanLimit; i++)
+        {
+            var b = data[i];
+            if (b >= 32 && b <= 126)
+            {
+                if (sb.Length < 200)
+                    sb.Append((char)b);
+            }
+            else
+            {
+                if (sb.Length >= minLength)
+                {
+                    var candidate = sb.ToString().Trim();
+                    if (candidate.Length >= minLength && !results.Contains(candidate, StringComparer.Ordinal))
+                        results.Add(candidate);
+                }
+                sb.Clear();
+            }
+        }
+
+        if (sb.Length >= minLength)
+        {
+            var candidate = sb.ToString().Trim();
+            if (candidate.Length >= minLength && !results.Contains(candidate, StringComparer.Ordinal))
+                results.Add(candidate);
+        }
+
+        return results
+            .OrderByDescending(ScoreStringRelevance)
+            .ThenByDescending(s => s.Length)
+            .Take(maxCount)
+            .ToList();
+    }
+
+    private static int ScoreStringRelevance(string s)
+    {
+        var score = 0;
+        if (UrlPattern.IsMatch(s)) score += 50;
+        if (IpPattern.IsMatch(s)) score += 40;
+        if (s.StartsWith('/') || s.Contains("/bin/") || s.Contains("/tmp/") || s.Contains("/etc/") || s.Contains("/proc/")) score += 25;
+        foreach (var (pattern, _) in IndicatorRules)
+        {
+            if (s.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+                score += 30;
+        }
+        return score;
+    }
+}
+
 static class SCPUploadHandler
 {
-    private static readonly string UploadDir = Path.Combine(Program.LogDir, "uploads");
     private static readonly object _lock = new();
     internal const int MaxUploadBytes = 5 * 1024 * 1024;
-
-    static SCPUploadHandler()
+    private static readonly JsonSerializerOptions MetadataJsonOptions = new()
     {
-        try { Directory.CreateDirectory(UploadDir); }
+        WriteIndented = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
+    private static string GetUploadDir() => Path.Combine(Program.LogDir, "uploads");
+
+    public static void EnsureUploadDir()
+    {
+        try { Directory.CreateDirectory(GetUploadDir()); }
         catch (Exception ex)
         {
             Logger.LogMsg($"Failed to create upload directory: {ex.Message}");
         }
     }
 
-    public static void EnsureUploadDir() { }
+    public static bool ContainsBinaryBytes(ReadOnlySpan<byte> data)
+    {
+        foreach (var b in data)
+        {
+            if (b == 0 || (b < 32 && b is not ((byte)'\t' or (byte)'\r' or (byte)'\n' or 0x1b)))
+                return true;
+        }
+        return false;
+    }
 
-    public static string CaptureUpload(string sessionKey, string filename, byte[] data)
+    public static string CaptureUpload(
+        string sessionKey,
+        string filename,
+        byte[] data,
+        BinaryUploadContext? context = null,
+        string source = "scp",
+        string? rejectionReason = null,
+        long? expectedBytes = null,
+        string? scpHeader = null,
+        string? scpPermissions = null)
     {
         lock (_lock)
         {
             try
             {
-                if (data.Length > MaxUploadBytes)
-                {
-                    var rejectedSha256 = Convert.ToHexString(SHA256.HashData(data)).ToLowerInvariant();
-                    Logger.LogYaml("scp_upload_rejected", new SCPUploadLogEntry
-                    {
-                        Timestamp = DateTime.UtcNow,
-                        SessionKey = sessionKey,
-                        Filename = filename,
-                        Bytes = data.Length,
-                        Sha256 = rejectedSha256,
-                        Path = "",
-                        Status = "too_large"
-                    });
-                    Logger.LogMsg($"SCP upload rejected: {filename} ({data.Length} bytes) exceeds {MaxUploadBytes} bytes from session {sessionKey}");
-                    return "";
-                }
+                data ??= Array.Empty<byte>();
+                var now = DateTime.UtcNow;
+                var effectiveSessionKey = !string.IsNullOrWhiteSpace(sessionKey)
+                    ? sessionKey
+                    : context?.SessionKey ?? "unknown";
+                var announcedBytes = expectedBytes ?? data.Length;
+                var isOversized = data.Length > MaxUploadBytes || announcedBytes > MaxUploadBytes;
+                var truncated = data.Length > MaxUploadBytes || announcedBytes > data.Length;
+                var bytesToSave = data.Length > MaxUploadBytes
+                    ? data.AsSpan(0, MaxUploadBytes).ToArray()
+                    : data;
 
-                var sessionDir = Path.Combine(UploadDir, sessionKey[..Math.Min(8, sessionKey.Length)]);
+                var isRejected = !string.IsNullOrWhiteSpace(rejectionReason) || isOversized;
+                var effectiveReason = rejectionReason ?? (isOversized ? "too_large" : null);
+                var status = isOversized
+                    ? (bytesToSave.Length > 0 ? "too_large_saved" : "too_large")
+                    : isRejected
+                        ? "rejected_saved"
+                        : "captured";
+                var eventType = isRejected ? "scp_upload_rejected" : "scp_upload_captured";
+
+                var uploadRoot = GetUploadDir();
+                var sessionPrefix = effectiveSessionKey[..Math.Min(8, effectiveSessionKey.Length)];
+                var sessionDir = Path.Combine(uploadRoot, string.IsNullOrWhiteSpace(sessionPrefix) ? "unknown" : sessionPrefix);
                 Directory.CreateDirectory(sessionDir);
 
-                var safeName = Regex.Replace(filename, @"[^a-zA-Z0-9._-]", "_");
-                var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+                var rawFileName = string.IsNullOrWhiteSpace(filename) ? "upload.bin" : Path.GetFileName(filename.Trim());
+                if (string.IsNullOrWhiteSpace(rawFileName))
+                    rawFileName = "upload.bin";
+                var safeName = Regex.Replace(rawFileName, @"[^a-zA-Z0-9._-]", "_");
+                var timestamp = now.ToString("yyyyMMddHHmmss");
                 var destPath = Path.Combine(sessionDir, $"{timestamp}_{safeName}");
-
-                File.WriteAllBytes(destPath, data);
-
-                var sha256 = Convert.ToHexString(SHA256.HashData(data)).ToLowerInvariant();
-                Logger.LogYaml("scp_upload_captured", new SCPUploadLogEntry
+                var collision = 1;
+                while (File.Exists(destPath))
                 {
-                    Timestamp = DateTime.UtcNow,
-                    SessionKey = sessionKey,
+                    destPath = Path.Combine(sessionDir, $"{timestamp}_{collision++}_{safeName}");
+                }
+
+                File.WriteAllBytes(destPath, bytesToSave);
+
+                var sha256 = Convert.ToHexString(SHA256.HashData(bytesToSave)).ToLowerInvariant();
+                var analysis = BinaryPayloadAnalyzer.Analyze(bytesToSave, filename);
+                var metadataPath = destPath + ".meta.json";
+
+                var metadata = new BinaryUploadMetadataRecord
+                {
+                    CapturedAtUtc = now,
+                    SessionId = effectiveSessionKey,
+                    ShellSessionId = NullIfWhiteSpace(context?.ShellSessionId),
+                    ExchangeId = NullIfWhiteSpace(context?.ExchangeId),
+                    Source = source,
+                    Status = status,
+                    RejectionReason = effectiveReason,
+                    RemoteEndpoint = context?.RemoteEndpoint ?? "unknown",
+                    RemoteIp = context?.RemoteIp ?? Program.GetRemoteAttemptKey(context?.RemoteEndpoint ?? "unknown"),
+                    Username = context?.Username ?? "unknown",
+                    ClientVersion = context?.ClientVersion ?? "unknown",
+                    SshBanner = context?.SshBanner ?? "",
+                    DeliveryChannel = context?.DeliveryChannel ?? "exec",
+                    CommandText = context?.CommandText ?? "",
+                    ScpHeader = NullIfWhiteSpace(scpHeader),
+                    ScpPermissions = NullIfWhiteSpace(scpPermissions),
+                    OriginalFilename = filename,
+                    StoredFilePath = destPath,
+                    MetadataFilePath = metadataPath,
+                    ExpectedBytes = announcedBytes,
+                    CapturedBytes = bytesToSave.Length,
+                    Truncated = truncated,
+                    Sha256 = sha256,
+                    Analysis = analysis
+                };
+
+                File.WriteAllText(metadataPath, JsonSerializer.Serialize(metadata, MetadataJsonOptions));
+                AppendBinaryUploadPublicationRecord(metadata);
+
+                Logger.LogYaml(eventType, new SCPUploadLogEntry
+                {
+                    Timestamp = now,
+                    SessionKey = effectiveSessionKey,
+                    ShellSessionId = context?.ShellSessionId ?? "",
+                    ExchangeId = context?.ExchangeId ?? "",
+                    RemoteEndpoint = context?.RemoteEndpoint ?? "",
+                    Username = context?.Username ?? "",
+                    ClientVersion = context?.ClientVersion ?? "",
+                    SshBanner = context?.SshBanner ?? "",
+                    Command = context?.CommandText ?? "",
+                    Source = source,
                     Filename = filename,
-                    Bytes = data.Length,
+                    Bytes = bytesToSave.Length,
+                    ExpectedBytes = announcedBytes,
                     Sha256 = sha256,
                     Path = destPath,
-                    Status = "captured"
+                    MetadataPath = metadataPath,
+                    Status = status,
+                    RejectionReason = effectiveReason ?? "",
+                    Analysis = analysis
                 });
 
-                Logger.LogMsg($"SCP upload captured: {filename} ({data.Length} bytes) from session {sessionKey}");
+                Logger.LogMsg($"Binary upload {status} ({source}): {filename} ({bytesToSave.Length}/{announcedBytes} bytes, {analysis.Summary}) from session {effectiveSessionKey} -> {destPath}");
                 return destPath;
             }
             catch (Exception ex)
@@ -1982,6 +2588,237 @@ static class SCPUploadHandler
             }
         }
     }
+
+    public static string SavePayloadArtifact(
+        string sessionKey,
+        string filename,
+        byte[] data,
+        BinaryUploadContext? context,
+        string source,
+        string status,
+        string? rejectionReason,
+        long expectedBytes,
+        BinaryUploadAnalysis analysis,
+        out string metadataPath,
+        string? scpHeader = null,
+        string? scpPermissions = null)
+    {
+        metadataPath = "";
+        lock (_lock)
+        {
+            try
+            {
+                data ??= Array.Empty<byte>();
+                var now = DateTime.UtcNow;
+                var effectiveSessionKey = !string.IsNullOrWhiteSpace(sessionKey)
+                    ? sessionKey
+                    : context?.SessionKey ?? "unknown";
+                var bytesToSave = data.Length > MaxUploadBytes
+                    ? data.AsSpan(0, MaxUploadBytes).ToArray()
+                    : data;
+                var truncated = data.Length > MaxUploadBytes || expectedBytes > bytesToSave.Length;
+
+                var uploadRoot = GetUploadDir();
+                var sessionPrefix = effectiveSessionKey[..Math.Min(8, effectiveSessionKey.Length)];
+                var sessionDir = Path.Combine(uploadRoot, string.IsNullOrWhiteSpace(sessionPrefix) ? "unknown" : sessionPrefix);
+                Directory.CreateDirectory(sessionDir);
+
+                var rawFileName = string.IsNullOrWhiteSpace(filename) ? "upload.bin" : Path.GetFileName(filename.Trim());
+                if (string.IsNullOrWhiteSpace(rawFileName))
+                    rawFileName = "upload.bin";
+                var safeName = Regex.Replace(rawFileName, @"[^a-zA-Z0-9._-]", "_");
+                var timestamp = now.ToString("yyyyMMddHHmmss");
+                var destPath = Path.Combine(sessionDir, $"{timestamp}_{safeName}");
+                var collision = 1;
+                while (File.Exists(destPath))
+                {
+                    destPath = Path.Combine(sessionDir, $"{timestamp}_{collision++}_{safeName}");
+                }
+
+                File.WriteAllBytes(destPath, bytesToSave);
+
+                var sha256 = Convert.ToHexString(SHA256.HashData(bytesToSave)).ToLowerInvariant();
+                metadataPath = destPath + ".meta.json";
+
+                var metadata = new BinaryUploadMetadataRecord
+                {
+                    CapturedAtUtc = now,
+                    SessionId = effectiveSessionKey,
+                    ShellSessionId = NullIfWhiteSpace(context?.ShellSessionId),
+                    ExchangeId = NullIfWhiteSpace(context?.ExchangeId),
+                    Source = source,
+                    Status = status,
+                    RejectionReason = rejectionReason,
+                    RemoteEndpoint = context?.RemoteEndpoint ?? "unknown",
+                    RemoteIp = context?.RemoteIp ?? Program.GetRemoteAttemptKey(context?.RemoteEndpoint ?? "unknown"),
+                    Username = context?.Username ?? "unknown",
+                    ClientVersion = context?.ClientVersion ?? "unknown",
+                    SshBanner = context?.SshBanner ?? "",
+                    DeliveryChannel = context?.DeliveryChannel ?? "exec",
+                    CommandText = context?.CommandText ?? "",
+                    ScpHeader = NullIfWhiteSpace(scpHeader),
+                    ScpPermissions = NullIfWhiteSpace(scpPermissions),
+                    OriginalFilename = filename,
+                    StoredFilePath = destPath,
+                    MetadataFilePath = metadataPath,
+                    ExpectedBytes = expectedBytes,
+                    CapturedBytes = bytesToSave.Length,
+                    Truncated = truncated,
+                    Sha256 = sha256,
+                    Analysis = analysis
+                };
+
+                File.WriteAllText(metadataPath, JsonSerializer.Serialize(metadata, MetadataJsonOptions));
+                AppendBinaryUploadPublicationRecord(metadata);
+                return destPath;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogMsg($"Payload artifact save failed: {ex.Message}");
+                return "";
+            }
+        }
+    }
+
+    public static bool TryExtractInlineEncodedPayload(string command, out string suggestedFilename, out byte[] payloadBytes, out string encodingSource)
+    {
+        suggestedFilename = "inline_payload.bin";
+        payloadBytes = Array.Empty<byte>();
+        encodingSource = "";
+
+        if (string.IsNullOrWhiteSpace(command))
+            return false;
+
+        // 1. Base64 decode pattern: echo '<b64>' | base64 -d [> /path/file]
+        var b64Match = Regex.Match(
+            command,
+            @"(?:echo|printf)\s+(?:-[neE]+\s+)?['""]?(?<b64>[A-Za-z0-9+/=\r\n]{16,})['""]?\s*\|\s*(?:/usr/bin/|/bin/|busybox\s+)?base64\s+(?:-d|--decode)\b(?:\s*>\s*(?<target>[^\s;|&'""]+))?",
+            RegexOptions.IgnoreCase);
+        if (b64Match.Success)
+        {
+            var rawB64 = Regex.Replace(b64Match.Groups["b64"].Value, @"\s+", "");
+            try
+            {
+                var decoded = Convert.FromBase64String(rawB64);
+                if (decoded.Length > 0)
+                {
+                    payloadBytes = decoded;
+                    encodingSource = "inline_base64";
+                    var target = b64Match.Groups["target"].Value;
+                    if (!string.IsNullOrWhiteSpace(target))
+                        suggestedFilename = Path.GetFileName(target);
+                    return true;
+                }
+            }
+            catch
+            {
+                // Ignore invalid base64
+            }
+        }
+
+        // 2. Hex escape or xxd -r -p pattern: echo -ne '\x7f\x45...' > /tmp/file or echo '7f454c46...' | xxd -r -p
+        var hexEscapeMatches = Regex.Matches(command, @"\\x(?<hex>[0-9A-Fa-f]{2})");
+        if (hexEscapeMatches.Count >= 8)
+        {
+            var bytes = new byte[hexEscapeMatches.Count];
+            for (int i = 0; i < hexEscapeMatches.Count; i++)
+                bytes[i] = Convert.ToByte(hexEscapeMatches[i].Groups["hex"].Value, 16);
+
+            payloadBytes = bytes;
+            encodingSource = "inline_hex_escape";
+            var redirectMatch = Regex.Match(command, @">\s*(?<target>[^\s;|&'""]+)");
+            if (redirectMatch.Success && !string.IsNullOrWhiteSpace(redirectMatch.Groups["target"].Value))
+                suggestedFilename = Path.GetFileName(redirectMatch.Groups["target"].Value);
+            return true;
+        }
+
+        var xxdMatch = Regex.Match(
+            command,
+            @"(?:echo|printf)\s+(?:-[neE]+\s+)?['""]?(?<hex>(?:[0-9A-Fa-f]{2}){8,})['""]?\s*\|\s*(?:/usr/bin/|/bin/|busybox\s+)?xxd\s+-r(?:\s+-p)?\b(?:\s*>\s*(?<target>[^\s;|&'""]+))?",
+            RegexOptions.IgnoreCase);
+        if (xxdMatch.Success)
+        {
+            try
+            {
+                var decoded = Convert.FromHexString(xxdMatch.Groups["hex"].Value);
+                if (decoded.Length > 0)
+                {
+                    payloadBytes = decoded;
+                    encodingSource = "inline_xxd_hex";
+                    var target = xxdMatch.Groups["target"].Value;
+                    if (!string.IsNullOrWhiteSpace(target))
+                        suggestedFilename = Path.GetFileName(target);
+                    return true;
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        return false;
+    }
+
+    private const int MaxPublishedBinaryUploads = 500;
+
+    internal static void AppendBinaryUploadPublicationRecord(BinaryUploadMetadataRecord record)
+    {
+        try
+        {
+            var ip = record.RemoteIp;
+            if (ip == "127.0.0.1" || ip == "::1")
+                return;
+
+            var staticDataDir = Path.Combine(Program.AppDir, "frontend", "data");
+            Directory.CreateDirectory(staticDataDir);
+            var binariesPath = Path.Combine(staticDataDir, "binaries.json");
+            var existing = ReadBinaryUploadsFile(binariesPath);
+            existing.Add(record);
+            WriteBinaryUploadsFile(binariesPath, existing);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogMsg($"Warning: Failed to update binaries.json: {ex.Message}");
+        }
+    }
+
+    internal static List<BinaryUploadMetadataRecord> ReadBinaryUploadsFile(string path)
+    {
+        if (!File.Exists(path))
+            return new();
+        try
+        {
+            return JsonSerializer.Deserialize<List<BinaryUploadMetadataRecord>>(File.ReadAllText(path)) ?? new();
+        }
+        catch
+        {
+            return new();
+        }
+    }
+
+    internal static void WriteBinaryUploadsFile(string path, IEnumerable<BinaryUploadMetadataRecord> records)
+    {
+        var retained = records
+            .Where(r => r is not null && !string.IsNullOrWhiteSpace(r.SessionId))
+            .GroupBy(r => $"{r.SessionId}|{r.ExchangeId}|{r.StoredFilePath}|{r.Sha256}|{r.CapturedAtUtc:O}", StringComparer.Ordinal)
+            .Select(g => g.First())
+            .OrderByDescending(r => r.CapturedAtUtc)
+            .Take(MaxPublishedBinaryUploads)
+            .ToList();
+
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
+        var tempPath = path + ".tmp";
+        File.WriteAllText(tempPath, JsonSerializer.Serialize(retained, MetadataJsonOptions));
+        File.Move(tempPath, path, overwrite: true);
+    }
+
+    internal static void MergeBinaryUploadsFiles(string targetPath, string snapshotPath)
+    {
+        var combined = ReadBinaryUploadsFile(targetPath).Concat(ReadBinaryUploadsFile(snapshotPath));
+        WriteBinaryUploadsFile(targetPath, combined);
+    }
+
+    private static string? NullIfWhiteSpace(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 }
 
 internal sealed class SCPUploadSession
@@ -1991,17 +2828,23 @@ internal sealed class SCPUploadSession
     private static readonly byte[] Deny = Encoding.UTF8.GetBytes("\u0002Upload too large\n");
     private readonly string _sessionKey;
     private readonly string _fallbackFilename;
+    private readonly BinaryUploadContext? _context;
     private readonly MemoryStream _header = new();
     private MemoryStream? _content;
     private string _filename = "upload.bin";
+    private string _rawHeaderLine = "";
+    private string _permissions = "";
     private long _expectedBytes;
     private long _receivedBytes;
+    private bool _oversized;
+    private string? _rejectionReason;
     private State _state = State.Header;
 
-    public SCPUploadSession(string sessionKey, string fallbackFilename)
+    public SCPUploadSession(string sessionKey, string fallbackFilename, BinaryUploadContext? context = null)
     {
         _sessionKey = sessionKey;
         _fallbackFilename = string.IsNullOrWhiteSpace(fallbackFilename) ? "upload.bin" : fallbackFilename;
+        _context = context;
     }
 
     public void HandleData(byte[] data, Action<byte[]> sendData, Action<string> close)
@@ -2024,16 +2867,72 @@ internal sealed class SCPUploadSession
         }
     }
 
+    public void FlushPending(string closeReason)
+    {
+        if (_state is State.Done or State.Rejected)
+            return;
+
+        if (_content is not null && _content.Length > 0)
+        {
+            _state = State.Rejected;
+            SCPUploadHandler.CaptureUpload(
+                _sessionKey,
+                _filename,
+                _content.ToArray(),
+                _context,
+                source: "scp",
+                rejectionReason: _rejectionReason ?? (_oversized ? "too_large" : $"incomplete_transfer:{closeReason}"),
+                expectedBytes: _expectedBytes,
+                scpHeader: _rawHeaderLine,
+                scpPermissions: _permissions);
+            return;
+        }
+
+        if (_header.Length > 0)
+        {
+            var rawHeader = _header.ToArray();
+            _state = State.Rejected;
+            SCPUploadHandler.CaptureUpload(
+                _sessionKey,
+                _fallbackFilename,
+                rawHeader,
+                _context,
+                source: "scp_raw_stream",
+                rejectionReason: $"unterminated_scp_header:{closeReason}",
+                expectedBytes: rawHeader.Length);
+        }
+    }
+
     private void ReadHeader(byte[] data, ref int offset, Action<byte[]> sendData, Action<string> close)
     {
         var b = data[offset++];
         if (b == (byte)'\n')
         {
-            var headerLine = Encoding.ASCII.GetString(_header.ToArray()).TrimEnd('\r');
+            var headerBytes = _header.ToArray();
+            var headerLine = Encoding.ASCII.GetString(headerBytes).TrimEnd('\r');
+            _rawHeaderLine = headerLine;
             _header.SetLength(0);
-            if (!TryParseHeader(headerLine, out _expectedBytes, out _filename))
+            if (!TryParseHeader(headerLine, out _permissions, out _expectedBytes, out _filename))
             {
+                var remainingLength = data.Length - offset;
+                var capturedInvalid = new byte[Math.Min(SCPUploadHandler.MaxUploadBytes, headerBytes.Length + 1 + Math.Max(0, remainingLength))];
+                var headerCopy = Math.Min(headerBytes.Length, capturedInvalid.Length);
+                Buffer.BlockCopy(headerBytes, 0, capturedInvalid, 0, headerCopy);
+                if (headerCopy < capturedInvalid.Length)
+                    capturedInvalid[headerCopy++] = (byte)'\n';
+                if (remainingLength > 0 && headerCopy < capturedInvalid.Length)
+                    Buffer.BlockCopy(data, offset, capturedInvalid, headerCopy, Math.Min(remainingLength, capturedInvalid.Length - headerCopy));
+
                 _state = State.Rejected;
+                SCPUploadHandler.CaptureUpload(
+                    _sessionKey,
+                    _fallbackFilename,
+                    capturedInvalid,
+                    _context,
+                    source: "scp_invalid_header",
+                    rejectionReason: "invalid_scp_header",
+                    expectedBytes: capturedInvalid.Length,
+                    scpHeader: headerLine);
                 sendData(Encoding.UTF8.GetBytes("\u0002Invalid SCP upload header\n"));
                 close("SCPUploadInvalidHeader");
                 return;
@@ -2041,23 +2940,48 @@ internal sealed class SCPUploadSession
 
             if (_expectedBytes > SCPUploadHandler.MaxUploadBytes)
             {
-                _state = State.Rejected;
-                Logger.LogYaml("scp_upload_rejected", new SCPUploadLogEntry
+                _oversized = true;
+                _rejectionReason = "too_large";
+                var remainingInPacket = data.Length - offset;
+                if (remainingInPacket > 0)
                 {
-                    Timestamp = DateTime.UtcNow,
-                    SessionKey = _sessionKey,
-                    Filename = _filename,
-                    Bytes = _expectedBytes,
-                    Path = "",
-                    Status = "too_large"
-                });
-                Logger.LogMsg($"SCP upload rejected before transfer: {_filename} ({_expectedBytes} bytes) exceeds {SCPUploadHandler.MaxUploadBytes} bytes from session {_sessionKey}");
+                    var sampleLen = (int)Math.Min(remainingInPacket, Math.Min(_expectedBytes, SCPUploadHandler.MaxUploadBytes));
+                    var sample = new byte[sampleLen];
+                    Buffer.BlockCopy(data, offset, sample, 0, sampleLen);
+                    offset = data.Length;
+                    _state = State.Rejected;
+                    SCPUploadHandler.CaptureUpload(
+                        _sessionKey,
+                        _filename,
+                        sample,
+                        _context,
+                        source: "scp",
+                        rejectionReason: "too_large",
+                        expectedBytes: _expectedBytes,
+                        scpHeader: _rawHeaderLine,
+                        scpPermissions: _permissions);
+                }
+                else
+                {
+                    _state = State.Rejected;
+                    SCPUploadHandler.CaptureUpload(
+                        _sessionKey,
+                        _filename,
+                        Array.Empty<byte>(),
+                        _context,
+                        source: "scp",
+                        rejectionReason: "too_large",
+                        expectedBytes: _expectedBytes,
+                        scpHeader: _rawHeaderLine,
+                        scpPermissions: _permissions);
+                }
+
                 sendData(Deny);
                 close("SCPUploadTooLarge");
                 return;
             }
 
-            _content = new MemoryStream((int)_expectedBytes);
+            _content = new MemoryStream((int)Math.Min(_expectedBytes, SCPUploadHandler.MaxUploadBytes));
             _receivedBytes = 0;
             _state = State.Content;
             sendData(Ack);
@@ -2067,7 +2991,16 @@ internal sealed class SCPUploadSession
         _header.WriteByte(b);
         if (_header.Length > MaxHeaderBytes)
         {
+            var rawHeader = _header.ToArray();
             _state = State.Rejected;
+            SCPUploadHandler.CaptureUpload(
+                _sessionKey,
+                _fallbackFilename,
+                rawHeader,
+                _context,
+                source: "scp_header_overflow",
+                rejectionReason: "scp_header_too_long",
+                expectedBytes: rawHeader.Length);
             sendData(Encoding.UTF8.GetBytes("\u0002SCP upload header too long\n"));
             close("SCPUploadHeaderTooLong");
         }
@@ -2081,7 +3014,9 @@ internal sealed class SCPUploadSession
 
         if (toCopy > 0)
         {
-            _content!.Write(data, offset, toCopy);
+            var writable = (int)Math.Min(toCopy, Math.Max(0, SCPUploadHandler.MaxUploadBytes - _content!.Length));
+            if (writable > 0)
+                _content.Write(data, offset, writable);
             offset += toCopy;
             _receivedBytes += toCopy;
         }
@@ -2096,19 +3031,39 @@ internal sealed class SCPUploadSession
         if (terminator != 0)
         {
             _state = State.Rejected;
+            SCPUploadHandler.CaptureUpload(
+                _sessionKey,
+                _filename,
+                _content!.ToArray(),
+                _context,
+                source: "scp",
+                rejectionReason: "invalid_scp_terminator",
+                expectedBytes: _expectedBytes,
+                scpHeader: _rawHeaderLine,
+                scpPermissions: _permissions);
             sendData(Encoding.UTF8.GetBytes("\u0002Invalid SCP upload terminator\n"));
             close("SCPUploadInvalidTerminator");
             return;
         }
 
-        SCPUploadHandler.CaptureUpload(_sessionKey, _filename, _content!.ToArray());
+        SCPUploadHandler.CaptureUpload(
+            _sessionKey,
+            _filename,
+            _content!.ToArray(),
+            _context,
+            source: "scp",
+            rejectionReason: null,
+            expectedBytes: _expectedBytes,
+            scpHeader: _rawHeaderLine,
+            scpPermissions: _permissions);
         _state = State.Done;
         sendData(Ack);
         close("SCPUploadCaptured");
     }
 
-    private bool TryParseHeader(string headerLine, out long size, out string filename)
+    private bool TryParseHeader(string headerLine, out string permissions, out long size, out string filename)
     {
+        permissions = "";
         size = 0;
         filename = _fallbackFilename;
 
@@ -2119,6 +3074,7 @@ internal sealed class SCPUploadSession
         if (parts.Length < 3 || !long.TryParse(parts[1], out size) || size < 0)
             return false;
 
+        permissions = parts[0];
         filename = string.IsNullOrWhiteSpace(parts[2]) ? _fallbackFilename : parts[2];
         return true;
     }
@@ -2137,11 +3093,23 @@ public class SCPUploadLogEntry
 {
     public DateTime Timestamp { get; set; }
     public string SessionKey { get; set; } = "";
+    public string ShellSessionId { get; set; } = "";
+    public string ExchangeId { get; set; } = "";
+    public string RemoteEndpoint { get; set; } = "";
+    public string Username { get; set; } = "";
+    public string ClientVersion { get; set; } = "";
+    public string SshBanner { get; set; } = "";
+    public string Command { get; set; } = "";
+    public string Source { get; set; } = "scp";
     public string Filename { get; set; } = "";
     public long Bytes { get; set; }
+    public long ExpectedBytes { get; set; }
     public string Sha256 { get; set; } = "";
     public string Path { get; set; } = "";
+    public string MetadataPath { get; set; } = "";
     public string Status { get; set; } = "";
+    public string RejectionReason { get; set; } = "";
+    public BinaryUploadAnalysis? Analysis { get; set; }
 }
 
 internal static class SyntheticHostClock
@@ -3357,13 +4325,14 @@ static class DataHarvester
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(material))).ToLowerInvariant();
     }
 
-    public static async Task CapturePayloadMetadataAsync(string url, string sessionKey, string shellSessionId, string remoteEndpoint)
+    public static async Task CapturePayloadMetadataAsync(string url, string sessionKey, string shellSessionId, string remoteEndpoint, BinaryUploadContext? context = null)
     {
         var entry = new PayloadCaptureLogEntry
         {
             Timestamp = DateTime.UtcNow,
             SessionKey = sessionKey,
             ShellSessionId = shellSessionId,
+            ExchangeId = context?.ExchangeId ?? "",
             RemoteEndpoint = remoteEndpoint,
             Url = url,
             Status = "queued"
@@ -3391,11 +4360,16 @@ static class DataHarvester
 
             await using var stream = await response.Content.ReadAsStreamAsync(cts.Token);
             using var sha256 = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+            using var capturedBytesStream = new MemoryStream();
             var buffer = new byte[81920];
             long bytesCaptured = 0;
             int read;
             while ((read = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length), cts.Token)) > 0)
             {
+                var saveRoom = (int)Math.Min(read, Math.Max(0, SCPUploadHandler.MaxUploadBytes - capturedBytesStream.Length));
+                if (saveRoom > 0)
+                    capturedBytesStream.Write(buffer, 0, saveRoom);
+
                 if (bytesCaptured + read > MaxPayloadCaptureBytes)
                 {
                     entry.Status = "too_large";
@@ -3411,6 +4385,38 @@ static class DataHarvester
 
             entry.BytesCaptured = bytesCaptured;
             entry.Sha256 = Convert.ToHexString(sha256.GetHashAndReset()).ToLowerInvariant();
+
+            var rawBytes = capturedBytesStream.ToArray();
+            if (rawBytes.Length > 0)
+            {
+                var urlFileName = Path.GetFileName(uri.AbsolutePath);
+                if (string.IsNullOrWhiteSpace(urlFileName))
+                    urlFileName = "downloaded_payload.bin";
+
+                var effectiveContext = (context ?? new BinaryUploadContext(
+                    SessionKey: sessionKey,
+                    ShellSessionId: shellSessionId,
+                    RemoteEndpoint: remoteEndpoint,
+                    RemoteIp: Program.GetRemoteAttemptKey(remoteEndpoint))) with
+                {
+                    CommandText = string.IsNullOrWhiteSpace(context?.CommandText) ? url : $"{context!.CommandText} [url={url}]"
+                };
+
+                entry.Analysis = BinaryPayloadAnalyzer.Analyze(rawBytes, urlFileName);
+                var savedPath = SCPUploadHandler.SavePayloadArtifact(
+                    sessionKey,
+                    urlFileName,
+                    rawBytes,
+                    effectiveContext,
+                    source: "url_payload",
+                    status: entry.Status,
+                    rejectionReason: entry.Status == "too_large" ? "too_large" : null,
+                    expectedBytes: response.Content.Headers.ContentLength ?? bytesCaptured,
+                    analysis: entry.Analysis,
+                    out var metaPath);
+                entry.Path = savedPath;
+                entry.MetadataPath = metaPath;
+            }
         }
         catch (Exception ex)
         {
@@ -3792,15 +4798,28 @@ static class Logger
                 payload.HttpStatusCode,
                 payload.BytesCaptured,
                 Sha256 = NullIfEmpty(payload.Sha256),
+                Path = NullIfEmpty(payload.Path),
+                MetadataPath = NullIfEmpty(payload.MetadataPath),
+                payload.Analysis,
                 Error = NullIfEmpty(payload.Error)
             },
             SCPUploadLogEntry upload => new
             {
+                RemoteEndpoint = NullIfEmpty(upload.RemoteEndpoint),
+                Username = NullIfEmpty(upload.Username),
+                ClientVersion = NullIfEmpty(upload.ClientVersion),
+                SshBanner = NullIfEmpty(upload.SshBanner),
+                Command = NullIfEmpty(upload.Command),
+                Source = NullIfEmpty(upload.Source),
                 upload.Filename,
                 upload.Bytes,
+                ExpectedBytes = upload.ExpectedBytes > 0 && upload.ExpectedBytes != upload.Bytes ? upload.ExpectedBytes : (long?)null,
                 Sha256 = NullIfEmpty(upload.Sha256),
                 Path = NullIfEmpty(upload.Path),
-                upload.Status
+                MetadataPath = NullIfEmpty(upload.MetadataPath),
+                upload.Status,
+                RejectionReason = NullIfEmpty(upload.RejectionReason),
+                upload.Analysis
             },
             _ => data
         };
@@ -4269,6 +5288,13 @@ static class Logger
             File.WriteAllText(sessionsPath, "[]");
             LogMsg("Reinitialized invalid sessions.json.", sessionId);
         }
+
+        var binariesPath = Path.Combine(dataDir, "binaries.json");
+        if (!IsValidJson<List<BinaryUploadMetadataRecord>>(binariesPath))
+        {
+            File.WriteAllText(binariesPath, "[]");
+            LogMsg("Reinitialized invalid binaries.json.", sessionId);
+        }
     }
 
     public static (string Objective, string Tactic, string Technique) InferCommandObjective(string? command)
@@ -4426,6 +5452,80 @@ static class Logger
 
         // 3. Generate structured sessions.json
         GenerateStructuredSessions(dataDir, parsedEvents);
+
+        // 4. Generate binaries.json
+        GenerateBinaryUploadsIndex(dataDir, parsedEvents);
+    }
+
+    internal static void GenerateBinaryUploadsIndex(string dataDir, List<(DateTime Timestamp, string Event, string SessionId, long Sequence, string? ChannelId, string? ExchangeId, JsonElement Data)> parsedEvents)
+    {
+        var records = new List<BinaryUploadMetadataRecord>();
+        foreach (var e in parsedEvents)
+        {
+            if (e.Event is not ("scp_upload_captured" or "scp_upload_rejected" or "payload_capture") || e.Data.ValueKind != JsonValueKind.Object)
+                continue;
+
+            var status = JsonString(e.Data, "Status", e.Event == "scp_upload_captured" ? "captured" : "rejected");
+            var path = JsonString(e.Data, "Path");
+            var url = JsonString(e.Data, "Url");
+            if (e.Event == "payload_capture" && string.IsNullOrWhiteSpace(path) && status != "captured" && status != "too_large")
+                continue;
+
+            BinaryUploadAnalysis analysis = new();
+            if (e.Data.TryGetProperty("Analysis", out var analysisElement) && analysisElement.ValueKind == JsonValueKind.Object)
+            {
+                try
+                {
+                    analysis = JsonSerializer.Deserialize<BinaryUploadAnalysis>(analysisElement.GetRawText()) ?? new();
+                }
+                catch { }
+            }
+
+            var remoteEndpoint = JsonString(e.Data, "RemoteEndpoint", "unknown");
+            var filename = JsonString(e.Data, "Filename");
+            if (string.IsNullOrWhiteSpace(filename) && !string.IsNullOrWhiteSpace(url))
+            {
+                filename = Uri.TryCreate(url, UriKind.Absolute, out var u) && !string.IsNullOrWhiteSpace(Path.GetFileName(u.AbsolutePath))
+                    ? Path.GetFileName(u.AbsolutePath)
+                    : url;
+            }
+
+            var capturedBytes = JsonLong(e.Data, "Bytes");
+            if (capturedBytes == 0)
+                capturedBytes = JsonLong(e.Data, "BytesCaptured");
+            var expectedBytes = JsonLong(e.Data, "ExpectedBytes");
+            if (expectedBytes == 0)
+                expectedBytes = capturedBytes;
+
+            records.Add(new BinaryUploadMetadataRecord
+            {
+                CapturedAtUtc = e.Timestamp,
+                SessionId = e.SessionId,
+                ShellSessionId = e.ChannelId,
+                ExchangeId = e.ExchangeId,
+                Source = JsonString(e.Data, "Source", e.Event == "payload_capture" ? "url_payload" : "scp"),
+                Status = status,
+                RejectionReason = NullIfEmpty(JsonString(e.Data, "RejectionReason")) ?? (status.StartsWith("too_large", StringComparison.OrdinalIgnoreCase) ? "too_large" : null),
+                RemoteEndpoint = remoteEndpoint,
+                RemoteIp = Program.GetRemoteAttemptKey(remoteEndpoint),
+                Username = JsonString(e.Data, "Username", "unknown"),
+                ClientVersion = JsonString(e.Data, "ClientVersion", "unknown"),
+                SshBanner = JsonString(e.Data, "SshBanner"),
+                CommandText = NullIfEmpty(JsonString(e.Data, "Command")) ?? url,
+                OriginalFilename = string.IsNullOrWhiteSpace(filename) ? "upload.bin" : filename,
+                StoredFilePath = path,
+                MetadataFilePath = JsonString(e.Data, "MetadataPath"),
+                ExpectedBytes = expectedBytes,
+                CapturedBytes = capturedBytes,
+                Truncated = expectedBytes > capturedBytes,
+                Sha256 = JsonString(e.Data, "Sha256"),
+                Analysis = analysis
+            });
+        }
+
+        var binariesPath = Path.Combine(dataDir, "binaries.json");
+        var merged = SCPUploadHandler.ReadBinaryUploadsFile(binariesPath).Concat(records);
+        SCPUploadHandler.WriteBinaryUploadsFile(binariesPath, merged);
     }
 
     internal static void GenerateStructuredSessions(string dataDir, List<(DateTime Timestamp, string Event, string SessionId, long Sequence, string? ChannelId, string? ExchangeId, JsonElement Data)> parsedEvents)
@@ -4692,9 +5792,9 @@ static class Logger
             merged[session.SessionId] = session;
         }
 
-        // Retain all command-bearing sessions first (up to MaxStructuredSessions), then fill remaining slots with newest non-command sessions.
+        // Retain all command-bearing or upload-bearing sessions first (up to MaxStructuredSessions), then fill remaining slots with newest non-command sessions.
         var retained = merged.Values
-            .OrderByDescending(session => session.CommandCount > 0 ? 1 : 0)
+            .OrderByDescending(session => (session.CommandCount > 0 || session.Timeline.Any(t => t.Event is "scp_upload_captured" or "scp_upload_rejected" or "payload_capture")) ? 1 : 0)
             .ThenByDescending(session => session.StartedAt ?? session.EndedAt ?? DateTime.MinValue)
             .Take(MaxStructuredSessions)
             .OrderByDescending(session => session.StartedAt ?? session.EndedAt ?? DateTime.MinValue)
@@ -4940,10 +6040,14 @@ static class Logger
             if (File.Exists(snapshotOllama))
                 OllamaPublication.MergeFiles(Path.Combine(dataDir, "ollama.json"), snapshotOllama);
 
+            var snapshotBinaries = Path.Combine(snapshotDataDir, "binaries.json");
+            if (File.Exists(snapshotBinaries))
+                SCPUploadHandler.MergeBinaryUploadsFiles(Path.Combine(dataDir, "binaries.json"), snapshotBinaries);
+
             foreach (var file in Directory.EnumerateFiles(snapshotDataDir))
             {
                 var fileName = Path.GetFileName(file);
-                if (fileName is "events.jsonl" or "events_summary.json" or "threat_intel.json" or "sessions.json" or "ollama.json")
+                if (fileName is "events.jsonl" or "events_summary.json" or "threat_intel.json" or "sessions.json" or "ollama.json" or "binaries.json")
                     continue;
                 File.Copy(file, Path.Combine(dataDir, fileName), overwrite: true);
             }

@@ -1,0 +1,6 @@
+{
+  "model": "openai/gpt-6.1-terra",
+  "cacheEntries": 272,
+  "scenarioCount": 10,
+  "completedAt": "2026-10-29T08:18:12.698182+00:00"
+}

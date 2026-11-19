@@ -2,12 +2,43 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import subprocess
+import sys
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch, Mock, call
 import supervise
 
 
 class SupervisorTests(unittest.TestCase):
+    def test_app_environment_matches_user_and_preserves_app_configuration(self):
+        app = SimpleNamespace(pw_dir="/home/test", pw_name="test", pw_shell="/bin/bash")
+        inherited = {"HOME": "/root", "USER": "root", "LOGNAME": "root",
+                     "XDG_CONFIG_HOME": "/root/.config", "XDG_RUNTIME_DIR": "/run/user/0",
+                     "DOTNET_CLI_HOME": "/root", "GITHUB_TOKEN": "fake-publication-token",
+                     "LLM_PROVIDER": "subscription-bridge"}
+        env = supervise.application_environment(app, inherited)
+        self.assertEqual("/home/test", env["HOME"])
+        self.assertEqual("test", env["USER"])
+        self.assertEqual("test", env["LOGNAME"])
+        self.assertEqual("/bin/bash", env["SHELL"])
+        self.assertEqual("/home/test/.config", env["XDG_CONFIG_HOME"])
+        self.assertEqual("/home/test/.cache", env["XDG_CACHE_HOME"])
+        self.assertEqual("/home/test/.local/share", env["XDG_DATA_HOME"])
+        self.assertEqual("/home/test/.local/state", env["XDG_STATE_HOME"])
+        self.assertEqual("/home/test", env["DOTNET_CLI_HOME"])
+        self.assertNotIn("XDG_RUNTIME_DIR", env)
+        self.assertEqual("fake-publication-token", env["GITHUB_TOKEN"])
+        self.assertEqual("subscription-bridge", env["LLM_PROVIDER"])
+        self.assertEqual("/root", inherited["HOME"])
+
+    def test_real_child_receives_correct_home(self):
+        app = SimpleNamespace(pw_dir="/home/test", pw_name="test", pw_shell="/bin/bash")
+        output = subprocess.check_output([sys.executable, "-I", "-c",
+            "import os; print(os.environ['HOME']); print(os.environ['XDG_CONFIG_HOME'])"],
+            env=supervise.application_environment(app, {"HOME": "/root"}), text=True)
+        self.assertEqual(["/home/test", "/home/test/.config"], output.splitlines())
+
     def test_permissions_set_while_root_owns_directory_without_fowner_capability(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "private"

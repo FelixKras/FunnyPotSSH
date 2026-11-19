@@ -1,56 +1,48 @@
 ---
 id: mp-artifact-scp-upload-handling
 kind: fact
-title: SCP Upload Handling
+title: SCP And Binary Upload Quarantine, Metadata, And Analysis
 scope: project
 status: approved-by-request
 created_at: 2026-07-12
+updated_at: 2026-11-19
 author: Forge
+reviewer: Forge
 source_refs:
   - FunnyPot/Program.cs
   - FunnyPot.Tests/UnitTests.cs
   - frontend-main/index.html
 ---
 
-# SCP Upload Handling
+# SCP And Binary Upload Quarantine, Metadata, And Analysis
 
-FunnyPot detects SCP and SFTP commands and has a dedicated SCP upload state machine for exec channels opened with an SCP upload command.
+FunnyPot detects SCP/SFTP uploads, inline binary/control-byte streams, inline encoded binary drops (`base64 -d`, `\x..`, `xxd -r`), and external payload URLs. Rejected and accepted binary uploads are saved to `${Program.LogDir}/uploads/<session-prefix>/` alongside a sidecar `.meta.json` file containing full session provenance and static payload analysis.
 
-## Detection
+## Detection And Sources
 
 - `SCPDetector.IsSCPCommand` returns true for `scp`, `scp ...`, `SCP`, `sftp`, and `sftp-server` style inputs.
 - `SCPDetector.IsSCPUpload` matches SCP commands containing upload flags such as `-t`, `-r`, or `-p` in upload mode.
-- `SCPDetector.ParseSCPUpload` extracts a fallback filename from the command where possible.
+- `SCPUploadHandler.ContainsBinaryBytes` detects null bytes and non-terminal control bytes on raw SSH channel data before or at newline boundaries.
+- `SCPUploadHandler.TryExtractInlineEncodedPayload` decodes inline `base64 -d`, `\x..` hex escapes, and `xxd -r` binary staging commands.
+- `DataHarvester.CapturePayloadMetadataAsync` saves up to 5 MiB of fetched HTTP/HTTPS payloads into the uploads quarantine directory with full provenance and analysis.
 
-## Interactive Command Behavior
+## Exec Upload State Machine And Rejection Quarantine
 
-- In `CommandResolver.ResolveCommandAsync`, SCP commands return empty output and are marked as static/local handling rather than LLM work.
-- SCP upload commands touch the remote filename in the fake filesystem so later filesystem interactions can appear continuous.
-
-## Exec Upload State Machine
-
-- In `SetupShell`, an exec channel detected as SCP upload creates an `SCPUploadSession` and sends an initial zero-byte ACK.
+- In `SetupShell`, an exec channel detected as SCP upload creates an `SCPUploadSession` with `BinaryUploadContext` and sends an initial zero-byte ACK.
 - `SCPUploadSession` progresses through `Header`, `Content`, `Terminator`, `Done`, and `Rejected` states.
-- Headers must be SCP `C...` headers and are capped at 4096 bytes.
-- Announced file size must be non-negative and no larger than `SCPUploadHandler.MaxUploadBytes`.
-- The terminator byte must be zero.
+- Invalid headers, oversized headers, oversized transfers (`> 5 MiB`), invalid terminators, and incomplete transfers on channel close (`FlushPending`) are not merely dropped: any received bytes (capped at 5 MiB) and a sidecar `.meta.json` record are written to the uploads directory and logged as `scp_upload_rejected`.
+- Inline binary input rejected by `InputValidator` (`Binary content not allowed`) is also preserved in the uploads directory with `.meta.json` and logged as `scp_upload_rejected` (`status: "rejected_saved"`).
 
-## Capture And Storage
+## Capture, Sidecar Metadata, And Static Analysis
 
-- The maximum accepted upload size is 5 MiB.
-- Captured uploads are written under `${Program.LogDir}/uploads/<session-prefix>/`.
-- Filenames are sanitized to alphanumeric, dot, underscore, and hyphen characters.
-- Stored filenames are prefixed with a UTC timestamp.
-- Captured uploads log `scp_upload_captured` with timestamp, session key, filename, byte count, SHA-256, path, and status.
-- Rejected oversized uploads log `scp_upload_rejected` with status `too_large`.
-
-## Close Reasons
-
-- Successful upload close reason is `SCPUploadCaptured`.
-- Oversized upload close reason is `SCPUploadTooLarge`.
-- Invalid header, header-too-long, and invalid terminator paths have dedicated close reasons.
-
-## Verified Behaviors
-
-- Unit tests verify binary upload capture, ACK behavior, path placement under log uploads, payload byte preservation, and rejection of files larger than 5 MiB.
-- Dashboard code counts captured and rejected uploads from `scp_upload_captured` and `scp_upload_rejected` events.
+- Captured and rejected uploads are written under `${Program.LogDir}/uploads/<session-prefix>/<timestamp>_<safe-filename>`.
+- Every saved artifact gets a companion `<destPath>.meta.json` (`BinaryUploadMetadataRecord`) containing:
+  - `SessionId`, `ShellSessionId`, `ExchangeId`, `CapturedAtUtc`
+  - `RemoteEndpoint`, `RemoteIp`, `Username`, `ClientVersion`, `SshBanner`, `DeliveryChannel`, `CommandText`
+  - `Source` (`scp`, `scp_invalid_header`, `scp_header_overflow`, `scp_raw_stream`, `ssh_pty_binary`, `ssh_exec_binary`, `inline_base64`, `inline_hex_escape`, `inline_xxd_hex`, `url_payload`)
+  - `Status` (`captured`, `rejected_saved`, `too_large_saved`, `too_large`), `RejectionReason`, `ScpHeader`, `ScpPermissions`
+  - `OriginalFilename`, `StoredFilePath`, `MetadataFilePath`, `ExpectedBytes`, `CapturedBytes`, `Truncated`, `Sha256`
+- `BinaryPayloadAnalyzer.Analyze` performs static classification on every saved payload:
+  - File format & magic bytes (`ELF 32/64-bit LSB/MSB`, architecture such as `x86-64`/`ARM`/`MIPS`/`AArch64`/`RISC-V`, ELF binary type, script shebangs, `PE/MZ`, `Mach-O`, `gzip`/`bzip2`/`xz`/`zstd`/`ZIP`/`tar`, shell staging text, or raw binary)
+  - Shannon byte entropy and packed/encrypted heuristics (`Entropy >= 7.2` or `UPX!` markers)
+  - Printable strings, embedded URLs, IPv4 addresses, and suspicious indicators (`xmrig`, `stratum+`, `/dev/tcp/`, `LD_PRELOAD`, `ptrace`, `UPX`, `authorized_keys`, `crontab`, `systemctl`, `chattr`, `wget`, `curl`, `busybox`).

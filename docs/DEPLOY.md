@@ -273,6 +273,41 @@ The immediately preceding two-container image is retained as
 `funnypot:pre-single-container-20261029`. Its sidecar and obsolete socket volume
 were removed; data/publication mounts were preserved.
 
+### Publication environment and end-to-end verification
+
+The single-container supervisor must set the .NET child's user environment as
+well as UID/GID. It explicitly sets `HOME`, `USER`, `LOGNAME`, `SHELL`,
+`DOTNET_CLI_HOME`, and XDG config/cache/data/state paths from the application's
+passwd entry and removes any root-only inherited runtime directory. App/Git
+configuration remains available to the app; the bridge still receives only its
+minimal whitelist, not GitHub credentials.
+
+An incident on 2026-10-29 left the app running as UID 1000 with `HOME=/root`.
+Libgit2 failed with `failed to stat '/root/.gitconfig'`. SSH, model access, and
+local collection continued normally while the public dashboard stayed at its
+morning reset. Correcting the actual child environment recovered all pending
+records without changing the app/bridge UID separation.
+
+Startup now attempts publication after repository recovery and before opening
+SSH, so a backlog is not stranded until the next attack. Pushes use normal
+refspecs, not forced history updates. Subsequent session-triggered publication
+was verified independently of that one-time startup recovery.
+
+Container health alone is **not** an end-to-end publication check. Verify the
+runtime publication HEAD against the remote and inspect fresh public JSON:
+
+```bash
+docker exec --user test funnypot-container git -C /home/test/app/frontend log -1 --oneline
+docker exec --user test funnypot-container git -C /home/test/app/frontend ls-remote origin refs/heads/data
+```
+
+For environment diagnosis, inspect only safe fields from the **actual .NET
+process's** `/proc/PID/environ`, as that process's UID. A new `docker exec --user
+test` process may show the correct HOME even when the supervised application
+inherited the wrong one. Never dump the full environment: it can contain GitHub
+or other application credentials. Confirm publication from the public data
+branch, not merely from local dirty files or an unrelated diagnostic process.
+
 ## Optional full Kilo / ChatGPT provider (legacy)
 
 The default remains OpenRouter. Set `LLM_PROVIDER=kilo` to route cache misses
@@ -321,6 +356,84 @@ is not forwarded to Kilo. Kilo may retain operational logs even after sessions
 are deleted. Existing cache hits do not call either provider.
 
 ## Response dictionary
+
+### Terra asset rebuild and clean telemetry baseline (2026-10-29)
+
+The active cache was regenerated from scratch with `openai/gpt-6.1-terra`:
+272 baseline entries, plus 10 fresh synthetic scenario transcripts containing
+47 command/response turns. Existing keys supplied coverage, but no previous
+model answers were reused. Canonical placeholders were instantiated with synthetic
+TEST-NET endpoints/passwords before model generation and re-templated afterward.
+
+Assets under `FunnyPot/data/`:
+
+- `command_responses.json`: validated generated baseline (`origin: seed`, with
+  actual Terra model attribution and generation timestamps). Future runtime
+  additions continue to use `origin: llm`.
+- `attack_scenarios.json`: explicitly synthetic Terra-generated playbooks and
+  stateful simulated transcripts, separate from real attacker telemetry.
+- `terra-rebuild-manifest.json` and `terra-rebuild-complete.json`: source-cache
+  fingerprint, generation model, completion time, and asset counts.
+
+Before reset, writers were stopped and a private, Git/Docker-ignored backup was
+created at `backups/terra-rebuild-20261029/` (about 4.5 GB). It includes the entire
+runtime publication worktree and Git database, raw session logs, runtime logs,
+the response dictionary, and the separate host frontend checkout. The generation
+plan, original input, intermediate responses, validation report, and scenario
+checkpoints are preserved in `generation-work.tar.gz` there, not left in the
+active data directory. Do not publish this backup: it contains raw harvested data
+and repository metadata.
+
+Runtime attack history and threat-intelligence aggregates were cleared after the
+backup, then published as data commit `6d996207` using a normal fast-forward push.
+Git history was **not** rewritten: prior records remain recoverable in historical
+commits and the local backup. Generated scenarios were not injected into real
+attacker events. New activity naturally repopulates the clean telemetry baseline.
+
+For a future rebuild:
+
+1. Stop writers and back up the cache, publication volume, and runtime logs.
+2. Temporarily set `FUNNYPOT_MAINTENANCE=1` in the host-local Compose override,
+   then recreate the container. Only the bridge runs; SSH is disabled. The
+   maintenance health probe checks the bridge, not an SSH listener.
+3. Generate into a separate staging directory alongside the live cache:
+
+   ```bash
+   docker exec --user test funnypot-container dotnet FunnyPot.dll \
+     --rebuild-response-assets /var/lib/funnypot/command_responses.json \
+     /var/lib/funnypot/terra-rebuild-STAMP
+   ```
+
+   This is resumable against the **same original input file** (SHA-256 checked).
+   It uses at most two simultaneous model requests, retries invalid output, and
+   never executes generated shell commands. Failed generation does not activate
+   incomplete assets. Persona checks enforce CPU/GPU/OS expectations, stdout-only
+   CPU fallback baseline behavior, expected labels, and full bounded CPU records.
+   Binary terminal junk is allowed intentional truncation; normal text is not.
+4. After `complete.json` exists, activate and run tests **while still offline**:
+
+   ```bash
+   docker exec --user test funnypot-container dotnet FunnyPot.dll \
+     --activate-response-assets /var/lib/funnypot/terra-rebuild-STAMP
+   dotnet test FunnyPot.sln --no-restore
+   ```
+
+5. If also resetting collected history, with its backup already verified:
+
+   ```bash
+   docker exec --user test funnypot-container dotnet FunnyPot.dll \
+     --reset-attack-history /home/test/app/frontend
+   ```
+
+   This clears current events, summaries, threat intelligence, debriefs and raw
+   session files, commits the new baseline on the configured data branch, and
+   pushes without force. It fails if the remote head changed before reset.
+6. Archive/remove staging, remove the maintenance override, rebuild the image
+   with the new baseline assets, and recreate the single container. Verify health,
+   model access, and persistent data before resuming normal operation.
+
+Reset/generation/activation CLIs reject use without the maintenance flag. Manual
+model checks bypass event logging, avoiding synthetic attacks in the clean dataset.
 
 ### Earlier Kilo host deployment (superseded on 2026-10-29)
 
