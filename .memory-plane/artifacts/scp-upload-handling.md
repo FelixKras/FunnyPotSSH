@@ -25,7 +25,11 @@ FunnyPot detects SCP/SFTP uploads, inline binary/control-byte streams, inline en
 - `SCPUploadHandler.ContainsBinaryBytes` detects null bytes and non-terminal control bytes on raw SSH channel data before or at newline boundaries.
 - `SCPUploadHandler.TryExtractInlineEncodedPayload` decodes inline `base64 -d`, `\x..` hex escapes, and `xxd -r` binary staging commands.
 - `DataHarvester.ExtractPayloadUrls` extracts both explicit `http://` / `https://` URLs and schemeless `curl` / `wget` / `fetch` / `lwp-download` targets (e.g. `curl 198.51.100.44:8080/bins/x86_64`), normalizing schemeless endpoints to `http://...`.
-- `DataHarvester.CapturePayloadMetadataAsync` fetches those URLs with realistic `curl`/`Wget` User-Agent headers, determines the target filename from `-o` / `-O` / `>` redirection or the URL path, and saves up to 5 MiB of the downloaded payload into `${Program.LogDir}/uploads/<session-prefix>/` as a read-only (`0400`) `.quarantine` artifact with `.meta.json` provenance and full static binary analysis.
+- `DataHarvester.TrySanitizePayloadDownloadTarget` enforces a strict pre-download sanitization boundary so the raw attacker command never reaches the download routine:
+  - Strips all shell commands, flags (`-o`, `-O`, headers, pipes, redirects), quotes, and trailing operators, isolating only a single URL token.
+  - Rejects any shell metacharacters, whitespace, control characters, embedded credentials (`user:pass@`), non-HTTP/HTTPS schemes, and internal/loopback/link-local/RFC1918/metadata SSRF hosts (`127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16`, `100.64.0.0/10`, IPv6 loopback/link-local/ULA, `localhost`, `*.internal`, `*.local`).
+  - Reconstructs a canonical `Uri` via `UriBuilder` and derives the sanitized target filename strictly from the URL path (`Path.GetFileName(sanitizedUri.AbsolutePath)`), passing only `(Uri sanitizedUri, string sanitizedFileName)` to `DataHarvester.CapturePayloadMetadataAsync`.
+- `DataHarvester.CapturePayloadMetadataAsync` downloads up to 5 MiB from the sanitized `Uri` into `${Program.LogDir}/uploads/<session-prefix>/` as a read-only (`0400`) `.quarantine` artifact with `.meta.json` provenance and full static binary analysis.
 
 ## Exec Upload State Machine And Rejection Quarantine
 

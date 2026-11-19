@@ -921,12 +921,15 @@ class Program
                     processingStage = "starting payload capture";
                     foreach (var payloadUrl in commandAnalysis.PayloadUrls)
                     {
+                        if (!DataHarvester.TrySanitizePayloadDownloadTarget(payloadUrl, out var sanitizedUri, out var sanitizedFileName))
+                            continue;
+
                         var urlContext = uploadContext with
                         {
                             ExchangeId = exchangeId,
-                            CommandText = line
+                            CommandText = sanitizedUri.AbsoluteUri
                         };
-                        _ = Task.Run(() => DataHarvester.CapturePayloadMetadataAsync(payloadUrl, connectionSessionKey, sessionId, remoteEndpoint, urlContext));
+                        _ = Task.Run(() => DataHarvester.CapturePayloadMetadataAsync(sanitizedUri, sanitizedFileName, connectionSessionKey, sessionId, remoteEndpoint, urlContext));
                     }
 
                     if (SCPUploadHandler.TryExtractInlineEncodedPayload(line, out var inlineEncodedName, out var inlineEncodedBytes, out var encodingSource))
@@ -4354,32 +4357,122 @@ static class DataHarvester
         return (raw ?? "").Trim().Trim('\'', '"', '`').TrimEnd('.', ',', ';', ')', '>', '\'', '"');
     }
 
-    public static string? ExtractTargetFilenameFromCommand(string? command, Uri? uri = null)
+    public static bool TrySanitizePayloadDownloadTarget(string? rawInput, out Uri sanitizedUri, out string sanitizedFileName, out string rejectionReason)
     {
-        if (!string.IsNullOrWhiteSpace(command))
+        sanitizedUri = null!;
+        sanitizedFileName = "downloaded_payload.bin";
+        rejectionReason = "";
+
+        if (string.IsNullOrWhiteSpace(rawInput))
         {
-            // Match curl -o <file>, wget -O <file>, or shell redirection > <file>
-            var flagMatch = Regex.Match(command, @"(?:\s-(?:o|O)\s*|\s--output(?:-document)?(?:=|\s+)|\s>\s*)['""]?(?<path>[^\s'""|;&)>]+)['""]?");
-            if (flagMatch.Success)
+            rejectionReason = "empty_input";
+            return false;
+        }
+
+        // 1. Strip any command prefix/suffix and isolate only a single URL/address token
+        var extracted = ExtractPayloadUrls(rawInput).FirstOrDefault();
+        var token = !string.IsNullOrWhiteSpace(extracted) ? extracted : CleanExtractedUrl(rawInput);
+
+        // 2. Reject any shell metacharacters, whitespace, control characters, or subshell markers
+        if (string.IsNullOrWhiteSpace(token)
+            || token.Length > 2048
+            || token.Any(c => char.IsWhiteSpace(c) || char.IsControl(c) || c is ';' or '|' or '&' or '$' or '`' or '<' or '>' or '\'' or '"' or '\\' or '(' or ')' or '{' or '}'))
+        {
+            rejectionReason = "invalid_characters_in_url";
+            return false;
+        }
+
+        if (!token.Contains("://", StringComparison.Ordinal))
+            token = "http://" + token;
+
+        if (!Uri.TryCreate(token, UriKind.Absolute, out var parsed)
+            || parsed.Scheme is not ("http" or "https")
+            || string.IsNullOrWhiteSpace(parsed.Host))
+        {
+            rejectionReason = "unsupported_scheme";
+            return false;
+        }
+
+        // Reject embedded credentials (user:pass@host)
+        if (!string.IsNullOrEmpty(parsed.UserInfo))
+        {
+            rejectionReason = "credentials_not_allowed";
+            return false;
+        }
+
+        // 3. Block internal/loopback/link-local/private SSRF targets
+        if (IsForbiddenDownloadHost(parsed.Host))
+        {
+            rejectionReason = "forbidden_internal_host";
+            return false;
+        }
+
+        // 4. Rebuild strictly from canonical scheme + host + port + normalized path & query
+        var builder = new UriBuilder(parsed.Scheme, parsed.Host, parsed.Port)
+        {
+            Path = string.IsNullOrWhiteSpace(parsed.AbsolutePath) ? "/" : parsed.AbsolutePath,
+            Query = parsed.Query.TrimStart('?')
+        };
+        sanitizedUri = builder.Uri;
+
+        // 5. Sanitize filename strictly from the URL path (never from raw shell arguments)
+        var rawFile = Path.GetFileName(sanitizedUri.AbsolutePath);
+        var cleanFile = string.IsNullOrWhiteSpace(rawFile)
+            ? ""
+            : Regex.Replace(rawFile, @"[^a-zA-Z0-9._-]", "_").TrimStart('.');
+        sanitizedFileName = string.IsNullOrWhiteSpace(cleanFile) ? "downloaded_payload.bin" : cleanFile;
+        return true;
+    }
+
+    public static bool TrySanitizePayloadDownloadTarget(string? rawInput, out Uri sanitizedUri, out string sanitizedFileName)
+        => TrySanitizePayloadDownloadTarget(rawInput, out sanitizedUri, out sanitizedFileName, out _);
+
+    private static bool IsForbiddenDownloadHost(string host)
+    {
+        var normalized = host.Trim().Trim('[', ']').ToLowerInvariant();
+        if (normalized is "localhost" or "ip6-localhost" or "ip6-loopback" or "host.docker.internal" or "gateway.docker.internal" or "metadata.google.internal"
+            || normalized.EndsWith(".local", StringComparison.Ordinal)
+            || normalized.EndsWith(".internal", StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        if (!IPAddress.TryParse(normalized, out var ip))
+            return false;
+
+        if (IPAddress.IsLoopback(ip))
+            return true;
+
+        if (ip.IsIPv4MappedToIPv6)
+            ip = ip.MapToIPv4();
+
+        if (ip.AddressFamily == AddressFamily.InterNetwork)
+        {
+            var b = ip.GetAddressBytes();
+            // 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16 (cloud metadata), 172.16.0.0/12, 192.168.0.0/16, 224.0.0.0/4+
+            if (b[0] == 0
+                || b[0] == 10
+                || (b[0] == 100 && b[1] >= 64 && b[1] <= 127)
+                || b[0] == 127
+                || (b[0] == 169 && b[1] == 254)
+                || (b[0] == 172 && b[1] >= 16 && b[1] <= 31)
+                || (b[0] == 192 && b[1] == 168)
+                || b[0] >= 224)
             {
-                var target = flagMatch.Groups["path"].Value.Trim();
-                if (target != "-" && !target.StartsWith("/dev/null", StringComparison.OrdinalIgnoreCase))
-                {
-                    var name = Path.GetFileName(target);
-                    if (!string.IsNullOrWhiteSpace(name))
-                        return name;
-                }
+                return true;
             }
         }
-
-        if (uri is not null)
+        else if (ip.AddressFamily == AddressFamily.InterNetworkV6)
         {
-            var fromUri = Path.GetFileName(uri.AbsolutePath);
-            if (!string.IsNullOrWhiteSpace(fromUri))
-                return fromUri;
+            if (ip.IsIPv6LinkLocal || ip.IsIPv6SiteLocal || ip.IsIPv6Multicast || ip.Equals(IPAddress.IPv6None))
+                return true;
+            var b = ip.GetAddressBytes();
+            // fc00::/7 Unique Local Addresses
+            if ((b[0] & 0xFE) == 0xFC)
+                return true;
         }
 
-        return null;
+        return false;
     }
 
     public static DhsCommandAnalysis AnalyzeCommand(string command)
@@ -4466,8 +4559,29 @@ static class DataHarvester
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(material))).ToLowerInvariant();
     }
 
-    public static async Task CapturePayloadMetadataAsync(string url, string sessionKey, string shellSessionId, string remoteEndpoint, BinaryUploadContext? context = null)
+    public static Task CapturePayloadMetadataAsync(string url, string sessionKey, string shellSessionId, string remoteEndpoint, BinaryUploadContext? context = null)
     {
+        if (!TrySanitizePayloadDownloadTarget(url, out var sanitizedUri, out var sanitizedFileName, out var rejectionReason))
+        {
+            Logger.LogYaml("payload_capture", new PayloadCaptureLogEntry
+            {
+                Timestamp = DateTime.UtcNow,
+                SessionKey = sessionKey,
+                ShellSessionId = shellSessionId,
+                ExchangeId = context?.ExchangeId ?? "",
+                RemoteEndpoint = remoteEndpoint,
+                Url = url ?? "",
+                Status = rejectionReason
+            });
+            return Task.CompletedTask;
+        }
+
+        return CapturePayloadMetadataAsync(sanitizedUri, sanitizedFileName, sessionKey, shellSessionId, remoteEndpoint, context);
+    }
+
+    public static async Task CapturePayloadMetadataAsync(Uri sanitizedUri, string sanitizedFileName, string sessionKey, string shellSessionId, string remoteEndpoint, BinaryUploadContext? context = null)
+    {
+        var cleanUrl = sanitizedUri.AbsoluteUri;
         var entry = new PayloadCaptureLogEntry
         {
             Timestamp = DateTime.UtcNow,
@@ -4475,13 +4589,13 @@ static class DataHarvester
             ShellSessionId = shellSessionId,
             ExchangeId = context?.ExchangeId ?? "",
             RemoteEndpoint = remoteEndpoint,
-            Url = url,
+            Url = cleanUrl,
             Status = "queued"
         };
 
         try
         {
-            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https"))
+            if (sanitizedUri.Scheme is not ("http" or "https") || IsForbiddenDownloadHost(sanitizedUri.Host))
             {
                 entry.Status = "unsupported_scheme";
                 Logger.LogYaml("payload_capture", entry);
@@ -4489,9 +4603,8 @@ static class DataHarvester
             }
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-            using var request = new HttpRequestMessage(HttpMethod.Get, uri);
-            var commandLower = (context?.CommandText ?? "").ToLowerInvariant();
-            request.Headers.UserAgent.ParseAdd(commandLower.Contains("wget") ? "Wget/1.21.3" : "curl/7.88.1");
+            using var request = new HttpRequestMessage(HttpMethod.Get, sanitizedUri);
+            request.Headers.UserAgent.ParseAdd("curl/7.88.1");
             var client = HttpClientOverride ?? Program.SharedHttpClient;
             using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
             entry.HttpStatusCode = (int)response.StatusCode;
@@ -4534,9 +4647,9 @@ static class DataHarvester
             var rawBytes = capturedBytesStream.ToArray();
             if (rawBytes.Length > 0)
             {
-                var urlFileName = ExtractTargetFilenameFromCommand(context?.CommandText, uri)
-                    ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
-                    ?? "downloaded_payload.bin";
+                var urlFileName = !string.IsNullOrWhiteSpace(sanitizedFileName)
+                    ? sanitizedFileName
+                    : "downloaded_payload.bin";
 
                 var effectiveContext = (context ?? new BinaryUploadContext(
                     SessionKey: sessionKey,
@@ -4544,7 +4657,7 @@ static class DataHarvester
                     RemoteEndpoint: remoteEndpoint,
                     RemoteIp: Program.GetRemoteAttemptKey(remoteEndpoint))) with
                 {
-                    CommandText = string.IsNullOrWhiteSpace(context?.CommandText) ? url : $"{context!.CommandText} [url={url}]"
+                    CommandText = cleanUrl
                 };
 
                 entry.Analysis = BinaryPayloadAnalyzer.Analyze(rawBytes, urlFileName);
