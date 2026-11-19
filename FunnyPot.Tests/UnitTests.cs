@@ -169,11 +169,21 @@ public class SCPUploadSessionTests
             Assert.All(acks, ack => Assert.Equal(new byte[] { 0 }, ack));
 
             var uploadDir = Path.Combine(tempDir, "uploads", "abcdef12");
-            var path = Assert.Single(Directory.GetFiles(uploadDir, "*_payload.bin"));
+            var path = Assert.Single(Directory.GetFiles(uploadDir, "*_payload.bin.quarantine"));
             Assert.Equal(payload, File.ReadAllBytes(path));
+            Assert.True((File.GetAttributes(path) & FileAttributes.ReadOnly) == FileAttributes.ReadOnly);
+            if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            {
+                Assert.Equal(UnixFileMode.UserRead, File.GetUnixFileMode(path));
+            }
 
             var metaPath = path + ".meta.json";
             Assert.True(File.Exists(metaPath));
+            Assert.True((File.GetAttributes(metaPath) & FileAttributes.ReadOnly) == FileAttributes.ReadOnly);
+            if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            {
+                Assert.Equal(UnixFileMode.UserRead, File.GetUnixFileMode(metaPath));
+            }
             var metadata = System.Text.Json.JsonSerializer.Deserialize<BinaryUploadMetadataRecord>(File.ReadAllText(metaPath));
             Assert.NotNull(metadata);
             Assert.Equal("abcdef1234567890", metadata!.SessionId);
@@ -200,9 +210,25 @@ public class SCPUploadSessionTests
         {
             Program.LogDir = previousLogDir;
             Program.AppDir = previousAppDir;
-            if (Directory.Exists(tempDir))
-                Directory.Delete(tempDir, recursive: true);
+            DeleteDirectoryWithReadOnlyFiles(tempDir);
         }
+    }
+
+    private static void DeleteDirectoryWithReadOnlyFiles(string dir)
+    {
+        if (!Directory.Exists(dir))
+            return;
+        foreach (var file in Directory.GetFiles(dir, "*", SearchOption.AllDirectories))
+        {
+            try
+            {
+                if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+                    File.SetUnixFileMode(file, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+                File.SetAttributes(file, FileAttributes.Normal);
+            }
+            catch { }
+        }
+        Directory.Delete(dir, recursive: true);
     }
 
     [Fact]
@@ -235,8 +261,9 @@ public class SCPUploadSessionTests
             Assert.Equal("SCPUploadTooLarge", Assert.Single(closeReasons));
             var uploadDir = Path.Combine(tempDir, "uploads", "abcdef12");
             Assert.True(Directory.Exists(uploadDir));
-            var savedFile = Assert.Single(Directory.GetFiles(uploadDir, "*_payload.bin"));
+            var savedFile = Assert.Single(Directory.GetFiles(uploadDir, "*_payload.bin.quarantine"));
             Assert.Equal(sample, File.ReadAllBytes(savedFile));
+            Assert.True((File.GetAttributes(savedFile) & FileAttributes.ReadOnly) == FileAttributes.ReadOnly);
 
             var metaPath = savedFile + ".meta.json";
             Assert.True(File.Exists(metaPath));
@@ -255,8 +282,7 @@ public class SCPUploadSessionTests
         {
             Program.LogDir = previousLogDir;
             Program.AppDir = previousAppDir;
-            if (Directory.Exists(tempDir))
-                Directory.Delete(tempDir, recursive: true);
+            DeleteDirectoryWithReadOnlyFiles(tempDir);
         }
     }
 
@@ -320,8 +346,7 @@ public class SCPUploadSessionTests
         {
             Program.LogDir = previousLogDir;
             Program.AppDir = previousAppDir;
-            if (Directory.Exists(tempDir))
-                Directory.Delete(tempDir, recursive: true);
+            DeleteDirectoryWithReadOnlyFiles(tempDir);
         }
     }
 

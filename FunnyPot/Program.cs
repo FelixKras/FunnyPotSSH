@@ -2448,11 +2448,32 @@ static class SCPUploadHandler
 
     public static void EnsureUploadDir()
     {
-        try { Directory.CreateDirectory(GetUploadDir()); }
+        try
+        {
+            var dir = GetUploadDir();
+            Directory.CreateDirectory(dir);
+            HardenQuarantineDirectory(dir);
+            foreach (var file in Directory.GetFiles(dir, "*", SearchOption.AllDirectories))
+                LockDownQuarantinedFile(file);
+        }
         catch (Exception ex)
         {
             Logger.LogMsg($"Failed to create upload directory: {ex.Message}");
         }
+    }
+
+    internal static void HardenQuarantineDirectory(string dirPath)
+    {
+        if (string.IsNullOrWhiteSpace(dirPath) || !Directory.Exists(dirPath))
+            return;
+        try
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                File.SetUnixFileMode(dirPath, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+            }
+        }
+        catch { }
     }
 
     public static bool ContainsBinaryBytes(ReadOnlySpan<byte> data)
@@ -2509,14 +2530,21 @@ static class SCPUploadHandler
                 if (bytesToSave.Length > 0)
                 {
                     var uploadRoot = GetUploadDir();
+                    Directory.CreateDirectory(uploadRoot);
+                    HardenQuarantineDirectory(uploadRoot);
                     var sessionPrefix = effectiveSessionKey[..Math.Min(8, effectiveSessionKey.Length)];
                     var sessionDir = Path.Combine(uploadRoot, string.IsNullOrWhiteSpace(sessionPrefix) ? "unknown" : sessionPrefix);
                     Directory.CreateDirectory(sessionDir);
+                    HardenQuarantineDirectory(sessionDir);
 
                     var rawFileName = string.IsNullOrWhiteSpace(filename) ? "upload.bin" : Path.GetFileName(filename.Trim());
                     if (string.IsNullOrWhiteSpace(rawFileName))
                         rawFileName = "upload.bin";
-                    var safeName = Regex.Replace(rawFileName, @"[^a-zA-Z0-9._-]", "_");
+                    var safeName = Regex.Replace(rawFileName, @"[^a-zA-Z0-9._-]", "_").TrimStart('.');
+                    if (string.IsNullOrWhiteSpace(safeName))
+                        safeName = "upload.bin";
+                    if (!safeName.EndsWith(".quarantine", StringComparison.OrdinalIgnoreCase))
+                        safeName += ".quarantine";
                     var timestamp = now.ToString("yyyyMMddHHmmss");
                     destPath = Path.Combine(sessionDir, $"{timestamp}_{safeName}");
                     var collision = 1;
@@ -2529,6 +2557,7 @@ static class SCPUploadHandler
                     sha256 = Convert.ToHexString(SHA256.HashData(bytesToSave)).ToLowerInvariant();
                     analysis = BinaryPayloadAnalyzer.Analyze(bytesToSave, filename);
                     metadataPath = destPath + ".meta.json";
+                    LockDownQuarantinedFile(destPath);
                 }
 
                 var metadata = new BinaryUploadMetadataRecord
@@ -2560,7 +2589,10 @@ static class SCPUploadHandler
                 };
 
                 if (!string.IsNullOrEmpty(metadataPath))
+                {
                     File.WriteAllText(metadataPath, JsonSerializer.Serialize(metadata, MetadataJsonOptions));
+                    LockDownQuarantinedFile(metadataPath);
+                }
                 AppendBinaryUploadPublicationRecord(metadata);
 
                 Logger.LogYaml(eventType, new SCPUploadLogEntry
@@ -2627,14 +2659,21 @@ static class SCPUploadHandler
                 var truncated = data.Length > MaxUploadBytes || expectedBytes > bytesToSave.Length;
 
                 var uploadRoot = GetUploadDir();
+                Directory.CreateDirectory(uploadRoot);
+                HardenQuarantineDirectory(uploadRoot);
                 var sessionPrefix = effectiveSessionKey[..Math.Min(8, effectiveSessionKey.Length)];
                 var sessionDir = Path.Combine(uploadRoot, string.IsNullOrWhiteSpace(sessionPrefix) ? "unknown" : sessionPrefix);
                 Directory.CreateDirectory(sessionDir);
+                HardenQuarantineDirectory(sessionDir);
 
                 var rawFileName = string.IsNullOrWhiteSpace(filename) ? "upload.bin" : Path.GetFileName(filename.Trim());
                 if (string.IsNullOrWhiteSpace(rawFileName))
                     rawFileName = "upload.bin";
-                var safeName = Regex.Replace(rawFileName, @"[^a-zA-Z0-9._-]", "_");
+                var safeName = Regex.Replace(rawFileName, @"[^a-zA-Z0-9._-]", "_").TrimStart('.');
+                if (string.IsNullOrWhiteSpace(safeName))
+                    safeName = "upload.bin";
+                if (!safeName.EndsWith(".quarantine", StringComparison.OrdinalIgnoreCase))
+                    safeName += ".quarantine";
                 var timestamp = now.ToString("yyyyMMddHHmmss");
                 var destPath = Path.Combine(sessionDir, $"{timestamp}_{safeName}");
                 var collision = 1;
@@ -2644,6 +2683,7 @@ static class SCPUploadHandler
                 }
 
                 File.WriteAllBytes(destPath, bytesToSave);
+                LockDownQuarantinedFile(destPath);
 
                 var sha256 = Convert.ToHexString(SHA256.HashData(bytesToSave)).ToLowerInvariant();
                 metadataPath = destPath + ".meta.json";
@@ -2677,6 +2717,7 @@ static class SCPUploadHandler
                 };
 
                 File.WriteAllText(metadataPath, JsonSerializer.Serialize(metadata, MetadataJsonOptions));
+                LockDownQuarantinedFile(metadataPath);
                 AppendBinaryUploadPublicationRecord(metadata);
                 return destPath;
             }
@@ -2824,6 +2865,26 @@ static class SCPUploadHandler
     {
         var combined = ReadBinaryUploadsFile(targetPath).Concat(ReadBinaryUploadsFile(snapshotPath));
         WriteBinaryUploadsFile(targetPath, combined);
+    }
+
+    internal static void LockDownQuarantinedFile(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+            return;
+
+        try
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                // Strip all execute and write bits: owner read-only (0400 / -r--------)
+                File.SetUnixFileMode(path, UnixFileMode.UserRead);
+            }
+            File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.ReadOnly);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogMsg($"Warning: Failed to apply read-only non-executable permissions to {path}: {ex.Message}");
+        }
     }
 
     private static string? NullIfWhiteSpace(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;

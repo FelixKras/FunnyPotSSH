@@ -35,7 +35,11 @@ FunnyPot detects SCP/SFTP uploads, inline binary/control-byte streams, inline en
 
 ## Capture, Sidecar Metadata, And Static Analysis
 
-- Captured and rejected uploads are written under `${Program.LogDir}/uploads/<session-prefix>/<timestamp>_<safe-filename>`.
+- Captured and rejected uploads are written under `${Program.LogDir}/uploads/<session-prefix>/<timestamp>_<safe-filename>.quarantine`.
+- Non-execution hardening:
+  - Every quarantined binary and `.meta.json` sidecar is immediately locked down via `SCPUploadHandler.LockDownQuarantinedFile` to strip all execute and write bits (`UnixFileMode.UserRead` / `0400` `-r--------` on Linux and `FileAttributes.ReadOnly`), while quarantine directories are restricted to `0700` (`drwx------`).
+  - Stored filenames are stripped of leading dots and suffixed with `.quarantine` so they cannot match executable script extensions or shell startup dotfiles.
+  - FunnyPot's SSH shell (`CommandResolver` / `FakeFileSystem`) is purely emulated in memory and never invokes `Process.Start` on attacker commands or uploaded files.
 - Every saved artifact gets a companion `<destPath>.meta.json` (`BinaryUploadMetadataRecord`) containing:
   - `SessionId`, `ShellSessionId`, `ExchangeId`, `CapturedAtUtc`
   - `RemoteEndpoint`, `RemoteIp`, `Username`, `ClientVersion`, `SshBanner`, `DeliveryChannel`, `CommandText`
