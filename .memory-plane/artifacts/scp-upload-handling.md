@@ -24,7 +24,8 @@ FunnyPot detects SCP/SFTP uploads, inline binary/control-byte streams, inline en
 - `SCPDetector.IsSCPUpload` matches SCP commands containing upload flags such as `-t`, `-r`, or `-p` in upload mode.
 - `SCPUploadHandler.ContainsBinaryBytes` detects null bytes and non-terminal control bytes on raw SSH channel data before or at newline boundaries.
 - `SCPUploadHandler.TryExtractInlineEncodedPayload` decodes inline `base64 -d`, `\x..` hex escapes, and `xxd -r` binary staging commands.
-- `DataHarvester.CapturePayloadMetadataAsync` saves up to 5 MiB of fetched HTTP/HTTPS payloads into the uploads quarantine directory with full provenance and analysis.
+- `DataHarvester.ExtractPayloadUrls` extracts both explicit `http://` / `https://` URLs and schemeless `curl` / `wget` / `fetch` / `lwp-download` targets (e.g. `curl 198.51.100.44:8080/bins/x86_64`), normalizing schemeless endpoints to `http://...`.
+- `DataHarvester.CapturePayloadMetadataAsync` fetches those URLs with realistic `curl`/`Wget` User-Agent headers, determines the target filename from `-o` / `-O` / `>` redirection or the URL path, and saves up to 5 MiB of the downloaded payload into `${Program.LogDir}/uploads/<session-prefix>/` as a read-only (`0400`) `.quarantine` artifact with `.meta.json` provenance and full static binary analysis.
 
 ## Exec Upload State Machine And Rejection Quarantine
 

