@@ -2851,9 +2851,25 @@ static class SCPUploadHandler
     internal static void WriteBinaryUploadsFile(string path, IEnumerable<BinaryUploadMetadataRecord> records)
     {
         var retained = records
-            .Where(r => r is not null && !string.IsNullOrWhiteSpace(r.SessionId))
-            .GroupBy(r => $"{r.SessionId}|{r.ExchangeId}|{r.StoredFilePath}|{r.Sha256}|{r.CapturedAtUtc:O}", StringComparer.Ordinal)
-            .Select(g => g.First())
+            .Where(r => r is not null
+                && !string.IsNullOrWhiteSpace(r.SessionId)
+                && !string.IsNullOrWhiteSpace(r.StoredFilePath)
+                && r.CapturedBytes > 0
+                && r.Analysis is not null
+                && !string.IsNullOrWhiteSpace(r.Analysis.FileFormat)
+                && !r.Analysis.FileFormat.Equals("unknown", StringComparison.OrdinalIgnoreCase)
+                && !r.Analysis.FileFormat.Equals("empty", StringComparison.OrdinalIgnoreCase))
+            .Select(r =>
+            {
+                if (r.Source == "url_payload" && !string.IsNullOrWhiteSpace(r.StoredFilePath))
+                {
+                    r.Status = "captured";
+                    r.RejectionReason = null;
+                }
+                return r;
+            })
+            .GroupBy(r => $"{r.SessionId}|{r.ExchangeId}|{r.StoredFilePath}|{r.Sha256}", StringComparer.Ordinal)
+            .Select(g => g.OrderByDescending(x => x.CapturedAtUtc).First())
             .OrderByDescending(r => r.CapturedAtUtc)
             .Take(MaxPublishedBinaryUploads)
             .ToList();
@@ -4638,15 +4654,13 @@ static class DataHarvester
                 bytesCaptured += read;
             }
 
-            if (entry.Status != "too_large")
-                entry.Status = "captured";
-
-            entry.BytesCaptured = bytesCaptured;
-            entry.Sha256 = Convert.ToHexString(sha256.GetHashAndReset()).ToLowerInvariant();
-
             var rawBytes = capturedBytesStream.ToArray();
             if (rawBytes.Length > 0)
             {
+                entry.Status = "captured";
+                entry.BytesCaptured = rawBytes.Length;
+                entry.Sha256 = Convert.ToHexString(SHA256.HashData(rawBytes)).ToLowerInvariant();
+
                 var urlFileName = !string.IsNullOrWhiteSpace(sanitizedFileName)
                     ? sanitizedFileName
                     : "downloaded_payload.bin";
@@ -4667,13 +4681,20 @@ static class DataHarvester
                     rawBytes,
                     effectiveContext,
                     source: "url_payload",
-                    status: entry.Status,
-                    rejectionReason: entry.Status == "too_large" ? "too_large" : null,
+                    status: "captured",
+                    rejectionReason: null,
                     expectedBytes: response.Content.Headers.ContentLength ?? bytesCaptured,
                     analysis: entry.Analysis,
                     out var metaPath);
                 entry.Path = savedPath;
                 entry.MetadataPath = metaPath;
+            }
+            else
+            {
+                if (entry.Status != "too_large")
+                    entry.Status = "captured";
+                entry.BytesCaptured = bytesCaptured;
+                entry.Sha256 = Convert.ToHexString(sha256.GetHashAndReset()).ToLowerInvariant();
             }
         }
         catch (Exception ex)
@@ -5554,6 +5575,10 @@ static class Logger
             File.WriteAllText(binariesPath, "[]");
             LogMsg("Reinitialized invalid binaries.json.", sessionId);
         }
+        else
+        {
+            SCPUploadHandler.WriteBinaryUploadsFile(binariesPath, SCPUploadHandler.ReadBinaryUploadsFile(binariesPath));
+        }
     }
 
     static void BackfillBinariesFromEventsIfEmpty(string repoPath)
@@ -5805,7 +5830,7 @@ static class Logger
             var status = JsonString(e.Data, "Status", e.Event == "scp_upload_captured" ? "captured" : "rejected");
             var path = JsonString(e.Data, "Path");
             var url = JsonString(e.Data, "Url");
-            if (e.Event == "payload_capture" && string.IsNullOrWhiteSpace(path) && status != "captured" && status != "too_large")
+            if (string.IsNullOrWhiteSpace(path))
                 continue;
 
             BinaryUploadAnalysis analysis = new();
@@ -5816,6 +5841,12 @@ static class Logger
                     analysis = JsonSerializer.Deserialize<BinaryUploadAnalysis>(analysisElement.GetRawText()) ?? new();
                 }
                 catch { }
+            }
+            if (string.IsNullOrWhiteSpace(analysis.FileFormat)
+                || analysis.FileFormat.Equals("unknown", StringComparison.OrdinalIgnoreCase)
+                || analysis.FileFormat.Equals("empty", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
             }
 
             var remoteEndpoint = JsonString(e.Data, "RemoteEndpoint", "unknown");
