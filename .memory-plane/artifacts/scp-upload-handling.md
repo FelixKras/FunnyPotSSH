@@ -29,13 +29,14 @@ FunnyPot detects SCP/SFTP uploads, inline binary/control-byte streams, inline en
   - Strips all shell commands, flags (`-o`, `-O`, headers, pipes, redirects), quotes, and trailing operators, isolating only a single URL token.
   - Rejects any shell metacharacters, whitespace, control characters, embedded credentials (`user:pass@`), non-HTTP/HTTPS schemes, and internal/loopback/link-local/RFC1918/metadata SSRF hosts (`127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16`, `100.64.0.0/10`, IPv6 loopback/link-local/ULA, `localhost`, `*.internal`, `*.local`).
   - Reconstructs a canonical `Uri` via `UriBuilder` and derives the sanitized target filename strictly from the URL path (`Path.GetFileName(sanitizedUri.AbsolutePath)`), passing only `(Uri sanitizedUri, string sanitizedFileName)` to `DataHarvester.CapturePayloadMetadataAsync`.
-- `DataHarvester.CapturePayloadMetadataAsync` downloads up to 5 MiB from the sanitized `Uri` into `${Program.LogDir}/uploads/<session-prefix>/` as a read-only (`0400`) `.quarantine` artifact with `.meta.json` provenance and full static binary analysis.
+- `DataHarvester.CapturePayloadMetadataAsync` downloads up to 50 MiB (bounded by the originating IP's remaining 50 MiB cumulative quota) from the sanitized `Uri` into `${Program.LogDir}/uploads/<session-prefix>/` as a read-only (`0400`) `.quarantine` artifact with `.meta.json` provenance and full static binary analysis.
 
 ## Exec Upload State Machine And Rejection Quarantine
 
 - In `SetupShell`, an exec channel detected as SCP upload creates an `SCPUploadSession` with `BinaryUploadContext` and sends an initial zero-byte ACK.
 - `SCPUploadSession` progresses through `Header`, `Content`, `Terminator`, `Done`, and `Rejected` states.
-- Invalid headers, oversized headers, oversized transfers (`> 5 MiB`), invalid terminators, and incomplete transfers on channel close (`FlushPending`) are not merely dropped: any received bytes (capped at 5 MiB) and a sidecar `.meta.json` record are written to the uploads directory and logged as `scp_upload_rejected`.
+- Storage quota is capped at **50 MiB per single remote IP** (`SCPUploadHandler.MaxUploadBytes = 50 MiB`, `SCPUploadHandler.MaxBytesPerIp = 50 MiB`), seeded on startup from existing `.meta.json` sidecars in `uploads/` and tracked across SCP uploads, inline binary drops, and URL downloads.
+- Invalid headers, oversized headers, transfers exceeding the 50 MiB per-IP budget (`too_large` or `ip_quota_exceeded`), invalid terminators, and incomplete transfers on channel close (`FlushPending`) save up to the remaining IP quota and log `scp_upload_rejected`.
 - Inline binary input rejected by `InputValidator` (`Binary content not allowed`) is also preserved in the uploads directory with `.meta.json` and logged as `scp_upload_rejected` (`status: "rejected_saved"`).
 
 ## Capture, Sidecar Metadata, And Static Analysis

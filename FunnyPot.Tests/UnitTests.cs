@@ -370,6 +370,65 @@ public class SCPUploadSessionTests
         Assert.Equal(12, hexBytes.Length);
         Assert.Equal(0x7F, hexBytes[0]);
     }
+
+    [Fact]
+    public void CaptureUpload_EnforcesFiftyMegabyteQuotaPerSingleIp()
+    {
+        var previousLogDir = Program.LogDir;
+        var previousAppDir = Program.AppDir;
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Program.LogDir = tempDir;
+        Program.AppDir = tempDir;
+
+        try
+        {
+            Assert.Equal(50 * 1024 * 1024, SCPUploadHandler.MaxUploadBytes);
+            Assert.Equal(50L * 1024 * 1024, SCPUploadHandler.MaxBytesPerIp);
+
+            var ip1Context = new BinaryUploadContext(
+                SessionKey: "1111222233334444",
+                ShellSessionId: "shell-ip1",
+                RemoteEndpoint: "203.0.113.100:40001",
+                RemoteIp: "203.0.113.100",
+                Username: "root");
+
+            var ip2Context = new BinaryUploadContext(
+                SessionKey: "5555666677778888",
+                ShellSessionId: "shell-ip2",
+                RemoteEndpoint: "203.0.113.200:40002",
+                RemoteIp: "203.0.113.200",
+                Username: "root");
+
+            var chunk = new byte[1024];
+            chunk[0] = 0x7F;
+            chunk[1] = (byte)'E';
+            chunk[2] = (byte)'L';
+            chunk[3] = (byte)'F';
+
+            var savedPath = SCPUploadHandler.CaptureUpload("1111222233334444", "first.elf", chunk, ip1Context);
+            Assert.False(string.IsNullOrEmpty(savedPath));
+            Assert.Equal(1024L, SCPUploadHandler.GetUsedIpQuotaBytes("203.0.113.100"));
+            Assert.Equal(SCPUploadHandler.MaxBytesPerIp - 1024L, SCPUploadHandler.GetRemainingIpQuotaBytes("203.0.113.100"));
+
+            // Another upload from the same IP announcing more than the remaining per-IP budget is rejected with ip_quota_exceeded
+            var sessionSameIp = new SCPUploadSession("1111222233334444", "second.elf", ip1Context);
+            var closeReasons = new List<string>();
+            var headerOverRemaining = System.Text.Encoding.ASCII.GetBytes($"C0755 {SCPUploadHandler.MaxBytesPerIp} second.elf\n");
+            sessionSameIp.HandleData(headerOverRemaining, _ => { }, closeReasons.Add);
+            Assert.Equal("SCPUploadTooLarge", Assert.Single(closeReasons));
+
+            // Different IP still has its full 50 MiB quota
+            Assert.Equal(SCPUploadHandler.MaxBytesPerIp, SCPUploadHandler.GetRemainingIpQuotaBytes("203.0.113.200"));
+            var savedPathIp2 = SCPUploadHandler.CaptureUpload("5555666677778888", "other_ip.elf", chunk, ip2Context);
+            Assert.False(string.IsNullOrEmpty(savedPathIp2));
+        }
+        finally
+        {
+            Program.LogDir = previousLogDir;
+            Program.AppDir = previousAppDir;
+            DeleteDirectoryWithReadOnlyFiles(tempDir);
+        }
+    }
 }
 
 [Collection("LogDirSerial")]

@@ -2440,7 +2440,10 @@ static class BinaryPayloadAnalyzer
 static class SCPUploadHandler
 {
     private static readonly object _lock = new();
-    internal const int MaxUploadBytes = 5 * 1024 * 1024;
+    internal const int MaxUploadBytes = 50 * 1024 * 1024;
+    internal const long MaxBytesPerIp = 50L * 1024 * 1024;
+    private static readonly ConcurrentDictionary<string, long> _bytesStoredByIp = new(StringComparer.OrdinalIgnoreCase);
+    private static string _trackedUploadRoot = "";
     private static readonly JsonSerializerOptions MetadataJsonOptions = new()
     {
         WriteIndented = true,
@@ -2448,6 +2451,63 @@ static class SCPUploadHandler
     };
 
     private static string GetUploadDir() => Path.Combine(Program.LogDir, "uploads");
+
+    private static string NormalizeRemoteIp(BinaryUploadContext? context, string? fallbackEndpoint = null)
+    {
+        var ip = context?.RemoteIp;
+        if (string.IsNullOrWhiteSpace(ip) || ip == "unknown")
+            ip = Program.GetRemoteAttemptKey(context?.RemoteEndpoint ?? fallbackEndpoint ?? "unknown");
+        return string.IsNullOrWhiteSpace(ip) ? "unknown" : ip;
+    }
+
+    private static void EnsureIpQuotaInitializedUnsafe()
+    {
+        var currentRoot = Path.GetFullPath(GetUploadDir());
+        if (string.Equals(_trackedUploadRoot, currentRoot, StringComparison.Ordinal))
+            return;
+
+        _bytesStoredByIp.Clear();
+        _trackedUploadRoot = currentRoot;
+        if (!Directory.Exists(currentRoot))
+            return;
+
+        foreach (var metaFile in Directory.GetFiles(currentRoot, "*.meta.json", SearchOption.AllDirectories))
+        {
+            try
+            {
+                var record = JsonSerializer.Deserialize<BinaryUploadMetadataRecord>(File.ReadAllText(metaFile));
+                if (record is not null && record.CapturedBytes > 0)
+                {
+                    var ip = string.IsNullOrWhiteSpace(record.RemoteIp)
+                        ? Program.GetRemoteAttemptKey(record.RemoteEndpoint)
+                        : record.RemoteIp;
+                    _bytesStoredByIp.AddOrUpdate(ip, record.CapturedBytes, (_, cur) => cur + record.CapturedBytes);
+                }
+            }
+            catch { }
+        }
+    }
+
+    public static long GetRemainingIpQuotaBytes(string? remoteIp)
+    {
+        lock (_lock)
+        {
+            EnsureIpQuotaInitializedUnsafe();
+            var key = string.IsNullOrWhiteSpace(remoteIp) ? "unknown" : remoteIp;
+            var used = _bytesStoredByIp.GetValueOrDefault(key, 0L);
+            return Math.Max(0L, MaxBytesPerIp - used);
+        }
+    }
+
+    public static long GetUsedIpQuotaBytes(string? remoteIp)
+    {
+        lock (_lock)
+        {
+            EnsureIpQuotaInitializedUnsafe();
+            var key = string.IsNullOrWhiteSpace(remoteIp) ? "unknown" : remoteIp;
+            return _bytesStoredByIp.GetValueOrDefault(key, 0L);
+        }
+    }
 
     public static void EnsureUploadDir()
     {
@@ -2458,6 +2518,11 @@ static class SCPUploadHandler
             HardenQuarantineDirectory(dir);
             foreach (var file in Directory.GetFiles(dir, "*", SearchOption.AllDirectories))
                 LockDownQuarantinedFile(file);
+            lock (_lock)
+            {
+                _trackedUploadRoot = "";
+                EnsureIpQuotaInitializedUnsafe();
+            }
         }
         catch (Exception ex)
         {
@@ -2509,17 +2574,27 @@ static class SCPUploadHandler
                 var effectiveSessionKey = !string.IsNullOrWhiteSpace(sessionKey)
                     ? sessionKey
                     : context?.SessionKey ?? "unknown";
+                EnsureIpQuotaInitializedUnsafe();
+                var remoteIp = NormalizeRemoteIp(context);
+                var remainingIpBudget = Math.Max(0L, MaxBytesPerIp - _bytesStoredByIp.GetValueOrDefault(remoteIp, 0L));
+                var maxAllowedForCall = (int)Math.Min(MaxUploadBytes, remainingIpBudget);
+
                 var announcedBytes = expectedBytes ?? data.Length;
-                var isOversized = data.Length > MaxUploadBytes || announcedBytes > MaxUploadBytes;
-                var truncated = data.Length > MaxUploadBytes || announcedBytes > data.Length;
-                var bytesToSave = data.Length > MaxUploadBytes
-                    ? data.AsSpan(0, MaxUploadBytes).ToArray()
-                    : data;
+                var ipQuotaExhausted = data.Length > 0 && remainingIpBudget == 0;
+                var exceedsIpQuota = data.Length > remainingIpBudget || announcedBytes > remainingIpBudget;
+                var isOversized = data.Length > MaxUploadBytes || announcedBytes > MaxUploadBytes || exceedsIpQuota;
+                var truncated = data.Length > maxAllowedForCall || announcedBytes > maxAllowedForCall;
+                var bytesToSave = maxAllowedForCall <= 0
+                    ? Array.Empty<byte>()
+                    : data.Length > maxAllowedForCall
+                        ? data.AsSpan(0, maxAllowedForCall).ToArray()
+                        : data;
 
                 var isRejected = !string.IsNullOrWhiteSpace(rejectionReason) || isOversized;
-                var effectiveReason = rejectionReason ?? (isOversized ? "too_large" : null);
+                var effectiveReason = rejectionReason
+                    ?? (ipQuotaExhausted || (exceedsIpQuota && announcedBytes <= MaxUploadBytes) ? "ip_quota_exceeded" : (isOversized ? "too_large" : null));
                 var status = isOversized
-                    ? (bytesToSave.Length > 0 ? "too_large_saved" : "too_large")
+                    ? (bytesToSave.Length > 0 ? "too_large_saved" : (effectiveReason == "ip_quota_exceeded" ? "ip_quota_exceeded" : "too_large"))
                     : isRejected
                         ? (bytesToSave.Length > 0 ? "rejected_saved" : "rejected")
                         : "captured";
@@ -2557,6 +2632,7 @@ static class SCPUploadHandler
                     }
 
                     File.WriteAllBytes(destPath, bytesToSave);
+                    _bytesStoredByIp.AddOrUpdate(remoteIp, bytesToSave.Length, (_, cur) => cur + bytesToSave.Length);
                     sha256 = Convert.ToHexString(SHA256.HashData(bytesToSave)).ToLowerInvariant();
                     analysis = BinaryPayloadAnalyzer.Analyze(bytesToSave, filename);
                     metadataPath = destPath + ".meta.json";
@@ -2656,10 +2732,17 @@ static class SCPUploadHandler
                 var effectiveSessionKey = !string.IsNullOrWhiteSpace(sessionKey)
                     ? sessionKey
                     : context?.SessionKey ?? "unknown";
-                var bytesToSave = data.Length > MaxUploadBytes
-                    ? data.AsSpan(0, MaxUploadBytes).ToArray()
+                EnsureIpQuotaInitializedUnsafe();
+                var remoteIp = NormalizeRemoteIp(context);
+                var remainingIpBudget = Math.Max(0L, MaxBytesPerIp - _bytesStoredByIp.GetValueOrDefault(remoteIp, 0L));
+                if (remainingIpBudget <= 0 || data.Length == 0)
+                    return "";
+
+                var maxAllowedForCall = (int)Math.Min(MaxUploadBytes, remainingIpBudget);
+                var bytesToSave = data.Length > maxAllowedForCall
+                    ? data.AsSpan(0, maxAllowedForCall).ToArray()
                     : data;
-                var truncated = data.Length > MaxUploadBytes || expectedBytes > bytesToSave.Length;
+                var truncated = data.Length > maxAllowedForCall || expectedBytes > bytesToSave.Length;
 
                 var uploadRoot = GetUploadDir();
                 Directory.CreateDirectory(uploadRoot);
@@ -2686,6 +2769,7 @@ static class SCPUploadHandler
                 }
 
                 File.WriteAllBytes(destPath, bytesToSave);
+                _bytesStoredByIp.AddOrUpdate(remoteIp, bytesToSave.Length, (_, cur) => cur + bytesToSave.Length);
                 LockDownQuarantinedFile(destPath);
 
                 var sha256 = Convert.ToHexString(SHA256.HashData(bytesToSave)).ToLowerInvariant();
@@ -3026,14 +3110,20 @@ internal sealed class SCPUploadSession
                 return;
             }
 
-            if (_expectedBytes > SCPUploadHandler.MaxUploadBytes)
+            var remoteIp = _context?.RemoteIp ?? Program.GetRemoteAttemptKey(_context?.RemoteEndpoint ?? "unknown");
+            var remainingIpBudget = SCPUploadHandler.GetRemainingIpQuotaBytes(remoteIp);
+            var effectiveMaxBytes = Math.Min(SCPUploadHandler.MaxUploadBytes, remainingIpBudget);
+
+            if (_expectedBytes > effectiveMaxBytes)
             {
                 _oversized = true;
-                _rejectionReason = "too_large";
+                _rejectionReason = _expectedBytes <= SCPUploadHandler.MaxUploadBytes && remainingIpBudget < _expectedBytes
+                    ? "ip_quota_exceeded"
+                    : "too_large";
                 var remainingInPacket = data.Length - offset;
-                if (remainingInPacket > 0)
+                if (remainingInPacket > 0 && effectiveMaxBytes > 0)
                 {
-                    var sampleLen = (int)Math.Min(remainingInPacket, Math.Min(_expectedBytes, SCPUploadHandler.MaxUploadBytes));
+                    var sampleLen = (int)Math.Min(remainingInPacket, Math.Min(_expectedBytes, effectiveMaxBytes));
                     var sample = new byte[sampleLen];
                     Buffer.BlockCopy(data, offset, sample, 0, sampleLen);
                     offset = data.Length;
@@ -3044,7 +3134,7 @@ internal sealed class SCPUploadSession
                         sample,
                         _context,
                         source: "scp",
-                        rejectionReason: "too_large",
+                        rejectionReason: _rejectionReason,
                         expectedBytes: _expectedBytes,
                         scpHeader: _rawHeaderLine,
                         scpPermissions: _permissions);
@@ -3058,7 +3148,7 @@ internal sealed class SCPUploadSession
                         Array.Empty<byte>(),
                         _context,
                         source: "scp",
-                        rejectionReason: "too_large",
+                        rejectionReason: _rejectionReason,
                         expectedBytes: _expectedBytes,
                         scpHeader: _rawHeaderLine,
                         scpPermissions: _permissions);
@@ -3069,7 +3159,7 @@ internal sealed class SCPUploadSession
                 return;
             }
 
-            _content = new MemoryStream((int)Math.Min(_expectedBytes, SCPUploadHandler.MaxUploadBytes));
+            _content = new MemoryStream((int)Math.Min(_expectedBytes, effectiveMaxBytes));
             _receivedBytes = 0;
             _state = State.Content;
             sendData(Ack);
@@ -4325,7 +4415,7 @@ static class DataHarvester
     private static readonly Regex ToolCommandRegex = new(@"(?:^|[;&|()]\s*)(?:sudo\s+)?(?:/[^\s]*/)?(?:\./)?(?:busybox\s+)?(?:curl|wget|fetch|lwp-download)\b(?<args>[^;&|\r\n]*)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex SchemelessEndpointWithPathRegex = new(@"(?:^|\s)['""]?(?<target>(?:(?:\d{1,3}\.){3}\d{1,3}|[a-z0-9][a-z0-9.-]*\.[a-z]{2,})(?::\d{1,5})?/[A-Za-z0-9._~:/?#\[\]@!$&()*+,;=%-]*)['""]?", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     internal static HttpClient? HttpClientOverride { get; set; }
-    private const int MaxPayloadCaptureBytes = 10 * 1024 * 1024;
+    private const int MaxPayloadCaptureBytes = SCPUploadHandler.MaxUploadBytes;
     private const string ExecutionTactic = "Execution";
     private const string PersistenceTactic = "Persistence";
     private const string DiscoveryTactic = "Discovery";
@@ -4618,7 +4708,17 @@ static class DataHarvester
                 return;
             }
 
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+            var attackerIp = context?.RemoteIp ?? Program.GetRemoteAttemptKey(remoteEndpoint);
+            var remainingIpBudget = SCPUploadHandler.GetRemainingIpQuotaBytes(attackerIp);
+            if (remainingIpBudget <= 0)
+            {
+                entry.Status = "ip_quota_exceeded";
+                Logger.LogYaml("payload_capture", entry);
+                return;
+            }
+            var maxCaptureForIp = (int)Math.Min(MaxPayloadCaptureBytes, remainingIpBudget);
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(45));
             using var request = new HttpRequestMessage(HttpMethod.Get, sanitizedUri);
             request.Headers.UserAgent.ParseAdd("curl/7.88.1");
             var client = HttpClientOverride ?? Program.SharedHttpClient;
@@ -4640,13 +4740,16 @@ static class DataHarvester
             int read;
             while ((read = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length), cts.Token)) > 0)
             {
-                var saveRoom = (int)Math.Min(read, Math.Max(0, SCPUploadHandler.MaxUploadBytes - capturedBytesStream.Length));
+                var saveRoom = (int)Math.Min(read, Math.Max(0, maxCaptureForIp - capturedBytesStream.Length));
                 if (saveRoom > 0)
                     capturedBytesStream.Write(buffer, 0, saveRoom);
 
-                if (bytesCaptured + read > MaxPayloadCaptureBytes)
+                if (bytesCaptured + read > maxCaptureForIp)
                 {
-                    entry.Status = "too_large";
+                    entry.Status = maxCaptureForIp < MaxPayloadCaptureBytes ? "ip_quota_exceeded" : "too_large";
+                    bytesCaptured += saveRoom;
+                    if (saveRoom > 0)
+                        sha256.AppendData(buffer, 0, saveRoom);
                     break;
                 }
 
