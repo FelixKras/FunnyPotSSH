@@ -20,8 +20,14 @@ ENV SSH_USER=$USERNAME
 ENV SSH_PASSWORD=test
 ENV FUNNYPOT_RUN_USER=$USERNAME
 
-# Install git for LibGit2Sharp native dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends git libgit2-dev python3 && rm -rf /var/lib/apt/lists/*
+# Install git for LibGit2Sharp native dependencies and read-only binary inspection tools for LLM malware review
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    libgit2-dev \
+    python3 \
+    file \
+    binutils \
+    && rm -rf /var/lib/apt/lists/*
 
 # Drop all capabilities for the container and match host UID/GID
 RUN groupadd -g ${USER_GID} $USERNAME && \

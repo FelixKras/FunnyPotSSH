@@ -30,7 +30,7 @@ internal sealed class SubscriptionBridgeAdapter
     }
 
     internal static async Task<(string response, int promptTokens, int completionTokens, int totalTokens, string model)> GetResponseAsync(
-        List<ChatRequestData.ChatMessage> history, int timeoutSeconds, CancellationToken cancellationToken)
+        List<ChatRequestData.ChatMessage> history, int timeoutSeconds, CancellationToken cancellationToken, bool staticReview = false)
     {
         const string model = "openai/gpt-6.1-terra";
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -38,7 +38,8 @@ internal sealed class SubscriptionBridgeAdapter
         try
         {
             using var content = CreateRequestContent(history);
-            using var response = await Client.PostAsync("http://subscription-bridge/v1/terminal", content, timeout.Token).ConfigureAwait(false);
+            var endpoint = staticReview ? "http://subscription-bridge/v1/static-review" : "http://subscription-bridge/v1/terminal";
+            using var response = await Client.PostAsync(endpoint, content, timeout.Token).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             using var stream = await response.Content.ReadAsStreamAsync(timeout.Token).ConfigureAwait(false);
             using var json = await JsonDocument.ParseAsync(stream, cancellationToken: timeout.Token).ConfigureAwait(false);

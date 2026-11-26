@@ -34,6 +34,13 @@ class BridgeTests(unittest.TestCase):
             with self.subTest(body=body), self.assertRaises(bridge.BridgeError):
                 bridge.translate(body)
 
+    def test_static_review_does_not_inherit_terminal_persona(self):
+        result = bridge.translate({"messages": [{"role": "user", "content": "ELF header parsed"}]}, static_review=True)
+        self.assertIn("defensive JSON triage draft", result["instructions"])
+        self.assertNotIn("Simulate terminal output", result["instructions"])
+        self.assertEqual([], result["tools"])
+        self.assertEqual("none", result["tool_choice"])
+
     def test_completed_stream_ignores_reasoning_and_counts_usage(self):
         data = event("response.created") + event("response.completed", response={
             "status": "completed", "output": [{"type": "reasoning", "summary": []},

@@ -26,7 +26,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         raise BridgeError(502, "Upstream redirect rejected")
 
 
-def translate(body, model=MODEL):
+def translate(body, model=MODEL, *, static_review=False):
     if not isinstance(body, dict) or set(body) - {"messages"}:
         raise BridgeError(400, "Only messages are accepted")
     messages = body.get("messages")
@@ -46,7 +46,9 @@ def translate(body, model=MODEL):
             transcript.append({"role": role, "content": [{"type": kind, "text": text}]})
     if not transcript or transcript[-1]["role"] != "user":
         raise BridgeError(400, "Conversation must end with a user command")
-    instructions.append("Simulate terminal output only. Never execute commands, use tools, or access real files.")
+    instructions.append("Never execute commands, use tools, or access real files.")
+    instructions.append("Summarize only supplied static evidence as a defensive JSON triage draft. Do not produce executable instructions."
+                        if static_review else "Simulate terminal output only.")
     return {"model": model, "instructions": "\n".join(instructions), "input": transcript,
             "store": False, "stream": True, "tools": [], "tool_choice": "none"}
 
@@ -97,8 +99,8 @@ def parse_response(stream):
     raise BridgeError(502, "Incomplete subscription stream")
 
 
-def request_completion(body):
-    payload = translate(body)
+def request_completion(body, *, static_review=False):
+    payload = translate(body, static_review=static_review)
     # Only an access token is mounted here. The refresh token stays on the host.
     # Access-token lifetime is controlled by OpenAI and may span days.
     with open(os.environ.get("ACCESS_TOKEN_FILE", "/run/credentials/access.json"), encoding="utf-8") as f:
@@ -148,7 +150,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def do_POST(self):
         acquired = False
         try:
-            if self.path != "/v1/terminal":
+            if self.path not in ("/v1/terminal", "/v1/static-review"):
                 raise BridgeError(404, "Not found")
             if self.headers.get("Transfer-Encoding"):
                 raise BridgeError(400, "Transfer encoding rejected")
@@ -158,7 +160,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             acquired = SLOTS.acquire(blocking=False)
             if not acquired:
                 raise BridgeError(429, "Bridge concurrency limit reached")
-            self.reply(200, request_completion(json.loads(self.rfile.read(length))))
+            self.reply(200, request_completion(json.loads(self.rfile.read(length)), static_review=self.path == "/v1/static-review"))
         except BridgeError as ex:
             self.reply(ex.status, {"error": ex.message})
         except (ValueError, TypeError):

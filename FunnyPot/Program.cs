@@ -1438,6 +1438,12 @@ Re-evaluate every assignment, command substitution, pipeline, and final echo/pri
     static readonly HttpClient KiloHttpClient = new() { Timeout = Timeout.InfiniteTimeSpan };
     static readonly Lazy<KiloLlmAdapter> KiloAdapter = new(() => new KiloLlmAdapter(KiloHttpClient, Config.Llm.Kilo));
 
+    internal static Task<(string, int, int, int, string)> GetStaticReviewResponseAsync(
+        List<ChatRequestData.ChatMessage> history, CancellationToken cancellationToken) =>
+        LlmProvider.Equals("subscription-bridge", StringComparison.OrdinalIgnoreCase)
+            ? SubscriptionBridgeAdapter.GetResponseAsync(history, Config.Llm.TimeoutSeconds, cancellationToken, staticReview: true)
+            : GetLLMResponseAsync(history, cancellationToken);
+
     internal static async Task<(string response, int promptTokens, int completionTokens, int totalTokens, string model)> GetLLMResponseAsync(
         List<ChatRequestData.ChatMessage> history,
         CancellationToken cancellationToken)
@@ -2806,6 +2812,8 @@ static class SCPUploadHandler
                 File.WriteAllText(metadataPath, JsonSerializer.Serialize(metadata, MetadataJsonOptions));
                 LockDownQuarantinedFile(metadataPath);
                 AppendBinaryUploadPublicationRecord(metadata);
+                if (source == "url_payload" && bytesToSave.Length > 0)
+                    MalwareToolReviewer.QueueBackgroundReview(metadataPath);
                 return destPath;
             }
             catch (Exception ex)
@@ -6017,13 +6025,22 @@ static class Logger
         var data = harvestedEvent.Data is JsonElement element
             ? element.Clone()
             : JsonSerializer.SerializeToElement(harvestedEvent.Data, EventJsonOptions);
+        var entry = (harvestedEvent.Timestamp, harvestedEvent.Event, harvestedEvent.SessionId, harvestedEvent.Sequence, harvestedEvent.ChannelId, harvestedEvent.ExchangeId, data);
+
         if (!ActiveSessionEvents.TryGetValue(harvestedEvent.SessionId, out var events))
         {
+            if (harvestedEvent.Event is "payload_capture" or "scp_upload_captured" or "scp_upload_rejected")
+            {
+                // Asynchronous payload downloads can finish after session_end removes the active entry.
+                // Merge directly into sessions.json without leaving an orphaned post-end entry in ActiveSessionEvents.
+                PersistStructuredSessionsUnsafe(dataDir, new[] { BuildStructuredSession(harvestedEvent.SessionId, new() { entry }) }, replaceExisting: false);
+                return;
+            }
             events = new();
             ActiveSessionEvents[harvestedEvent.SessionId] = events;
         }
 
-        events.Add((harvestedEvent.Timestamp, harvestedEvent.Event, harvestedEvent.SessionId, harvestedEvent.Sequence, harvestedEvent.ChannelId, harvestedEvent.ExchangeId, data));
+        events.Add(entry);
         if (harvestedEvent.Event == "session_end")
         {
             PersistStructuredSessionsUnsafe(dataDir, new[] { BuildStructuredSession(harvestedEvent.SessionId, events) }, replaceExisting: false);
@@ -6254,13 +6271,9 @@ static class Logger
         {
             if (string.IsNullOrWhiteSpace(session.SessionId))
                 continue;
-            if (merged.TryGetValue(session.SessionId, out var existing))
-            {
-                session.AiEnhancement ??= existing.AiEnhancement;
-                for (var i = 0; i < Math.Min(session.Commands.Count, existing.Commands.Count); i++)
-                    session.Commands[i].AiEnhancement ??= existing.Commands[i].AiEnhancement;
-            }
-            merged[session.SessionId] = session;
+            merged[session.SessionId] = merged.TryGetValue(session.SessionId, out var existing)
+                ? MergeStructuredSession(existing, session)
+                : session;
         }
 
         // Retain all command-bearing or upload-bearing sessions first (up to MaxStructuredSessions), then fill remaining slots with newest non-command sessions.
@@ -6273,6 +6286,115 @@ static class Logger
         var tempPath = sessionsPath + ".tmp";
         File.WriteAllText(tempPath, JsonSerializer.Serialize(retained, new JsonSerializerOptions { WriteIndented = true }));
         File.Move(tempPath, sessionsPath, overwrite: true);
+    }
+
+    internal static SessionDebrief MergeStructuredSession(SessionDebrief existing, SessionDebrief incoming)
+    {
+        static string PickKnown(string preferred, string fallback)
+            => !string.IsNullOrWhiteSpace(preferred) && !preferred.Equals("unknown", StringComparison.OrdinalIgnoreCase) && !preferred.Equals("pending", StringComparison.OrdinalIgnoreCase)
+                ? preferred
+                : (!string.IsNullOrWhiteSpace(fallback) ? fallback : preferred);
+
+        static DateTime? Earliest(DateTime? a, DateTime? b)
+            => a.HasValue && b.HasValue ? (a.Value <= b.Value ? a : b) : (a ?? b);
+
+        static DateTime? Latest(DateTime? a, DateTime? b)
+            => a.HasValue && b.HasValue ? (a.Value >= b.Value ? a : b) : (a ?? b);
+
+        var mergedTimeline = new List<SessionTimelineRecord>();
+        var timelineKeys = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var item in existing.Timeline.Concat(incoming.Timeline))
+        {
+            var key = item.Sequence > 0
+                ? $"{item.Event}|seq:{item.Sequence}"
+                : $"{item.Event}|{item.Timestamp:O}|{item.ChannelId}|{item.ExchangeId}";
+            if (timelineKeys.Add(key))
+                mergedTimeline.Add(item);
+        }
+        mergedTimeline = mergedTimeline
+            .OrderBy(t => t.Timestamp)
+            .ThenBy(t => t.Sequence)
+            .ToList();
+
+        var mergedAuth = new List<AuthAttemptRecord>();
+        var authKeys = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var attempt in existing.AuthAttempts.Concat(incoming.AuthAttempts))
+        {
+            var key = $"{attempt.Timestamp:O}|{attempt.Username}|{attempt.ConnectionAttemptNumber}|{attempt.AuthMethod}|{attempt.Accepted}";
+            if (authKeys.Add(key))
+                mergedAuth.Add(attempt);
+        }
+
+        var commandsByKey = new Dictionary<string, CommandExchangeRecord>(StringComparer.Ordinal);
+        var commandOrder = new List<string>();
+        void AddOrMergeCommand(CommandExchangeRecord cmd, bool preferIncoming)
+        {
+            var key = !string.IsNullOrWhiteSpace(cmd.ExchangeId)
+                ? $"ex:{cmd.ExchangeId}"
+                : $"seq:{cmd.Sequence}|{cmd.MessageNumber}|{cmd.Command}";
+            if (!commandsByKey.TryGetValue(key, out var cur))
+            {
+                commandsByKey[key] = cmd;
+                commandOrder.Add(key);
+                return;
+            }
+            if (preferIncoming && (cmd.HasResponse || !cur.HasResponse))
+            {
+                cmd.AiEnhancement ??= cur.AiEnhancement;
+                commandsByKey[key] = cmd;
+            }
+            else
+            {
+                cur.AiEnhancement ??= cmd.AiEnhancement;
+            }
+        }
+        foreach (var cmd in existing.Commands) AddOrMergeCommand(cmd, preferIncoming: false);
+        foreach (var cmd in incoming.Commands) AddOrMergeCommand(cmd, preferIncoming: true);
+        var mergedCommands = commandOrder
+            .Select(k => commandsByKey[k])
+            .OrderBy(c => c.Timestamp ?? DateTime.MaxValue)
+            .ThenBy(c => c.Sequence)
+            .ThenBy(c => c.MessageNumber)
+            .ToList();
+
+        var tactics = existing.TacticsObserved.Concat(incoming.TacticsObserved).Distinct(StringComparer.Ordinal).ToList();
+        var payloadUrls = existing.PayloadUrls.Concat(incoming.PayloadUrls).Distinct(StringComparer.Ordinal).ToList();
+        var persistence = existing.PersistenceVectors.Concat(incoming.PersistenceVectors).Distinct(StringComparer.Ordinal).ToList();
+        var authAccepted = existing.AuthAccepted || incoming.AuthAccepted;
+        var ttc = existing.TimeToCompromiseMs > 0 && incoming.TimeToCompromiseMs > 0
+            ? Math.Min(existing.TimeToCompromiseMs, incoming.TimeToCompromiseMs)
+            : Math.Max(existing.TimeToCompromiseMs, incoming.TimeToCompromiseMs);
+
+        var computedRisk = mergedCommands.Count * 2
+            + tactics.Count * 10
+            + payloadUrls.Count * 20
+            + persistence.Count * 15
+            + (authAccepted ? 10 : 0);
+
+        return new SessionDebrief
+        {
+            SessionId = incoming.SessionId,
+            StartedAt = Earliest(existing.StartedAt, incoming.StartedAt),
+            EndedAt = Latest(existing.EndedAt, incoming.EndedAt),
+            DurationSeconds = Math.Max(existing.DurationSeconds, incoming.DurationSeconds),
+            RemoteEndpoint = PickKnown(incoming.RemoteEndpoint, existing.RemoteEndpoint),
+            RemoteIp = PickKnown(incoming.RemoteIp, existing.RemoteIp),
+            Username = PickKnown(incoming.Username, existing.Username),
+            ClientVersion = PickKnown(incoming.ClientVersion, existing.ClientVersion),
+            SshBanner = !string.IsNullOrWhiteSpace(incoming.SshBanner) ? incoming.SshBanner : existing.SshBanner,
+            AuthAccepted = authAccepted,
+            AuthAttempts = mergedAuth,
+            Timeline = mergedTimeline,
+            ShellOpened = existing.ShellOpened || incoming.ShellOpened,
+            TimeToCompromiseMs = ttc,
+            CommandCount = mergedCommands.Count,
+            Commands = mergedCommands,
+            TacticsObserved = tactics,
+            PayloadUrls = payloadUrls,
+            PersistenceVectors = persistence,
+            RiskScore = Math.Max(computedRisk, Math.Max(existing.RiskScore, incoming.RiskScore)),
+            AiEnhancement = incoming.AiEnhancement ?? existing.AiEnhancement
+        };
     }
 
     static string JsonString(JsonElement data, string propertyName, string fallback = "")

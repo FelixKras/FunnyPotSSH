@@ -5,12 +5,15 @@ title: Frontend Static Dashboard Workflow
 scope: project
 status: approved-by-request
 created_at: 2026-07-12
-updated_at: 2026-10-29
+updated_at: 2026-11-26
 author: Forge
 reviewer: Kilo
 source_refs:
   - FunnyPot/Program.cs
+  - FunnyPot.Tests/UnitTests.cs
   - frontend-main/index.html
+  - frontend-main/404.html
+  - scripts/test-ollama-frontend.mjs
   - docs/docker-secrets.md
   - docs/data-harvesting-requirements.md
   - scripts/deploy.sh
@@ -48,8 +51,12 @@ FunnyPot separates dashboard UI from published telemetry data. Runtime writes in
 - Initial load concurrently fetches `global_stats.json`, `data/events_summary.json`, `data/threat_intel.json`, `data/sessions.json`, `data/ollama.json`, and `data/binaries.json`.
 - Browser-side `events.jsonl` hydration has been removed to prevent client-side memory exhaustion and payload bloat; session models map directly from pre-assembled debriefs in `data/sessions.json`.
 - If `data/sessions.json` is available, session models map directly from pre-assembled debriefs. When a prebuilt timeline is absent, the UI synthesizes start, authentication, command, result, and end events, but not shell lifecycle events; timelines can be partial.
-- Tabs include Overview, Credentials, Geography, Attacker Exchange, Caught Binaries, and Ollama / OpenAI.
+- Tabs include Overview (`/Overview`), Credentials (`/Credentials`), Geography (`/Geography`), Attacker Exchange (`/AttackerExchange`), Caught Binaries (`/CaughtBinaries`), Ollama / OpenAI (`/Ollama`), and the pilot Attack Mind Map (`/AttackMindMap`).
+- Each tab is a real `<a data-tab>` link backed by History API routing (`resolveTabFromRoute`, `detectSiteBasePath`, `activateTab`, `popstate`, `hashchange` fallback for `file://`) plus `frontend-main/404.html` SPA redirect handoff (`sessionStorage['funnypot:redirectPath']`) so direct GitHub Pages tab URLs (e.g. `https://felixkras.github.io/FunnyPot.ai/AttackerExchange`) load and restore cleanly without breaking relative `assets/` paths.
 - The **Caught Binaries** tab (`data-tab="binaries"`) displays only the top summary statistics cards (`#binariesStats`) and the list of real downloaded & analyzed binary files (`#binariesList`), while rejected/unstored transfer attempts are summarized strictly in the statistics card.
+- The **Attacker Exchange** tab correlates and renders caught binary artifacts from `data/binaries.json`, `session.uploads`, and `session.timeline` inside each matching session (a session-level Caught Binary Artifacts panel, inline per-step callouts matched by `ExchangeId`/URL, and a binary count badge in the session ribbon). `exchangeSearchMatches` indexes `session.id`, binary filenames, SHA-256 hashes, and indicators so the Caught Binaries jump button works, and `filteredExchangeSessions` retains 0-command binary-bearing sessions.
+- The **Attack Mind Map (`PILOT`)** tab (`data-tab="mindmap"`) renders each attack session as an interactive, foldable multi-branch mind map (`Origin & Access`, `Command Kill-Chain`, `Caught Binaries & Malware`, `Tactics & Behavioral Signals`). Every artefact node is clickable to display a plain-English explanation and raw evidence in the sticky inspector, and foldable via `−` / `+N` controls plus `Expand all` / `Fold all`.
+- `Logger.MergeStructuredSession` and `TrackStructuredSessionEventUnsafe` in `FunnyPot/Program.cs` merge asynchronous `payload_capture` / upload events that finish after `session_end` into existing `sessions.json` records rather than overwriting session commands and metadata.
 - The Overview tab features a dedicated **Top Attacker Commands & Tactical Objectives** component, classifying observed commands with inferred strategic goals (e.g., privilege identification, kernel reconnaissance, payload ingress, cron persistence) and MITRE ATT&CK tags.
 - Credentials and Geography tabs consume `threat_intel.json` to present the complete historical threat intelligence dataset (usernames, passwords, scanner source IPs) across resets.
 - It renders command/result exchanges, MITRE tactics, banners, source IPs, credentials, uploads, high-risk signals, and freshness status through the overview and exchange HUD views.

